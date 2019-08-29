@@ -1,5 +1,5 @@
 /*
- * AVL tree is a Self-Balancing Binary Seach Tree.
+ * AVL tree is a Self-Balancing Binary Search Tree.
  * In an AVL tree, the heights of the left and right subtrees of any node differ by at most 1.
  */
 

@@ -10,7 +10,7 @@ const (
 )
 
 type (
-	// VisitFunc represents the function for visting a key-value
+	// VisitFunc represents the function for visiting a key-value
 	VisitFunc func(interface{}, interface{}) bool
 
 	// KeyValue represents a key-value pair

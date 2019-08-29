@@ -45,7 +45,7 @@ const (
 	ShapeCircle   = "circle"
 	ShapeOval     = "oval"
 	ShapeBox      = "box"
-	ShapeSquare   = "sqaure"
+	ShapeSquare   = "square"
 	ShapeDiamond  = "diamond"
 	ShapeTriangle = "triangle"
 	ShapeRecord   = "record"
