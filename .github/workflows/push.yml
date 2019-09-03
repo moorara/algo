@@ -1,0 +1,23 @@
+name: Main
+on: push
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Lint
+        uses: docker://golangci/golangci-lint:latest
+        with:
+          entrypoint: golangci-lint
+          args: run --new --deadline 2m
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Test
+        uses: docker://golang:1.12
+        with:
+          entrypoint: go
+          args: test -race ./...
