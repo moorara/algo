@@ -1,6 +1,19 @@
 # Change Log
 
-## [v0.1.0](https://github.com/moorara/algo/tree/v0.1.0) (2019-08-28)
+## [v0.1.1](https://github.com/moorara/algo/tree/v0.1.1) (2019-09-03)
+[Full Changelog](https://github.com/moorara/algo/compare/v0.1.0...v0.1.1)
+
+**Closed issues:**
+
+- Migrate to New GitHub Actions [\#7](https://github.com/moorara/algo/issues/7)
+
+**Merged pull requests:**
+
+- Add Go Doc and Go Report Card badges [\#10](https://github.com/moorara/algo/pull/10) ([moorara](https://github.com/moorara))
+- Migrate to new GitHub actions and workflows [\#9](https://github.com/moorara/algo/pull/9) ([moorara](https://github.com/moorara))
+- Update const.go [\#5](https://github.com/moorara/algo/pull/5) ([moorara](https://github.com/moorara))
+
+## [v0.1.0](https://github.com/moorara/algo/tree/v0.1.0) (2019-08-29)
 **Merged pull requests:**
 
 - Add data structure packages [\#4](https://github.com/moorara/algo/pull/4) ([moorara](https://github.com/moorara))
