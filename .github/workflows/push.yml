@@ -7,17 +7,13 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Lint
-        uses: docker://golangci/golangci-lint:latest
-        with:
-          entrypoint: golangci-lint
-          args: run --new --deadline 2m
+        uses: moorara/actions/go-lint@master
   test:
     name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - name: Test
-        uses: docker://golang:1.12
+        uses: moorara/actions/go-cover@master
         with:
-          entrypoint: go
-          args: test -race ./...
+          codeclimate_reporter_id: ${{ secrets.CODECLIMATE_REPORTER_ID }}
