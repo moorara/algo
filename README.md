@@ -1,5 +1,5 @@
 [![Go Doc][godoc-image]][godoc-url]
-[![Go Doc][workflow-image]][workflow-url]
+[![Build Status][workflow-image]][workflow-url]
 [![Go Report Card][goreport-image]][goreport-url]
 [![Test Coverage][coverage-image]][coverage-url]
 [![Maintainability][maintainability-image]][maintainability-url]
