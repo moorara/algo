@@ -14,6 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Test
+        id: test
         uses: moorara/actions/go-cover@master
         with:
           codeclimate_reporter_id: ${{ secrets.CODECLIMATE_REPORTER_ID }}
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v1
+        with:
+          name: coverage-report
+          path: ${{ steps.test.outputs.coverage_report_file }}
