@@ -8,7 +8,7 @@ import (
 
 func TestShellSortInt(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareInt, []interface{}{}},
@@ -25,7 +25,7 @@ func TestShellSortInt(t *testing.T) {
 
 func TestShellSortString(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareString, []interface{}{}},

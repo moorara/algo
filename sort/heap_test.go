@@ -8,7 +8,7 @@ import (
 
 func TestHeapSortInt(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareInt, []interface{}{}},
@@ -25,7 +25,7 @@ func TestHeapSortInt(t *testing.T) {
 
 func TestHeapSortString(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareString, []interface{}{}},

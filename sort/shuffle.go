@@ -1,10 +1,8 @@
 package sort
 
-import (
-	"math/rand"
-)
+import "math/rand"
 
-// Shuffle shuffles an array in O(n) time
+// Shuffle shuffles an array in O(n) time.
 func Shuffle(a []interface{}) {
 	n := len(a)
 	for i := 0; i < n; i++ {

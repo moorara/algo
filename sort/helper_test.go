@@ -25,7 +25,7 @@ func compareString(a, b interface{}) int {
 	return strings.Compare(strA, strB)
 }
 
-func sorted(items []interface{}, compare func(a, b interface{}) int) bool {
+func sorted(items []interface{}, compare CompareFunc) bool {
 	for i := 0; i < len(items)-1; i++ {
 		if compare(items[i], items[i+1]) > 0 {
 			return false
