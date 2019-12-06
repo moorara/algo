@@ -1,6 +1,6 @@
 package list
 
-// Stack represents a stack data structure
+// Stack represents a stack abstract data type.
 type Stack interface {
 	Size() int
 	IsEmpty() bool
@@ -15,28 +15,31 @@ type arrayStack struct {
 	nodeSize  int
 	nodeIndex int
 	topNode   *arrayNode
-	compare   func(a, b interface{}) int
+	cmp       CompareFunc
 }
 
-// NewStack creates a new array-list stack
-func NewStack(nodeSize int, compare func(a, b interface{}) int) Stack {
+// NewStack creates a new array-list stack.
+func NewStack(nodeSize int, cmp CompareFunc) Stack {
 	return &arrayStack{
 		listSize:  0,
 		nodeSize:  nodeSize,
 		nodeIndex: -1,
 		topNode:   nil,
-		compare:   compare,
+		cmp:       cmp,
 	}
 }
 
+// Size returns the number of items on stack.
 func (s *arrayStack) Size() int {
 	return s.listSize
 }
 
+// IsEmpty returns true if stack is empty.
 func (s *arrayStack) IsEmpty() bool {
 	return s.listSize == 0
 }
 
+// Enqueue adds a new item to stack.
 func (s *arrayStack) Push(item interface{}) {
 	s.listSize++
 	s.nodeIndex++
@@ -53,6 +56,7 @@ func (s *arrayStack) Push(item interface{}) {
 	s.topNode.block[s.nodeIndex] = item
 }
 
+// Dequeue removes an item from stack.
 func (s *arrayStack) Pop() interface{} {
 	if s.listSize == 0 {
 		return nil
@@ -72,6 +76,7 @@ func (s *arrayStack) Pop() interface{} {
 	return item
 }
 
+// Peek returns the next item on stack without removing it from stack.
 func (s *arrayStack) Peek() interface{} {
 	if s.listSize == 0 {
 		return nil
@@ -80,12 +85,13 @@ func (s *arrayStack) Peek() interface{} {
 	return s.topNode.block[s.nodeIndex]
 }
 
+// Contains returns true if a given item is already on stack.
 func (s *arrayStack) Contains(item interface{}) bool {
 	n := s.topNode
 	i := s.nodeIndex
 
 	for n != nil {
-		if s.compare(n.block[i], item) == 0 {
+		if s.cmp(n.block[i], item) == 0 {
 			return true
 		}
 
