@@ -10,7 +10,7 @@ type (
 	symbolTableTest struct {
 		name            string
 		symbolTable     string
-		compareKey      func(a, b interface{}) int
+		cmpKey      CompareFunc
 		keyValues       []KeyValue
 		expectedSize    int
 		expectedIsEmpty bool
@@ -19,7 +19,7 @@ type (
 	orderedSymbolTableTest struct {
 		name                      string
 		symbolTable               string
-		compareKey                func(a, b interface{}) int
+		cmpKey                CompareFunc
 		keyValues                 []KeyValue
 		expectedSize              int
 		expectedHeight            int
@@ -55,7 +55,7 @@ func getSymbolTableTests() []symbolTableTest {
 		{
 			name:            "",
 			symbolTable:     "",
-			compareKey:      compareString,
+			cmpKey:      compareString,
 			keyValues:       []KeyValue{},
 			expectedSize:    0,
 			expectedIsEmpty: true,
@@ -67,7 +67,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest {
 	return []orderedSymbolTableTest{
 		{
 			name:                 "Empty",
-			compareKey:           compareString,
+			cmpKey:           compareString,
 			keyValues:            []KeyValue{},
 			expectedSize:         0,
 			expectedIsEmpty:      true,
@@ -93,7 +93,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest {
 		},
 		{
 			name:       "ABC",
-			compareKey: compareString,
+			cmpKey: compareString,
 			keyValues: []KeyValue{
 				{"B", 2},
 				{"A", 1},
@@ -127,7 +127,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest {
 		},
 		{
 			name:       "ABCDE",
-			compareKey: compareString,
+			cmpKey: compareString,
 			keyValues: []KeyValue{
 				{"B", 2},
 				{"A", 1},
@@ -163,7 +163,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest {
 		},
 		{
 			name:       "ADGJMPS",
-			compareKey: compareString,
+			cmpKey: compareString,
 			keyValues: []KeyValue{
 				{"J", 10},
 				{"A", 1},
@@ -212,7 +212,7 @@ func runSymbolTableTest(t *testing.T, st SymbolTable, test symbolTableTest) {
 
 		// TODO: verify
 		assert.NotEmpty(t, test.symbolTable)
-		assert.NotEmpty(t, test.compareKey)
+		assert.NotEmpty(t, test.cmpKey)
 		assert.NotEmpty(t, test.keyValues)
 		assert.NotEmpty(t, test.expectedSize)
 		assert.NotEmpty(t, test.expectedIsEmpty)
@@ -310,7 +310,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable, test ordere
 			assert.Contains(t, kvs, kv)
 		}
 		for i = 0; i < len(kvs)-1; i++ { // Sorted Ascending
-			assert.Equal(t, -1, test.compareKey(kvs[i].key, kvs[i+1].key))
+			assert.Equal(t, -1, test.cmpKey(kvs[i].key, kvs[i+1].key))
 		}
 
 		assert.Equal(t, test.expectedRangeSize, ost.RangeSize(test.rangeKeyLo, test.rangeKeyHi))
@@ -322,7 +322,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable, test ordere
 			assert.Contains(t, kvs, kv)
 		}
 		for i = 0; i < len(kvs)-1; i++ { // Sorted Ascending
-			assert.Equal(t, -1, test.compareKey(kvs[i].key, kvs[i+1].key))
+			assert.Equal(t, -1, test.cmpKey(kvs[i].key, kvs[i+1].key))
 		}
 
 		// Invalid Traversal
@@ -335,7 +335,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable, test ordere
 
 		// Pre-Order Traversal
 		i = 0
-		ost.Traverse(TraversePreOrder, func(key, value interface{}) bool {
+		ost.Traverse(PreOrderTraversal, func(key, value interface{}) bool {
 			assert.Equal(t, test.expectedPreOrderTraverse[i].key, key)
 			assert.Equal(t, test.expectedPreOrderTraverse[i].value, value)
 			i++
@@ -344,7 +344,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable, test ordere
 
 		// In-Order Traversal
 		i = 0
-		ost.Traverse(TraverseInOrder, func(key, value interface{}) bool {
+		ost.Traverse(InOrderTraversal, func(key, value interface{}) bool {
 			assert.Equal(t, test.expectedInOrderTraverse[i].key, key)
 			assert.Equal(t, test.expectedInOrderTraverse[i].value, value)
 			i++
@@ -353,7 +353,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable, test ordere
 
 		// Post-Order Traversal
 		i = 0
-		ost.Traverse(TraversePostOrder, func(key, value interface{}) bool {
+		ost.Traverse(PostOrderTraversal, func(key, value interface{}) bool {
 			assert.Equal(t, test.expectedPostOrderTraverse[i].key, key)
 			assert.Equal(t, test.expectedPostOrderTraverse[i].value, value)
 			i++

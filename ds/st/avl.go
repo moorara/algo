@@ -1,8 +1,3 @@
-/*
- * AVL tree is a Self-Balancing Binary Search Tree.
- * In an AVL tree, the heights of the left and right subtrees of any node differ by at most 1.
- */
-
 package st
 
 import (
@@ -21,15 +16,18 @@ type avlNode struct {
 }
 
 type avl struct {
-	root       *avlNode
-	compareKey func(a, b interface{}) int
+	root   *avlNode
+	cmpKey CompareFunc
 }
 
-// NewAVL creates a new AVL Tree
-func NewAVL(compareKey func(a, b interface{}) int) OrderedSymbolTable {
+// NewAVL creates a new AVL tree.
+//
+// AVL tree is a self-balancing binary search tree.
+// In an AVL tree, the heights of the left and right subtrees of any node differ by at most 1.
+func NewAVL(cmpKey CompareFunc) OrderedSymbolTable {
 	return &avl{
-		root:       nil,
-		compareKey: compareKey,
+		root:   nil,
+		cmpKey: cmpKey,
 	}
 }
 
@@ -38,8 +36,8 @@ func (t *avl) isBST(n *avlNode, min, max interface{}) bool {
 		return true
 	}
 
-	if (min != nil && t.compareKey(n.key, min) <= 0) ||
-		(max != nil && t.compareKey(n.key, max) >= 0) {
+	if (min != nil && t.cmpKey(n.key, min) <= 0) ||
+		(max != nil && t.cmpKey(n.key, max) >= 0) {
 		return false
 	}
 
@@ -139,14 +137,17 @@ func (t *avl) balance(n *avlNode) *avlNode {
 	return n
 }
 
+// Size returns the number of key-value pairs in AVL tree.
 func (t *avl) Size() int {
 	return t.size(t.root)
 }
 
+// Height returns the height of AVL tree.
 func (t *avl) Height() int {
 	return t.height(t.root)
 }
 
+// IsEmpty returns true if AVL tree is empty.
 func (t *avl) IsEmpty() bool {
 	return t.root == nil
 }
@@ -161,7 +162,7 @@ func (t *avl) _put(n *avlNode, key, value interface{}) *avlNode {
 		}
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	switch {
 	case cmp < 0:
 		n.left = t._put(n.left, key, value)
@@ -177,6 +178,7 @@ func (t *avl) _put(n *avlNode, key, value interface{}) *avlNode {
 	return t.balance(n)
 }
 
+// Put adds a new key-value pair to AVL tree.
 func (t *avl) Put(key, value interface{}) {
 	if key == nil {
 		return
@@ -190,7 +192,7 @@ func (t *avl) _get(n *avlNode, key interface{}) (interface{}, bool) {
 		return nil, false
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	switch {
 	case cmp < 0:
 		return t._get(n.left, key)
@@ -201,6 +203,7 @@ func (t *avl) _get(n *avlNode, key interface{}) (interface{}, bool) {
 	}
 }
 
+// Get returns the value of a given key in AVL tree.
 func (t *avl) Get(key interface{}) (interface{}, bool) {
 	return t._get(t.root, key)
 }
@@ -213,7 +216,7 @@ func (t *avl) _delete(n *avlNode, key interface{}) (*avlNode, interface{}, bool)
 	var ok bool
 	var value interface{}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	if cmp < 0 {
 		n.left, value, ok = t._delete(n.left, key)
 	} else if cmp > 0 {
@@ -239,16 +242,18 @@ func (t *avl) _delete(n *avlNode, key interface{}) (*avlNode, interface{}, bool)
 	return t.balance(n), value, ok
 }
 
+// Delete removes a key-value pair from AVL tree.
 func (t *avl) Delete(key interface{}) (value interface{}, ok bool) {
 	t.root, value, ok = t._delete(t.root, key)
 	return value, ok
 }
 
+// KeyValues returns all key-value pairs in AVL tree.
 func (t *avl) KeyValues() []KeyValue {
 	i := 0
 	kvs := make([]KeyValue, t.Size())
 
-	t._traverse(t.root, TraverseInOrder, func(n *avlNode) bool {
+	t._traverse(t.root, InOrderTraversal, func(n *avlNode) bool {
 		kvs[i] = KeyValue{n.key, n.value}
 		i++
 		return true
@@ -263,6 +268,7 @@ func (t *avl) _min(n *avlNode) *avlNode {
 	return t._min(n.left)
 }
 
+// Min returns the minimum key and its value in AVL tree.
 func (t *avl) Min() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -279,6 +285,7 @@ func (t *avl) _max(n *avlNode) *avlNode {
 	return t._max(n.right)
 }
 
+// Max returns the maximum key and its value in AVL tree.
 func (t *avl) Max() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -293,7 +300,7 @@ func (t *avl) _floor(n *avlNode, key interface{}) *avlNode {
 		return nil
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	if cmp == 0 {
 		return n
 	} else if cmp < 0 {
@@ -307,6 +314,7 @@ func (t *avl) _floor(n *avlNode, key interface{}) *avlNode {
 	return n
 }
 
+// Floor
 func (t *avl) Floor(key interface{}) (interface{}, interface{}) {
 	n := t._floor(t.root, key)
 	if n == nil {
@@ -320,7 +328,7 @@ func (t *avl) _ceiling(n *avlNode, key interface{}) *avlNode {
 		return nil
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	if cmp == 0 {
 		return n
 	} else if cmp > 0 {
@@ -334,6 +342,7 @@ func (t *avl) _ceiling(n *avlNode, key interface{}) *avlNode {
 	return n
 }
 
+// Ceiling
 func (t *avl) Ceiling(key interface{}) (interface{}, interface{}) {
 	n := t._ceiling(t.root, key)
 	if n == nil {
@@ -347,7 +356,7 @@ func (t *avl) _rank(n *avlNode, key interface{}) int {
 		return 0
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	switch {
 	case cmp < 0:
 		return t._rank(n.left, key)
@@ -358,6 +367,7 @@ func (t *avl) _rank(n *avlNode, key interface{}) int {
 	}
 }
 
+// Rank
 func (t *avl) Rank(key interface{}) int {
 	if key == nil {
 		return -1
@@ -382,6 +392,7 @@ func (t *avl) _select(n *avlNode, rank int) *avlNode {
 	}
 }
 
+// Select
 func (t *avl) Select(rank int) (interface{}, interface{}) {
 	if rank < 0 || rank >= t.Size() {
 		return nil, nil
@@ -403,6 +414,7 @@ func (t *avl) _deleteMin(n *avlNode) (*avlNode, *avlNode) {
 	return t.balance(n), min
 }
 
+// DeleteMin
 func (t *avl) DeleteMin() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -424,6 +436,7 @@ func (t *avl) _deleteMax(n *avlNode) (*avlNode, *avlNode) {
 	return t.balance(n), max
 }
 
+// DeleteMax
 func (t *avl) DeleteMax() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -434,12 +447,13 @@ func (t *avl) DeleteMax() (interface{}, interface{}) {
 	return max.key, max.value
 }
 
+// RangeSize
 func (t *avl) RangeSize(lo, hi interface{}) int {
 	if lo == nil || hi == nil {
 		return -1
 	}
 
-	if t.compareKey(lo, hi) > 0 {
+	if t.cmpKey(lo, hi) > 0 {
 		return 0
 	} else if _, found := t.Get(hi); found {
 		return 1 + t.Rank(hi) - t.Rank(lo)
@@ -454,8 +468,8 @@ func (t *avl) _range(n *avlNode, kvs *[]KeyValue, lo, hi interface{}) int {
 	}
 
 	len := 0
-	cmpLo := t.compareKey(lo, n.key)
-	cmpHi := t.compareKey(hi, n.key)
+	cmpLo := t.cmpKey(lo, n.key)
+	cmpHi := t.cmpKey(hi, n.key)
 
 	if cmpLo < 0 {
 		len += t._range(n.left, kvs, lo, hi)
@@ -471,6 +485,7 @@ func (t *avl) _range(n *avlNode, kvs *[]KeyValue, lo, hi interface{}) int {
 	return len
 }
 
+// Range
 func (t *avl) Range(lo, hi interface{}) []KeyValue {
 	if lo == nil || hi == nil {
 		return nil
@@ -487,15 +502,15 @@ func (t *avl) _traverse(n *avlNode, order int, visit func(*avlNode) bool) bool {
 	}
 
 	switch order {
-	case TraversePreOrder:
+	case PreOrderTraversal:
 		return visit(n) &&
 			t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit)
-	case TraverseInOrder:
+	case InOrderTraversal:
 		return t._traverse(n.left, order, visit) &&
 			visit(n) &&
 			t._traverse(n.right, order, visit)
-	case TraversePostOrder:
+	case PostOrderTraversal:
 		return t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit) &&
 			visit(n)
@@ -504,8 +519,9 @@ func (t *avl) _traverse(n *avlNode, order int, visit func(*avlNode) bool) bool {
 	}
 }
 
+// Traverse
 func (t *avl) Traverse(order int, visit VisitFunc) {
-	if order != TraversePreOrder && order != TraverseInOrder && order != TraversePostOrder {
+	if order != PreOrderTraversal && order != InOrderTraversal && order != PostOrderTraversal {
 		return
 	}
 
@@ -514,11 +530,12 @@ func (t *avl) Traverse(order int, visit VisitFunc) {
 	})
 }
 
+// Graphviz returns a visualization of AVL tree in Graphviz format.
 func (t *avl) Graphviz() string {
 	var parent, left, right, label string
 	graph := graphviz.NewGraph(true, true, "AVL", "", "", "", graphviz.ShapeOval)
 
-	t._traverse(t.root, TraversePreOrder, func(n *avlNode) bool {
+	t._traverse(t.root, PreOrderTraversal, func(n *avlNode) bool {
 		parent = fmt.Sprintf("%v", n.key)
 		label = fmt.Sprintf("%v,%v", n.key, n.value)
 		graph.AddNode(graphviz.NewNode(parent, "", label, "", "", "", "", ""))

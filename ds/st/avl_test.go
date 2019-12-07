@@ -83,7 +83,7 @@ func TestAVL(t *testing.T) {
 	tests := getAVLTests()
 
 	for _, tc := range tests {
-		avl := NewAVL(tc.compareKey)
+		avl := NewAVL(tc.cmpKey)
 		runOrderedSymbolTableTest(t, avl, tc)
 	}
 }

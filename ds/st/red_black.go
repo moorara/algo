@@ -1,12 +1,3 @@
-/*
- * A Red-Black Tree is 2-3 Tree represented as a binary search tree.
- * In a Left-Leaning Red-Black Tree, left-leaning red links are used to construct 3-nodes.
- * A Left-Leaning Red-Black Tree is a BST such that
- *  - Red links lean lef
- *  - No node has two red links connect to it
- *  - Every path from root to null link has the same number of black links
- */
-
 package st
 
 import (
@@ -29,17 +20,24 @@ type rbNode struct {
 	color bool
 }
 
-// Left-Leaning Red-Black Tree
+// redBlack is a left-leaning Red-Black tree.
 type redBlack struct {
-	root       *rbNode
-	compareKey func(a, b interface{}) int
+	root   *rbNode
+	cmpKey CompareFunc
 }
 
-// NewRedBlack creates a new Red-Black Tree
-func NewRedBlack(compareKey func(a, b interface{}) int) OrderedSymbolTable {
+// NewRedBlack creates a new Red-Black tree.
+//
+// A Red-Black tree is 2-3 Tree represented as a binary search tree.
+// In a left-leaning Red-Black tree, left-leaning red links are used to construct 3-nodes.
+// A left-leaning Red-Black tree is a BST such that:
+//   Red links lean lef.
+//   No node has two red links connect to it.
+//   Every path from root to null link has the same number of black links.
+func NewRedBlack(cmpKey CompareFunc) OrderedSymbolTable {
 	return &redBlack{
-		root:       nil,
-		compareKey: compareKey,
+		root:   nil,
+		cmpKey: cmpKey,
 	}
 }
 
@@ -48,8 +46,8 @@ func (t *redBlack) isBST(n *rbNode, min, max interface{}) bool {
 		return true
 	}
 
-	if (min != nil && t.compareKey(n.key, min) <= 0) ||
-		(max != nil && t.compareKey(n.key, max) >= 0) {
+	if (min != nil && t.cmpKey(n.key, min) <= 0) ||
+		(max != nil && t.cmpKey(n.key, max) >= 0) {
 		return false
 	}
 
@@ -68,7 +66,7 @@ func (t *redBlack) isSizeOK(n *rbNode) bool {
 	return t.isSizeOK(n.left) && t.isSizeOK(n.right)
 }
 
-// Tree should have no red right links, and at most one left red links in a row on any path.
+// A Red-Black tree should have no red right links, and at most one left red links in a row on any path.
 func (t *redBlack) isRedBlack(n *rbNode) bool {
 	if n == nil {
 		return true
@@ -200,7 +198,7 @@ func (t *redBlack) moveRedRight(n *rbNode) *rbNode {
 	return n
 }
 
-// Assuming n is not nil
+// Assuming n is not nil.
 func (t *redBlack) balance(n *rbNode) *rbNode {
 	/* if n == nil {
 		return nil
@@ -220,14 +218,17 @@ func (t *redBlack) balance(n *rbNode) *rbNode {
 	return n
 }
 
+// Size returns the number of key-value pairs in Red-Black tree.
 func (t *redBlack) Size() int {
 	return t.size(t.root)
 }
 
+// Height returns the height of Red-Black tree.
 func (t *redBlack) Height() int {
 	return t.height(t.root)
 }
 
+// IsEmpty returns true if Red-Black tree is empty.
 func (t *redBlack) IsEmpty() bool {
 	return t.root == nil
 }
@@ -242,7 +243,7 @@ func (t *redBlack) _put(n *rbNode, key, value interface{}) *rbNode {
 		}
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	switch {
 	case cmp < 0:
 		n.left = t._put(n.left, key, value)
@@ -267,6 +268,7 @@ func (t *redBlack) _put(n *rbNode, key, value interface{}) *rbNode {
 	return n
 }
 
+// Put adds a new key-value pair to Red-Black tree.
 func (t *redBlack) Put(key, value interface{}) {
 	if key == nil {
 		return
@@ -281,7 +283,7 @@ func (t *redBlack) _get(n *rbNode, key interface{}) (interface{}, bool) {
 		return nil, false
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	switch {
 	case cmp < 0:
 		return t._get(n.left, key)
@@ -292,6 +294,7 @@ func (t *redBlack) _get(n *rbNode, key interface{}) (interface{}, bool) {
 	}
 }
 
+// Get returns the value of a given key in Red-Black tree.
 func (t *redBlack) Get(key interface{}) (interface{}, bool) {
 	return t._get(t.root, key)
 }
@@ -300,7 +303,7 @@ func (t *redBlack) _delete(n *rbNode, key interface{}) (*rbNode, interface{}, bo
 	var ok bool
 	var value interface{}
 
-	if t.compareKey(key, n.key) < 0 {
+	if t.cmpKey(key, n.key) < 0 {
 		if !t.isRed(n.left) && !t.isRed(n.left.left) {
 			n = t.moveRedLeft(n)
 		}
@@ -310,7 +313,7 @@ func (t *redBlack) _delete(n *rbNode, key interface{}) (*rbNode, interface{}, bo
 			n = t.rotateRight(n)
 		}
 
-		if t.compareKey(key, n.key) == 0 && n.right == nil {
+		if t.cmpKey(key, n.key) == 0 && n.right == nil {
 			return nil, n.value, true
 		}
 
@@ -318,7 +321,7 @@ func (t *redBlack) _delete(n *rbNode, key interface{}) (*rbNode, interface{}, bo
 			n = t.moveRedRight(n)
 		}
 
-		if t.compareKey(key, n.key) == 0 {
+		if t.cmpKey(key, n.key) == 0 {
 			var min *rbNode
 			value, ok = n.value, true
 			n.right, min = t._deleteMin(n.right)
@@ -331,6 +334,7 @@ func (t *redBlack) _delete(n *rbNode, key interface{}) (*rbNode, interface{}, bo
 	return t.balance(n), value, ok
 }
 
+// Delete removes a key-value pair from Red-Black tree.
 func (t *redBlack) Delete(key interface{}) (value interface{}, ok bool) {
 	if t.root == nil || key == nil {
 		return nil, false
@@ -347,11 +351,12 @@ func (t *redBlack) Delete(key interface{}) (value interface{}, ok bool) {
 	return value, ok
 }
 
+// KeyValues returns all key-value pairs in Red-Black tree.
 func (t *redBlack) KeyValues() []KeyValue {
 	i := 0
 	kvs := make([]KeyValue, t.Size())
 
-	t._traverse(t.root, TraverseInOrder, func(n *rbNode) bool {
+	t._traverse(t.root, InOrderTraversal, func(n *rbNode) bool {
 		kvs[i] = KeyValue{n.key, n.value}
 		i++
 		return true
@@ -366,6 +371,7 @@ func (t *redBlack) _min(n *rbNode) *rbNode {
 	return t._min(n.left)
 }
 
+// Min returns the minimum key and its value in Red-Black tree.
 func (t *redBlack) Min() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -382,6 +388,7 @@ func (t *redBlack) _max(n *rbNode) *rbNode {
 	return t._max(n.right)
 }
 
+// Max returns the maximum key and its value in Red-Black tree.
 func (t *redBlack) Max() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -396,7 +403,7 @@ func (t *redBlack) _floor(n *rbNode, key interface{}) *rbNode {
 		return nil
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	if cmp == 0 {
 		return n
 	} else if cmp < 0 {
@@ -410,6 +417,7 @@ func (t *redBlack) _floor(n *rbNode, key interface{}) *rbNode {
 	return n
 }
 
+// Floor
 func (t *redBlack) Floor(key interface{}) (interface{}, interface{}) {
 	n := t._floor(t.root, key)
 	if n == nil {
@@ -423,7 +431,7 @@ func (t *redBlack) _ceiling(n *rbNode, key interface{}) *rbNode {
 		return nil
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	if cmp == 0 {
 		return n
 	} else if cmp > 0 {
@@ -437,6 +445,7 @@ func (t *redBlack) _ceiling(n *rbNode, key interface{}) *rbNode {
 	return n
 }
 
+// Ceiling
 func (t *redBlack) Ceiling(key interface{}) (interface{}, interface{}) {
 	n := t._ceiling(t.root, key)
 	if n == nil {
@@ -450,7 +459,7 @@ func (t *redBlack) _rank(n *rbNode, key interface{}) int {
 		return 0
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	switch {
 	case cmp < 0:
 		return t._rank(n.left, key)
@@ -461,6 +470,7 @@ func (t *redBlack) _rank(n *rbNode, key interface{}) int {
 	}
 }
 
+// Rank
 func (t *redBlack) Rank(key interface{}) int {
 	if key == nil {
 		return -1
@@ -485,6 +495,7 @@ func (t *redBlack) _select(n *rbNode, rank int) *rbNode {
 	}
 }
 
+// Select
 func (t *redBlack) Select(rank int) (interface{}, interface{}) {
 	if rank < 0 || rank >= t.Size() {
 		return nil, nil
@@ -508,6 +519,7 @@ func (t *redBlack) _deleteMin(n *rbNode) (*rbNode, *rbNode) {
 	return t.balance(n), min
 }
 
+// DeleteMin
 func (t *redBlack) DeleteMin() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -543,6 +555,7 @@ func (t *redBlack) _deleteMax(n *rbNode) (*rbNode, *rbNode) {
 	return t.balance(n), max
 }
 
+// DeleteMax
 func (t *redBlack) DeleteMax() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -560,12 +573,13 @@ func (t *redBlack) DeleteMax() (interface{}, interface{}) {
 	return max.key, max.value
 }
 
+// RangeSize
 func (t *redBlack) RangeSize(lo, hi interface{}) int {
 	if lo == nil || hi == nil {
 		return -1
 	}
 
-	if t.compareKey(lo, hi) > 0 {
+	if t.cmpKey(lo, hi) > 0 {
 		return 0
 	} else if _, found := t.Get(hi); found {
 		return 1 + t.Rank(hi) - t.Rank(lo)
@@ -580,8 +594,8 @@ func (t *redBlack) _range(n *rbNode, kvs *[]KeyValue, lo, hi interface{}) int {
 	}
 
 	len := 0
-	cmpLo := t.compareKey(lo, n.key)
-	cmpHi := t.compareKey(hi, n.key)
+	cmpLo := t.cmpKey(lo, n.key)
+	cmpHi := t.cmpKey(hi, n.key)
 
 	if cmpLo < 0 {
 		len += t._range(n.left, kvs, lo, hi)
@@ -597,6 +611,7 @@ func (t *redBlack) _range(n *rbNode, kvs *[]KeyValue, lo, hi interface{}) int {
 	return len
 }
 
+// Range
 func (t *redBlack) Range(lo, hi interface{}) []KeyValue {
 	if lo == nil || hi == nil {
 		return nil
@@ -613,15 +628,15 @@ func (t *redBlack) _traverse(n *rbNode, order int, visit func(*rbNode) bool) boo
 	}
 
 	switch order {
-	case TraversePreOrder:
+	case PreOrderTraversal:
 		return visit(n) &&
 			t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit)
-	case TraverseInOrder:
+	case InOrderTraversal:
 		return t._traverse(n.left, order, visit) &&
 			visit(n) &&
 			t._traverse(n.right, order, visit)
-	case TraversePostOrder:
+	case PostOrderTraversal:
 		return t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit) &&
 			visit(n)
@@ -630,8 +645,9 @@ func (t *redBlack) _traverse(n *rbNode, order int, visit func(*rbNode) bool) boo
 	}
 }
 
+// Traverse
 func (t *redBlack) Traverse(order int, visit VisitFunc) {
-	if order != TraversePreOrder && order != TraverseInOrder && order != TraversePostOrder {
+	if order != PreOrderTraversal && order != InOrderTraversal && order != PostOrderTraversal {
 		return
 	}
 
@@ -640,11 +656,12 @@ func (t *redBlack) Traverse(order int, visit VisitFunc) {
 	})
 }
 
+// Graphviz returns a visualization of Red-Black tree in Graphviz format.
 func (t *redBlack) Graphviz() string {
 	var parent, left, right, label, nodeColor, fontColor, edgeColor string
 	graph := graphviz.NewGraph(true, true, "RedBlack", "", "", graphviz.StyleFilled, graphviz.ShapeOval)
 
-	t._traverse(t.root, TraversePreOrder, func(n *rbNode) bool {
+	t._traverse(t.root, PreOrderTraversal, func(n *rbNode) bool {
 		parent = fmt.Sprintf("%v", n.key)
 		label = fmt.Sprintf("%v,%v", n.key, n.value)
 		if t.isRed(n) {
