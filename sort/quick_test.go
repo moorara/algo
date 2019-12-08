@@ -8,7 +8,7 @@ import (
 
 func TestSelect(t *testing.T) {
 	tests := []struct {
-		compare       func(a, b interface{}) int
+		compare       CompareFunc
 		items         []interface{}
 		expectedItems []interface{}
 	}{
@@ -28,7 +28,7 @@ func TestSelect(t *testing.T) {
 
 func TestQuickSortInt(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareInt, []interface{}{}},
@@ -45,7 +45,7 @@ func TestQuickSortInt(t *testing.T) {
 
 func TestQuickSort3WayInt(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareInt, []interface{}{}},
@@ -62,7 +62,7 @@ func TestQuickSort3WayInt(t *testing.T) {
 
 func TestQuickSortString(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareString, []interface{}{}},
@@ -79,7 +79,7 @@ func TestQuickSortString(t *testing.T) {
 
 func TestQuickSort3WayString(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareString, []interface{}{}},

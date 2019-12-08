@@ -1,8 +1,6 @@
 package graphviz
 
-import (
-	"bytes"
-)
+import "bytes"
 
 func addIndent(buf *bytes.Buffer, indent int) {
 	for i := 0; i < indent; i++ {

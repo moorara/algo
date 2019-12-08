@@ -1,6 +1,10 @@
+// Package heap implements heap (a.k.a. priority queue) data structures.
 package heap
 
-// Heap represents a heap (priority queue) data structure
+// The CompareFunc type is a function for comparing two values of the same type.
+type CompareFunc func(interface{}, interface{}) int
+
+// Heap represents a heap (priority queue) abstract data type.
 type Heap interface {
 	Size() int
 	IsEmpty() bool

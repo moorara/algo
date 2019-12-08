@@ -12,8 +12,8 @@ func TestMaxHeap(t *testing.T) {
 	tests := []struct {
 		name                  string
 		initialSize           int
-		compareKey            func(a, b interface{}) int
-		compareValue          func(a, b interface{}) int
+		cmpKey            CompareFunc
+		cmpVal          CompareFunc
 		insertKeys            []int
 		insertValues          []string
 		expectedSize          int
@@ -69,7 +69,7 @@ func TestMaxHeap(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			heap := NewMaxHeap(tc.initialSize, tc.compareKey, tc.compareValue)
+			heap := NewMaxHeap(tc.initialSize, tc.cmpKey, tc.cmpVal)
 
 			// Heap initially should be empty
 			peekKey, peekValue := heap.Peek()

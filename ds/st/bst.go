@@ -1,10 +1,3 @@
-/*
- * A Binary Search Tree (BST) is a binary tree in symmetric order.
- * Every node's key is:
- *  - larger than all keys in its left sub-tree
- *  - smaller than all keys in its right sub-tree
- */
-
 package st
 
 import (
@@ -22,15 +15,20 @@ type bstNode struct {
 }
 
 type bst struct {
-	root       *bstNode
-	compareKey func(a, b interface{}) int
+	root   *bstNode
+	cmpKey CompareFunc
 }
 
-// NewBST creates a new Binary Search Tree
-func NewBST(compareKey func(a, b interface{}) int) OrderedSymbolTable {
+// NewBST creates a new binary search tree.
+//
+// A binary search tree (BST) is a binary tree in symmetric order.
+// Every node's key is:
+//   Larger than all keys in its left sub-tree.
+//   Smaller than all keys in its right sub-tree.
+func NewBST(cmpKey CompareFunc) OrderedSymbolTable {
 	return &bst{
-		root:       nil,
-		compareKey: compareKey,
+		root:   nil,
+		cmpKey: cmpKey,
 	}
 }
 
@@ -39,8 +37,8 @@ func (t *bst) isBST(n *bstNode, min, max interface{}) bool {
 		return true
 	}
 
-	if (min != nil && t.compareKey(n.key, min) <= 0) ||
-		(max != nil && t.compareKey(n.key, max) >= 0) {
+	if (min != nil && t.cmpKey(n.key, min) <= 0) ||
+		(max != nil && t.cmpKey(n.key, max) >= 0) {
 		return false
 	}
 
@@ -80,14 +78,17 @@ func (t *bst) height(n *bstNode) int {
 	return 1 + max(t.height(n.left), t.height(n.right))
 }
 
+// Size returns the number of key-value pairs in BST tree.
 func (t *bst) Size() int {
 	return t.size(t.root)
 }
 
+// Height returns the height of BST tree.
 func (t *bst) Height() int {
 	return t.height(t.root)
 }
 
+// IsEmpty returns true if BST tree is empty.
 func (t *bst) IsEmpty() bool {
 	return t.root == nil
 }
@@ -101,7 +102,7 @@ func (t *bst) _put(n *bstNode, key, value interface{}) *bstNode {
 		}
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	switch {
 	case cmp < 0:
 		n.left = t._put(n.left, key, value)
@@ -115,6 +116,7 @@ func (t *bst) _put(n *bstNode, key, value interface{}) *bstNode {
 	return n
 }
 
+// Put adds a new key-value pair to BST tree.
 func (t *bst) Put(key, value interface{}) {
 	if key == nil {
 		return
@@ -128,7 +130,7 @@ func (t *bst) _get(n *bstNode, key interface{}) (interface{}, bool) {
 		return nil, false
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	switch {
 	case cmp < 0:
 		return t._get(n.left, key)
@@ -139,6 +141,7 @@ func (t *bst) _get(n *bstNode, key interface{}) (interface{}, bool) {
 	}
 }
 
+// Get returns the value of a given key in BST tree.
 func (t *bst) Get(key interface{}) (interface{}, bool) {
 	return t._get(t.root, key)
 }
@@ -151,7 +154,7 @@ func (t *bst) _delete(n *bstNode, key interface{}) (*bstNode, interface{}, bool)
 	var ok bool
 	var value interface{}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	if cmp < 0 {
 		n.left, value, ok = t._delete(n.left, key)
 	} else if cmp > 0 {
@@ -176,16 +179,18 @@ func (t *bst) _delete(n *bstNode, key interface{}) (*bstNode, interface{}, bool)
 	return n, value, ok
 }
 
+// Delete removes a key-value pair from BST tree.
 func (t *bst) Delete(key interface{}) (value interface{}, ok bool) {
 	t.root, value, ok = t._delete(t.root, key)
 	return value, ok
 }
 
+// KeyValues returns all key-value pairs in BST tree.
 func (t *bst) KeyValues() []KeyValue {
 	i := 0
 	kvs := make([]KeyValue, t.Size())
 
-	t._traverse(t.root, TraverseInOrder, func(n *bstNode) bool {
+	t._traverse(t.root, InOrderTraversal, func(n *bstNode) bool {
 		kvs[i] = KeyValue{n.key, n.value}
 		i++
 		return true
@@ -200,6 +205,7 @@ func (t *bst) _min(n *bstNode) *bstNode {
 	return t._min(n.left)
 }
 
+// Min returns the minimum key and its value in BST tree.
 func (t *bst) Min() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -216,6 +222,7 @@ func (t *bst) _max(n *bstNode) *bstNode {
 	return t._max(n.right)
 }
 
+// Max returns the maximum key and its value in BST tree.
 func (t *bst) Max() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -230,7 +237,7 @@ func (t *bst) _floor(n *bstNode, key interface{}) *bstNode {
 		return nil
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	if cmp == 0 {
 		return n
 	} else if cmp < 0 {
@@ -244,6 +251,7 @@ func (t *bst) _floor(n *bstNode, key interface{}) *bstNode {
 	return n
 }
 
+// Floor
 func (t *bst) Floor(key interface{}) (interface{}, interface{}) {
 	n := t._floor(t.root, key)
 	if n == nil {
@@ -257,7 +265,7 @@ func (t *bst) _ceiling(n *bstNode, key interface{}) *bstNode {
 		return nil
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	if cmp == 0 {
 		return n
 	} else if cmp > 0 {
@@ -271,6 +279,7 @@ func (t *bst) _ceiling(n *bstNode, key interface{}) *bstNode {
 	return n
 }
 
+// Ceiling
 func (t *bst) Ceiling(key interface{}) (interface{}, interface{}) {
 	n := t._ceiling(t.root, key)
 	if n == nil {
@@ -284,7 +293,7 @@ func (t *bst) _rank(n *bstNode, key interface{}) int {
 		return 0
 	}
 
-	cmp := t.compareKey(key, n.key)
+	cmp := t.cmpKey(key, n.key)
 	switch {
 	case cmp < 0:
 		return t._rank(n.left, key)
@@ -295,6 +304,7 @@ func (t *bst) _rank(n *bstNode, key interface{}) int {
 	}
 }
 
+// Rank
 func (t *bst) Rank(key interface{}) int {
 	if key == nil {
 		return -1
@@ -319,6 +329,7 @@ func (t *bst) _select(n *bstNode, rank int) *bstNode {
 	}
 }
 
+// Select
 func (t *bst) Select(rank int) (interface{}, interface{}) {
 	if rank < 0 || rank >= t.Size() {
 		return nil, nil
@@ -339,6 +350,7 @@ func (t *bst) _deleteMin(n *bstNode) (*bstNode, *bstNode) {
 	return n, min
 }
 
+// DeleteMin
 func (t *bst) DeleteMin() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -360,6 +372,7 @@ func (t *bst) _deleteMax(n *bstNode) (*bstNode, *bstNode) {
 	return n, max
 }
 
+// DeleteMax
 func (t *bst) DeleteMax() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -370,12 +383,13 @@ func (t *bst) DeleteMax() (interface{}, interface{}) {
 	return max.key, max.value
 }
 
+// RangeSize
 func (t *bst) RangeSize(lo, hi interface{}) int {
 	if lo == nil || hi == nil {
 		return -1
 	}
 
-	if t.compareKey(lo, hi) > 0 {
+	if t.cmpKey(lo, hi) > 0 {
 		return 0
 	} else if _, found := t.Get(hi); found {
 		return 1 + t.Rank(hi) - t.Rank(lo)
@@ -390,8 +404,8 @@ func (t *bst) _range(n *bstNode, kvs *[]KeyValue, lo, hi interface{}) int {
 	}
 
 	len := 0
-	cmpLo := t.compareKey(lo, n.key)
-	cmpHi := t.compareKey(hi, n.key)
+	cmpLo := t.cmpKey(lo, n.key)
+	cmpHi := t.cmpKey(hi, n.key)
 
 	if cmpLo < 0 {
 		len += t._range(n.left, kvs, lo, hi)
@@ -407,6 +421,7 @@ func (t *bst) _range(n *bstNode, kvs *[]KeyValue, lo, hi interface{}) int {
 	return len
 }
 
+// Range
 func (t *bst) Range(lo, hi interface{}) []KeyValue {
 	if lo == nil || hi == nil {
 		return nil
@@ -423,15 +438,15 @@ func (t *bst) _traverse(n *bstNode, order int, visit func(*bstNode) bool) bool {
 	}
 
 	switch order {
-	case TraversePreOrder:
+	case PreOrderTraversal:
 		return visit(n) &&
 			t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit)
-	case TraverseInOrder:
+	case InOrderTraversal:
 		return t._traverse(n.left, order, visit) &&
 			visit(n) &&
 			t._traverse(n.right, order, visit)
-	case TraversePostOrder:
+	case PostOrderTraversal:
 		return t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit) &&
 			visit(n)
@@ -440,8 +455,9 @@ func (t *bst) _traverse(n *bstNode, order int, visit func(*bstNode) bool) bool {
 	}
 }
 
+// Traverse
 func (t *bst) Traverse(order int, visit VisitFunc) {
-	if order != TraversePreOrder && order != TraverseInOrder && order != TraversePostOrder {
+	if order != PreOrderTraversal && order != InOrderTraversal && order != PostOrderTraversal {
 		return
 	}
 
@@ -450,11 +466,12 @@ func (t *bst) Traverse(order int, visit VisitFunc) {
 	})
 }
 
+// Graphviz returns a visualization of BST tree in Graphviz format.
 func (t *bst) Graphviz() string {
 	var parent, left, right, label string
 	graph := graphviz.NewGraph(true, true, "BST", "", "", "", graphviz.ShapeOval)
 
-	t._traverse(t.root, TraversePreOrder, func(n *bstNode) bool {
+	t._traverse(t.root, PreOrderTraversal, func(n *bstNode) bool {
 		parent = fmt.Sprintf("%v", n.key)
 		label = fmt.Sprintf("%v,%v", n.key, n.value)
 		graph.AddNode(graphviz.NewNode(parent, "", label, "", "", "", "", ""))

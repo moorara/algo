@@ -1,10 +1,8 @@
 package graphviz
 
-import (
-	"bytes"
-)
+import "bytes"
 
-// Node represents a graph node for visualization
+// Node represents a graph node.
 type Node struct {
 	Name      string
 	Group     string
@@ -16,7 +14,7 @@ type Node struct {
 	FontName  string
 }
 
-// NewNode creates a new node for visualization
+// NewNode creates a new node.
 func NewNode(name, group, label, color, style, shape, fontcolor, fontname string) Node {
 	return Node{
 		Name:      name,
@@ -30,7 +28,7 @@ func NewNode(name, group, label, color, style, shape, fontcolor, fontname string
 	}
 }
 
-// DotCode generates Graph dot language code for node
+// DotCode generates Graph dot language code for this node.
 func (n *Node) DotCode() string {
 	first := true
 	buf := new(bytes.Buffer)

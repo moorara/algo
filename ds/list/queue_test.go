@@ -10,7 +10,7 @@ func TestQueue(t *testing.T) {
 	tests := []struct {
 		name                 string
 		nodeSize             int
-		compare              func(a, b interface{}) int
+		cmp              CompareFunc
 		enqueueItems         []string
 		expectedSize         int
 		expectedIsEmpty      bool
@@ -62,7 +62,7 @@ func TestQueue(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			queue := NewQueue(tc.nodeSize, tc.compare)
+			queue := NewQueue(tc.nodeSize, tc.cmp)
 
 			// Queue initially should be empty
 			assert.Zero(t, queue.Size())

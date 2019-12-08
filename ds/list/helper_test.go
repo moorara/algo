@@ -1,8 +1,6 @@
 package list
 
-import (
-	"strings"
-)
+import "strings"
 
 func compareInt(a, b interface{}) int {
 	intA, _ := a.(int)

@@ -1,6 +1,6 @@
 package list
 
-// Queue represents a stack data structure
+// Queue represents a queue abstract data type.
 type Queue interface {
 	Size() int
 	IsEmpty() bool
@@ -17,11 +17,11 @@ type arrayQueue struct {
 	rearNodeIndex  int
 	frontNode      *arrayNode
 	rearNode       *arrayNode
-	compare        func(a, b interface{}) int
+	cmp            CompareFunc
 }
 
-// NewQueue creates a new array-list queue
-func NewQueue(nodeSize int, compare func(a, b interface{}) int) Queue {
+// NewQueue creates a new array-list queue.
+func NewQueue(nodeSize int, cmp CompareFunc) Queue {
 	return &arrayQueue{
 		listSize:       0,
 		nodeSize:       nodeSize,
@@ -29,18 +29,21 @@ func NewQueue(nodeSize int, compare func(a, b interface{}) int) Queue {
 		rearNodeIndex:  -1,
 		frontNode:      nil,
 		rearNode:       nil,
-		compare:        compare,
+		cmp:            cmp,
 	}
 }
 
+// Size returns the number of items in queue.
 func (q *arrayQueue) Size() int {
 	return q.listSize
 }
 
+// IsEmpty returns true if queue is empty.
 func (q *arrayQueue) IsEmpty() bool {
 	return q.listSize == 0
 }
 
+// Enqueue adds a new item to queue.
 func (q *arrayQueue) Enqueue(item interface{}) {
 	if q.frontNode == nil && q.rearNode == nil {
 		q.frontNodeIndex = 0
@@ -60,6 +63,7 @@ func (q *arrayQueue) Enqueue(item interface{}) {
 	}
 }
 
+// Dequeue removes an item from queue.
 func (q *arrayQueue) Dequeue() interface{} {
 	if q.listSize == 0 {
 		return nil
@@ -77,6 +81,7 @@ func (q *arrayQueue) Dequeue() interface{} {
 	return item
 }
 
+// Peek returns the next item in queue without removing it from queue.
 func (q *arrayQueue) Peek() interface{} {
 	if q.listSize == 0 {
 		return nil
@@ -85,12 +90,13 @@ func (q *arrayQueue) Peek() interface{} {
 	return q.frontNode.block[q.frontNodeIndex]
 }
 
+// Contains returns true if a given item is already in queue.
 func (q *arrayQueue) Contains(item interface{}) bool {
 	n := q.frontNode
 	i := q.frontNodeIndex
 
 	for n != nil && (n != q.rearNode || i <= q.rearNodeIndex) {
-		if q.compare(n.block[i], item) == 0 {
+		if q.cmp(n.block[i], item) == 0 {
 			return true
 		}
 

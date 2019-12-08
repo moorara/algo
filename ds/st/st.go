@@ -1,25 +1,32 @@
+// Package st implements symbol table (a.k.a. map, dictionary, etc.) data structures.
 package st
 
+// TraversalOrder specifies the order of traversing a tree.
+type TraversalOrder int
+
 const (
-	// TraversePreOrder represents pre-order traversal order
-	TraversePreOrder = 0
-	// TraverseInOrder represents in-order traversal order
-	TraverseInOrder = 1
-	// TraversePostOrder represents post-order traversal order
-	TraversePostOrder = 2
+	// PreOrderTraversal represents pre-order traversal.
+	PreOrderTraversal = iota
+	// InOrderTraversal represents in-order traversal.
+	InOrderTraversal
+	// PostOrderTraversal represents post-order traversal.
+	PostOrderTraversal
 )
 
 type (
-	// VisitFunc represents the function for visiting a key-value
+	// The CompareFunc type is a function for comparing two values of the same type.
+	CompareFunc func(interface{}, interface{}) int
+
+	// The VisitFunc type is a function for visiting a key-value pair.
 	VisitFunc func(interface{}, interface{}) bool
 
-	// KeyValue represents a key-value pair
+	// KeyValue represents a key-value pair.
 	KeyValue struct {
 		key   interface{}
 		value interface{}
 	}
 
-	// SymbolTable represents an unordered symbol table (key-value collection)
+	// SymbolTable represents an unordered symbol table abstract data type.
 	SymbolTable interface {
 		verify() bool
 		Size() int
@@ -31,7 +38,7 @@ type (
 		KeyValues() []KeyValue
 	}
 
-	// OrderedSymbolTable represents an ordered symbol table (key-value collection)
+	// OrderedSymbolTable represents an ordered symbol table abstract data type.
 	OrderedSymbolTable interface {
 		SymbolTable
 		Min() (interface{}, interface{})

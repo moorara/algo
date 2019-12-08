@@ -1,6 +1,6 @@
 package sort
 
-func partition(a []interface{}, lo, hi int, compare func(a, b interface{}) int) int {
+func partition(a []interface{}, lo, hi int, compare CompareFunc) int {
 	v := a[lo]
 	var i, j int = lo, hi + 1
 
@@ -19,8 +19,8 @@ func partition(a []interface{}, lo, hi int, compare func(a, b interface{}) int) 
 	return j
 }
 
-// Select finds the kth smallest item of an array in O(n) time on average
-func Select(a []interface{}, k int, compare func(a, b interface{}) int) interface{} {
+// Select finds the kth smallest item of an array in O(n) time on average.
+func Select(a []interface{}, k int, compare CompareFunc) interface{} {
 	Shuffle(a)
 	var lo, hi int = 0, len(a) - 1
 	for lo < hi {
@@ -38,8 +38,7 @@ func Select(a []interface{}, k int, compare func(a, b interface{}) int) interfac
 	return a[k]
 }
 
-// QuickSort implements quick sort algorithm
-func quickSort(a []interface{}, lo, hi int, compare func(a, b interface{}) int) {
+func quickSort(a []interface{}, lo, hi int, compare CompareFunc) {
 	if lo >= hi {
 		return
 	}
@@ -49,13 +48,13 @@ func quickSort(a []interface{}, lo, hi int, compare func(a, b interface{}) int) 
 	quickSort(a, j+1, hi, compare)
 }
 
-// QuickSort implements quick sort algorithm
-func QuickSort(a []interface{}, compare func(a, b interface{}) int) {
+// QuickSort implements the quick sort algorithm.
+func QuickSort(a []interface{}, compare CompareFunc) {
 	Shuffle(a)
 	quickSort(a, 0, len(a)-1, compare)
 }
 
-func quickSort3Way(a []interface{}, lo, hi int, compare func(a, b interface{}) int) {
+func quickSort3Way(a []interface{}, lo, hi int, compare CompareFunc) {
 	if lo >= hi {
 		return
 	}
@@ -82,7 +81,7 @@ func quickSort3Way(a []interface{}, lo, hi int, compare func(a, b interface{}) i
 	quickSort3Way(a, gt+1, hi, compare)
 }
 
-// QuickSort3Way implements 3-way quick sort algorithm
-func QuickSort3Way(a []interface{}, compare func(a, b interface{}) int) {
+// QuickSort3Way implements the 3-way version of quick sort algorithm.
+func QuickSort3Way(a []interface{}, compare CompareFunc) {
 	quickSort3Way(a, 0, len(a)-1, compare)
 }

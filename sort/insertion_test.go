@@ -8,7 +8,7 @@ import (
 
 func TestInsertionSortInt(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareInt, []interface{}{}},
@@ -25,7 +25,7 @@ func TestInsertionSortInt(t *testing.T) {
 
 func TestInsertionSortString(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareString, []interface{}{}},

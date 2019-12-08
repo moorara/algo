@@ -83,7 +83,7 @@ func TestBST(t *testing.T) {
 	tests := getBSTTests()
 
 	for _, tc := range tests {
-		bst := NewBST(tc.compareKey)
+		bst := NewBST(tc.cmpKey)
 		runOrderedSymbolTableTest(t, bst, tc)
 	}
 }

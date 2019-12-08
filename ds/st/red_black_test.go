@@ -83,7 +83,7 @@ func TestRedBlack(t *testing.T) {
 	tests := getRedBlackTests()
 
 	for _, tc := range tests {
-		rbt := NewRedBlack(tc.compareKey)
+		rbt := NewRedBlack(tc.cmpKey)
 		runOrderedSymbolTableTest(t, rbt, tc)
 	}
 }

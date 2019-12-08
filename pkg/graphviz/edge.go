@@ -1,10 +1,8 @@
 package graphviz
 
-import (
-	"bytes"
-)
+import "bytes"
 
-// Edge represents a graph edge for visualization
+// Edge represents an edge.
 type Edge struct {
 	From      string
 	To        string
@@ -16,7 +14,7 @@ type Edge struct {
 	Arrowhead string
 }
 
-// NewEdge creates a new edge for visualization
+// NewEdge creates a new edge.
 func NewEdge(from, to, edgeType, edgeDir, label, color, style, arrowhead string) Edge {
 	return Edge{
 		From:      from,
@@ -30,7 +28,7 @@ func NewEdge(from, to, edgeType, edgeDir, label, color, style, arrowhead string)
 	}
 }
 
-// DotCode generates Graph dot language code for edge
+// DotCode generates Graph dot language code for this edge.
 func (e *Edge) DotCode() string {
 	first := true
 	buf := new(bytes.Buffer)

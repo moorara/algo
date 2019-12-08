@@ -1,10 +1,8 @@
 package graphviz
 
-import (
-	"bytes"
-)
+import "bytes"
 
-// Subgraph represents a subgraph for visualization
+// Subgraph represents a subgraph.
 type Subgraph struct {
 	Name      string
 	Label     string
@@ -20,7 +18,7 @@ type Subgraph struct {
 	Subgraphs []Subgraph
 }
 
-// NewSubgraph creates a new subgraph for visualization
+// NewSubgraph creates a new subgraph.
 func NewSubgraph(name, label, color, style, rank, rankdir, nodeColor, nodeStyle, nodeShape string) Subgraph {
 	return Subgraph{
 		Name:      name,
@@ -38,22 +36,22 @@ func NewSubgraph(name, label, color, style, rank, rankdir, nodeColor, nodeStyle,
 	}
 }
 
-// AddNode adds a new node to graph for visualization
+// AddNode adds a new node to this subgraph.
 func (s *Subgraph) AddNode(nodes ...Node) {
 	s.Nodes = append(s.Nodes, nodes...)
 }
 
-// AddEdge adds a new edge to graph for visualization
+// AddEdge adds a new edge to this subgraph.
 func (s *Subgraph) AddEdge(edges ...Edge) {
 	s.Edges = append(s.Edges, edges...)
 }
 
-// AddSubgraph adds a new subgraph to graph for visualization
+// AddSubgraph adds a new subgraph to this subgraph.
 func (s *Subgraph) AddSubgraph(subgraphs ...Subgraph) {
 	s.Subgraphs = append(s.Subgraphs, subgraphs...)
 }
 
-// DotCode generates Graph dot language code for subgraph
+// DotCode generates Graph dot language code for this subgraph.
 func (s *Subgraph) DotCode(indent int) string {
 	first := true
 	buf := new(bytes.Buffer)

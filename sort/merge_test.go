@@ -8,7 +8,7 @@ import (
 
 func TestMergeSortInt(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareInt, []interface{}{}},
@@ -25,7 +25,7 @@ func TestMergeSortInt(t *testing.T) {
 
 func TestMergeSortString(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareString, []interface{}{}},
@@ -42,7 +42,7 @@ func TestMergeSortString(t *testing.T) {
 
 func TestMergeSortRecInt(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareInt, []interface{}{}},
@@ -59,7 +59,7 @@ func TestMergeSortRecInt(t *testing.T) {
 
 func TestMergeSortRecString(t *testing.T) {
 	tests := []struct {
-		compare func(a, b interface{}) int
+		compare CompareFunc
 		items   []interface{}
 	}{
 		{compareString, []interface{}{}},
