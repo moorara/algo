@@ -1,4 +1,6 @@
-// Package heap implements heap (a.k.a. priority queue) data structures.
+// Package heap implements heap data structures.
+//
+// Heaps are also known as priority queues.
 package heap
 
 // The CompareFunc type is a function for comparing two values of the same type.

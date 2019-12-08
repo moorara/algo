@@ -1,4 +1,7 @@
-// Package st implements symbol table (a.k.a. map, dictionary, etc.) data structures.
+// Package st implements symbol table data structures.
+//
+// Symbol tables are also known as maps, dictionaries, etc.
+// Symbol tables can be ordered or unordered.
 package st
 
 // TraversalOrder specifies the order of traversing a tree.
