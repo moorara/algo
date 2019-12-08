@@ -7,30 +7,20 @@ import (
 	"github.com/moorara/algo/pkg/graphviz"
 )
 
-// Graph represents an undirected graph abstract data type.
-type Graph interface {
-	V() int
-	E() int
-	Degree(int) int
-	AddEdge(int, int)
-	Adj(int) []int
-	Graphviz() string
-}
-
-// graph implements an undirected graph data type.
-type graph struct {
+// Undirected represents an undirected graph data type.
+type Undirected struct {
 	v, e int
 	adj  [][]int
 }
 
-// NewGraph creates a new undirected graph.
-func NewGraph(V int, edges ...[2]int) Graph {
+// NewUndirected creates a new undirected graph.
+func NewUndirected(V int, edges ...[2]int) *Undirected {
 	adj := make([][]int, V)
 	for i := range adj {
 		adj[i] = make([]int, 0)
 	}
 
-	g := &graph{
+	g := &Undirected{
 		v:   V, // no. of vertices
 		e:   0, // no. of edges
 		adj: adj,
@@ -43,22 +33,22 @@ func NewGraph(V int, edges ...[2]int) Graph {
 	return g
 }
 
-func (g *graph) isVertexValid(v int) bool {
+func (g *Undirected) isVertexValid(v int) bool {
 	return v >= 0 && v < g.v
 }
 
 // V returns the number of vertices.
-func (g *graph) V() int {
+func (g *Undirected) V() int {
 	return g.v
 }
 
 // E returns the number of edges.
-func (g *graph) E() int {
+func (g *Undirected) E() int {
 	return g.e
 }
 
 // Degree returns the degree of a vertext.
-func (g *graph) Degree(v int) int {
+func (g *Undirected) Degree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
@@ -67,7 +57,7 @@ func (g *graph) Degree(v int) int {
 }
 
 // AddEdge adds a new edge to the graph.
-func (g *graph) AddEdge(v, w int) {
+func (g *Undirected) AddEdge(v, w int) {
 	if g.isVertexValid(v) && g.isVertexValid(w) {
 		g.e++
 		g.adj[v] = append(g.adj[v], w)
@@ -76,7 +66,7 @@ func (g *graph) AddEdge(v, w int) {
 }
 
 // Adj returns the vertices adjacent from vertex.
-func (g *graph) Adj(v int) []int {
+func (g *Undirected) Adj(v int) []int {
 	if !g.isVertexValid(v) {
 		return nil
 	}
@@ -85,7 +75,7 @@ func (g *graph) Adj(v int) []int {
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.
-func (g *graph) Graphviz() string {
+func (g *Undirected) Graphviz() string {
 	graph := graphviz.NewGraph(true, false, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
 
 	for i := 0; i < g.v; i++ {

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDigraph(t *testing.T) {
+func TestDirected(t *testing.T) {
 	tests := []struct {
 		name               string
 		V                  int
@@ -16,7 +16,7 @@ func TestDigraph(t *testing.T) {
 		expectedInDegrees  []int
 		expectedOutDegrees []int
 		expectedAdjacents  [][]int
-		expectedReverse    Digraph
+		expectedReverse    *Directed
 	}{
 		{
 			name: "Disconnected",
@@ -64,7 +64,7 @@ func TestDigraph(t *testing.T) {
 				[]int{4, 12},
 				[]int{9},
 			},
-			expectedReverse: &digraph{
+			expectedReverse: &Directed{
 				v:   13,
 				e:   22,
 				ins: []int{2, 0, 2, 2, 2, 1, 3, 2, 2, 2, 1, 2, 1},
@@ -89,7 +89,7 @@ func TestDigraph(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			g := NewDigraph(tc.V, tc.edges...)
+			g := NewDirected(tc.V, tc.edges...)
 
 			assert.NotEmpty(t, g)
 			assert.Equal(t, tc.expectedV, g.V())

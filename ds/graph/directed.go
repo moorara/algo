@@ -6,33 +6,21 @@ import (
 	"github.com/moorara/algo/pkg/graphviz"
 )
 
-// Digraph represents a directed graph abstract data type.
-type Digraph interface {
-	V() int
-	E() int
-	InDegree(int) int
-	OutDegree(int) int
-	AddEdge(int, int)
-	Adj(int) []int
-	Reverse() Digraph
-	Graphviz() string
-}
-
-// digraph implements a directed graph data type.
-type digraph struct {
+// Directed represents a directed graph data type.
+type Directed struct {
 	v, e int
 	ins  []int
 	adj  [][]int
 }
 
-// NewDigraph creates a new directed graph.
-func NewDigraph(V int, edges ...[2]int) Digraph {
+// NewDirected creates a new directed graph.
+func NewDirected(V int, edges ...[2]int) *Directed {
 	adj := make([][]int, V)
 	for i := range adj {
 		adj[i] = make([]int, 0)
 	}
 
-	g := &digraph{
+	g := &Directed{
 		v:   V, // no. of vertices
 		e:   0, // no. of edges
 		ins: make([]int, V),
@@ -46,22 +34,22 @@ func NewDigraph(V int, edges ...[2]int) Digraph {
 	return g
 }
 
-func (g *digraph) isVertexValid(v int) bool {
+func (g *Directed) isVertexValid(v int) bool {
 	return v >= 0 && v < g.v
 }
 
 // V returns the number of vertices.
-func (g *digraph) V() int {
+func (g *Directed) V() int {
 	return g.v
 }
 
 // E returns the number of edges.
-func (g *digraph) E() int {
+func (g *Directed) E() int {
 	return g.e
 }
 
 // InDegree returns the number of directed edges incident to a vertex.
-func (g *digraph) InDegree(v int) int {
+func (g *Directed) InDegree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
@@ -70,7 +58,7 @@ func (g *digraph) InDegree(v int) int {
 }
 
 // OutDegree returns the number of directed edges incident from a vertex.
-func (g *digraph) OutDegree(v int) int {
+func (g *Directed) OutDegree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
@@ -79,7 +67,7 @@ func (g *digraph) OutDegree(v int) int {
 }
 
 // AddEdge adds a new edge to the graph.
-func (g *digraph) AddEdge(v, w int) {
+func (g *Directed) AddEdge(v, w int) {
 	if g.isVertexValid(v) && g.isVertexValid(w) {
 		g.e++
 		g.ins[w]++
@@ -88,7 +76,7 @@ func (g *digraph) AddEdge(v, w int) {
 }
 
 // Adj returns the vertices adjacent from vertex.
-func (g *digraph) Adj(v int) []int {
+func (g *Directed) Adj(v int) []int {
 	if !g.isVertexValid(v) {
 		return nil
 	}
@@ -97,8 +85,8 @@ func (g *digraph) Adj(v int) []int {
 }
 
 // Reverse returns the reverse of the directed graph.
-func (g *digraph) Reverse() Digraph {
-	rev := NewDigraph(g.v)
+func (g *Directed) Reverse() *Directed {
+	rev := NewDirected(g.v)
 	for v := 0; v < g.v; v++ {
 		for _, w := range g.adj[v] {
 			rev.AddEdge(w, v)
@@ -109,7 +97,7 @@ func (g *digraph) Reverse() Digraph {
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.
-func (g *digraph) Graphviz() string {
+func (g *Directed) Graphviz() string {
 	graph := graphviz.NewGraph(true, true, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
 
 	for i := 0; i < g.v; i++ {

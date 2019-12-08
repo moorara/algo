@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGraph(t *testing.T) {
+func TestUndirected(t *testing.T) {
 	tests := []struct {
 		name              string
 		V                 int
@@ -57,7 +57,7 @@ func TestGraph(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			g := NewGraph(tc.V, tc.edges...)
+			g := NewUndirected(tc.V, tc.edges...)
 
 			assert.NotEmpty(t, g)
 			assert.Equal(t, tc.expectedV, g.V())
