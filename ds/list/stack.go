@@ -7,7 +7,7 @@ type Stack interface {
 	Push(interface{})
 	Pop() interface{}
 	Peek() interface{}
-	Contains(interface{}) bool
+	Contains(interface{}, CompareFunc) bool
 }
 
 type arrayStack struct {
@@ -15,17 +15,15 @@ type arrayStack struct {
 	nodeSize  int
 	nodeIndex int
 	topNode   *arrayNode
-	cmp       CompareFunc
 }
 
 // NewStack creates a new array-list stack.
-func NewStack(nodeSize int, cmp CompareFunc) Stack {
+func NewStack(nodeSize int) Stack {
 	return &arrayStack{
 		listSize:  0,
 		nodeSize:  nodeSize,
 		nodeIndex: -1,
 		topNode:   nil,
-		cmp:       cmp,
 	}
 }
 
@@ -86,12 +84,12 @@ func (s *arrayStack) Peek() interface{} {
 }
 
 // Contains returns true if a given item is already on stack.
-func (s *arrayStack) Contains(item interface{}) bool {
+func (s *arrayStack) Contains(item interface{}, cmp CompareFunc) bool {
 	n := s.topNode
 	i := s.nodeIndex
 
 	for n != nil {
-		if s.cmp(n.block[i], item) == 0 {
+		if cmp(n.block[i], item) == 0 {
 			return true
 		}
 

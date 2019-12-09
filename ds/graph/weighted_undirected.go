@@ -6,22 +6,15 @@ import (
 	"github.com/moorara/algo/pkg/graphviz"
 )
 
-// Edge represents a weighted undirected edge abstract data type.
-type Edge interface {
-	Either() int
-	Other(int) int
-	Weight() float64
-}
-
-// edge implements a weighted undirected edge data type.
-type edge struct {
+// UndirectedEdge represents a weighted undirected edge data type.
+type UndirectedEdge struct {
 	v, w   int
 	weight float64
 }
 
-// NewEdge creates a new weighted undirected edge.
-func NewEdge(v, w int, weight float64) Edge {
-	return &edge{
+// NewUndirectedEdge creates a new weighted undirected edge.
+func NewUndirectedEdge(v, w int, weight float64) UndirectedEdge {
+	return UndirectedEdge{
 		v:      v,
 		w:      w,
 		weight: weight,
@@ -29,12 +22,12 @@ func NewEdge(v, w int, weight float64) Edge {
 }
 
 // Either returns either of this edge's vertices.
-func (e *edge) Either() int {
+func (e UndirectedEdge) Either() int {
 	return e.v
 }
 
 // Other returns the other vertext of this edge.
-func (e *edge) Other(vertex int) int {
+func (e UndirectedEdge) Other(vertex int) int {
 	if vertex == e.v {
 		return e.w
 	}
@@ -42,35 +35,24 @@ func (e *edge) Other(vertex int) int {
 }
 
 // Weight returns the weight of this edge.
-func (e *edge) Weight() float64 {
+func (e UndirectedEdge) Weight() float64 {
 	return e.weight
 }
 
-// WeightedGraph represents a weighted undirected graph abstract data type.
-type WeightedGraph interface {
-	V() int
-	E() int
-	Degree(int) int
-	AddEdge(Edge)
-	Adj(int) []Edge
-	Edges() []Edge
-	Graphviz() string
-}
-
-// weightedGraph
-type weightedGraph struct {
+// WeightedUndirected represents a weighted undirected graph data type.
+type WeightedUndirected struct {
 	v, e int
-	adj  [][]Edge
+	adj  [][]UndirectedEdge
 }
 
-// NewWeightedGraph creates a new weighted undirected graph.
-func NewWeightedGraph(V int, edges ...Edge) WeightedGraph {
-	adj := make([][]Edge, V)
+// NewWeightedUndirected creates a new weighted undirected graph.
+func NewWeightedUndirected(V int, edges ...UndirectedEdge) *WeightedUndirected {
+	adj := make([][]UndirectedEdge, V)
 	for i := range adj {
-		adj[i] = make([]Edge, 0)
+		adj[i] = make([]UndirectedEdge, 0)
 	}
 
-	g := &weightedGraph{
+	g := &WeightedUndirected{
 		v:   V, // no. of vertices
 		e:   0, // no. of edges
 		adj: adj,
@@ -83,22 +65,22 @@ func NewWeightedGraph(V int, edges ...Edge) WeightedGraph {
 	return g
 }
 
-func (g *weightedGraph) isVertexValid(v int) bool {
+func (g *WeightedUndirected) isVertexValid(v int) bool {
 	return v >= 0 && v < g.v
 }
 
 // V returns the number of vertices.
-func (g *weightedGraph) V() int {
+func (g *WeightedUndirected) V() int {
 	return g.v
 }
 
 // E returns the number of edges.
-func (g *weightedGraph) E() int {
+func (g *WeightedUndirected) E() int {
 	return g.e
 }
 
 // Degree returns the degree of a vertext.
-func (g *weightedGraph) Degree(v int) int {
+func (g *WeightedUndirected) Degree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
@@ -107,7 +89,7 @@ func (g *weightedGraph) Degree(v int) int {
 }
 
 // AddEdge adds a new edge to the graph.
-func (g *weightedGraph) AddEdge(e Edge) {
+func (g *WeightedUndirected) AddEdge(e UndirectedEdge) {
 	v := e.Either()
 	w := e.Other(v)
 
@@ -119,7 +101,7 @@ func (g *weightedGraph) AddEdge(e Edge) {
 }
 
 // Adj returns the vertices adjacent from vertex.
-func (g *weightedGraph) Adj(v int) []Edge {
+func (g *WeightedUndirected) Adj(v int) []UndirectedEdge {
 	if !g.isVertexValid(v) {
 		return nil
 	}
@@ -128,8 +110,8 @@ func (g *weightedGraph) Adj(v int) []Edge {
 }
 
 // Edges returns all edges in the graph.
-func (g *weightedGraph) Edges() []Edge {
-	edges := make([]Edge, 0)
+func (g *WeightedUndirected) Edges() []UndirectedEdge {
+	edges := make([]UndirectedEdge, 0)
 	for v := range g.adj {
 		for _, e := range g.adj[v] {
 			if e.Other(v) > v {
@@ -142,7 +124,7 @@ func (g *weightedGraph) Edges() []Edge {
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.
-func (g *weightedGraph) Graphviz() string {
+func (g *WeightedUndirected) Graphviz() string {
 	graph := graphviz.NewGraph(true, false, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
 
 	for i := 0; i < g.v; i++ {

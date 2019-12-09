@@ -6,22 +6,15 @@ import (
 	"github.com/moorara/algo/pkg/graphviz"
 )
 
-// DirectedEdge represents a weighted directed edge abstract data type.
-type DirectedEdge interface {
-	From() int
-	To() int
-	Weight() float64
-}
-
-// directedEdge implements a weighted directed edge data type.
-type directedEdge struct {
+// DirectedEdge represents a weighted directed edge data type.
+type DirectedEdge struct {
 	from, to int
 	weight   float64
 }
 
 // NewDirectedEdge creates a new weighted directed edge.
 func NewDirectedEdge(from, to int, weight float64) DirectedEdge {
-	return &directedEdge{
+	return DirectedEdge{
 		from:   from,
 		to:     to,
 		weight: weight,
@@ -29,48 +22,35 @@ func NewDirectedEdge(from, to int, weight float64) DirectedEdge {
 }
 
 // From returns the vertex this edge points from.
-func (e *directedEdge) From() int {
+func (e DirectedEdge) From() int {
 	return e.from
 }
 
 // To returns the vertex this edge points to.
-func (e *directedEdge) To() int {
+func (e DirectedEdge) To() int {
 	return e.to
 }
 
 // Weight returns the weight of this edge.
-func (e *directedEdge) Weight() float64 {
+func (e DirectedEdge) Weight() float64 {
 	return e.weight
 }
 
-// WeightedDigraph represents a weighted directed graph abstract data type.
-type WeightedDigraph interface {
-	V() int
-	E() int
-	InDegree(int) int
-	OutDegree(int) int
-	AddEdge(DirectedEdge)
-	Adj(int) []DirectedEdge
-	Edges() []DirectedEdge
-	Reverse() WeightedDigraph
-	Graphviz() string
-}
-
-// weightedDigraph
-type weightedDigraph struct {
+// WeightedDirected represents a weighted directed graph data type.
+type WeightedDirected struct {
 	v, e int
 	ins  []int
 	adj  [][]DirectedEdge
 }
 
-// NewWeightedDigraph creates a new weighted directed graph.
-func NewWeightedDigraph(V int, edges ...DirectedEdge) WeightedDigraph {
+// NewWeightedDirected creates a new weighted directed graph.
+func NewWeightedDirected(V int, edges ...DirectedEdge) *WeightedDirected {
 	adj := make([][]DirectedEdge, V)
 	for i := range adj {
 		adj[i] = make([]DirectedEdge, 0)
 	}
 
-	g := &weightedDigraph{
+	g := &WeightedDirected{
 		v:   V, // no. of vertices
 		e:   0, // no. of edges
 		ins: make([]int, V),
@@ -84,22 +64,22 @@ func NewWeightedDigraph(V int, edges ...DirectedEdge) WeightedDigraph {
 	return g
 }
 
-func (g *weightedDigraph) isVertexValid(v int) bool {
+func (g *WeightedDirected) isVertexValid(v int) bool {
 	return v >= 0 && v < g.v
 }
 
 // V returns the number of vertices.
-func (g *weightedDigraph) V() int {
+func (g *WeightedDirected) V() int {
 	return g.v
 }
 
 // E returns the number of edges.
-func (g *weightedDigraph) E() int {
+func (g *WeightedDirected) E() int {
 	return g.e
 }
 
 // InDegree returns the number of directed edges incident to a vertex.
-func (g *weightedDigraph) InDegree(v int) int {
+func (g *WeightedDirected) InDegree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
@@ -108,7 +88,7 @@ func (g *weightedDigraph) InDegree(v int) int {
 }
 
 // OutDegree returns the number of directed edges incident from a vertex.
-func (g *weightedDigraph) OutDegree(v int) int {
+func (g *WeightedDirected) OutDegree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
@@ -117,7 +97,7 @@ func (g *weightedDigraph) OutDegree(v int) int {
 }
 
 // AddEdge adds a new edge to the graph.
-func (g *weightedDigraph) AddEdge(e DirectedEdge) {
+func (g *WeightedDirected) AddEdge(e DirectedEdge) {
 	v := e.From()
 	w := e.To()
 
@@ -129,7 +109,7 @@ func (g *weightedDigraph) AddEdge(e DirectedEdge) {
 }
 
 // Adj returns the vertices adjacent from vertex.
-func (g *weightedDigraph) Adj(v int) []DirectedEdge {
+func (g *WeightedDirected) Adj(v int) []DirectedEdge {
 	if !g.isVertexValid(v) {
 		return nil
 	}
@@ -138,7 +118,7 @@ func (g *weightedDigraph) Adj(v int) []DirectedEdge {
 }
 
 // Edges returns all directed edges in the graph.
-func (g *weightedDigraph) Edges() []DirectedEdge {
+func (g *WeightedDirected) Edges() []DirectedEdge {
 	edges := make([]DirectedEdge, 0)
 	for _, adjEdges := range g.adj {
 		edges = append(edges, adjEdges...)
@@ -148,8 +128,8 @@ func (g *weightedDigraph) Edges() []DirectedEdge {
 }
 
 // Reverse returns the reverse of the directed graph.
-func (g *weightedDigraph) Reverse() WeightedDigraph {
-	rev := NewWeightedDigraph(g.v)
+func (g *WeightedDirected) Reverse() *WeightedDirected {
+	rev := NewWeightedDirected(g.v)
 	for v := 0; v < g.v; v++ {
 		for _, e := range g.adj[v] {
 			edge := NewDirectedEdge(e.To(), e.From(), e.Weight())
@@ -161,7 +141,7 @@ func (g *weightedDigraph) Reverse() WeightedDigraph {
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.
-func (g *weightedDigraph) Graphviz() string {
+func (g *WeightedDirected) Graphviz() string {
 	graph := graphviz.NewGraph(true, true, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
 
 	for i := 0; i < g.v; i++ {

@@ -28,7 +28,7 @@ func TestDirectedEdge(t *testing.T) {
 	}
 }
 
-func TestWeightedDigraph(t *testing.T) {
+func TestWeightedDirected(t *testing.T) {
 	tests := []struct {
 		name               string
 		V                  int
@@ -39,27 +39,27 @@ func TestWeightedDigraph(t *testing.T) {
 		expectedOutDegrees []int
 		expectedAdjacents  [][]DirectedEdge
 		expectedEdges      []DirectedEdge
-		expectedReverse    WeightedDigraph
+		expectedReverse    *WeightedDirected
 	}{
 		{
 			name: "",
 			V:    8,
 			edges: []DirectedEdge{
-				&directedEdge{0, 2, 0.26},
-				&directedEdge{0, 4, 0.38},
-				&directedEdge{1, 3, 0.29},
-				&directedEdge{2, 7, 0.34},
-				&directedEdge{3, 6, 0.52},
-				&directedEdge{4, 5, 0.35},
-				&directedEdge{4, 7, 0.37},
-				&directedEdge{5, 1, 0.32},
-				&directedEdge{5, 4, 0.35},
-				&directedEdge{5, 7, 0.28},
-				&directedEdge{6, 0, 0.58},
-				&directedEdge{6, 2, 0.40},
-				&directedEdge{6, 4, 0.93},
-				&directedEdge{7, 3, 0.39},
-				&directedEdge{7, 5, 0.28},
+				{0, 2, 0.26},
+				{0, 4, 0.38},
+				{1, 3, 0.29},
+				{2, 7, 0.34},
+				{3, 6, 0.52},
+				{4, 5, 0.35},
+				{4, 7, 0.37},
+				{5, 1, 0.32},
+				{5, 4, 0.35},
+				{5, 7, 0.28},
+				{6, 0, 0.58},
+				{6, 2, 0.40},
+				{6, 4, 0.93},
+				{7, 3, 0.39},
+				{7, 5, 0.28},
 			},
 			expectedV:          8,
 			expectedE:          15,
@@ -67,89 +67,89 @@ func TestWeightedDigraph(t *testing.T) {
 			expectedOutDegrees: []int{2, 1, 1, 1, 2, 3, 3, 2},
 			expectedAdjacents: [][]DirectedEdge{
 				[]DirectedEdge{
-					&directedEdge{0, 2, 0.26},
-					&directedEdge{0, 4, 0.38},
+					{0, 2, 0.26},
+					{0, 4, 0.38},
 				},
 				[]DirectedEdge{
-					&directedEdge{1, 3, 0.29},
+					{1, 3, 0.29},
 				},
 				[]DirectedEdge{
-					&directedEdge{2, 7, 0.34},
+					{2, 7, 0.34},
 				},
 				[]DirectedEdge{
-					&directedEdge{3, 6, 0.52},
+					{3, 6, 0.52},
 				},
 				[]DirectedEdge{
-					&directedEdge{4, 5, 0.35},
-					&directedEdge{4, 7, 0.37},
+					{4, 5, 0.35},
+					{4, 7, 0.37},
 				},
 				[]DirectedEdge{
-					&directedEdge{5, 1, 0.32},
-					&directedEdge{5, 4, 0.35},
-					&directedEdge{5, 7, 0.28},
+					{5, 1, 0.32},
+					{5, 4, 0.35},
+					{5, 7, 0.28},
 				},
 				[]DirectedEdge{
-					&directedEdge{6, 0, 0.58},
-					&directedEdge{6, 2, 0.40},
-					&directedEdge{6, 4, 0.93},
+					{6, 0, 0.58},
+					{6, 2, 0.40},
+					{6, 4, 0.93},
 				},
 				[]DirectedEdge{
-					&directedEdge{7, 3, 0.39},
-					&directedEdge{7, 5, 0.28},
+					{7, 3, 0.39},
+					{7, 5, 0.28},
 				},
 			},
 			expectedEdges: []DirectedEdge{
-				&directedEdge{0, 2, 0.26},
-				&directedEdge{0, 4, 0.38},
-				&directedEdge{1, 3, 0.29},
-				&directedEdge{2, 7, 0.34},
-				&directedEdge{3, 6, 0.52},
-				&directedEdge{4, 5, 0.35},
-				&directedEdge{4, 7, 0.37},
-				&directedEdge{5, 1, 0.32},
-				&directedEdge{5, 4, 0.35},
-				&directedEdge{5, 7, 0.28},
-				&directedEdge{6, 0, 0.58},
-				&directedEdge{6, 2, 0.40},
-				&directedEdge{6, 4, 0.93},
-				&directedEdge{7, 3, 0.39},
-				&directedEdge{7, 5, 0.28},
+				{0, 2, 0.26},
+				{0, 4, 0.38},
+				{1, 3, 0.29},
+				{2, 7, 0.34},
+				{3, 6, 0.52},
+				{4, 5, 0.35},
+				{4, 7, 0.37},
+				{5, 1, 0.32},
+				{5, 4, 0.35},
+				{5, 7, 0.28},
+				{6, 0, 0.58},
+				{6, 2, 0.40},
+				{6, 4, 0.93},
+				{7, 3, 0.39},
+				{7, 5, 0.28},
 			},
-			expectedReverse: &weightedDigraph{
+			expectedReverse: &WeightedDirected{
 				v:   8,
 				e:   15,
 				ins: []int{2, 1, 1, 1, 2, 3, 3, 2},
 				adj: [][]DirectedEdge{
 					[]DirectedEdge{
-						&directedEdge{0, 6, 0.58},
+						{0, 6, 0.58},
 					},
 					[]DirectedEdge{
-						&directedEdge{1, 5, 0.32},
+						{1, 5, 0.32},
 					},
 					[]DirectedEdge{
-						&directedEdge{2, 0, 0.26},
-						&directedEdge{2, 6, 0.40},
+						{2, 0, 0.26},
+						{2, 6, 0.40},
 					},
 					[]DirectedEdge{
-						&directedEdge{3, 1, 0.29},
-						&directedEdge{3, 7, 0.39},
+						{3, 1, 0.29},
+						{3, 7, 0.39},
 					},
 					[]DirectedEdge{
-						&directedEdge{4, 0, 0.38},
-						&directedEdge{4, 5, 0.35},
-						&directedEdge{4, 6, 0.93},
+						{4, 0, 0.38},
+						{4, 5, 0.35},
+						{4, 6, 0.93},
 					},
 					[]DirectedEdge{
-						&directedEdge{5, 4, 0.35},
-						&directedEdge{5, 7, 0.28},
+						{5, 4, 0.35},
+						{5, 7, 0.28},
 					},
 					[]DirectedEdge{
-						&directedEdge{6, 3, 0.52},
+						{6, 3, 0.52},
 					},
 					[]DirectedEdge{
-						&directedEdge{7, 2, 0.34},
-						&directedEdge{7, 4, 0.37},
-						&directedEdge{7, 5, 0.28},
+						{7, 2, 0.34},
+						{7, 4, 0.37},
+						{7, 5, 0.28},
 					},
 				},
 			},
@@ -158,7 +158,7 @@ func TestWeightedDigraph(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			g := NewWeightedDigraph(tc.V, tc.edges...)
+			g := NewWeightedDirected(tc.V, tc.edges...)
 
 			assert.NotEmpty(t, g)
 			assert.Equal(t, tc.expectedV, g.V())

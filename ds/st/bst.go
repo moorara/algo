@@ -78,17 +78,17 @@ func (t *bst) height(n *bstNode) int {
 	return 1 + max(t.height(n.left), t.height(n.right))
 }
 
-// Size returns the number of key-value pairs in BST tree.
+// Size returns the number of key-value pairs in BST.
 func (t *bst) Size() int {
 	return t.size(t.root)
 }
 
-// Height returns the height of BST tree.
+// Height returns the height of BST.
 func (t *bst) Height() int {
 	return t.height(t.root)
 }
 
-// IsEmpty returns true if BST tree is empty.
+// IsEmpty returns true if BST is empty.
 func (t *bst) IsEmpty() bool {
 	return t.root == nil
 }
@@ -116,7 +116,7 @@ func (t *bst) _put(n *bstNode, key, value interface{}) *bstNode {
 	return n
 }
 
-// Put adds a new key-value pair to BST tree.
+// Put adds a new key-value pair to BST.
 func (t *bst) Put(key, value interface{}) {
 	if key == nil {
 		return
@@ -141,7 +141,7 @@ func (t *bst) _get(n *bstNode, key interface{}) (interface{}, bool) {
 	}
 }
 
-// Get returns the value of a given key in BST tree.
+// Get returns the value of a given key in BST.
 func (t *bst) Get(key interface{}) (interface{}, bool) {
 	return t._get(t.root, key)
 }
@@ -179,18 +179,18 @@ func (t *bst) _delete(n *bstNode, key interface{}) (*bstNode, interface{}, bool)
 	return n, value, ok
 }
 
-// Delete removes a key-value pair from BST tree.
+// Delete removes a key-value pair from BST.
 func (t *bst) Delete(key interface{}) (value interface{}, ok bool) {
 	t.root, value, ok = t._delete(t.root, key)
 	return value, ok
 }
 
-// KeyValues returns all key-value pairs in BST tree.
+// KeyValues returns all key-value pairs in BST.
 func (t *bst) KeyValues() []KeyValue {
 	i := 0
 	kvs := make([]KeyValue, t.Size())
 
-	t._traverse(t.root, InOrderTraversal, func(n *bstNode) bool {
+	t._traverse(t.root, InOrder, func(n *bstNode) bool {
 		kvs[i] = KeyValue{n.key, n.value}
 		i++
 		return true
@@ -205,7 +205,7 @@ func (t *bst) _min(n *bstNode) *bstNode {
 	return t._min(n.left)
 }
 
-// Min returns the minimum key and its value in BST tree.
+// Min returns the minimum key and its value in BST.
 func (t *bst) Min() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -222,7 +222,7 @@ func (t *bst) _max(n *bstNode) *bstNode {
 	return t._max(n.right)
 }
 
-// Max returns the maximum key and its value in BST tree.
+// Max returns the maximum key and its value in BST.
 func (t *bst) Max() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -251,7 +251,7 @@ func (t *bst) _floor(n *bstNode, key interface{}) *bstNode {
 	return n
 }
 
-// Floor
+// Floor returns the largest key in BST less than or equal to key.
 func (t *bst) Floor(key interface{}) (interface{}, interface{}) {
 	n := t._floor(t.root, key)
 	if n == nil {
@@ -279,7 +279,7 @@ func (t *bst) _ceiling(n *bstNode, key interface{}) *bstNode {
 	return n
 }
 
-// Ceiling
+// Ceiling returns the smallest key in BST greater than or equal to key.
 func (t *bst) Ceiling(key interface{}) (interface{}, interface{}) {
 	n := t._ceiling(t.root, key)
 	if n == nil {
@@ -304,7 +304,7 @@ func (t *bst) _rank(n *bstNode, key interface{}) int {
 	}
 }
 
-// Rank
+// Rank returns the number of keys in BST less than key.
 func (t *bst) Rank(key interface{}) int {
 	if key == nil {
 		return -1
@@ -329,7 +329,7 @@ func (t *bst) _select(n *bstNode, rank int) *bstNode {
 	}
 }
 
-// Select
+// Select return the k-th smallest key in BST.
 func (t *bst) Select(rank int) (interface{}, interface{}) {
 	if rank < 0 || rank >= t.Size() {
 		return nil, nil
@@ -350,7 +350,7 @@ func (t *bst) _deleteMin(n *bstNode) (*bstNode, *bstNode) {
 	return n, min
 }
 
-// DeleteMin
+// DeleteMin removes the smallest key and associated value from BST.
 func (t *bst) DeleteMin() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -372,7 +372,7 @@ func (t *bst) _deleteMax(n *bstNode) (*bstNode, *bstNode) {
 	return n, max
 }
 
-// DeleteMax
+// DeleteMax removes the largest key and associated value from BST.
 func (t *bst) DeleteMax() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -383,7 +383,7 @@ func (t *bst) DeleteMax() (interface{}, interface{}) {
 	return max.key, max.value
 }
 
-// RangeSize
+// RangeSize returns the number of keys in BST between two given keys.
 func (t *bst) RangeSize(lo, hi interface{}) int {
 	if lo == nil || hi == nil {
 		return -1
@@ -421,7 +421,7 @@ func (t *bst) _range(n *bstNode, kvs *[]KeyValue, lo, hi interface{}) int {
 	return len
 }
 
-// Range
+// Range returns all keys and associated values in BST between two given keys.
 func (t *bst) Range(lo, hi interface{}) []KeyValue {
 	if lo == nil || hi == nil {
 		return nil
@@ -432,21 +432,21 @@ func (t *bst) Range(lo, hi interface{}) []KeyValue {
 	return kvs[0:len]
 }
 
-func (t *bst) _traverse(n *bstNode, order int, visit func(*bstNode) bool) bool {
+func (t *bst) _traverse(n *bstNode, order TraverseOrder, visit func(*bstNode) bool) bool {
 	if n == nil {
 		return true
 	}
 
 	switch order {
-	case PreOrderTraversal:
+	case PreOrder:
 		return visit(n) &&
 			t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit)
-	case InOrderTraversal:
+	case InOrder:
 		return t._traverse(n.left, order, visit) &&
 			visit(n) &&
 			t._traverse(n.right, order, visit)
-	case PostOrderTraversal:
+	case PostOrder:
 		return t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit) &&
 			visit(n)
@@ -455,9 +455,9 @@ func (t *bst) _traverse(n *bstNode, order int, visit func(*bstNode) bool) bool {
 	}
 }
 
-// Traverse
-func (t *bst) Traverse(order int, visit VisitFunc) {
-	if order != PreOrderTraversal && order != InOrderTraversal && order != PostOrderTraversal {
+// Traverse is used for visiting all key-value pairs in BST.
+func (t *bst) Traverse(order TraverseOrder, visit VisitFunc) {
+	if order != PreOrder && order != InOrder && order != PostOrder {
 		return
 	}
 
@@ -466,12 +466,12 @@ func (t *bst) Traverse(order int, visit VisitFunc) {
 	})
 }
 
-// Graphviz returns a visualization of BST tree in Graphviz format.
+// Graphviz returns a visualization of BST in Graphviz format.
 func (t *bst) Graphviz() string {
 	var parent, left, right, label string
 	graph := graphviz.NewGraph(true, true, "BST", "", "", "", graphviz.ShapeOval)
 
-	t._traverse(t.root, PreOrderTraversal, func(n *bstNode) bool {
+	t._traverse(t.root, PreOrder, func(n *bstNode) bool {
 		parent = fmt.Sprintf("%v", n.key)
 		label = fmt.Sprintf("%v,%v", n.key, n.value)
 		graph.AddNode(graphviz.NewNode(parent, "", label, "", "", "", "", ""))
