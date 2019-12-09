@@ -7,7 +7,7 @@ type Queue interface {
 	Enqueue(interface{})
 	Dequeue() interface{}
 	Peek() interface{}
-	Contains(interface{}) bool
+	Contains(interface{}, CompareFunc) bool
 }
 
 type arrayQueue struct {
@@ -17,11 +17,10 @@ type arrayQueue struct {
 	rearNodeIndex  int
 	frontNode      *arrayNode
 	rearNode       *arrayNode
-	cmp            CompareFunc
 }
 
 // NewQueue creates a new array-list queue.
-func NewQueue(nodeSize int, cmp CompareFunc) Queue {
+func NewQueue(nodeSize int) Queue {
 	return &arrayQueue{
 		listSize:       0,
 		nodeSize:       nodeSize,
@@ -29,7 +28,6 @@ func NewQueue(nodeSize int, cmp CompareFunc) Queue {
 		rearNodeIndex:  -1,
 		frontNode:      nil,
 		rearNode:       nil,
-		cmp:            cmp,
 	}
 }
 
@@ -91,12 +89,12 @@ func (q *arrayQueue) Peek() interface{} {
 }
 
 // Contains returns true if a given item is already in queue.
-func (q *arrayQueue) Contains(item interface{}) bool {
+func (q *arrayQueue) Contains(item interface{}, cmp CompareFunc) bool {
 	n := q.frontNode
 	i := q.frontNodeIndex
 
 	for n != nil && (n != q.rearNode || i <= q.rearNodeIndex) {
-		if q.cmp(n.block[i], item) == 0 {
+		if cmp(n.block[i], item) == 0 {
 			return true
 		}
 

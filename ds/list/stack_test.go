@@ -9,8 +9,8 @@ import (
 func TestStack(t *testing.T) {
 	tests := []struct {
 		name             string
+		cmp              CompareFunc
 		nodeSize         int
-		cmp          CompareFunc
 		pushItems        []string
 		expectedSize     int
 		expectedIsEmpty  bool
@@ -20,8 +20,8 @@ func TestStack(t *testing.T) {
 	}{
 		{
 			"Empty",
-			2,
 			compareString,
+			2,
 			[]string{},
 			0, true,
 			"",
@@ -30,8 +30,8 @@ func TestStack(t *testing.T) {
 		},
 		{
 			"OneNode",
-			2,
 			compareString,
+			2,
 			[]string{"a", "b"},
 			2, false,
 			"b",
@@ -40,8 +40,8 @@ func TestStack(t *testing.T) {
 		},
 		{
 			"TwoNodes",
-			2,
 			compareString,
+			2,
 			[]string{"a", "b", "c"},
 			3, false,
 			"c",
@@ -50,8 +50,8 @@ func TestStack(t *testing.T) {
 		},
 		{
 			"MoreNodes",
-			2,
 			compareString,
+			2,
 			[]string{"a", "b", "c", "d", "e", "f", "g"},
 			7, false,
 			"g",
@@ -62,14 +62,14 @@ func TestStack(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			stack := NewStack(tc.nodeSize, tc.cmp)
+			stack := NewStack(tc.nodeSize)
 
 			// Stack initially should be empty
 			assert.Zero(t, stack.Size())
 			assert.True(t, stack.IsEmpty())
 			assert.Nil(t, stack.Pop())
 			assert.Nil(t, stack.Peek())
-			assert.False(t, stack.Contains(nil))
+			assert.False(t, stack.Contains(nil, tc.cmp))
 
 			for _, item := range tc.pushItems {
 				stack.Push(item)
@@ -85,7 +85,7 @@ func TestStack(t *testing.T) {
 			}
 
 			for _, item := range tc.expectedContains {
-				assert.True(t, stack.Contains(item))
+				assert.True(t, stack.Contains(item, tc.cmp))
 			}
 
 			for _, item := range tc.expectedPopItems {
@@ -97,7 +97,7 @@ func TestStack(t *testing.T) {
 			assert.True(t, stack.IsEmpty())
 			assert.Nil(t, stack.Pop())
 			assert.Nil(t, stack.Peek())
-			assert.False(t, stack.Contains(nil))
+			assert.False(t, stack.Contains(nil, tc.cmp))
 		})
 	}
 }
@@ -107,7 +107,7 @@ func BenchmarkStack(b *testing.B) {
 	item := 27
 
 	b.Run("Push", func(b *testing.B) {
-		stack := NewStack(nodeSize, compareInt)
+		stack := NewStack(nodeSize)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
@@ -116,7 +116,7 @@ func BenchmarkStack(b *testing.B) {
 	})
 
 	b.Run("Pop", func(b *testing.B) {
-		stack := NewStack(nodeSize, compareInt)
+		stack := NewStack(nodeSize)
 		for n := 0; n < b.N; n++ {
 			stack.Push(item)
 		}
