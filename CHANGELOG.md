@@ -1,5 +1,25 @@
 # Change Log
 
+## [v0.1.2](https://github.com/moorara/algo/tree/v0.1.2) (2019-12-08)
+[Full Changelog](https://github.com/moorara/algo/compare/v0.1.1...v0.1.2)
+
+**Closed issues:**
+
+- Add Readme Badges [\#6](https://github.com/moorara/algo/issues/6)
+
+**Merged pull requests:**
+
+- Add graph algorithms [\#20](https://github.com/moorara/algo/pull/20) ([moorara](https://github.com/moorara))
+- Refactor synopsis texts [\#19](https://github.com/moorara/algo/pull/19) ([moorara](https://github.com/moorara))
+- Add Graph Package [\#18](https://github.com/moorara/algo/pull/18) ([moorara](https://github.com/moorara))
+- Refactor sort package [\#17](https://github.com/moorara/algo/pull/17) ([moorara](https://github.com/moorara))
+- Update push.yml [\#16](https://github.com/moorara/algo/pull/16) ([moorara](https://github.com/moorara))
+- Repo refactoring [\#15](https://github.com/moorara/algo/pull/15) ([moorara](https://github.com/moorara))
+- Fix README badge [\#14](https://github.com/moorara/algo/pull/14) ([moorara](https://github.com/moorara))
+- Add badges [\#13](https://github.com/moorara/algo/pull/13) ([moorara](https://github.com/moorara))
+- Add Test Coverage Report [\#12](https://github.com/moorara/algo/pull/12) ([moorara](https://github.com/moorara))
+- Add GitHub badge [\#11](https://github.com/moorara/algo/pull/11) ([moorara](https://github.com/moorara))
+
 ## [v0.1.1](https://github.com/moorara/algo/tree/v0.1.1) (2019-09-03)
 [Full Changelog](https://github.com/moorara/algo/compare/v0.1.0...v0.1.1)
 
