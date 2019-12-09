@@ -1,9 +1,9 @@
-// Package graph implements graph data structures and algorithms.
 package graph
 
 import (
 	"fmt"
 
+	"github.com/moorara/algo/ds/list"
 	"github.com/moorara/algo/pkg/graphviz"
 )
 
@@ -72,6 +72,129 @@ func (g *Undirected) Adj(v int) []int {
 	}
 
 	return g.adj[v]
+}
+
+// DFS Traversal (Recursion)
+func (g *Undirected) _traverseDFS(visited []bool, v int, order TraverseOrder, visit VisitFunc) {
+	visited[v] = true
+
+	if order == PreOrder {
+		visit(v)
+	}
+
+	for _, w := range g.adj[v] {
+		if !visited[w] {
+			g._traverseDFS(visited, w, order, visit)
+		}
+	}
+
+	if order == PostOrder {
+		visit(v)
+	}
+}
+
+// DFS Traversal (Driver)
+func (g *Undirected) traverseDFS(s int, order TraverseOrder, visit VisitFunc) {
+	if !g.isVertexValid(s) {
+		return
+	}
+
+	if order != PreOrder && order != PostOrder {
+		return
+	}
+
+	visited := make([]bool, g.V())
+	g._traverseDFS(visited, s, order, visit)
+}
+
+// Iterative DFS Traversal
+func (g *Undirected) traverseDFSIterative(s int, order TraverseOrder, visit VisitFunc) {
+	if !g.isVertexValid(s) {
+		return
+	}
+
+	if order != PreOrder && order != PostOrder {
+		return
+	}
+
+	visited := make([]bool, g.V())
+	stack := list.NewStack(listNodeSize)
+
+	visited[s] = true
+	stack.Push(s)
+	if order == PreOrder {
+		visit(s)
+	}
+
+	for !stack.IsEmpty() {
+		v := stack.Pop().(int)
+		if order == PostOrder {
+			visit(v)
+		}
+
+		for _, w := range g.adj[v] {
+			if !visited[w] {
+				visited[w] = true
+				stack.Push(w)
+				if order == PreOrder {
+					visit(w)
+				}
+			}
+		}
+	}
+}
+
+// BFS Traversal
+func (g *Undirected) traverseBFS(s int, order TraverseOrder, visit VisitFunc) {
+	if !g.isVertexValid(s) {
+		return
+	}
+
+	if order != PreOrder && order != PostOrder {
+		return
+	}
+
+	visited := make([]bool, g.V())
+	queue := list.NewQueue(listNodeSize)
+
+	visited[s] = true
+	queue.Enqueue(s)
+	if order == PreOrder {
+		visit(s)
+	}
+
+	for !queue.IsEmpty() {
+		v := queue.Dequeue().(int)
+		if order == PostOrder {
+			visit(v)
+		}
+
+		for _, w := range g.adj[v] {
+			if !visited[w] {
+				visited[w] = true
+				queue.Enqueue(w)
+				if order == PreOrder {
+					visit(w)
+				}
+			}
+		}
+	}
+}
+
+// Traverse is used for visiting all vertices in graph.
+func (g *Undirected) Traverse(s int, strategy TraverseStrategy, order TraverseOrder, visit VisitFunc) {
+	if strategy != DFS && strategy != DFSIterative && strategy != BFS {
+		return
+	}
+
+	switch strategy {
+	case DFS:
+		g.traverseDFS(s, order, visit)
+	case DFSIterative:
+		g.traverseDFSIterative(s, order, visit)
+	case BFS:
+		g.traverseBFS(s, order, visit)
+	}
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.

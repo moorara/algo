@@ -7,6 +7,14 @@ import (
 )
 
 func TestDirected(t *testing.T) {
+	type traverseTest struct {
+		name           string
+		start          int
+		strategy       TraverseStrategy
+		order          TraverseOrder
+		expectedVisits []int
+	}
+
 	tests := []struct {
 		name               string
 		V                  int
@@ -17,6 +25,7 @@ func TestDirected(t *testing.T) {
 		expectedOutDegrees []int
 		expectedAdjacents  [][]int
 		expectedReverse    *Directed
+		traverseTests      []traverseTest
 	}{
 		{
 			name: "Disconnected",
@@ -84,6 +93,99 @@ func TestDirected(t *testing.T) {
 					[]int{10, 11},
 				},
 			},
+			traverseTests: []traverseTest{
+				{
+					name:           "InvalidStrategy",
+					start:          0,
+					strategy:       -1,
+					order:          -1,
+					expectedVisits: []int{},
+				},
+				{
+					name:           "PreOrderDFS",
+					start:          0,
+					strategy:       DFS,
+					order:          PreOrder,
+					expectedVisits: []int{0, 1, 5, 4, 2, 3},
+				},
+				{
+					name:           "PostOrderDFS",
+					start:          0,
+					strategy:       DFS,
+					order:          PostOrder,
+					expectedVisits: []int{1, 3, 2, 4, 5, 0},
+				},
+				{
+					name:           "InvalidVertexDFS",
+					start:          -1,
+					strategy:       DFS,
+					order:          PreOrder,
+					expectedVisits: []int{},
+				},
+				{
+					name:           "InvalidOrderDFS",
+					start:          0,
+					strategy:       DFS,
+					order:          -1,
+					expectedVisits: []int{},
+				},
+				{
+					name:           "PreOrderDFSIterative",
+					start:          0,
+					strategy:       DFSIterative,
+					order:          PreOrder,
+					expectedVisits: []int{0, 1, 5, 4, 2, 3},
+				},
+				{
+					name:           "PostOrderDFSIterative",
+					start:          0,
+					strategy:       DFSIterative,
+					order:          PostOrder,
+					expectedVisits: []int{0, 5, 4, 3, 2, 1},
+				},
+				{
+					name:           "InvalidVertexDFSIterative",
+					start:          -1,
+					strategy:       DFSIterative,
+					order:          PreOrder,
+					expectedVisits: []int{},
+				},
+				{
+					name:           "InvalidOrderDFSIterative",
+					start:          0,
+					strategy:       DFSIterative,
+					order:          -1,
+					expectedVisits: []int{},
+				},
+				{
+					name:           "PreOrderBFS",
+					start:          0,
+					strategy:       BFS,
+					order:          PreOrder,
+					expectedVisits: []int{0, 1, 5, 4, 2, 3},
+				},
+				{
+					name:           "PostOrderBFS",
+					start:          0,
+					strategy:       BFS,
+					order:          PostOrder,
+					expectedVisits: []int{0, 1, 5, 4, 2, 3},
+				},
+				{
+					name:           "InvalidVertexBFS",
+					start:          -1,
+					strategy:       BFS,
+					order:          PreOrder,
+					expectedVisits: []int{},
+				},
+				{
+					name:           "InvalidOrderBFS",
+					start:          0,
+					strategy:       BFS,
+					order:          -1,
+					expectedVisits: []int{},
+				},
+			},
 		},
 	}
 
@@ -111,6 +213,17 @@ func TestDirected(t *testing.T) {
 			}
 
 			assert.Equal(t, tc.expectedReverse, g.Reverse())
+
+			for _, traverse := range tc.traverseTests {
+				t.Run(traverse.name, func(t *testing.T) {
+					visited := make([]int, 0)
+					g.Traverse(traverse.start, traverse.strategy, traverse.order, func(v int) {
+						visited = append(visited, v)
+					})
+					assert.Equal(t, traverse.expectedVisits, visited)
+				})
+			}
+
 			assert.NotEmpty(t, g.Graphviz())
 		})
 	}
