@@ -356,7 +356,7 @@ func (t *redBlack) KeyValues() []KeyValue {
 	i := 0
 	kvs := make([]KeyValue, t.Size())
 
-	t._traverse(t.root, InOrderTraversal, func(n *rbNode) bool {
+	t._traverse(t.root, InOrder, func(n *rbNode) bool {
 		kvs[i] = KeyValue{n.key, n.value}
 		i++
 		return true
@@ -417,7 +417,7 @@ func (t *redBlack) _floor(n *rbNode, key interface{}) *rbNode {
 	return n
 }
 
-// Floor
+// Floor returns the largest key in Red-Black tree less than or equal to key.
 func (t *redBlack) Floor(key interface{}) (interface{}, interface{}) {
 	n := t._floor(t.root, key)
 	if n == nil {
@@ -445,7 +445,7 @@ func (t *redBlack) _ceiling(n *rbNode, key interface{}) *rbNode {
 	return n
 }
 
-// Ceiling
+// Ceiling returns the smallest key in Red-Black tree greater than or equal to key.
 func (t *redBlack) Ceiling(key interface{}) (interface{}, interface{}) {
 	n := t._ceiling(t.root, key)
 	if n == nil {
@@ -470,7 +470,7 @@ func (t *redBlack) _rank(n *rbNode, key interface{}) int {
 	}
 }
 
-// Rank
+// Rank returns the number of keys in Red-Black tree less than key.
 func (t *redBlack) Rank(key interface{}) int {
 	if key == nil {
 		return -1
@@ -495,7 +495,7 @@ func (t *redBlack) _select(n *rbNode, rank int) *rbNode {
 	}
 }
 
-// Select
+// Select return the k-th smallest key in Red-Black tree.
 func (t *redBlack) Select(rank int) (interface{}, interface{}) {
 	if rank < 0 || rank >= t.Size() {
 		return nil, nil
@@ -519,7 +519,7 @@ func (t *redBlack) _deleteMin(n *rbNode) (*rbNode, *rbNode) {
 	return t.balance(n), min
 }
 
-// DeleteMin
+// DeleteMin removes the smallest key and associated value from Red-Black tree.
 func (t *redBlack) DeleteMin() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -555,7 +555,7 @@ func (t *redBlack) _deleteMax(n *rbNode) (*rbNode, *rbNode) {
 	return t.balance(n), max
 }
 
-// DeleteMax
+// DeleteMax removes the largest key and associated value from Red-Black tree.
 func (t *redBlack) DeleteMax() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -573,7 +573,7 @@ func (t *redBlack) DeleteMax() (interface{}, interface{}) {
 	return max.key, max.value
 }
 
-// RangeSize
+// RangeSize returns the number of keys in Red-Black tree between two given keys.
 func (t *redBlack) RangeSize(lo, hi interface{}) int {
 	if lo == nil || hi == nil {
 		return -1
@@ -611,7 +611,7 @@ func (t *redBlack) _range(n *rbNode, kvs *[]KeyValue, lo, hi interface{}) int {
 	return len
 }
 
-// Range
+// Range returns all keys and associated values in Red-Black tree between two given keys.
 func (t *redBlack) Range(lo, hi interface{}) []KeyValue {
 	if lo == nil || hi == nil {
 		return nil
@@ -622,21 +622,21 @@ func (t *redBlack) Range(lo, hi interface{}) []KeyValue {
 	return kvs[0:len]
 }
 
-func (t *redBlack) _traverse(n *rbNode, order int, visit func(*rbNode) bool) bool {
+func (t *redBlack) _traverse(n *rbNode, order TraverseOrder, visit func(*rbNode) bool) bool {
 	if n == nil {
 		return true
 	}
 
 	switch order {
-	case PreOrderTraversal:
+	case PreOrder:
 		return visit(n) &&
 			t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit)
-	case InOrderTraversal:
+	case InOrder:
 		return t._traverse(n.left, order, visit) &&
 			visit(n) &&
 			t._traverse(n.right, order, visit)
-	case PostOrderTraversal:
+	case PostOrder:
 		return t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit) &&
 			visit(n)
@@ -645,9 +645,9 @@ func (t *redBlack) _traverse(n *rbNode, order int, visit func(*rbNode) bool) boo
 	}
 }
 
-// Traverse
-func (t *redBlack) Traverse(order int, visit VisitFunc) {
-	if order != PreOrderTraversal && order != InOrderTraversal && order != PostOrderTraversal {
+// Traverse is used for visiting all key-value pairs in Red-Black tree.
+func (t *redBlack) Traverse(order TraverseOrder, visit VisitFunc) {
+	if order != PreOrder && order != InOrder && order != PostOrder {
 		return
 	}
 
@@ -661,7 +661,7 @@ func (t *redBlack) Graphviz() string {
 	var parent, left, right, label, nodeColor, fontColor, edgeColor string
 	graph := graphviz.NewGraph(true, true, "RedBlack", "", "", graphviz.StyleFilled, graphviz.ShapeOval)
 
-	t._traverse(t.root, PreOrderTraversal, func(n *rbNode) bool {
+	t._traverse(t.root, PreOrder, func(n *rbNode) bool {
 		parent = fmt.Sprintf("%v", n.key)
 		label = fmt.Sprintf("%v,%v", n.key, n.value)
 		if t.isRed(n) {

@@ -253,7 +253,7 @@ func (t *avl) KeyValues() []KeyValue {
 	i := 0
 	kvs := make([]KeyValue, t.Size())
 
-	t._traverse(t.root, InOrderTraversal, func(n *avlNode) bool {
+	t._traverse(t.root, InOrder, func(n *avlNode) bool {
 		kvs[i] = KeyValue{n.key, n.value}
 		i++
 		return true
@@ -314,7 +314,7 @@ func (t *avl) _floor(n *avlNode, key interface{}) *avlNode {
 	return n
 }
 
-// Floor
+// Floor returns the largest key in AVL tree less than or equal to key.
 func (t *avl) Floor(key interface{}) (interface{}, interface{}) {
 	n := t._floor(t.root, key)
 	if n == nil {
@@ -342,7 +342,7 @@ func (t *avl) _ceiling(n *avlNode, key interface{}) *avlNode {
 	return n
 }
 
-// Ceiling
+// Ceiling returns the smallest key in AVL tree greater than or equal to key.
 func (t *avl) Ceiling(key interface{}) (interface{}, interface{}) {
 	n := t._ceiling(t.root, key)
 	if n == nil {
@@ -367,7 +367,7 @@ func (t *avl) _rank(n *avlNode, key interface{}) int {
 	}
 }
 
-// Rank
+// Rank returns the number of keys in AVL tree less than key.
 func (t *avl) Rank(key interface{}) int {
 	if key == nil {
 		return -1
@@ -392,7 +392,7 @@ func (t *avl) _select(n *avlNode, rank int) *avlNode {
 	}
 }
 
-// Select
+// Select return the k-th smallest key in AVL tree.
 func (t *avl) Select(rank int) (interface{}, interface{}) {
 	if rank < 0 || rank >= t.Size() {
 		return nil, nil
@@ -414,7 +414,7 @@ func (t *avl) _deleteMin(n *avlNode) (*avlNode, *avlNode) {
 	return t.balance(n), min
 }
 
-// DeleteMin
+// DeleteMin removes the smallest key and associated value from AVL tree.
 func (t *avl) DeleteMin() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -436,7 +436,7 @@ func (t *avl) _deleteMax(n *avlNode) (*avlNode, *avlNode) {
 	return t.balance(n), max
 }
 
-// DeleteMax
+// DeleteMax removes the largest key and associated value from AVL tree.
 func (t *avl) DeleteMax() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
@@ -447,7 +447,7 @@ func (t *avl) DeleteMax() (interface{}, interface{}) {
 	return max.key, max.value
 }
 
-// RangeSize
+// RangeSize returns the number of keys in AVL tree between two given keys.
 func (t *avl) RangeSize(lo, hi interface{}) int {
 	if lo == nil || hi == nil {
 		return -1
@@ -485,7 +485,7 @@ func (t *avl) _range(n *avlNode, kvs *[]KeyValue, lo, hi interface{}) int {
 	return len
 }
 
-// Range
+// Range returns all keys and associated values in AVL tree between two given keys.
 func (t *avl) Range(lo, hi interface{}) []KeyValue {
 	if lo == nil || hi == nil {
 		return nil
@@ -496,21 +496,21 @@ func (t *avl) Range(lo, hi interface{}) []KeyValue {
 	return kvs[0:len]
 }
 
-func (t *avl) _traverse(n *avlNode, order int, visit func(*avlNode) bool) bool {
+func (t *avl) _traverse(n *avlNode, order TraverseOrder, visit func(*avlNode) bool) bool {
 	if n == nil {
 		return true
 	}
 
 	switch order {
-	case PreOrderTraversal:
+	case PreOrder:
 		return visit(n) &&
 			t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit)
-	case InOrderTraversal:
+	case InOrder:
 		return t._traverse(n.left, order, visit) &&
 			visit(n) &&
 			t._traverse(n.right, order, visit)
-	case PostOrderTraversal:
+	case PostOrder:
 		return t._traverse(n.left, order, visit) &&
 			t._traverse(n.right, order, visit) &&
 			visit(n)
@@ -519,9 +519,9 @@ func (t *avl) _traverse(n *avlNode, order int, visit func(*avlNode) bool) bool {
 	}
 }
 
-// Traverse
-func (t *avl) Traverse(order int, visit VisitFunc) {
-	if order != PreOrderTraversal && order != InOrderTraversal && order != PostOrderTraversal {
+// Traverse is used for visiting all key-value pairs in AVL tree.
+func (t *avl) Traverse(order TraverseOrder, visit VisitFunc) {
+	if order != PreOrder && order != InOrder && order != PostOrder {
 		return
 	}
 
@@ -535,7 +535,7 @@ func (t *avl) Graphviz() string {
 	var parent, left, right, label string
 	graph := graphviz.NewGraph(true, true, "AVL", "", "", "", graphviz.ShapeOval)
 
-	t._traverse(t.root, PreOrderTraversal, func(n *avlNode) bool {
+	t._traverse(t.root, PreOrder, func(n *avlNode) bool {
 		parent = fmt.Sprintf("%v", n.key)
 		label = fmt.Sprintf("%v,%v", n.key, n.value)
 		graph.AddNode(graphviz.NewNode(parent, "", label, "", "", "", "", ""))

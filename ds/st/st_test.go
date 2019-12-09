@@ -335,7 +335,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable, test ordere
 
 		// Pre-Order Traversal
 		i = 0
-		ost.Traverse(PreOrderTraversal, func(key, value interface{}) bool {
+		ost.Traverse(PreOrder, func(key, value interface{}) bool {
 			assert.Equal(t, test.expectedPreOrderTraverse[i].key, key)
 			assert.Equal(t, test.expectedPreOrderTraverse[i].value, value)
 			i++
@@ -344,7 +344,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable, test ordere
 
 		// In-Order Traversal
 		i = 0
-		ost.Traverse(InOrderTraversal, func(key, value interface{}) bool {
+		ost.Traverse(InOrder, func(key, value interface{}) bool {
 			assert.Equal(t, test.expectedInOrderTraverse[i].key, key)
 			assert.Equal(t, test.expectedInOrderTraverse[i].value, value)
 			i++
@@ -353,7 +353,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable, test ordere
 
 		// Post-Order Traversal
 		i = 0
-		ost.Traverse(PostOrderTraversal, func(key, value interface{}) bool {
+		ost.Traverse(PostOrder, func(key, value interface{}) bool {
 			assert.Equal(t, test.expectedPostOrderTraverse[i].key, key)
 			assert.Equal(t, test.expectedPostOrderTraverse[i].value, value)
 			i++
