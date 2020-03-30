@@ -17,7 +17,7 @@ A collection of common algorithms and data structures for Go applications.
 | `make coverage`  | Run unit tests and generate coverage report |
 
 
-[godoc-url]: https://godoc.org/github.com/moorara/algo
+[godoc-url]: https://pkg.go.dev/github.com/moorara/algo
 [godoc-image]: https://godoc.org/github.com/moorara/algo?status.svg
 [workflow-url]: https://github.com/moorara/algo/actions
 [workflow-image]: https://github.com/moorara/algo/workflows/Main/badge.svg
