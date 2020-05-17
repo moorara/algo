@@ -39,80 +39,80 @@ func BenchmarkSort(b *testing.B) {
 		}
 	})
 
-	b.Run("HeapSort", func(b *testing.B) {
+	b.Run("Heap", func(b *testing.B) {
 		rand.Seed(seed)
 		items := genIntSlice(size, minInt, maxInt)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
-			HeapSort(items, compareInt)
+			Heap(items, compareInt)
 		}
 	})
 
-	b.Run("InsertionSort", func(b *testing.B) {
+	b.Run("Insertion", func(b *testing.B) {
 		rand.Seed(seed)
 		items := genIntSlice(size, minInt, maxInt)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
-			InsertionSort(items, compareInt)
+			Insertion(items, compareInt)
 		}
 	})
 
-	b.Run("MergeSort", func(b *testing.B) {
+	b.Run("Merge", func(b *testing.B) {
 		rand.Seed(seed)
 		items := genIntSlice(size, minInt, maxInt)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
-			MergeSort(items, compareInt)
+			Merge(items, compareInt)
 		}
 	})
 
-	b.Run("MergeSortRec", func(b *testing.B) {
+	b.Run("MergeRec", func(b *testing.B) {
 		rand.Seed(seed)
 		items := genIntSlice(size, minInt, maxInt)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
-			MergeSortRec(items, compareInt)
+			MergeRec(items, compareInt)
 		}
 	})
 
-	b.Run("QuickSort", func(b *testing.B) {
+	b.Run("Quick", func(b *testing.B) {
 		rand.Seed(seed)
 		items := genIntSlice(size, minInt, maxInt)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
-			QuickSort(items, compareInt)
+			Quick(items, compareInt)
 		}
 	})
 
-	b.Run("QuickSort3Way", func(b *testing.B) {
+	b.Run("Quick3Way", func(b *testing.B) {
 		rand.Seed(seed)
 		items := genIntSlice(size, minInt, maxInt)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
-			QuickSort3Way(items, compareInt)
+			Quick3Way(items, compareInt)
 		}
 	})
 
-	b.Run("ShellSort", func(b *testing.B) {
+	b.Run("Shell", func(b *testing.B) {
 		rand.Seed(seed)
 		items := genIntSlice(size, minInt, maxInt)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
-			ShellSort(items, compareInt)
+			Shell(items, compareInt)
 		}
 	})
 }

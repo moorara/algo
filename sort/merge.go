@@ -28,8 +28,8 @@ func merge(a, aux []interface{}, lo, mid, hi int, cmp CompareFunc) {
 	}
 }
 
-// MergeSort implements the iterative version of merge sort algorithm.
-func MergeSort(a []interface{}, cmp CompareFunc) {
+// Merge implements the iterative version of merge sort algorithm.
+func Merge(a []interface{}, cmp CompareFunc) {
 	n := len(a)
 	aux := make([]interface{}, n)
 	for sz := 1; sz < n; sz += sz {
@@ -39,24 +39,24 @@ func MergeSort(a []interface{}, cmp CompareFunc) {
 	}
 }
 
-func mergeSortRec(a, aux []interface{}, lo, hi int, cmp CompareFunc) {
+func mergeRec(a, aux []interface{}, lo, hi int, cmp CompareFunc) {
 	if hi <= lo {
 		return
 	}
 
 	mid := lo + (hi-lo)/2
-	mergeSortRec(a, aux, lo, mid, cmp)
-	mergeSortRec(a, aux, mid+1, hi, cmp)
+	mergeRec(a, aux, lo, mid, cmp)
+	mergeRec(a, aux, mid+1, hi, cmp)
 	if cmp(a[mid+1], a[mid]) >= 0 {
 		return
 	}
 	merge(a, aux, lo, mid, hi, cmp)
 }
 
-// MergeSortRec implements the recursive version of merge sort algorithm.
-func MergeSortRec(a []interface{}, cmp CompareFunc) {
+// MergeRec implements the recursive version of merge sort algorithm.
+func MergeRec(a []interface{}, cmp CompareFunc) {
 	n := len(a)
 	aux := make([]interface{}, n)
 
-	mergeSortRec(a, aux, 0, n-1, cmp)
+	mergeRec(a, aux, 0, n-1, cmp)
 }

@@ -1,10 +1,8 @@
 package sort
 
-import (
-	"testing"
-)
+import "testing"
 
-func TestShellInt(t *testing.T) {
+func TestSelectionInt(t *testing.T) {
 	tests := []struct {
 		items []interface{}
 	}{
@@ -15,7 +13,7 @@ func TestShellInt(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Shell(tc.items, compareInt)
+		Selection(tc.items, compareInt)
 
 		if !sorted(tc.items, compareInt) {
 			t.Fatalf("%v is not sorted.", tc.items)
@@ -23,7 +21,7 @@ func TestShellInt(t *testing.T) {
 	}
 }
 
-func TestShellString(t *testing.T) {
+func TestSelectionString(t *testing.T) {
 	tests := []struct {
 		items []interface{}
 	}{
@@ -34,7 +32,7 @@ func TestShellString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Shell(tc.items, compareString)
+		Selection(tc.items, compareString)
 
 		if !sorted(tc.items, compareString) {
 			t.Fatalf("%v is not sorted.", tc.items)

@@ -4,8 +4,6 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestShuffle(t *testing.T) {
@@ -19,10 +17,6 @@ func TestShuffle(t *testing.T) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	for _, tc := range tests {
-		orig := make([]interface{}, len(tc.items))
-		copy(orig, tc.items)
 		Shuffle(tc.items)
-
-		assert.NotEqual(t, orig, tc.items)
 	}
 }

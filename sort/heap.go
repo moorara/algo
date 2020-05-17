@@ -14,7 +14,7 @@ func sink(a []interface{}, k, n int, cmp CompareFunc) {
 	}
 }
 
-func heapSort(a []interface{}, cmp CompareFunc) {
+func heap(a []interface{}, cmp CompareFunc) {
 	n := len(a) - 1
 
 	// build max-heap bottom-up
@@ -30,10 +30,10 @@ func heapSort(a []interface{}, cmp CompareFunc) {
 	}
 }
 
-// HeapSort implements the heap sort algorithm.
-func HeapSort(a []interface{}, cmp CompareFunc) {
+// Heap implements the heap sort algorithm.
+func Heap(a []interface{}, cmp CompareFunc) {
 	// Heap elements need to start from position 1
 	aux := append([]interface{}{nil}, a...)
-	heapSort(aux, cmp)
+	heap(aux, cmp)
 	copy(a, aux[1:])
 }
