@@ -1,75 +1,79 @@
 package sort
 
-import (
-	"testing"
+import "testing"
 
-	"github.com/stretchr/testify/assert"
-)
-
-func TestMergeSortInt(t *testing.T) {
+func TestMergeInt(t *testing.T) {
 	tests := []struct {
-		compare CompareFunc
-		items   []interface{}
+		items []interface{}
 	}{
-		{compareInt, []interface{}{}},
-		{compareInt, []interface{}{20, 10, 30}},
-		{compareInt, []interface{}{30, 20, 10, 40, 50}},
-		{compareInt, []interface{}{90, 80, 70, 60, 50, 40, 30, 20, 10}},
+		{[]interface{}{}},
+		{[]interface{}{20, 10, 30}},
+		{[]interface{}{30, 20, 10, 40, 50}},
+		{[]interface{}{90, 80, 70, 60, 50, 40, 30, 20, 10}},
 	}
 
 	for _, tc := range tests {
-		MergeSort(tc.items, tc.compare)
-		assert.True(t, sorted(tc.items, tc.compare))
+		Merge(tc.items, compareInt)
+
+		if !sorted(tc.items, compareInt) {
+			t.Fatalf("%v is not sorted.", tc.items)
+		}
 	}
 }
 
-func TestMergeSortString(t *testing.T) {
+func TestMergeString(t *testing.T) {
 	tests := []struct {
-		compare CompareFunc
-		items   []interface{}
+		items []interface{}
 	}{
-		{compareString, []interface{}{}},
-		{compareString, []interface{}{"Milad", "Mona"}},
-		{compareString, []interface{}{"Alice", "Bob", "Alex", "Jackie"}},
-		{compareString, []interface{}{"Docker", "Kubernetes", "Go", "JavaScript", "Elixir", "React", "Redux", "Vue"}},
+		{[]interface{}{}},
+		{[]interface{}{"Milad", "Mona"}},
+		{[]interface{}{"Alice", "Bob", "Alex", "Jackie"}},
+		{[]interface{}{"Docker", "Kubernetes", "Go", "JavaScript", "Elixir", "React", "Redux", "Vue"}},
 	}
 
 	for _, tc := range tests {
-		MergeSort(tc.items, tc.compare)
-		assert.True(t, sorted(tc.items, tc.compare))
+		Merge(tc.items, compareString)
+
+		if !sorted(tc.items, compareString) {
+			t.Fatalf("%v is not sorted.", tc.items)
+		}
 	}
 }
 
-func TestMergeSortRecInt(t *testing.T) {
+func TestMergeRecInt(t *testing.T) {
 	tests := []struct {
-		compare CompareFunc
-		items   []interface{}
+		items []interface{}
 	}{
-		{compareInt, []interface{}{}},
-		{compareInt, []interface{}{20, 10, 30}},
-		{compareInt, []interface{}{30, 20, 10, 40, 50}},
-		{compareInt, []interface{}{90, 80, 70, 60, 50, 40, 30, 20, 10}},
+		{[]interface{}{}},
+		{[]interface{}{20, 10, 30}},
+		{[]interface{}{30, 20, 10, 40, 50}},
+		{[]interface{}{90, 80, 70, 60, 50, 40, 30, 20, 10}},
 	}
 
 	for _, tc := range tests {
-		MergeSortRec(tc.items, tc.compare)
-		assert.True(t, sorted(tc.items, tc.compare))
+		MergeRec(tc.items, compareInt)
+
+		if !sorted(tc.items, compareInt) {
+			t.Fatalf("%v is not sorted.", tc.items)
+		}
 	}
 }
 
-func TestMergeSortRecString(t *testing.T) {
+func TestMergeRecString(t *testing.T) {
 	tests := []struct {
-		compare CompareFunc
-		items   []interface{}
+		items []interface{}
 	}{
-		{compareString, []interface{}{}},
-		{compareString, []interface{}{"Milad", "Mona"}},
-		{compareString, []interface{}{"Alice", "Bob", "Alex", "Jackie"}},
-		{compareString, []interface{}{"Docker", "Kubernetes", "Go", "JavaScript", "Elixir", "React", "Redux", "Vue"}},
+		{[]interface{}{}},
+		{[]interface{}{"Milad", "Mona"}},
+		{[]interface{}{"Alice", "Bob", "Alex", "Jackie"}},
+		{[]interface{}{"Docker", "Kubernetes", "Go", "JavaScript", "Elixir", "React", "Redux", "Vue"}},
 	}
 
 	for _, tc := range tests {
-		MergeSortRec(tc.items, tc.compare)
-		assert.True(t, sorted(tc.items, tc.compare))
+		MergeRec(tc.items, compareString)
+
+		if !sorted(tc.items, compareString) {
+			t.Fatalf("%v is not sorted.", tc.items)
+		}
 	}
 }

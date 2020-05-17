@@ -38,23 +38,23 @@ func Select(a []interface{}, k int, compare CompareFunc) interface{} {
 	return a[k]
 }
 
-func quickSort(a []interface{}, lo, hi int, compare CompareFunc) {
+func quick(a []interface{}, lo, hi int, compare CompareFunc) {
 	if lo >= hi {
 		return
 	}
 
 	j := partition(a, lo, hi, compare)
-	quickSort(a, lo, j-1, compare)
-	quickSort(a, j+1, hi, compare)
+	quick(a, lo, j-1, compare)
+	quick(a, j+1, hi, compare)
 }
 
-// QuickSort implements the quick sort algorithm.
-func QuickSort(a []interface{}, compare CompareFunc) {
+// Quick implements the quick sort algorithm.
+func Quick(a []interface{}, compare CompareFunc) {
 	Shuffle(a)
-	quickSort(a, 0, len(a)-1, compare)
+	quick(a, 0, len(a)-1, compare)
 }
 
-func quickSort3Way(a []interface{}, lo, hi int, compare CompareFunc) {
+func quick3Way(a []interface{}, lo, hi int, compare CompareFunc) {
 	if lo >= hi {
 		return
 	}
@@ -77,11 +77,11 @@ func quickSort3Way(a []interface{}, lo, hi int, compare CompareFunc) {
 		}
 	}
 
-	quickSort3Way(a, lo, lt-1, compare)
-	quickSort3Way(a, gt+1, hi, compare)
+	quick3Way(a, lo, lt-1, compare)
+	quick3Way(a, gt+1, hi, compare)
 }
 
-// QuickSort3Way implements the 3-way version of quick sort algorithm.
-func QuickSort3Way(a []interface{}, compare CompareFunc) {
-	quickSort3Way(a, 0, len(a)-1, compare)
+// Quick3Way implements the 3-way version of quick sort algorithm.
+func Quick3Way(a []interface{}, compare CompareFunc) {
+	quick3Way(a, 0, len(a)-1, compare)
 }

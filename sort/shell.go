@@ -1,7 +1,7 @@
 package sort
 
-// ShellSort implements the shell sort algorithm.
-func ShellSort(a []interface{}, cmp CompareFunc) {
+// Shell implements the shell sort algorithm.
+func Shell(a []interface{}, cmp CompareFunc) {
 	n := len(a)
 	h := 1
 	for h < n/3 {

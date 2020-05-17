@@ -1,41 +1,41 @@
 package sort
 
-import (
-	"testing"
+import "testing"
 
-	"github.com/stretchr/testify/assert"
-)
-
-func TestInsertionSortInt(t *testing.T) {
+func TestInsertionInt(t *testing.T) {
 	tests := []struct {
-		compare CompareFunc
-		items   []interface{}
+		items []interface{}
 	}{
-		{compareInt, []interface{}{}},
-		{compareInt, []interface{}{20, 10, 30}},
-		{compareInt, []interface{}{30, 20, 10, 40, 50}},
-		{compareInt, []interface{}{90, 80, 70, 60, 50, 40, 30, 20, 10}},
+		{[]interface{}{}},
+		{[]interface{}{20, 10, 30}},
+		{[]interface{}{30, 20, 10, 40, 50}},
+		{[]interface{}{90, 80, 70, 60, 50, 40, 30, 20, 10}},
 	}
 
 	for _, tc := range tests {
-		InsertionSort(tc.items, tc.compare)
-		assert.True(t, sorted(tc.items, tc.compare))
+		Insertion(tc.items, compareInt)
+
+		if !sorted(tc.items, compareInt) {
+			t.Fatalf("%v is not sorted.", tc.items)
+		}
 	}
 }
 
-func TestInsertionSortString(t *testing.T) {
+func TestInsertionString(t *testing.T) {
 	tests := []struct {
-		compare CompareFunc
-		items   []interface{}
+		items []interface{}
 	}{
-		{compareString, []interface{}{}},
-		{compareString, []interface{}{"Milad", "Mona"}},
-		{compareString, []interface{}{"Alice", "Bob", "Alex", "Jackie"}},
-		{compareString, []interface{}{"Docker", "Kubernetes", "Go", "JavaScript", "Elixir", "React", "Redux", "Vue"}},
+		{[]interface{}{}},
+		{[]interface{}{"Milad", "Mona"}},
+		{[]interface{}{"Alice", "Bob", "Alex", "Jackie"}},
+		{[]interface{}{"Docker", "Kubernetes", "Go", "JavaScript", "Elixir", "React", "Redux", "Vue"}},
 	}
 
 	for _, tc := range tests {
-		InsertionSort(tc.items, tc.compare)
-		assert.True(t, sorted(tc.items, tc.compare))
+		Insertion(tc.items, compareString)
+
+		if !sorted(tc.items, compareString) {
+			t.Fatalf("%v is not sorted.", tc.items)
+		}
 	}
 }
