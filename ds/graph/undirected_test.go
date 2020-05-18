@@ -63,9 +63,20 @@ func TestUndirected(t *testing.T) {
 			},
 			traverseTests: []traverseTest{
 				{
+					name:           "InvalidVertex",
+					start:          -1,
+					expectedVisits: []int{},
+				},
+				{
 					name:           "InvalidStrategy",
 					start:          0,
 					strategy:       -1,
+					expectedVisits: []int{},
+				},
+				{
+					name:           "InvalidOrder",
+					start:          0,
+					strategy:       DFS,
 					order:          -1,
 					expectedVisits: []int{},
 				},
@@ -84,20 +95,6 @@ func TestUndirected(t *testing.T) {
 					expectedVisits: []int{1, 2, 6, 4, 3, 5, 0},
 				},
 				{
-					name:           "InvalidVertexDFS",
-					start:          -1,
-					strategy:       DFS,
-					order:          PreOrder,
-					expectedVisits: []int{},
-				},
-				{
-					name:           "InvalidOrderDFS",
-					start:          0,
-					strategy:       DFS,
-					order:          -1,
-					expectedVisits: []int{},
-				},
-				{
 					name:           "PreOrderDFSIterative",
 					start:          0,
 					strategy:       DFSIterative,
@@ -112,20 +109,6 @@ func TestUndirected(t *testing.T) {
 					expectedVisits: []int{0, 6, 4, 3, 5, 2, 1},
 				},
 				{
-					name:           "InvalidVertexDFSIterative",
-					start:          -1,
-					strategy:       DFSIterative,
-					order:          PreOrder,
-					expectedVisits: []int{},
-				},
-				{
-					name:           "InvalidOrderDFSIterative",
-					start:          0,
-					strategy:       DFSIterative,
-					order:          -1,
-					expectedVisits: []int{},
-				},
-				{
 					name:           "PreOrderBFS",
 					start:          0,
 					strategy:       BFS,
@@ -138,20 +121,6 @@ func TestUndirected(t *testing.T) {
 					strategy:       BFS,
 					order:          PostOrder,
 					expectedVisits: []int{0, 1, 2, 5, 6, 3, 4},
-				},
-				{
-					name:           "InvalidVertexBFS",
-					start:          -1,
-					strategy:       BFS,
-					order:          PreOrder,
-					expectedVisits: []int{},
-				},
-				{
-					name:           "InvalidOrderBFS",
-					start:          0,
-					strategy:       BFS,
-					order:          -1,
-					expectedVisits: []int{},
 				},
 			},
 		},

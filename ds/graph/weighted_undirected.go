@@ -3,6 +3,7 @@ package graph
 import (
 	"fmt"
 
+	"github.com/moorara/algo/ds/list"
 	"github.com/moorara/algo/pkg/graphviz"
 )
 
@@ -110,6 +111,112 @@ func (g *WeightedUndirected) Edges() []UndirectedEdge {
 	}
 
 	return edges
+}
+
+// DFS Traversal (Recursion)
+func (g *WeightedUndirected) _traverseDFS(visited []bool, v int, order TraverseOrder, visitVertex VertexVisitor) {
+	visited[v] = true
+
+	if order == PreOrder {
+		visitVertex(v)
+	}
+
+	for _, e := range g.adj[v] {
+		w := e.Other(v)
+		if !visited[w] {
+			g._traverseDFS(visited, w, order, visitVertex)
+		}
+	}
+
+	if order == PostOrder {
+		visitVertex(v)
+	}
+}
+
+// DFS Traversal (Driver)
+func (g *WeightedUndirected) traverseDFS(s int, order TraverseOrder, visitVertex VertexVisitor) {
+	visited := make([]bool, g.V())
+	g._traverseDFS(visited, s, order, visitVertex)
+}
+
+// Iterative DFS Traversal
+func (g *WeightedUndirected) traverseDFSIterative(s int, order TraverseOrder, visitVertex VertexVisitor) {
+	visited := make([]bool, g.V())
+	stack := list.NewStack(listNodeSize)
+
+	visited[s] = true
+	stack.Push(s)
+	if order == PreOrder {
+		visitVertex(s)
+	}
+
+	for !stack.IsEmpty() {
+		v := stack.Pop().(int)
+		if order == PostOrder {
+			visitVertex(v)
+		}
+
+		for _, e := range g.adj[v] {
+			w := e.Other(v)
+			if !visited[w] {
+				visited[w] = true
+				stack.Push(w)
+				if order == PreOrder {
+					visitVertex(w)
+				}
+			}
+		}
+	}
+}
+
+// BFS Traversal
+func (g *WeightedUndirected) traverseBFS(s int, order TraverseOrder, visitVertex VertexVisitor) {
+	visited := make([]bool, g.V())
+	queue := list.NewQueue(listNodeSize)
+
+	visited[s] = true
+	queue.Enqueue(s)
+	if order == PreOrder {
+		visitVertex(s)
+	}
+
+	for !queue.IsEmpty() {
+		v := queue.Dequeue().(int)
+		if order == PostOrder {
+			visitVertex(v)
+		}
+
+		for _, e := range g.adj[v] {
+			w := e.Other(v)
+			if !visited[w] {
+				visited[w] = true
+				queue.Enqueue(w)
+				if order == PreOrder {
+					visitVertex(w)
+				}
+			}
+		}
+	}
+}
+
+// Traverse is used for visiting all vertices in graph.
+func (g *WeightedUndirected) Traverse(s int, strategy TraverseStrategy, order TraverseOrder, visitVertex VertexVisitor) {
+	if !g.isVertexValid(s) {
+		return
+	}
+
+	if order != PreOrder && order != PostOrder {
+		return
+	}
+
+	switch strategy {
+	case DFS:
+		g.traverseDFS(s, order, visitVertex)
+	case DFSIterative:
+		g.traverseDFSIterative(s, order, visitVertex)
+	case BFS:
+		g.traverseBFS(s, order, visitVertex)
+	}
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.
