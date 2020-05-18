@@ -129,46 +129,46 @@ func (g *WeightedDirected) Reverse() *WeightedDirected {
 }
 
 // DFS Traversal (Recursion)
-func (g *WeightedDirected) _traverseDFS(visited []bool, v int, order TraverseOrder, visitVertex VertexVisitor) {
+func (g *WeightedDirected) _traverseDFS(visited []bool, v int, order TraverseOrder, visitor *Visitor) {
 	visited[v] = true
 
-	if order == PreOrder {
-		visitVertex(v)
+	if order == PreOrder && visitor != nil && visitor.VisitVertex != nil {
+		visitor.VisitVertex(v)
 	}
 
 	for _, e := range g.adj[v] {
 		w := e.To()
 		if !visited[w] {
-			g._traverseDFS(visited, w, order, visitVertex)
+			g._traverseDFS(visited, w, order, visitor)
 		}
 	}
 
-	if order == PostOrder {
-		visitVertex(v)
+	if order == PostOrder && visitor != nil && visitor.VisitVertex != nil {
+		visitor.VisitVertex(v)
 	}
 }
 
 // DFS Traversal (Driver)
-func (g *WeightedDirected) traverseDFS(s int, order TraverseOrder, visitVertex VertexVisitor) {
+func (g *WeightedDirected) traverseDFS(s int, order TraverseOrder, visitor *Visitor) {
 	visited := make([]bool, g.V())
-	g._traverseDFS(visited, s, order, visitVertex)
+	g._traverseDFS(visited, s, order, visitor)
 }
 
 // Iterative DFS Traversal
-func (g *WeightedDirected) traverseDFSIterative(s int, order TraverseOrder, visitVertex VertexVisitor) {
+func (g *WeightedDirected) traverseDFSIterative(s int, order TraverseOrder, visitor *Visitor) {
 	visited := make([]bool, g.V())
 	stack := list.NewStack(listNodeSize)
 
 	visited[s] = true
 	stack.Push(s)
-	if order == PreOrder {
-		visitVertex(s)
+	if order == PreOrder && visitor != nil && visitor.VisitVertex != nil {
+		visitor.VisitVertex(s)
 	}
 
 	for !stack.IsEmpty() {
 		v := stack.Pop().(int)
-		if order == PostOrder {
-			visitVertex(v)
+		if order == PostOrder && visitor != nil && visitor.VisitVertex != nil {
+			visitor.VisitVertex(v)
 		}
 
 		for _, e := range g.adj[v] {
@@ -176,8 +176,8 @@ func (g *WeightedDirected) traverseDFSIterative(s int, order TraverseOrder, visi
 			if !visited[w] {
 				visited[w] = true
 				stack.Push(w)
-				if order == PreOrder {
-					visitVertex(w)
+				if order == PreOrder && visitor != nil && visitor.VisitVertex != nil {
+					visitor.VisitVertex(w)
 				}
 			}
 		}
@@ -185,20 +185,20 @@ func (g *WeightedDirected) traverseDFSIterative(s int, order TraverseOrder, visi
 }
 
 // BFS Traversal
-func (g *WeightedDirected) traverseBFS(s int, order TraverseOrder, visitVertex VertexVisitor) {
+func (g *WeightedDirected) traverseBFS(s int, order TraverseOrder, visitor *Visitor) {
 	visited := make([]bool, g.V())
 	queue := list.NewQueue(listNodeSize)
 
 	visited[s] = true
 	queue.Enqueue(s)
-	if order == PreOrder {
-		visitVertex(s)
+	if order == PreOrder && visitor != nil && visitor.VisitVertex != nil {
+		visitor.VisitVertex(s)
 	}
 
 	for !queue.IsEmpty() {
 		v := queue.Dequeue().(int)
-		if order == PostOrder {
-			visitVertex(v)
+		if order == PostOrder && visitor != nil && visitor.VisitVertex != nil {
+			visitor.VisitVertex(v)
 		}
 
 		for _, e := range g.adj[v] {
@@ -206,8 +206,8 @@ func (g *WeightedDirected) traverseBFS(s int, order TraverseOrder, visitVertex V
 			if !visited[w] {
 				visited[w] = true
 				queue.Enqueue(w)
-				if order == PreOrder {
-					visitVertex(w)
+				if order == PreOrder && visitor != nil && visitor.VisitVertex != nil {
+					visitor.VisitVertex(w)
 				}
 			}
 		}
@@ -215,7 +215,7 @@ func (g *WeightedDirected) traverseBFS(s int, order TraverseOrder, visitVertex V
 }
 
 // Traverse is used for visiting all vertices in graph.
-func (g *WeightedDirected) Traverse(s int, strategy TraverseStrategy, order TraverseOrder, visitVertex VertexVisitor) {
+func (g *WeightedDirected) Traverse(s int, strategy TraverseStrategy, order TraverseOrder, visitor *Visitor) {
 	if !g.isVertexValid(s) {
 		return
 	}
@@ -226,11 +226,11 @@ func (g *WeightedDirected) Traverse(s int, strategy TraverseStrategy, order Trav
 
 	switch strategy {
 	case DFS:
-		g.traverseDFS(s, order, visitVertex)
+		g.traverseDFS(s, order, visitor)
 	case DFSIterative:
-		g.traverseDFSIterative(s, order, visitVertex)
+		g.traverseDFSIterative(s, order, visitor)
 	case BFS:
-		g.traverseBFS(s, order, visitVertex)
+		g.traverseBFS(s, order, visitor)
 	}
 }
 

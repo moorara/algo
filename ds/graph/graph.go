@@ -33,13 +33,12 @@ const (
 	PostOrder
 )
 
-type (
-	// VertexVisitor is a function for visiting graph vertices.
-	VertexVisitor func(int)
-
-	// EdgeVisitor is a function for visiting graph edges (undirected and directed).
-	EdgeVisitor func(int, int)
-
-	// WeightedEdgeVisitor is a function for visiting weighted graph edges (undirected and directed).
-	WeightedEdgeVisitor func(int, int, float64)
-)
+// Visitor provides methods for visiting vertices and edges when traversing a graph.
+//   VisitVertex is called when visiting a vertex in a graph (undirected, directed, weighted-undirected, and weighted-directed).
+//   VisitEdge is called when visiting an edge in a graph (undirected and directed).
+//   VisitWeightedEdge is called when visiting an edge in a graph (weighted-undirected and weighted-directed).
+type Visitor struct {
+	VisitVertex       func(int)
+	VisitEdge         func(int, int)
+	VisitWeightedEdge func(int, int, float64)
+}

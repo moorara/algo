@@ -229,8 +229,10 @@ func TestWeightedGraph(t *testing.T) {
 			for _, traverse := range tc.traverseTests {
 				t.Run(traverse.name, func(t *testing.T) {
 					visited := make([]int, 0)
-					g.Traverse(traverse.start, traverse.strategy, traverse.order, func(v int) {
-						visited = append(visited, v)
+					g.Traverse(traverse.start, traverse.strategy, traverse.order, &Visitor{
+						VisitVertex: func(v int) {
+							visited = append(visited, v)
+						},
 					})
 					assert.Equal(t, traverse.expectedVisits, visited)
 				})
