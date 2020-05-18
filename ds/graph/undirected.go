@@ -26,15 +26,11 @@ func NewUndirected(V int, edges ...[2]int) *Undirected {
 		adj: adj,
 	}
 
-	for _, edge := range edges {
-		g.AddEdge(edge[0], edge[1])
+	for _, e := range edges {
+		g.AddEdge(e[0], e[1])
 	}
 
 	return g
-}
-
-func (g *Undirected) isVertexValid(v int) bool {
-	return v >= 0 && v < g.v
 }
 
 // V returns the number of vertices.
@@ -47,13 +43,24 @@ func (g *Undirected) E() int {
 	return g.e
 }
 
+func (g *Undirected) isVertexValid(v int) bool {
+	return v >= 0 && v < g.v
+}
+
 // Degree returns the degree of a vertext.
 func (g *Undirected) Degree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
-
 	return len(g.adj[v])
+}
+
+// Adj returns the vertices adjacent from vertex.
+func (g *Undirected) Adj(v int) []int {
+	if !g.isVertexValid(v) {
+		return nil
+	}
+	return g.adj[v]
 }
 
 // AddEdge adds a new edge to the graph.
@@ -65,79 +72,54 @@ func (g *Undirected) AddEdge(v, w int) {
 	}
 }
 
-// Adj returns the vertices adjacent from vertex.
-func (g *Undirected) Adj(v int) []int {
-	if !g.isVertexValid(v) {
-		return nil
-	}
-
-	return g.adj[v]
-}
-
 // DFS Traversal (Recursion)
-func (g *Undirected) _traverseDFS(visited []bool, v int, order TraverseOrder, visit VisitFunc) {
+func (g *Undirected) _traverseDFS(visited []bool, v int, order TraverseOrder, visitor *Visitor) {
 	visited[v] = true
 
-	if order == PreOrder {
-		visit(v)
+	if order == PreOrder && visitor != nil && visitor.VisitVertex != nil {
+		visitor.VisitVertex(v)
 	}
 
 	for _, w := range g.adj[v] {
 		if !visited[w] {
-			g._traverseDFS(visited, w, order, visit)
+			g._traverseDFS(visited, w, order, visitor)
 		}
 	}
 
-	if order == PostOrder {
-		visit(v)
+	if order == PostOrder && visitor != nil && visitor.VisitVertex != nil {
+		visitor.VisitVertex(v)
 	}
 }
 
 // DFS Traversal (Driver)
-func (g *Undirected) traverseDFS(s int, order TraverseOrder, visit VisitFunc) {
-	if !g.isVertexValid(s) {
-		return
-	}
-
-	if order != PreOrder && order != PostOrder {
-		return
-	}
-
+func (g *Undirected) traverseDFS(s int, order TraverseOrder, visitor *Visitor) {
 	visited := make([]bool, g.V())
-	g._traverseDFS(visited, s, order, visit)
+	g._traverseDFS(visited, s, order, visitor)
 }
 
 // Iterative DFS Traversal
-func (g *Undirected) traverseDFSIterative(s int, order TraverseOrder, visit VisitFunc) {
-	if !g.isVertexValid(s) {
-		return
-	}
-
-	if order != PreOrder && order != PostOrder {
-		return
-	}
-
+func (g *Undirected) traverseDFSIterative(s int, order TraverseOrder, visitor *Visitor) {
 	visited := make([]bool, g.V())
 	stack := list.NewStack(listNodeSize)
 
 	visited[s] = true
 	stack.Push(s)
-	if order == PreOrder {
-		visit(s)
+	if order == PreOrder && visitor != nil && visitor.VisitVertex != nil {
+		visitor.VisitVertex(s)
 	}
 
 	for !stack.IsEmpty() {
 		v := stack.Pop().(int)
-		if order == PostOrder {
-			visit(v)
+		if order == PostOrder && visitor != nil && visitor.VisitVertex != nil {
+			visitor.VisitVertex(v)
 		}
 
 		for _, w := range g.adj[v] {
 			if !visited[w] {
 				visited[w] = true
 				stack.Push(w)
-				if order == PreOrder {
-					visit(w)
+				if order == PreOrder && visitor != nil && visitor.VisitVertex != nil {
+					visitor.VisitVertex(w)
 				}
 			}
 		}
@@ -145,7 +127,36 @@ func (g *Undirected) traverseDFSIterative(s int, order TraverseOrder, visit Visi
 }
 
 // BFS Traversal
-func (g *Undirected) traverseBFS(s int, order TraverseOrder, visit VisitFunc) {
+func (g *Undirected) traverseBFS(s int, order TraverseOrder, visitor *Visitor) {
+	visited := make([]bool, g.V())
+	queue := list.NewQueue(listNodeSize)
+
+	visited[s] = true
+	queue.Enqueue(s)
+	if order == PreOrder && visitor != nil && visitor.VisitVertex != nil {
+		visitor.VisitVertex(s)
+	}
+
+	for !queue.IsEmpty() {
+		v := queue.Dequeue().(int)
+		if order == PostOrder && visitor != nil && visitor.VisitVertex != nil {
+			visitor.VisitVertex(v)
+		}
+
+		for _, w := range g.adj[v] {
+			if !visited[w] {
+				visited[w] = true
+				queue.Enqueue(w)
+				if order == PreOrder && visitor != nil && visitor.VisitVertex != nil {
+					visitor.VisitVertex(w)
+				}
+			}
+		}
+	}
+}
+
+// Traverse is used for visiting all vertices in graph.
+func (g *Undirected) Traverse(s int, strategy TraverseStrategy, order TraverseOrder, visitor *Visitor) {
 	if !g.isVertexValid(s) {
 		return
 	}
@@ -154,46 +165,13 @@ func (g *Undirected) traverseBFS(s int, order TraverseOrder, visit VisitFunc) {
 		return
 	}
 
-	visited := make([]bool, g.V())
-	queue := list.NewQueue(listNodeSize)
-
-	visited[s] = true
-	queue.Enqueue(s)
-	if order == PreOrder {
-		visit(s)
-	}
-
-	for !queue.IsEmpty() {
-		v := queue.Dequeue().(int)
-		if order == PostOrder {
-			visit(v)
-		}
-
-		for _, w := range g.adj[v] {
-			if !visited[w] {
-				visited[w] = true
-				queue.Enqueue(w)
-				if order == PreOrder {
-					visit(w)
-				}
-			}
-		}
-	}
-}
-
-// Traverse is used for visiting all vertices in graph.
-func (g *Undirected) Traverse(s int, strategy TraverseStrategy, order TraverseOrder, visit VisitFunc) {
-	if strategy != DFS && strategy != DFSIterative && strategy != BFS {
-		return
-	}
-
 	switch strategy {
 	case DFS:
-		g.traverseDFS(s, order, visit)
+		g.traverseDFS(s, order, visitor)
 	case DFSIterative:
-		g.traverseDFSIterative(s, order, visit)
+		g.traverseDFSIterative(s, order, visitor)
 	case BFS:
-		g.traverseBFS(s, order, visit)
+		g.traverseBFS(s, order, visitor)
 	}
 }
 

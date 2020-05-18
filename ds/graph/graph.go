@@ -33,7 +33,12 @@ const (
 	PostOrder
 )
 
-type (
-	// The VisitFunc type is a function for visiting a graph vertex.
-	VisitFunc func(int)
-)
+// Visitor provides methods for visiting vertices and edges when traversing a graph.
+//   VisitVertex is called when visiting a vertex in a graph (undirected, directed, weighted-undirected, and weighted-directed).
+//   VisitEdge is called when visiting an edge in a graph (undirected and directed).
+//   VisitWeightedEdge is called when visiting an edge in a graph (weighted-undirected and weighted-directed).
+type Visitor struct {
+	VisitVertex       func(int)
+	VisitEdge         func(int, int)
+	VisitWeightedEdge func(int, int, float64)
+}

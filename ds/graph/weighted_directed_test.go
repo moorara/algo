@@ -18,7 +18,7 @@ func TestDirectedEdge(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			e := NewDirectedEdge(tc.from, tc.to, tc.weight)
+			e := DirectedEdge{tc.from, tc.to, tc.weight}
 
 			assert.NotEmpty(t, e)
 			assert.Equal(t, tc.from, e.From())
@@ -29,6 +29,14 @@ func TestDirectedEdge(t *testing.T) {
 }
 
 func TestWeightedDirected(t *testing.T) {
+	type traverseTest struct {
+		name           string
+		start          int
+		strategy       TraverseStrategy
+		order          TraverseOrder
+		expectedVisits []int
+	}
+
 	tests := []struct {
 		name               string
 		V                  int
@@ -40,6 +48,7 @@ func TestWeightedDirected(t *testing.T) {
 		expectedAdjacents  [][]DirectedEdge
 		expectedEdges      []DirectedEdge
 		expectedReverse    *WeightedDirected
+		traverseTests      []traverseTest
 	}{
 		{
 			name: "",
@@ -153,6 +162,68 @@ func TestWeightedDirected(t *testing.T) {
 					},
 				},
 			},
+			traverseTests: []traverseTest{
+				{
+					name:           "InvalidVertex",
+					start:          -1,
+					expectedVisits: []int{},
+				},
+				{
+					name:           "InvalidStrategy",
+					start:          0,
+					strategy:       -1,
+					expectedVisits: []int{},
+				},
+				{
+					name:           "InvalidOrderDFS",
+					start:          0,
+					strategy:       DFS,
+					order:          -1,
+					expectedVisits: []int{},
+				},
+				{
+					name:           "PreOrderDFS",
+					start:          0,
+					strategy:       DFS,
+					order:          PreOrder,
+					expectedVisits: []int{0, 2, 7, 3, 6, 4, 5, 1},
+				},
+				{
+					name:           "PostOrderDFS",
+					start:          0,
+					strategy:       DFS,
+					order:          PostOrder,
+					expectedVisits: []int{1, 5, 4, 6, 3, 7, 2, 0},
+				},
+				{
+					name:           "PreOrderDFSIterative",
+					start:          0,
+					strategy:       DFSIterative,
+					order:          PreOrder,
+					expectedVisits: []int{0, 2, 4, 5, 7, 3, 6, 1},
+				},
+				{
+					name:           "PostOrderDFSIterative",
+					start:          0,
+					strategy:       DFSIterative,
+					order:          PostOrder,
+					expectedVisits: []int{0, 4, 7, 3, 6, 5, 1, 2},
+				},
+				{
+					name:           "PreOrderBFS",
+					start:          0,
+					strategy:       BFS,
+					order:          PreOrder,
+					expectedVisits: []int{0, 2, 4, 7, 5, 3, 1, 6},
+				},
+				{
+					name:           "PostOrderBFS",
+					start:          0,
+					strategy:       BFS,
+					order:          PostOrder,
+					expectedVisits: []int{0, 2, 4, 7, 5, 3, 1, 6},
+				},
+			},
 		},
 	}
 
@@ -181,6 +252,19 @@ func TestWeightedDirected(t *testing.T) {
 
 			assert.Equal(t, tc.expectedEdges, g.Edges())
 			assert.Equal(t, tc.expectedReverse, g.Reverse())
+
+			for _, traverse := range tc.traverseTests {
+				t.Run(traverse.name, func(t *testing.T) {
+					visited := make([]int, 0)
+					g.Traverse(traverse.start, traverse.strategy, traverse.order, &Visitor{
+						VisitVertex: func(v int) {
+							visited = append(visited, v)
+						},
+					})
+					assert.Equal(t, traverse.expectedVisits, visited)
+				})
+			}
+
 			assert.NotEmpty(t, g.Graphviz())
 		})
 	}
