@@ -33,5 +33,13 @@ const (
 	PostOrder
 )
 
-// The VisitFunc type is a function for visiting graph vertices.
-type VisitFunc func(int)
+type (
+	// VertexVisitor is a function for visiting graph vertices.
+	VertexVisitor func(int)
+
+	// EdgeVisitor is a function for visiting graph edges (undirected and directed).
+	EdgeVisitor func(int, int)
+
+	// WeightedEdgeVisitor is a function for visiting weighted graph edges (undirected and directed).
+	WeightedEdgeVisitor func(int, int, float64)
+)
