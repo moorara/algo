@@ -33,7 +33,5 @@ const (
 	PostOrder
 )
 
-type (
-	// The VisitFunc type is a function for visiting a graph vertex.
-	VisitFunc func(int)
-)
+// The VisitFunc type is a function for visiting graph vertices.
+type VisitFunc func(int)

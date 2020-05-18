@@ -18,7 +18,7 @@ func TestUndirectedEdge(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			e := NewUndirectedEdge(tc.v, tc.w, tc.weight)
+			e := UndirectedEdge{tc.v, tc.w, tc.weight}
 
 			assert.NotEmpty(t, e)
 			assert.Equal(t, tc.v, e.Either())

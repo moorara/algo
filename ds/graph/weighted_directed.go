@@ -12,15 +12,6 @@ type DirectedEdge struct {
 	weight   float64
 }
 
-// NewDirectedEdge creates a new weighted directed edge.
-func NewDirectedEdge(from, to int, weight float64) DirectedEdge {
-	return DirectedEdge{
-		from:   from,
-		to:     to,
-		weight: weight,
-	}
-}
-
 // From returns the vertex this edge points from.
 func (e DirectedEdge) From() int {
 	return e.from
@@ -57,15 +48,11 @@ func NewWeightedDirected(V int, edges ...DirectedEdge) *WeightedDirected {
 		adj: adj,
 	}
 
-	for _, edge := range edges {
-		g.AddEdge(edge)
+	for _, e := range edges {
+		g.AddEdge(e)
 	}
 
 	return g
-}
-
-func (g *WeightedDirected) isVertexValid(v int) bool {
-	return v >= 0 && v < g.v
 }
 
 // V returns the number of vertices.
@@ -78,12 +65,15 @@ func (g *WeightedDirected) E() int {
 	return g.e
 }
 
+func (g *WeightedDirected) isVertexValid(v int) bool {
+	return v >= 0 && v < g.v
+}
+
 // InDegree returns the number of directed edges incident to a vertex.
 func (g *WeightedDirected) InDegree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
-
 	return g.ins[v]
 }
 
@@ -92,8 +82,15 @@ func (g *WeightedDirected) OutDegree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
-
 	return len(g.adj[v])
+}
+
+// Adj returns the vertices adjacent from vertex.
+func (g *WeightedDirected) Adj(v int) []DirectedEdge {
+	if !g.isVertexValid(v) {
+		return nil
+	}
+	return g.adj[v]
 }
 
 // AddEdge adds a new edge to the graph.
@@ -106,15 +103,6 @@ func (g *WeightedDirected) AddEdge(e DirectedEdge) {
 		g.ins[w]++
 		g.adj[v] = append(g.adj[v], e)
 	}
-}
-
-// Adj returns the vertices adjacent from vertex.
-func (g *WeightedDirected) Adj(v int) []DirectedEdge {
-	if !g.isVertexValid(v) {
-		return nil
-	}
-
-	return g.adj[v]
 }
 
 // Edges returns all directed edges in the graph.
@@ -132,8 +120,7 @@ func (g *WeightedDirected) Reverse() *WeightedDirected {
 	rev := NewWeightedDirected(g.v)
 	for v := 0; v < g.v; v++ {
 		for _, e := range g.adj[v] {
-			edge := NewDirectedEdge(e.To(), e.From(), e.Weight())
-			rev.AddEdge(edge)
+			rev.AddEdge(DirectedEdge{e.To(), e.From(), e.Weight()})
 		}
 	}
 

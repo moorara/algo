@@ -28,15 +28,11 @@ func NewDirected(V int, edges ...[2]int) *Directed {
 		adj: adj,
 	}
 
-	for _, edge := range edges {
-		g.AddEdge(edge[0], edge[1])
+	for _, e := range edges {
+		g.AddEdge(e[0], e[1])
 	}
 
 	return g
-}
-
-func (g *Directed) isVertexValid(v int) bool {
-	return v >= 0 && v < g.v
 }
 
 // V returns the number of vertices.
@@ -49,12 +45,15 @@ func (g *Directed) E() int {
 	return g.e
 }
 
+func (g *Directed) isVertexValid(v int) bool {
+	return v >= 0 && v < g.v
+}
+
 // InDegree returns the number of directed edges incident to a vertex.
 func (g *Directed) InDegree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
-
 	return g.ins[v]
 }
 
@@ -63,8 +62,15 @@ func (g *Directed) OutDegree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
-
 	return len(g.adj[v])
+}
+
+// Adj returns the vertices adjacent from vertex.
+func (g *Directed) Adj(v int) []int {
+	if !g.isVertexValid(v) {
+		return nil
+	}
+	return g.adj[v]
 }
 
 // AddEdge adds a new edge to the graph.
@@ -74,15 +80,6 @@ func (g *Directed) AddEdge(v, w int) {
 		g.ins[w]++
 		g.adj[v] = append(g.adj[v], w)
 	}
-}
-
-// Adj returns the vertices adjacent from vertex.
-func (g *Directed) Adj(v int) []int {
-	if !g.isVertexValid(v) {
-		return nil
-	}
-
-	return g.adj[v]
 }
 
 // Reverse returns the reverse of the directed graph.
@@ -118,28 +115,12 @@ func (g *Directed) _traverseDFS(visited []bool, v int, order TraverseOrder, visi
 
 // DFS Traversal (Driver)
 func (g *Directed) traverseDFS(s int, order TraverseOrder, visit VisitFunc) {
-	if !g.isVertexValid(s) {
-		return
-	}
-
-	if order != PreOrder && order != PostOrder {
-		return
-	}
-
 	visited := make([]bool, g.V())
 	g._traverseDFS(visited, s, order, visit)
 }
 
 // Iterative DFS Traversal
 func (g *Directed) traverseDFSIterative(s int, order TraverseOrder, visit VisitFunc) {
-	if !g.isVertexValid(s) {
-		return
-	}
-
-	if order != PreOrder && order != PostOrder {
-		return
-	}
-
 	visited := make([]bool, g.V())
 	stack := list.NewStack(listNodeSize)
 
@@ -169,14 +150,6 @@ func (g *Directed) traverseDFSIterative(s int, order TraverseOrder, visit VisitF
 
 // BFS Traversal
 func (g *Directed) traverseBFS(s int, order TraverseOrder, visit VisitFunc) {
-	if !g.isVertexValid(s) {
-		return
-	}
-
-	if order != PreOrder && order != PostOrder {
-		return
-	}
-
 	visited := make([]bool, g.V())
 	queue := list.NewQueue(listNodeSize)
 
@@ -206,7 +179,11 @@ func (g *Directed) traverseBFS(s int, order TraverseOrder, visit VisitFunc) {
 
 // Traverse is used for visiting all vertices in graph.
 func (g *Directed) Traverse(s int, strategy TraverseStrategy, order TraverseOrder, visit VisitFunc) {
-	if strategy != DFS && strategy != DFSIterative && strategy != BFS {
+	if !g.isVertexValid(s) {
+		return
+	}
+
+	if order != PreOrder && order != PostOrder {
 		return
 	}
 

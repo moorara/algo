@@ -18,7 +18,7 @@ func TestDirectedEdge(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			e := NewDirectedEdge(tc.from, tc.to, tc.weight)
+			e := DirectedEdge{tc.from, tc.to, tc.weight}
 
 			assert.NotEmpty(t, e)
 			assert.Equal(t, tc.from, e.From())

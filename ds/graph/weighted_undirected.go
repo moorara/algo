@@ -12,15 +12,6 @@ type UndirectedEdge struct {
 	weight float64
 }
 
-// NewUndirectedEdge creates a new weighted undirected edge.
-func NewUndirectedEdge(v, w int, weight float64) UndirectedEdge {
-	return UndirectedEdge{
-		v:      v,
-		w:      w,
-		weight: weight,
-	}
-}
-
 // Either returns either of this edge's vertices.
 func (e UndirectedEdge) Either() int {
 	return e.v
@@ -58,15 +49,11 @@ func NewWeightedUndirected(V int, edges ...UndirectedEdge) *WeightedUndirected {
 		adj: adj,
 	}
 
-	for _, edge := range edges {
-		g.AddEdge(edge)
+	for _, e := range edges {
+		g.AddEdge(e)
 	}
 
 	return g
-}
-
-func (g *WeightedUndirected) isVertexValid(v int) bool {
-	return v >= 0 && v < g.v
 }
 
 // V returns the number of vertices.
@@ -79,13 +66,24 @@ func (g *WeightedUndirected) E() int {
 	return g.e
 }
 
+func (g *WeightedUndirected) isVertexValid(v int) bool {
+	return v >= 0 && v < g.v
+}
+
 // Degree returns the degree of a vertext.
 func (g *WeightedUndirected) Degree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
-
 	return len(g.adj[v])
+}
+
+// Adj returns the vertices adjacent from vertex.
+func (g *WeightedUndirected) Adj(v int) []UndirectedEdge {
+	if !g.isVertexValid(v) {
+		return nil
+	}
+	return g.adj[v]
 }
 
 // AddEdge adds a new edge to the graph.
@@ -100,21 +98,12 @@ func (g *WeightedUndirected) AddEdge(e UndirectedEdge) {
 	}
 }
 
-// Adj returns the vertices adjacent from vertex.
-func (g *WeightedUndirected) Adj(v int) []UndirectedEdge {
-	if !g.isVertexValid(v) {
-		return nil
-	}
-
-	return g.adj[v]
-}
-
 // Edges returns all edges in the graph.
 func (g *WeightedUndirected) Edges() []UndirectedEdge {
 	edges := make([]UndirectedEdge, 0)
 	for v := range g.adj {
 		for _, e := range g.adj[v] {
-			if e.Other(v) > v {
+			if e.Other(v) > v { // Consider every edge only once
 				edges = append(edges, e)
 			}
 		}
