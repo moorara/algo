@@ -30,24 +30,33 @@ func TestUndirectedEdge(t *testing.T) {
 }
 
 func TestWeightedGraph(t *testing.T) {
-	type traverseTest struct {
-		name           string
-		start          int
-		strategy       TraverseStrategy
-		order          TraverseOrder
-		expectedVisits []int
+	type traverseVerticesTest struct {
+		name                 string
+		source               int
+		strategy             TraversalStrategy
+		order                TraversalOrder
+		expectedVertexVisits []int
+	}
+
+	type traverseEdgesTest struct {
+		name                 string
+		source               int
+		strategy             TraversalStrategy
+		expectedEdgeVisits   [][2]int
+		expectedWeightVisits []float64
 	}
 
 	tests := []struct {
-		name              string
-		V                 int
-		edges             []UndirectedEdge
-		expectedV         int
-		expectedE         int
-		expectedDegrees   []int
-		expectedAdjacents [][]UndirectedEdge
-		expectedEdges     []UndirectedEdge
-		traverseTests     []traverseTest
+		name                  string
+		V                     int
+		edges                 []UndirectedEdge
+		expectedV             int
+		expectedE             int
+		expectedDegrees       []int
+		expectedAdjacents     [][]UndirectedEdge
+		expectedEdges         []UndirectedEdge
+		traverseVerticesTests []traverseVerticesTest
+		traverseEdgesTests    []traverseEdgesTest
 	}{
 		{
 			name: "Connected",
@@ -141,66 +150,126 @@ func TestWeightedGraph(t *testing.T) {
 				{4, 7, 0.37},
 				{5, 7, 0.28},
 			},
-			traverseTests: []traverseTest{
+			traverseVerticesTests: []traverseVerticesTest{
 				{
-					name:           "InvalidVertex",
-					start:          -1,
-					expectedVisits: []int{},
+					name:                 "InvalidVertex",
+					source:               -1,
+					expectedVertexVisits: []int{},
 				},
 				{
-					name:           "InvalidStrategy",
-					start:          0,
-					strategy:       -1,
-					expectedVisits: []int{},
+					name:                 "InvalidStrategy",
+					source:               0,
+					strategy:             -1,
+					expectedVertexVisits: []int{},
 				},
 				{
-					name:           "InvalidOrder",
-					start:          0,
-					strategy:       DFS,
-					order:          -1,
-					expectedVisits: []int{},
+					name:                 "InvalidOrder",
+					source:               0,
+					strategy:             DFS,
+					order:                -1,
+					expectedVertexVisits: []int{},
 				},
 				{
-					name:           "PreOrderDFS",
-					start:          0,
-					strategy:       DFS,
-					order:          PreOrder,
-					expectedVisits: []int{0, 2, 1, 3, 6, 4, 5, 7},
+					name:                 "PreOrderDFS",
+					source:               0,
+					strategy:             DFS,
+					order:                PreOrder,
+					expectedVertexVisits: []int{0, 2, 1, 3, 6, 4, 5, 7},
 				},
 				{
-					name:           "PostOrderDFS",
-					start:          0,
-					strategy:       DFS,
-					order:          PostOrder,
-					expectedVisits: []int{7, 5, 4, 6, 3, 1, 2, 0},
+					name:                 "PostOrderDFS",
+					source:               0,
+					strategy:             DFS,
+					order:                PostOrder,
+					expectedVertexVisits: []int{7, 5, 4, 6, 3, 1, 2, 0},
 				},
 				{
-					name:           "PreOrderDFSIterative",
-					start:          0,
-					strategy:       DFSIterative,
-					order:          PreOrder,
-					expectedVisits: []int{0, 2, 4, 7, 6, 3, 1, 5},
+					name:                 "PreOrderDFSi",
+					source:               0,
+					strategy:             DFSi,
+					order:                PreOrder,
+					expectedVertexVisits: []int{0, 2, 4, 7, 6, 3, 1, 5},
 				},
 				{
-					name:           "PostOrderDFSIterative",
-					start:          0,
-					strategy:       DFSIterative,
-					order:          PostOrder,
-					expectedVisits: []int{0, 6, 3, 1, 5, 7, 4, 2},
+					name:                 "PostOrderDFSi",
+					source:               0,
+					strategy:             DFSi,
+					order:                PostOrder,
+					expectedVertexVisits: []int{0, 6, 3, 1, 5, 7, 4, 2},
 				},
 				{
-					name:           "PreOrderBFS",
-					start:          0,
-					strategy:       BFS,
-					order:          PreOrder,
-					expectedVisits: []int{0, 2, 4, 7, 6, 1, 3, 5},
+					name:                 "PreOrderBFS",
+					source:               0,
+					strategy:             BFS,
+					order:                PreOrder,
+					expectedVertexVisits: []int{0, 2, 4, 7, 6, 1, 3, 5},
 				},
 				{
-					name:           "PostOrderBFS",
-					start:          0,
-					strategy:       BFS,
-					order:          PostOrder,
-					expectedVisits: []int{0, 2, 4, 7, 6, 1, 3, 5},
+					name:                 "PostOrderBFS",
+					source:               0,
+					strategy:             BFS,
+					order:                PostOrder,
+					expectedVertexVisits: []int{0, 2, 4, 7, 6, 1, 3, 5},
+				},
+			},
+			traverseEdgesTests: []traverseEdgesTest{
+				{
+					name:                 "InvalidVertex",
+					source:               -1,
+					expectedEdgeVisits:   [][2]int{},
+					expectedWeightVisits: []float64{},
+				},
+				{
+					name:                 "InvalidStrategy",
+					source:               0,
+					strategy:             -1,
+					expectedEdgeVisits:   [][2]int{},
+					expectedWeightVisits: []float64{},
+				},
+				{
+					name:     "DFS",
+					source:   0,
+					strategy: DFS,
+					expectedEdgeVisits: [][2]int{
+						{0, 2},
+						{2, 1},
+						{1, 3},
+						{3, 6},
+						{6, 4},
+						{4, 5},
+						{5, 7},
+					},
+					expectedWeightVisits: []float64{0.26, 0.36, 0.29, 0.52, 0.93, 0.35, 0.28},
+				},
+				{
+					name:     "DFSi",
+					source:   0,
+					strategy: DFSi,
+					expectedEdgeVisits: [][2]int{
+						{0, 2},
+						{0, 4},
+						{0, 7},
+						{0, 6},
+						{6, 3},
+						{3, 1},
+						{1, 5},
+					},
+					expectedWeightVisits: []float64{0.26, 0.38, 0.16, 0.58, 0.52, 0.29, 0.32},
+				},
+				{
+					name:     "BFS",
+					source:   0,
+					strategy: BFS,
+					expectedEdgeVisits: [][2]int{
+						{0, 2},
+						{0, 4},
+						{0, 7},
+						{0, 6},
+						{2, 1},
+						{2, 3},
+						{4, 5},
+					},
+					expectedWeightVisits: []float64{0.26, 0.38, 0.16, 0.58, 0.36, 0.17, 0.35},
 				},
 			},
 		},
@@ -226,17 +295,26 @@ func TestWeightedGraph(t *testing.T) {
 
 			assert.Equal(t, tc.expectedEdges, g.Edges())
 
-			for _, traverse := range tc.traverseTests {
-				t.Run(traverse.name, func(t *testing.T) {
-					visited := make([]int, 0)
-					g.Traverse(traverse.start, traverse.strategy, traverse.order, &Visitor{
-						VisitVertex: func(v int) {
-							visited = append(visited, v)
-						},
+			t.Run("TraverseVertices", func(t *testing.T) {
+				for _, tc := range tc.traverseVerticesTests {
+					t.Run(tc.name, func(t *testing.T) {
+						visitor := newVisitor()
+						g.TraverseVertices(tc.source, tc.strategy, tc.order, visitor)
+						assert.Equal(t, tc.expectedVertexVisits, visitor.vertices)
 					})
-					assert.Equal(t, traverse.expectedVisits, visited)
-				})
-			}
+				}
+			})
+
+			t.Run("TraverseEdges", func(t *testing.T) {
+				for _, tc := range tc.traverseEdgesTests {
+					t.Run(tc.name, func(t *testing.T) {
+						visitor := newVisitor()
+						g.TraverseEdges(tc.source, tc.strategy, visitor)
+						assert.Equal(t, tc.expectedEdgeVisits, visitor.edges)
+						assert.Equal(t, tc.expectedWeightVisits, visitor.weights)
+					})
+				}
+			})
 
 			assert.NotEmpty(t, g.Graphviz())
 		})

@@ -1,44 +1,54 @@
 // Package graph implements graph data structures and algorithms.
 //
 // There are four different type of graphs implementd:
-//   - Undirected Graph
-//   - Directed Graph
-//   - Weighted Undirected Graph
-//   - Weighted Directed Graph
+//   Undirected Graph
+//   Directed Graph
+//   Weighted Undirected Graph
+//   Weighted Directed Graph
 package graph
 
 const (
 	listNodeSize = 1024
 )
 
-// TraverseStrategy specifies the strategy for traversing vertices in a graph.
-type TraverseStrategy int
+// TraversalStrategy specifies the strategy for traversing vertices in a graph.
+type TraversalStrategy int
 
 const (
 	// DFS is recursive depth-first search traversal.
-	DFS TraverseStrategy = iota
-	// DFSIterative is iterative depth-first search traversal.
-	DFSIterative
+	DFS TraversalStrategy = iota
+	// DFSi is iterative depth-first search traversal.
+	DFSi
 	// BFS is breadth-first search traversal.
 	BFS
 )
 
-// TraverseOrder specifies the order for traversing vertices in a graph.
-type TraverseOrder int
+// TraversalOrder specifies the order for traversing vertices in a graph.
+type TraversalOrder int
 
 const (
 	// PreOrder is pre-order traversal.
-	PreOrder TraverseOrder = iota
+	PreOrder TraversalOrder = iota
 	// PostOrder is post-order traversal.
 	PostOrder
 )
 
-// Visitor provides methods for visiting vertices and edges when traversing a graph.
-//   VisitVertex is called when visiting a vertex in a graph (undirected, directed, weighted-undirected, and weighted-directed).
-//   VisitEdge is called when visiting an edge in a graph (undirected and directed).
-//   VisitWeightedEdge is called when visiting an edge in a graph (weighted-undirected and weighted-directed).
-type Visitor struct {
-	VisitVertex       func(int)
-	VisitEdge         func(int, int)
-	VisitWeightedEdge func(int, int, float64)
-}
+type (
+	// VertexVisitor provides methods for visiting vertices when traversing a graph.
+	//   VisitVertex is called when visiting a vertex in a graph.
+	VertexVisitor interface {
+		VisitVertex(int) bool
+	}
+
+	// EdgeVisitor provides methods for visiting edges when traversing a graph.
+	//   VisitEdge is called when visiting an edge in a graph.
+	EdgeVisitor interface {
+		VisitEdge(int, int) bool
+	}
+
+	// WeightedEdgeVisitor provides methods for visiting edges when traversing a graph with weighted edges.
+	//   VisitWeightedEdge is called when visiting an edge in a graph with weighted edges.
+	WeightedEdgeVisitor interface {
+		VisitWeightedEdge(int, int, float64) bool
+	}
+)
