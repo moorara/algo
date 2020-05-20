@@ -99,7 +99,7 @@ func (g *Directed) _traverseDFS(visited []bool, v int, order TraversalOrder, ver
 	visited[v] = true
 
 	if order == PreOrder && vertexVisitor != nil {
-		if follow := vertexVisitor.VisitVertex(v); !follow {
+		if !vertexVisitor.VisitVertex(v) {
 			return
 		}
 	}
@@ -107,7 +107,7 @@ func (g *Directed) _traverseDFS(visited []bool, v int, order TraversalOrder, ver
 	for _, w := range g.adj[v] {
 		if !visited[w] {
 			if order == PreOrder && edgeVisitor != nil {
-				if follow := edgeVisitor.VisitEdge(v, w); !follow {
+				if !edgeVisitor.VisitEdge(v, w) {
 					return
 				}
 			}
@@ -117,7 +117,7 @@ func (g *Directed) _traverseDFS(visited []bool, v int, order TraversalOrder, ver
 	}
 
 	if order == PostOrder && vertexVisitor != nil {
-		if follow := vertexVisitor.VisitVertex(v); !follow {
+		if !vertexVisitor.VisitVertex(v) {
 			return
 		}
 	}
@@ -138,7 +138,7 @@ func (g *Directed) traverseDFSi(s int, order TraversalOrder, vertexVisitor Verte
 	stack.Push(s)
 
 	if order == PreOrder && vertexVisitor != nil {
-		if follow := vertexVisitor.VisitVertex(s); !follow {
+		if !vertexVisitor.VisitVertex(s) {
 			return
 		}
 	}
@@ -147,7 +147,7 @@ func (g *Directed) traverseDFSi(s int, order TraversalOrder, vertexVisitor Verte
 		v := stack.Pop().(int)
 
 		if order == PostOrder && vertexVisitor != nil {
-			if follow := vertexVisitor.VisitVertex(v); !follow {
+			if !vertexVisitor.VisitVertex(v) {
 				return
 			}
 		}
@@ -158,13 +158,13 @@ func (g *Directed) traverseDFSi(s int, order TraversalOrder, vertexVisitor Verte
 				stack.Push(w)
 
 				if order == PreOrder && vertexVisitor != nil {
-					if follow := vertexVisitor.VisitVertex(w); !follow {
+					if !vertexVisitor.VisitVertex(w) {
 						return
 					}
 				}
 
 				if order == PreOrder && edgeVisitor != nil {
-					if follow := edgeVisitor.VisitEdge(v, w); !follow {
+					if !edgeVisitor.VisitEdge(v, w) {
 						return
 					}
 				}
@@ -182,7 +182,7 @@ func (g *Directed) traverseBFS(s int, order TraversalOrder, vertexVisitor Vertex
 	queue.Enqueue(s)
 
 	if order == PreOrder && vertexVisitor != nil {
-		if follow := vertexVisitor.VisitVertex(s); !follow {
+		if !vertexVisitor.VisitVertex(s) {
 			return
 		}
 	}
@@ -191,7 +191,7 @@ func (g *Directed) traverseBFS(s int, order TraversalOrder, vertexVisitor Vertex
 		v := queue.Dequeue().(int)
 
 		if order == PostOrder && vertexVisitor != nil {
-			if follow := vertexVisitor.VisitVertex(v); !follow {
+			if !vertexVisitor.VisitVertex(v) {
 				return
 			}
 		}
@@ -202,13 +202,13 @@ func (g *Directed) traverseBFS(s int, order TraversalOrder, vertexVisitor Vertex
 				queue.Enqueue(w)
 
 				if order == PreOrder && vertexVisitor != nil {
-					if follow := vertexVisitor.VisitVertex(w); !follow {
+					if !vertexVisitor.VisitVertex(w) {
 						return
 					}
 				}
 
 				if order == PreOrder && edgeVisitor != nil {
-					if follow := edgeVisitor.VisitEdge(v, w); !follow {
+					if !edgeVisitor.VisitEdge(v, w) {
 						return
 					}
 				}
