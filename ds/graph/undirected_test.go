@@ -7,31 +7,24 @@ import (
 )
 
 func TestUndirected(t *testing.T) {
-	type traverseVerticesTest struct {
-		name                 string
-		source               int
-		strategy             TraversalStrategy
-		order                TraversalOrder
-		expectedVertexVisits []int
-	}
-
-	type traverseEdgesTest struct {
-		name               string
-		source             int
-		strategy           TraversalStrategy
-		expectedEdgeVisits [][2]int
+	type traverseTest struct {
+		name                          string
+		source                        int
+		strategy                      TraversalStrategy
+		expectedVertexPreOrderVisits  []int
+		expectedVertexPostOrderVisits []int
+		expectedEdgePreOrderVisits    [][2]int
 	}
 
 	tests := []struct {
-		name                  string
-		V                     int
-		edges                 [][2]int
-		expectedV             int
-		expectedE             int
-		expectedDegrees       []int
-		expectedAdjacents     [][]int
-		traverseVerticesTests []traverseVerticesTest
-		traverseEdgesTests    []traverseEdgesTest
+		name              string
+		V                 int
+		edges             [][2]int
+		expectedV         int
+		expectedE         int
+		expectedDegrees   []int
+		expectedAdjacents [][]int
+		traverseTests     []traverseTest
 	}{
 		{
 			name: "Disconnected",
@@ -69,85 +62,29 @@ func TestUndirected(t *testing.T) {
 				[]int{9, 12},
 				[]int{9, 11},
 			},
-			traverseVerticesTests: []traverseVerticesTest{
+			traverseTests: []traverseTest{
 				{
-					name:                 "InvalidVertex",
-					source:               -1,
-					expectedVertexVisits: []int{},
+					name:                          "InvalidVertex",
+					source:                        -1,
+					expectedVertexPreOrderVisits:  []int{},
+					expectedVertexPostOrderVisits: []int{},
+					expectedEdgePreOrderVisits:    [][2]int{},
 				},
 				{
-					name:                 "InvalidStrategy",
-					source:               0,
-					strategy:             -1,
-					expectedVertexVisits: []int{},
+					name:                          "InvalidStrategy",
+					source:                        0,
+					strategy:                      -1,
+					expectedVertexPreOrderVisits:  []int{},
+					expectedVertexPostOrderVisits: []int{},
+					expectedEdgePreOrderVisits:    [][2]int{},
 				},
 				{
-					name:                 "InvalidOrder",
-					source:               0,
-					strategy:             DFS,
-					order:                -1,
-					expectedVertexVisits: []int{},
-				},
-				{
-					name:                 "PreOrderDFS",
-					source:               0,
-					strategy:             DFS,
-					order:                PreOrder,
-					expectedVertexVisits: []int{0, 1, 2, 5, 3, 4, 6},
-				},
-				{
-					name:                 "PostOrderDFS",
-					source:               0,
-					strategy:             DFS,
-					order:                PostOrder,
-					expectedVertexVisits: []int{1, 2, 6, 4, 3, 5, 0},
-				},
-				{
-					name:                 "PreOrderDFSi",
-					source:               0,
-					strategy:             DFSi,
-					order:                PreOrder,
-					expectedVertexVisits: []int{0, 1, 2, 5, 6, 4, 3},
-				},
-				{
-					name:                 "PostOrderDFSi",
-					source:               0,
-					strategy:             DFSi,
-					order:                PostOrder,
-					expectedVertexVisits: []int{0, 6, 4, 3, 5, 2, 1},
-				},
-				{
-					name:                 "PreOrderBFS",
-					source:               0,
-					strategy:             BFS,
-					order:                PreOrder,
-					expectedVertexVisits: []int{0, 1, 2, 5, 6, 3, 4},
-				},
-				{
-					name:                 "PostOrderBFS",
-					source:               0,
-					strategy:             BFS,
-					order:                PostOrder,
-					expectedVertexVisits: []int{0, 1, 2, 5, 6, 3, 4},
-				},
-			},
-			traverseEdgesTests: []traverseEdgesTest{
-				{
-					name:               "InvalidVertex",
-					source:             -1,
-					expectedEdgeVisits: [][2]int{},
-				},
-				{
-					name:               "InvalidStrategy",
-					source:             0,
-					strategy:           -1,
-					expectedEdgeVisits: [][2]int{},
-				},
-				{
-					name:     "DFS",
-					source:   0,
-					strategy: DFS,
-					expectedEdgeVisits: [][2]int{
+					name:                          "DFS",
+					source:                        0,
+					strategy:                      DFS,
+					expectedVertexPreOrderVisits:  []int{0, 1, 2, 5, 3, 4, 6},
+					expectedVertexPostOrderVisits: []int{1, 2, 6, 4, 3, 5, 0},
+					expectedEdgePreOrderVisits: [][2]int{
 						{0, 1},
 						{0, 2},
 						{0, 5},
@@ -157,10 +94,12 @@ func TestUndirected(t *testing.T) {
 					},
 				},
 				{
-					name:     "DFSi",
-					source:   0,
-					strategy: DFSi,
-					expectedEdgeVisits: [][2]int{
+					name:                          "DFSi",
+					source:                        0,
+					strategy:                      DFSi,
+					expectedVertexPreOrderVisits:  []int{0, 1, 2, 5, 6, 4, 3},
+					expectedVertexPostOrderVisits: []int{0, 6, 4, 3, 5, 2, 1},
+					expectedEdgePreOrderVisits: [][2]int{
 						{0, 1},
 						{0, 2},
 						{0, 5},
@@ -170,10 +109,12 @@ func TestUndirected(t *testing.T) {
 					},
 				},
 				{
-					name:     "BFS",
-					source:   0,
-					strategy: BFS,
-					expectedEdgeVisits: [][2]int{
+					name:                          "BFS",
+					source:                        0,
+					strategy:                      BFS,
+					expectedVertexPreOrderVisits:  []int{0, 1, 2, 5, 6, 3, 4},
+					expectedVertexPostOrderVisits: []int{0, 1, 2, 5, 6, 3, 4},
+					expectedEdgePreOrderVisits: [][2]int{
 						{0, 1},
 						{0, 2},
 						{0, 5},
@@ -204,22 +145,14 @@ func TestUndirected(t *testing.T) {
 				assert.Equal(t, expectedAdj, g.Adj(v))
 			}
 
-			t.Run("TraverseVertices", func(t *testing.T) {
-				for _, tc := range tc.traverseVerticesTests {
+			t.Run("Traverse", func(t *testing.T) {
+				for _, tc := range tc.traverseTests {
 					t.Run(tc.name, func(t *testing.T) {
-						visitor := newVisitor()
-						g.TraverseVertices(tc.source, tc.strategy, tc.order, visitor)
-						assert.Equal(t, tc.expectedVertexVisits, visitor.vertices)
-					})
-				}
-			})
-
-			t.Run("TraverseEdges", func(t *testing.T) {
-				for _, tc := range tc.traverseEdgesTests {
-					t.Run(tc.name, func(t *testing.T) {
-						visitor := newVisitor()
-						g.TraverseEdges(tc.source, tc.strategy, visitor)
-						assert.Equal(t, tc.expectedEdgeVisits, visitor.edges)
+						tv := newTestVisitors()
+						g.Traverse(tc.source, tc.strategy, tv.Visitors)
+						assert.Equal(t, tc.expectedVertexPreOrderVisits, tv.preOrderVertices)
+						assert.Equal(t, tc.expectedVertexPostOrderVisits, tv.postOrderVertices)
+						assert.Equal(t, tc.expectedEdgePreOrderVisits, tv.preOrderEdges)
 					})
 				}
 			})

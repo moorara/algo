@@ -29,35 +29,28 @@ func TestDirectedEdge(t *testing.T) {
 }
 
 func TestWeightedDirected(t *testing.T) {
-	type traverseVerticesTest struct {
-		name                 string
-		source               int
-		strategy             TraversalStrategy
-		order                TraversalOrder
-		expectedVertexVisits []int
-	}
-
-	type traverseEdgesTest struct {
-		name                 string
-		source               int
-		strategy             TraversalStrategy
-		expectedEdgeVisits   [][2]int
-		expectedWeightVisits []float64
+	type traverseTest struct {
+		name                          string
+		source                        int
+		strategy                      TraversalStrategy
+		expectedVertexPreOrderVisits  []int
+		expectedVertexPostOrderVisits []int
+		expectedEdgePreOrderVisits    [][2]int
+		expectedWeightPreOrderVisits  []float64
 	}
 
 	tests := []struct {
-		name                  string
-		V                     int
-		edges                 []DirectedEdge
-		expectedV             int
-		expectedE             int
-		expectedInDegrees     []int
-		expectedOutDegrees    []int
-		expectedAdjacents     [][]DirectedEdge
-		expectedEdges         []DirectedEdge
-		expectedReverse       *WeightedDirected
-		traverseVerticesTests []traverseVerticesTest
-		traverseEdgesTests    []traverseEdgesTest
+		name               string
+		V                  int
+		edges              []DirectedEdge
+		expectedV          int
+		expectedE          int
+		expectedInDegrees  []int
+		expectedOutDegrees []int
+		expectedAdjacents  [][]DirectedEdge
+		expectedEdges      []DirectedEdge
+		expectedReverse    *WeightedDirected
+		traverseTests      []traverseTest
 	}{
 		{
 			name: "",
@@ -171,87 +164,31 @@ func TestWeightedDirected(t *testing.T) {
 					},
 				},
 			},
-			traverseVerticesTests: []traverseVerticesTest{
+			traverseTests: []traverseTest{
 				{
-					name:                 "InvalidVertex",
-					source:               -1,
-					expectedVertexVisits: []int{},
+					name:                          "InvalidVertex",
+					source:                        -1,
+					expectedVertexPreOrderVisits:  []int{},
+					expectedVertexPostOrderVisits: []int{},
+					expectedEdgePreOrderVisits:    [][2]int{},
+					expectedWeightPreOrderVisits:  []float64{},
 				},
 				{
-					name:                 "InvalidStrategy",
-					source:               0,
-					strategy:             -1,
-					expectedVertexVisits: []int{},
+					name:                          "InvalidStrategy",
+					source:                        0,
+					strategy:                      -1,
+					expectedVertexPreOrderVisits:  []int{},
+					expectedVertexPostOrderVisits: []int{},
+					expectedEdgePreOrderVisits:    [][2]int{},
+					expectedWeightPreOrderVisits:  []float64{},
 				},
 				{
-					name:                 "InvalidOrderDFS",
-					source:               0,
-					strategy:             DFS,
-					order:                -1,
-					expectedVertexVisits: []int{},
-				},
-				{
-					name:                 "PreOrderDFS",
-					source:               0,
-					strategy:             DFS,
-					order:                PreOrder,
-					expectedVertexVisits: []int{0, 2, 7, 3, 6, 4, 5, 1},
-				},
-				{
-					name:                 "PostOrderDFS",
-					source:               0,
-					strategy:             DFS,
-					order:                PostOrder,
-					expectedVertexVisits: []int{1, 5, 4, 6, 3, 7, 2, 0},
-				},
-				{
-					name:                 "PreOrderDFSi",
-					source:               0,
-					strategy:             DFSi,
-					order:                PreOrder,
-					expectedVertexVisits: []int{0, 2, 4, 5, 7, 3, 6, 1},
-				},
-				{
-					name:                 "PostOrderDFSi",
-					source:               0,
-					strategy:             DFSi,
-					order:                PostOrder,
-					expectedVertexVisits: []int{0, 4, 7, 3, 6, 5, 1, 2},
-				},
-				{
-					name:                 "PreOrderBFS",
-					source:               0,
-					strategy:             BFS,
-					order:                PreOrder,
-					expectedVertexVisits: []int{0, 2, 4, 7, 5, 3, 1, 6},
-				},
-				{
-					name:                 "PostOrderBFS",
-					source:               0,
-					strategy:             BFS,
-					order:                PostOrder,
-					expectedVertexVisits: []int{0, 2, 4, 7, 5, 3, 1, 6},
-				},
-			},
-			traverseEdgesTests: []traverseEdgesTest{
-				{
-					name:                 "InvalidVertex",
-					source:               -1,
-					expectedEdgeVisits:   [][2]int{},
-					expectedWeightVisits: []float64{},
-				},
-				{
-					name:                 "InvalidStrategy",
-					source:               0,
-					strategy:             -1,
-					expectedEdgeVisits:   [][2]int{},
-					expectedWeightVisits: []float64{},
-				},
-				{
-					name:     "DFS",
-					source:   0,
-					strategy: DFS,
-					expectedEdgeVisits: [][2]int{
+					name:                          "DFS",
+					source:                        0,
+					strategy:                      DFS,
+					expectedVertexPreOrderVisits:  []int{0, 2, 7, 3, 6, 4, 5, 1},
+					expectedVertexPostOrderVisits: []int{1, 5, 4, 6, 3, 7, 2, 0},
+					expectedEdgePreOrderVisits: [][2]int{
 						{0, 2},
 						{2, 7},
 						{7, 3},
@@ -260,13 +197,15 @@ func TestWeightedDirected(t *testing.T) {
 						{4, 5},
 						{5, 1},
 					},
-					expectedWeightVisits: []float64{0.26, 0.34, 0.39, 0.52, 0.93, 0.35, 0.32},
+					expectedWeightPreOrderVisits: []float64{0.26, 0.34, 0.39, 0.52, 0.93, 0.35, 0.32},
 				},
 				{
-					name:     "DFSi",
-					source:   0,
-					strategy: DFSi,
-					expectedEdgeVisits: [][2]int{
+					name:                          "DFSi",
+					source:                        0,
+					strategy:                      DFSi,
+					expectedVertexPreOrderVisits:  []int{0, 2, 4, 5, 7, 3, 6, 1},
+					expectedVertexPostOrderVisits: []int{0, 4, 7, 3, 6, 5, 1, 2},
+					expectedEdgePreOrderVisits: [][2]int{
 						{0, 2},
 						{0, 4},
 						{4, 5},
@@ -275,13 +214,15 @@ func TestWeightedDirected(t *testing.T) {
 						{3, 6},
 						{5, 1},
 					},
-					expectedWeightVisits: []float64{0.26, 0.38, 0.35, 0.37, 0.39, 0.52, 0.32},
+					expectedWeightPreOrderVisits: []float64{0.26, 0.38, 0.35, 0.37, 0.39, 0.52, 0.32},
 				},
 				{
-					name:     "BFS",
-					source:   0,
-					strategy: BFS,
-					expectedEdgeVisits: [][2]int{
+					name:                          "BFS",
+					source:                        0,
+					strategy:                      BFS,
+					expectedVertexPreOrderVisits:  []int{0, 2, 4, 7, 5, 3, 1, 6},
+					expectedVertexPostOrderVisits: []int{0, 2, 4, 7, 5, 3, 1, 6},
+					expectedEdgePreOrderVisits: [][2]int{
 						{0, 2},
 						{0, 4},
 						{2, 7},
@@ -290,7 +231,7 @@ func TestWeightedDirected(t *testing.T) {
 						{5, 1},
 						{3, 6},
 					},
-					expectedWeightVisits: []float64{0.26, 0.38, 0.34, 0.35, 0.39, 0.32, 0.52},
+					expectedWeightPreOrderVisits: []float64{0.26, 0.38, 0.34, 0.35, 0.39, 0.32, 0.52},
 				},
 			},
 		},
@@ -322,23 +263,15 @@ func TestWeightedDirected(t *testing.T) {
 			assert.Equal(t, tc.expectedEdges, g.Edges())
 			assert.Equal(t, tc.expectedReverse, g.Reverse())
 
-			t.Run("TraverseVertices", func(t *testing.T) {
-				for _, tc := range tc.traverseVerticesTests {
+			t.Run("Traverse", func(t *testing.T) {
+				for _, tc := range tc.traverseTests {
 					t.Run(tc.name, func(t *testing.T) {
-						visitor := newVisitor()
-						g.TraverseVertices(tc.source, tc.strategy, tc.order, visitor)
-						assert.Equal(t, tc.expectedVertexVisits, visitor.vertices)
-					})
-				}
-			})
-
-			t.Run("TraverseEdges", func(t *testing.T) {
-				for _, tc := range tc.traverseEdgesTests {
-					t.Run(tc.name, func(t *testing.T) {
-						visitor := newVisitor()
-						g.TraverseEdges(tc.source, tc.strategy, visitor)
-						assert.Equal(t, tc.expectedEdgeVisits, visitor.edges)
-						assert.Equal(t, tc.expectedWeightVisits, visitor.weights)
+						tv := newTestVisitors()
+						g.Traverse(tc.source, tc.strategy, tv.Visitors)
+						assert.Equal(t, tc.expectedVertexPreOrderVisits, tv.preOrderVertices)
+						assert.Equal(t, tc.expectedVertexPostOrderVisits, tv.postOrderVertices)
+						assert.Equal(t, tc.expectedEdgePreOrderVisits, tv.preOrderEdges)
+						assert.Equal(t, tc.expectedWeightPreOrderVisits, tv.preOrderWeights)
 					})
 				}
 			})

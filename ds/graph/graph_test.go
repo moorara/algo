@@ -1,31 +1,36 @@
 package graph
 
-type visitor struct {
-	vertices []int
-	edges    [][2]int
-	weights  []float64
+type testVisitors struct {
+	*Visitors
+	preOrderVertices  []int
+	postOrderVertices []int
+	preOrderEdges     [][2]int
+	preOrderWeights   []float64
 }
 
-func newVisitor() *visitor {
-	return &visitor{
-		vertices: make([]int, 0),
-		edges:    make([][2]int, 0),
-		weights:  make([]float64, 0),
+func newTestVisitors() *testVisitors {
+	tv := &testVisitors{
+		preOrderVertices:  make([]int, 0),
+		postOrderVertices: make([]int, 0),
+		preOrderEdges:     make([][2]int, 0),
+		preOrderWeights:   make([]float64, 0),
 	}
-}
 
-func (vis *visitor) VisitVertex(v int) bool {
-	vis.vertices = append(vis.vertices, v)
-	return true
-}
+	tv.Visitors = &Visitors{
+		VertexPreOrder: func(v int) bool {
+			tv.preOrderVertices = append(tv.preOrderVertices, v)
+			return true
+		},
+		VertexPostOrder: func(v int) bool {
+			tv.postOrderVertices = append(tv.postOrderVertices, v)
+			return true
+		},
+		EdgePreOrder: func(v, w int, weight float64) bool {
+			tv.preOrderEdges = append(tv.preOrderEdges, [2]int{v, w})
+			tv.preOrderWeights = append(tv.preOrderWeights, weight)
+			return true
+		},
+	}
 
-func (vis *visitor) VisitEdge(v, w int) bool {
-	vis.edges = append(vis.edges, [2]int{v, w})
-	return true
-}
-
-func (vis *visitor) VisitWeightedEdge(v, w int, weight float64) bool {
-	vis.edges = append(vis.edges, [2]int{v, w})
-	vis.weights = append(vis.weights, weight)
-	return true
+	return tv
 }

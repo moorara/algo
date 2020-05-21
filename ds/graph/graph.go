@@ -23,32 +23,13 @@ const (
 	BFS
 )
 
-// TraversalOrder specifies the order for traversing vertices in a graph.
-type TraversalOrder int
-
-const (
-	// PreOrder is pre-order traversal.
-	PreOrder TraversalOrder = iota
-	// PostOrder is post-order traversal.
-	PostOrder
-)
-
-type (
-	// VertexVisitor provides methods for visiting vertices when traversing a graph.
-	//   VisitVertex is called when visiting a vertex in a graph.
-	VertexVisitor interface {
-		VisitVertex(int) bool
-	}
-
-	// EdgeVisitor provides methods for visiting edges when traversing a graph.
-	//   VisitEdge is called when visiting an edge in a graph.
-	EdgeVisitor interface {
-		VisitEdge(int, int) bool
-	}
-
-	// WeightedEdgeVisitor provides methods for visiting edges when traversing a graph with weighted edges.
-	//   VisitWeightedEdge is called when visiting an edge in a graph with weighted edges.
-	WeightedEdgeVisitor interface {
-		VisitWeightedEdge(int, int, float64) bool
-	}
-)
+// Visitors provides a method for visiting vertices and edges when traversing a graph.
+// VertexPreOrder is called when visiting a vertex in a graph.
+// VertexPostOrder is called when visiting a vertex in a graph.
+// EdgePreOrder is called when visiting an edge in a graph.
+// The graph traversal will immediately stop if the return value from any of these functions is false.
+type Visitors struct {
+	VertexPreOrder  func(int) bool
+	VertexPostOrder func(int) bool
+	EdgePreOrder    func(int, int, float64) bool
+}
