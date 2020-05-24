@@ -84,8 +84,8 @@ func (g *Directed) AddEdge(v, w int) {
 
 // Reverse returns the reverse of the directed graph.
 func (g *Directed) Reverse() *Directed {
-	rev := NewDirected(g.v)
-	for v := 0; v < g.v; v++ {
+	rev := NewDirected(g.V())
+	for v := 0; v < g.V(); v++ {
 		for _, w := range g.adj[v] {
 			rev.AddEdge(w, v)
 		}
@@ -95,50 +95,43 @@ func (g *Directed) Reverse() *Directed {
 }
 
 // DFS Traversal (Recursion)
-func (g *Directed) _traverseDFS(visited []bool, v int, order TraversalOrder, vertexVisitor VertexVisitor, edgeVisitor EdgeVisitor) {
+func (g *Directed) traverseDFS(v int, visited []bool, visitors *Visitors) {
 	visited[v] = true
 
-	if order == PreOrder && vertexVisitor != nil {
-		if !vertexVisitor.VisitVertex(v) {
+	if visitors != nil && visitors.VertexPreOrder != nil {
+		if !visitors.VertexPreOrder(v) {
 			return
 		}
 	}
 
 	for _, w := range g.adj[v] {
 		if !visited[w] {
-			if order == PreOrder && edgeVisitor != nil {
-				if !edgeVisitor.VisitEdge(v, w) {
+			if visitors != nil && visitors.EdgePreOrder != nil {
+				if !visitors.EdgePreOrder(v, w, 0) {
 					return
 				}
 			}
 
-			g._traverseDFS(visited, w, order, vertexVisitor, edgeVisitor)
+			g.traverseDFS(w, visited, visitors)
 		}
 	}
 
-	if order == PostOrder && vertexVisitor != nil {
-		if !vertexVisitor.VisitVertex(v) {
+	if visitors != nil && visitors.VertexPostOrder != nil {
+		if !visitors.VertexPostOrder(v) {
 			return
 		}
 	}
 }
 
-// DFS Traversal (Driver)
-func (g *Directed) traverseDFS(s int, order TraversalOrder, vertexVisitor VertexVisitor, edgeVisitor EdgeVisitor) {
-	visited := make([]bool, g.V())
-	g._traverseDFS(visited, s, order, vertexVisitor, edgeVisitor)
-}
-
 // Iterative DFS Traversal
-func (g *Directed) traverseDFSi(s int, order TraversalOrder, vertexVisitor VertexVisitor, edgeVisitor EdgeVisitor) {
-	visited := make([]bool, g.V())
+func (g *Directed) traverseDFSi(s int, visited []bool, visitors *Visitors) {
 	stack := list.NewStack(listNodeSize)
 
 	visited[s] = true
 	stack.Push(s)
 
-	if order == PreOrder && vertexVisitor != nil {
-		if !vertexVisitor.VisitVertex(s) {
+	if visitors != nil && visitors.VertexPreOrder != nil {
+		if !visitors.VertexPreOrder(s) {
 			return
 		}
 	}
@@ -146,8 +139,8 @@ func (g *Directed) traverseDFSi(s int, order TraversalOrder, vertexVisitor Verte
 	for !stack.IsEmpty() {
 		v := stack.Pop().(int)
 
-		if order == PostOrder && vertexVisitor != nil {
-			if !vertexVisitor.VisitVertex(v) {
+		if visitors != nil && visitors.VertexPostOrder != nil {
+			if !visitors.VertexPostOrder(v) {
 				return
 			}
 		}
@@ -157,14 +150,14 @@ func (g *Directed) traverseDFSi(s int, order TraversalOrder, vertexVisitor Verte
 				visited[w] = true
 				stack.Push(w)
 
-				if order == PreOrder && vertexVisitor != nil {
-					if !vertexVisitor.VisitVertex(w) {
+				if visitors != nil && visitors.VertexPreOrder != nil {
+					if !visitors.VertexPreOrder(w) {
 						return
 					}
 				}
 
-				if order == PreOrder && edgeVisitor != nil {
-					if !edgeVisitor.VisitEdge(v, w) {
+				if visitors != nil && visitors.EdgePreOrder != nil {
+					if !visitors.EdgePreOrder(v, w, 0) {
 						return
 					}
 				}
@@ -174,15 +167,14 @@ func (g *Directed) traverseDFSi(s int, order TraversalOrder, vertexVisitor Verte
 }
 
 // BFS Traversal
-func (g *Directed) traverseBFS(s int, order TraversalOrder, vertexVisitor VertexVisitor, edgeVisitor EdgeVisitor) {
-	visited := make([]bool, g.V())
+func (g *Directed) traverseBFS(s int, visited []bool, visitors *Visitors) {
 	queue := list.NewQueue(listNodeSize)
 
 	visited[s] = true
 	queue.Enqueue(s)
 
-	if order == PreOrder && vertexVisitor != nil {
-		if !vertexVisitor.VisitVertex(s) {
+	if visitors != nil && visitors.VertexPreOrder != nil {
+		if !visitors.VertexPreOrder(s) {
 			return
 		}
 	}
@@ -190,8 +182,8 @@ func (g *Directed) traverseBFS(s int, order TraversalOrder, vertexVisitor Vertex
 	for !queue.IsEmpty() {
 		v := queue.Dequeue().(int)
 
-		if order == PostOrder && vertexVisitor != nil {
-			if !vertexVisitor.VisitVertex(v) {
+		if visitors != nil && visitors.VertexPostOrder != nil {
+			if !visitors.VertexPostOrder(v) {
 				return
 			}
 		}
@@ -201,14 +193,14 @@ func (g *Directed) traverseBFS(s int, order TraversalOrder, vertexVisitor Vertex
 				visited[w] = true
 				queue.Enqueue(w)
 
-				if order == PreOrder && vertexVisitor != nil {
-					if !vertexVisitor.VisitVertex(w) {
+				if visitors != nil && visitors.VertexPreOrder != nil {
+					if !visitors.VertexPreOrder(w) {
 						return
 					}
 				}
 
-				if order == PreOrder && edgeVisitor != nil {
-					if !edgeVisitor.VisitEdge(v, w) {
+				if visitors != nil && visitors.EdgePreOrder != nil {
+					if !visitors.EdgePreOrder(v, w, 0) {
 						return
 					}
 				}
@@ -217,40 +209,123 @@ func (g *Directed) traverseBFS(s int, order TraversalOrder, vertexVisitor Vertex
 	}
 }
 
-// TraverseVertices is used for visiting all vertices in graph.
-func (g *Directed) TraverseVertices(s int, strategy TraversalStrategy, order TraversalOrder, visitor VertexVisitor) {
+// Traverse is used for visiting all vertices and edges in graph.
+func (g *Directed) Traverse(s int, strategy TraversalStrategy, visitors *Visitors) {
 	if !g.isVertexValid(s) {
 		return
 	}
 
-	if order != PreOrder && order != PostOrder {
-		return
-	}
+	visited := make([]bool, g.V())
 
 	switch strategy {
 	case DFS:
-		g.traverseDFS(s, order, visitor, nil)
+		g.traverseDFS(s, visited, visitors)
 	case DFSi:
-		g.traverseDFSi(s, order, visitor, nil)
+		g.traverseDFSi(s, visited, visitors)
 	case BFS:
-		g.traverseBFS(s, order, visitor, nil)
+		g.traverseBFS(s, visited, visitors)
 	}
 }
 
-// TraverseEdges is used for visiting all edges in graph.
-func (g *Directed) TraverseEdges(s int, strategy TraversalStrategy, visitor EdgeVisitor) {
-	if !g.isVertexValid(s) {
-		return
+// Paths finds all paths from a source vertex to every other vertex.
+func (g *Directed) Paths(s int, strategy TraversalStrategy) *Paths {
+	p := &Paths{
+		s:       s,
+		visited: make([]bool, g.V()),
+		edgeTo:  make([]int, g.V()),
 	}
 
-	switch strategy {
-	case DFS:
-		g.traverseDFS(s, PreOrder, nil, visitor)
-	case DFSi:
-		g.traverseDFSi(s, PreOrder, nil, visitor)
-	case BFS:
-		g.traverseBFS(s, PreOrder, nil, visitor)
+	if g.isVertexValid(s) && isStrategyValid(strategy) {
+		visitors := &Visitors{
+			EdgePreOrder: func(v, w int, _ float64) bool {
+				p.edgeTo[w] = v
+				return true
+			},
+		}
+
+		p.edgeTo[s] = s
+
+		switch strategy {
+		case DFS:
+			g.traverseDFS(s, p.visited, visitors)
+		case DFSi:
+			g.traverseDFSi(s, p.visited, visitors)
+		case BFS:
+			g.traverseBFS(s, p.visited, visitors)
+		}
 	}
+
+	return p
+}
+
+// Orders determines ordering of vertices in the graph.
+func (g *Directed) Orders(strategy TraversalStrategy) *Orders {
+	o := &Orders{
+		preRank:   make([]int, g.V()),
+		postRank:  make([]int, g.V()),
+		preOrder:  make([]int, 0),
+		postOrder: make([]int, 0),
+	}
+
+	if isStrategyValid(strategy) {
+		var preCounter, postCounter int
+		visited := make([]bool, g.V())
+		visitors := &Visitors{
+			VertexPreOrder: func(v int) bool {
+				o.preRank[v] = preCounter
+				preCounter++
+				o.preOrder = append(o.preOrder, v)
+				return true
+			},
+			VertexPostOrder: func(v int) bool {
+				o.postRank[v] = postCounter
+				postCounter++
+				o.postOrder = append(o.postOrder, v)
+				return true
+			},
+		}
+
+		for v := 0; v < g.V(); v++ {
+			if !visited[v] {
+				switch strategy {
+				case DFS:
+					g.traverseDFS(v, visited, visitors)
+				case DFSi:
+					g.traverseDFSi(v, visited, visitors)
+				case BFS:
+					g.traverseBFS(v, visited, visitors)
+				}
+			}
+		}
+	}
+
+	return o
+}
+
+// StronglyConnectedComponents determines all the connected components in the graph.
+func (g *Directed) StronglyConnectedComponents() *StronglyConnectedComponents {
+	scc := &StronglyConnectedComponents{
+		count: 0,
+		id:    make([]int, g.V()),
+	}
+
+	visited := make([]bool, g.V())
+	visitors := &Visitors{
+		VertexPreOrder: func(v int) bool {
+			scc.id[v] = scc.count
+			return true
+		},
+	}
+
+	order := g.Reverse().Orders(DFS).ReversePostOrder()
+	for _, v := range order {
+		if !visited[v] {
+			g.traverseDFS(v, visited, visitors)
+			scc.count++
+		}
+	}
+
+	return scc
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.
