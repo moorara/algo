@@ -40,37 +40,69 @@ func TestWeightedGraph(t *testing.T) {
 		expectedWeightPreOrderVisits  []float64
 	}
 
+	type pathsTest struct {
+		name         string
+		source       int
+		strategy     TraversalStrategy
+		vertex       int
+		expectedPath []int
+		expectedOK   bool
+	}
+
+	type ordersTest struct {
+		name                     string
+		strategy                 TraversalStrategy
+		v                        int
+		expectedPreRank          int
+		expectedPostRank         int
+		expectedPreOrder         []int
+		expectedPostOrder        []int
+		expectedReversePostOrder []int
+	}
+
+	type connectivityTest struct {
+		name                string
+		v                   int
+		w                   int
+		expectedID          int
+		expectedIsConnected bool
+	}
+
 	tests := []struct {
-		name              string
-		V                 int
-		edges             []UndirectedEdge
-		expectedV         int
-		expectedE         int
-		expectedDegrees   []int
-		expectedAdjacents [][]UndirectedEdge
-		expectedEdges     []UndirectedEdge
-		traverseTests     []traverseTest
+		name                        string
+		V                           int
+		edges                       []UndirectedEdge
+		expectedV                   int
+		expectedE                   int
+		expectedDegrees             []int
+		expectedAdjacents           [][]UndirectedEdge
+		expectedEdges               []UndirectedEdge
+		traverseTests               []traverseTest
+		pathsTests                  []pathsTest
+		ordersTests                 []ordersTest
+		expectedConnectedComponents [][]int
+		connectivityTests           []connectivityTest
 	}{
 		{
-			name: "Connected",
+			name: "WeightedGraph",
 			V:    8,
 			edges: []UndirectedEdge{
 				{0, 2, 0.26},
 				{0, 4, 0.38},
+				{0, 6, 0.58},
 				{0, 7, 0.16},
 				{1, 2, 0.36},
 				{1, 3, 0.29},
 				{1, 5, 0.32},
 				{1, 7, 0.19},
 				{2, 3, 0.17},
+				{2, 6, 0.40},
 				{2, 7, 0.34},
 				{3, 6, 0.52},
 				{4, 5, 0.35},
 				{4, 6, 0.93},
 				{4, 7, 0.37},
 				{5, 7, 0.28},
-				{6, 0, 0.58},
-				{6, 2, 0.40},
 			},
 			expectedV:       8,
 			expectedE:       16,
@@ -79,8 +111,8 @@ func TestWeightedGraph(t *testing.T) {
 				[]UndirectedEdge{
 					{0, 2, 0.26},
 					{0, 4, 0.38},
+					{0, 6, 0.58},
 					{0, 7, 0.16},
-					{6, 0, 0.58},
 				},
 				[]UndirectedEdge{
 					{1, 2, 0.36},
@@ -92,8 +124,8 @@ func TestWeightedGraph(t *testing.T) {
 					{0, 2, 0.26},
 					{1, 2, 0.36},
 					{2, 3, 0.17},
+					{2, 6, 0.40},
 					{2, 7, 0.34},
-					{6, 2, 0.40},
 				},
 				[]UndirectedEdge{
 					{1, 3, 0.29},
@@ -112,10 +144,10 @@ func TestWeightedGraph(t *testing.T) {
 					{5, 7, 0.28},
 				},
 				[]UndirectedEdge{
+					{0, 6, 0.58},
+					{2, 6, 0.40},
 					{3, 6, 0.52},
 					{4, 6, 0.93},
-					{6, 0, 0.58},
-					{6, 2, 0.40},
 				},
 				[]UndirectedEdge{
 					{0, 7, 0.16},
@@ -128,15 +160,15 @@ func TestWeightedGraph(t *testing.T) {
 			expectedEdges: []UndirectedEdge{
 				{0, 2, 0.26},
 				{0, 4, 0.38},
+				{0, 6, 0.58},
 				{0, 7, 0.16},
-				{6, 0, 0.58},
 				{1, 2, 0.36},
 				{1, 3, 0.29},
 				{1, 5, 0.32},
 				{1, 7, 0.19},
 				{2, 3, 0.17},
+				{2, 6, 0.40},
 				{2, 7, 0.34},
-				{6, 2, 0.40},
 				{3, 6, 0.52},
 				{4, 5, 0.35},
 				{4, 6, 0.93},
@@ -182,35 +214,135 @@ func TestWeightedGraph(t *testing.T) {
 					name:                          "DFSi",
 					source:                        0,
 					strategy:                      DFSi,
-					expectedVertexPreOrderVisits:  []int{0, 2, 4, 7, 6, 3, 1, 5},
-					expectedVertexPostOrderVisits: []int{0, 6, 3, 1, 5, 7, 4, 2},
+					expectedVertexPreOrderVisits:  []int{0, 2, 4, 6, 7, 1, 5, 3},
+					expectedVertexPostOrderVisits: []int{0, 7, 5, 1, 3, 6, 4, 2},
 					expectedEdgePreOrderVisits: [][2]int{
 						{0, 2},
 						{0, 4},
-						{0, 7},
 						{0, 6},
-						{6, 3},
-						{3, 1},
-						{1, 5},
+						{0, 7},
+						{7, 1},
+						{7, 5},
+						{1, 3},
 					},
-					expectedWeightPreOrderVisits: []float64{0.26, 0.38, 0.16, 0.58, 0.52, 0.29, 0.32},
+					expectedWeightPreOrderVisits: []float64{0.26, 0.38, 0.58, 0.16, 0.19, 0.28, 0.29},
 				},
 				{
 					name:                          "BFS",
 					source:                        0,
 					strategy:                      BFS,
-					expectedVertexPreOrderVisits:  []int{0, 2, 4, 7, 6, 1, 3, 5},
-					expectedVertexPostOrderVisits: []int{0, 2, 4, 7, 6, 1, 3, 5},
+					expectedVertexPreOrderVisits:  []int{0, 2, 4, 6, 7, 1, 3, 5},
+					expectedVertexPostOrderVisits: []int{0, 2, 4, 6, 7, 1, 3, 5},
 					expectedEdgePreOrderVisits: [][2]int{
 						{0, 2},
 						{0, 4},
-						{0, 7},
 						{0, 6},
+						{0, 7},
 						{2, 1},
 						{2, 3},
 						{4, 5},
 					},
-					expectedWeightPreOrderVisits: []float64{0.26, 0.38, 0.16, 0.58, 0.36, 0.17, 0.35},
+					expectedWeightPreOrderVisits: []float64{0.26, 0.38, 0.58, 0.16, 0.36, 0.17, 0.35},
+				},
+			},
+			pathsTests: []pathsTest{
+				{
+					name:         "InvalidVertex",
+					source:       -1,
+					expectedPath: nil,
+					expectedOK:   false,
+				},
+				{
+					name:         "InvalidStrategy",
+					source:       0,
+					strategy:     -1,
+					expectedPath: nil,
+					expectedOK:   false,
+				},
+				{
+					name:         "DFS",
+					source:       0,
+					strategy:     DFS,
+					vertex:       5,
+					expectedPath: []int{0, 2, 1, 3, 6, 4, 5},
+					expectedOK:   true,
+				},
+				{
+					name:         "DFSi",
+					source:       0,
+					strategy:     DFSi,
+					vertex:       5,
+					expectedPath: []int{0, 7, 5},
+					expectedOK:   true,
+				},
+				{
+					name:         "BFS",
+					source:       0,
+					strategy:     BFS,
+					vertex:       5,
+					expectedPath: []int{0, 4, 5},
+					expectedOK:   true,
+				},
+			},
+			ordersTests: []ordersTest{
+				{
+					name:                     "InvalidStrategy",
+					strategy:                 -1,
+					v:                        0,
+					expectedPreRank:          0,
+					expectedPostRank:         0,
+					expectedPreOrder:         []int{},
+					expectedPostOrder:        []int{},
+					expectedReversePostOrder: []int{},
+				},
+				{
+					name:                     "DFS",
+					strategy:                 DFS,
+					v:                        3,
+					expectedPreRank:          3,
+					expectedPostRank:         4,
+					expectedPreOrder:         []int{0, 2, 1, 3, 6, 4, 5, 7},
+					expectedPostOrder:        []int{7, 5, 4, 6, 3, 1, 2, 0},
+					expectedReversePostOrder: []int{0, 2, 1, 3, 6, 4, 5, 7},
+				},
+				{
+					name:                     "DFSi",
+					strategy:                 DFSi,
+					v:                        3,
+					expectedPreRank:          7,
+					expectedPostRank:         4,
+					expectedPreOrder:         []int{0, 2, 4, 6, 7, 1, 5, 3},
+					expectedPostOrder:        []int{0, 7, 5, 1, 3, 6, 4, 2},
+					expectedReversePostOrder: []int{2, 4, 6, 3, 1, 5, 7, 0},
+				},
+				{
+					name:                     "BFS",
+					strategy:                 BFS,
+					v:                        3,
+					expectedPreRank:          6,
+					expectedPostRank:         6,
+					expectedPreOrder:         []int{0, 2, 4, 6, 7, 1, 3, 5},
+					expectedPostOrder:        []int{0, 2, 4, 6, 7, 1, 3, 5},
+					expectedReversePostOrder: []int{5, 3, 1, 7, 6, 4, 2, 0},
+				},
+			},
+			expectedConnectedComponents: [][]int{
+				[]int{0, 1, 2, 3, 4, 5, 6, 7},
+			},
+			connectivityTests: []connectivityTest{
+				{
+					name:                "Connected#1",
+					v:                   3,
+					w:                   4,
+					expectedID:          0,
+					expectedIsConnected: true,
+				},
+				{
+					name:                "Connected#2",
+					v:                   5,
+					w:                   6,
+					expectedID:          0,
+					expectedIsConnected: true,
 				},
 			},
 		},
@@ -245,6 +377,40 @@ func TestWeightedGraph(t *testing.T) {
 						assert.Equal(t, tc.expectedVertexPostOrderVisits, tv.postOrderVertices)
 						assert.Equal(t, tc.expectedEdgePreOrderVisits, tv.preOrderEdges)
 						assert.Equal(t, tc.expectedWeightPreOrderVisits, tv.preOrderWeights)
+					})
+				}
+			})
+
+			t.Run("Paths", func(t *testing.T) {
+				for _, tc := range tc.pathsTests {
+					t.Run(tc.name, func(t *testing.T) {
+						path, ok := g.Paths(tc.source, tc.strategy).To(tc.vertex)
+						assert.Equal(t, tc.expectedPath, path)
+						assert.Equal(t, tc.expectedOK, ok)
+					})
+				}
+			})
+
+			t.Run("Orders", func(t *testing.T) {
+				for _, tc := range tc.ordersTests {
+					t.Run(tc.name, func(t *testing.T) {
+						o := g.Orders(tc.strategy)
+						assert.Equal(t, tc.expectedPreRank, o.PreRank(tc.v))
+						assert.Equal(t, tc.expectedPostRank, o.PostRank(tc.v))
+						assert.Equal(t, tc.expectedPreOrder, o.PreOrder())
+						assert.Equal(t, tc.expectedPostOrder, o.PostOrder())
+						assert.Equal(t, tc.expectedReversePostOrder, o.ReversePostOrder())
+					})
+				}
+			})
+
+			t.Run("ConnectedComponents", func(t *testing.T) {
+				cc := g.ConnectedComponents()
+				assert.Equal(t, tc.expectedConnectedComponents, cc.Components())
+				for _, tc := range tc.connectivityTests {
+					t.Run(tc.name, func(t *testing.T) {
+						assert.Equal(t, tc.expectedID, cc.ID(tc.v))
+						assert.Equal(t, tc.expectedIsConnected, cc.IsConnected(tc.v, tc.w))
 					})
 				}
 			})

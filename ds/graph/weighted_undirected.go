@@ -114,10 +114,10 @@ func (g *WeightedUndirected) Edges() []UndirectedEdge {
 }
 
 // DFS Traversal (Recursion)
-func (g *WeightedUndirected) _traverseDFS(visited []bool, v int, visitors *Visitors) {
+func (g *WeightedUndirected) traverseDFS(v int, visited []bool, visitors *Visitors) {
 	visited[v] = true
 
-	if visitors != nil {
+	if visitors != nil && visitors.VertexPreOrder != nil {
 		if !visitors.VertexPreOrder(v) {
 			return
 		}
@@ -126,38 +126,31 @@ func (g *WeightedUndirected) _traverseDFS(visited []bool, v int, visitors *Visit
 	for _, e := range g.adj[v] {
 		w := e.Other(v)
 		if !visited[w] {
-			if visitors != nil {
+			if visitors != nil && visitors.EdgePreOrder != nil {
 				if !visitors.EdgePreOrder(v, w, e.Weight()) {
 					return
 				}
 			}
 
-			g._traverseDFS(visited, w, visitors)
+			g.traverseDFS(w, visited, visitors)
 		}
 	}
 
-	if visitors != nil {
+	if visitors != nil && visitors.VertexPostOrder != nil {
 		if !visitors.VertexPostOrder(v) {
 			return
 		}
 	}
 }
 
-// DFS Traversal (Driver)
-func (g *WeightedUndirected) traverseDFS(s int, visitors *Visitors) {
-	visited := make([]bool, g.V())
-	g._traverseDFS(visited, s, visitors)
-}
-
 // Iterative DFS Traversal
-func (g *WeightedUndirected) traverseDFSi(s int, visitors *Visitors) {
-	visited := make([]bool, g.V())
+func (g *WeightedUndirected) traverseDFSi(s int, visited []bool, visitors *Visitors) {
 	stack := list.NewStack(listNodeSize)
 
 	visited[s] = true
 	stack.Push(s)
 
-	if visitors != nil {
+	if visitors != nil && visitors.VertexPreOrder != nil {
 		if !visitors.VertexPreOrder(s) {
 			return
 		}
@@ -166,7 +159,7 @@ func (g *WeightedUndirected) traverseDFSi(s int, visitors *Visitors) {
 	for !stack.IsEmpty() {
 		v := stack.Pop().(int)
 
-		if visitors != nil {
+		if visitors != nil && visitors.VertexPostOrder != nil {
 			if !visitors.VertexPostOrder(v) {
 				return
 			}
@@ -178,10 +171,13 @@ func (g *WeightedUndirected) traverseDFSi(s int, visitors *Visitors) {
 				visited[w] = true
 				stack.Push(w)
 
-				if visitors != nil {
+				if visitors != nil && visitors.VertexPreOrder != nil {
 					if !visitors.VertexPreOrder(w) {
 						return
 					}
+				}
+
+				if visitors != nil && visitors.EdgePreOrder != nil {
 					if !visitors.EdgePreOrder(v, w, e.Weight()) {
 						return
 					}
@@ -192,14 +188,13 @@ func (g *WeightedUndirected) traverseDFSi(s int, visitors *Visitors) {
 }
 
 // BFS Traversal
-func (g *WeightedUndirected) traverseBFS(s int, visitors *Visitors) {
-	visited := make([]bool, g.V())
+func (g *WeightedUndirected) traverseBFS(s int, visited []bool, visitors *Visitors) {
 	queue := list.NewQueue(listNodeSize)
 
 	visited[s] = true
 	queue.Enqueue(s)
 
-	if visitors != nil {
+	if visitors != nil && visitors.VertexPreOrder != nil {
 		if !visitors.VertexPreOrder(s) {
 			return
 		}
@@ -208,7 +203,7 @@ func (g *WeightedUndirected) traverseBFS(s int, visitors *Visitors) {
 	for !queue.IsEmpty() {
 		v := queue.Dequeue().(int)
 
-		if visitors != nil {
+		if visitors != nil && visitors.VertexPostOrder != nil {
 			if !visitors.VertexPostOrder(v) {
 				return
 			}
@@ -220,10 +215,13 @@ func (g *WeightedUndirected) traverseBFS(s int, visitors *Visitors) {
 				visited[w] = true
 				queue.Enqueue(w)
 
-				if visitors != nil {
+				if visitors != nil && visitors.VertexPreOrder != nil {
 					if !visitors.VertexPreOrder(w) {
 						return
 					}
+				}
+
+				if visitors != nil && visitors.EdgePreOrder != nil {
 					if !visitors.EdgePreOrder(v, w, e.Weight()) {
 						return
 					}
@@ -239,14 +237,116 @@ func (g *WeightedUndirected) Traverse(s int, strategy TraversalStrategy, visitor
 		return
 	}
 
+	visited := make([]bool, g.V())
+
 	switch strategy {
 	case DFS:
-		g.traverseDFS(s, visitors)
+		g.traverseDFS(s, visited, visitors)
 	case DFSi:
-		g.traverseDFSi(s, visitors)
+		g.traverseDFSi(s, visited, visitors)
 	case BFS:
-		g.traverseBFS(s, visitors)
+		g.traverseBFS(s, visited, visitors)
 	}
+}
+
+// Paths finds all paths from a source vertex to every other vertex.
+func (g *WeightedUndirected) Paths(s int, strategy TraversalStrategy) *Paths {
+	p := &Paths{
+		s:       s,
+		visited: make([]bool, g.V()),
+		edgeTo:  make([]int, g.V()),
+	}
+
+	if g.isVertexValid(s) && isStrategyValid(strategy) {
+		visitors := &Visitors{
+			EdgePreOrder: func(v, w int, weight float64) bool {
+				p.edgeTo[w] = v
+				return true
+			},
+		}
+
+		p.edgeTo[s] = s
+
+		switch strategy {
+		case DFS:
+			g.traverseDFS(s, p.visited, visitors)
+		case DFSi:
+			g.traverseDFSi(s, p.visited, visitors)
+		case BFS:
+			g.traverseBFS(s, p.visited, visitors)
+		}
+	}
+
+	return p
+}
+
+// Orders determines ordering of vertices in the graph.
+func (g *WeightedUndirected) Orders(strategy TraversalStrategy) *Orders {
+	o := &Orders{
+		preRank:   make([]int, g.V()),
+		postRank:  make([]int, g.V()),
+		preOrder:  make([]int, 0),
+		postOrder: make([]int, 0),
+	}
+
+	if isStrategyValid(strategy) {
+		var preCounter, postCounter int
+		visited := make([]bool, g.V())
+		visitors := &Visitors{
+			VertexPreOrder: func(v int) bool {
+				o.preRank[v] = preCounter
+				preCounter++
+				o.preOrder = append(o.preOrder, v)
+				return true
+			},
+			VertexPostOrder: func(v int) bool {
+				o.postRank[v] = postCounter
+				postCounter++
+				o.postOrder = append(o.postOrder, v)
+				return true
+			},
+		}
+
+		for v := 0; v < g.V(); v++ {
+			if !visited[v] {
+				switch strategy {
+				case DFS:
+					g.traverseDFS(v, visited, visitors)
+				case DFSi:
+					g.traverseDFSi(v, visited, visitors)
+				case BFS:
+					g.traverseBFS(v, visited, visitors)
+				}
+			}
+		}
+	}
+
+	return o
+}
+
+// ConnectedComponents determines all the connected components in the graph.
+func (g *WeightedUndirected) ConnectedComponents() *ConnectedComponents {
+	cc := &ConnectedComponents{
+		count: 0,
+		id:    make([]int, g.V()),
+	}
+
+	visited := make([]bool, g.V())
+	visitors := &Visitors{
+		VertexPreOrder: func(v int) bool {
+			cc.id[v] = cc.count
+			return true
+		},
+	}
+
+	for v := 0; v < g.V(); v++ {
+		if !visited[v] {
+			g.traverseDFS(v, visited, visitors)
+			cc.count++
+		}
+	}
+
+	return cc
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.
