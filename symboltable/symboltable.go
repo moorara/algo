@@ -1,8 +1,8 @@
-// Package st implements symbol table data structures.
+// Package symboltable implements symbol table data structures.
 //
 // Symbol tables are also known as maps, dictionaries, etc.
 // Symbol tables can be ordered or unordered.
-package st
+package symboltable
 
 // TraverseOrder specifies the order for traversing nodes of a tree.
 type TraverseOrder int

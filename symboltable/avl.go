@@ -1,4 +1,4 @@
-package st
+package symboltable
 
 import (
 	"fmt"
@@ -6,33 +6,32 @@ import (
 	"github.com/moorara/algo/pkg/graphviz"
 )
 
-type bstNode struct {
-	key   interface{}
-	value interface{}
-	left  *bstNode
-	right *bstNode
-	size  int
+type avlNode struct {
+	key    interface{}
+	value  interface{}
+	left   *avlNode
+	right  *avlNode
+	size   int
+	height int
 }
 
-type bst struct {
-	root   *bstNode
+type avl struct {
+	root   *avlNode
 	cmpKey CompareFunc
 }
 
-// NewBST creates a new binary search tree.
+// NewAVL creates a new AVL tree.
 //
-// A binary search tree (BST) is a binary tree in symmetric order.
-// Every node's key is:
-//   Larger than all keys in its left sub-tree.
-//   Smaller than all keys in its right sub-tree.
-func NewBST(cmpKey CompareFunc) OrderedSymbolTable {
-	return &bst{
+// AVL tree is a self-balancing binary search tree.
+// In an AVL tree, the heights of the left and right subtrees of any node differ by at most 1.
+func NewAVL(cmpKey CompareFunc) OrderedSymbolTable {
+	return &avl{
 		root:   nil,
 		cmpKey: cmpKey,
 	}
 }
 
-func (t *bst) isBST(n *bstNode, min, max interface{}) bool {
+func (t *avl) isBST(n *avlNode, min, max interface{}) bool {
 	if n == nil {
 		return true
 	}
@@ -45,7 +44,7 @@ func (t *bst) isBST(n *bstNode, min, max interface{}) bool {
 	return t.isBST(n.left, min, n.key) && t.isBST(n.right, n.key, max)
 }
 
-func (t *bst) isSizeOK(n *bstNode) bool {
+func (t *avl) isSizeOK(n *avlNode) bool {
 	if n == nil {
 		return true
 	}
@@ -57,12 +56,26 @@ func (t *bst) isSizeOK(n *bstNode) bool {
 	return t.isSizeOK(n.left) && t.isSizeOK(n.right)
 }
 
-func (t *bst) verify() bool {
-	return t.isBST(t.root, nil, nil) &&
-		t.isSizeOK(t.root)
+func (t *avl) isAVL(n *avlNode) bool {
+	if n == nil {
+		return true
+	}
+
+	bf := t.balanceFactor(n)
+	if bf > 1 || bf < -1 {
+		return false
+	}
+
+	return t.isAVL(n.left) && t.isAVL(n.right)
 }
 
-func (t *bst) size(n *bstNode) int {
+func (t *avl) verify() bool {
+	return t.isBST(t.root, nil, nil) &&
+		t.isSizeOK(t.root) &&
+		t.isAVL(t.root)
+}
+
+func (t *avl) size(n *avlNode) int {
 	if n == nil {
 		return 0
 	}
@@ -70,35 +83,82 @@ func (t *bst) size(n *bstNode) int {
 	return n.size
 }
 
-func (t *bst) height(n *bstNode) int {
+func (t *avl) height(n *avlNode) int {
 	if n == nil {
 		return 0
 	}
 
-	return 1 + max(t.height(n.left), t.height(n.right))
+	return n.height
 }
 
-// Size returns the number of key-value pairs in BST.
-func (t *bst) Size() int {
+func (t *avl) balanceFactor(n *avlNode) int {
+	return t.height(n.left) - t.height(n.right)
+}
+
+func (t *avl) rotateLeft(n *avlNode) *avlNode {
+	r := n.right
+	n.right = r.left
+	r.left = n
+
+	r.size = n.size
+	n.size = 1 + t.size(n.left) + t.size(n.right)
+	n.height = 1 + max(t.height(n.left), t.height(n.right))
+	r.height = 1 + max(t.height(r.left), t.height(r.right))
+
+	return r
+}
+
+func (t *avl) rotateRight(n *avlNode) *avlNode {
+	l := n.left
+	n.left = l.right
+	l.right = n
+
+	l.size = n.size
+	n.size = 1 + t.size(n.left) + t.size(n.right)
+	n.height = 1 + max(t.height(n.left), t.height(n.right))
+	l.height = 1 + max(t.height(l.left), t.height(l.right))
+
+	return l
+}
+
+func (t *avl) balance(n *avlNode) *avlNode {
+	if t.balanceFactor(n) == 2 {
+		if t.balanceFactor(n) == -1 {
+			n.left = t.rotateLeft(n.left)
+		}
+		n = t.rotateRight(n)
+	} else if t.balanceFactor(n) == -2 {
+		if t.balanceFactor(n.right) == 1 {
+			n.right = t.rotateRight(n.right)
+		}
+		n = t.rotateLeft(n)
+	}
+
+	return n
+}
+
+// Size returns the number of key-value pairs in AVL tree.
+func (t *avl) Size() int {
 	return t.size(t.root)
 }
 
-// Height returns the height of BST.
-func (t *bst) Height() int {
+// Height returns the height of AVL tree.
+func (t *avl) Height() int {
 	return t.height(t.root)
 }
 
-// IsEmpty returns true if BST is empty.
-func (t *bst) IsEmpty() bool {
+// IsEmpty returns true if AVL tree is empty.
+func (t *avl) IsEmpty() bool {
 	return t.root == nil
 }
 
-func (t *bst) _put(n *bstNode, key, value interface{}) *bstNode {
+func (t *avl) _put(n *avlNode, key, value interface{}) *avlNode {
 	if n == nil {
-		return &bstNode{
-			key:   key,
-			value: value,
-			size:  1,
+		return &avlNode{
+			key:    key,
+			value:  value,
+			size:   1,
+			height: 1,
 		}
 	}
 
@@ -110,14 +170,16 @@ func (t *bst) _put(n *bstNode, key, value interface{}) *bstNode {
 		n.right = t._put(n.right, key, value)
 	default:
 		n.value = value
+		return n
 	}
 
 	n.size = 1 + t.size(n.left) + t.size(n.right)
-	return n
+	n.height = 1 + max(t.height(n.left), t.height(n.right))
+	return t.balance(n)
 }
 
-// Put adds a new key-value pair to BST.
-func (t *bst) Put(key, value interface{}) {
+// Put adds a new key-value pair to AVL tree.
+func (t *avl) Put(key, value interface{}) {
 	if key == nil {
 		return
 	}
@@ -125,7 +187,7 @@ func (t *bst) Put(key, value interface{}) {
 	t.root = t._put(t.root, key, value)
 }
 
-func (t *bst) _get(n *bstNode, key interface{}) (interface{}, bool) {
+func (t *avl) _get(n *avlNode, key interface{}) (interface{}, bool) {
 	if n == nil || key == nil {
 		return nil, false
 	}
@@ -141,12 +203,12 @@ func (t *bst) _get(n *bstNode, key interface{}) (interface{}, bool) {
 	}
 }
 
-// Get returns the value of a given key in BST.
-func (t *bst) Get(key interface{}) (interface{}, bool) {
+// Get returns the value of a given key in AVL tree.
+func (t *avl) Get(key interface{}) (interface{}, bool) {
 	return t._get(t.root, key)
 }
 
-func (t *bst) _delete(n *bstNode, key interface{}) (*bstNode, interface{}, bool) {
+func (t *avl) _delete(n *avlNode, key interface{}) (*avlNode, interface{}, bool) {
 	if n == nil || key == nil {
 		return n, nil, false
 	}
@@ -176,21 +238,22 @@ func (t *bst) _delete(n *bstNode, key interface{}) (*bstNode, interface{}, bool)
 	}
 
 	n.size = 1 + t.size(n.left) + t.size(n.right)
-	return n, value, ok
+	n.height = 1 + max(t.height(n.left), t.height(n.right))
+	return t.balance(n), value, ok
 }
 
-// Delete removes a key-value pair from BST.
-func (t *bst) Delete(key interface{}) (value interface{}, ok bool) {
+// Delete removes a key-value pair from AVL tree.
+func (t *avl) Delete(key interface{}) (value interface{}, ok bool) {
 	t.root, value, ok = t._delete(t.root, key)
 	return value, ok
 }
 
-// KeyValues returns all key-value pairs in BST.
-func (t *bst) KeyValues() []KeyValue {
+// KeyValues returns all key-value pairs in AVL tree.
+func (t *avl) KeyValues() []KeyValue {
 	i := 0
 	kvs := make([]KeyValue, t.Size())
 
-	t._traverse(t.root, InOrder, func(n *bstNode) bool {
+	t._traverse(t.root, InOrder, func(n *avlNode) bool {
 		kvs[i] = KeyValue{n.key, n.value}
 		i++
 		return true
@@ -198,15 +261,15 @@ func (t *bst) KeyValues() []KeyValue {
 	return kvs
 }
 
-func (t *bst) _min(n *bstNode) *bstNode {
+func (t *avl) _min(n *avlNode) *avlNode {
 	if n.left == nil {
 		return n
 	}
 	return t._min(n.left)
 }
 
-// Min returns the minimum key and its value in BST.
-func (t *bst) Min() (interface{}, interface{}) {
+// Min returns the minimum key and its value in AVL tree.
+func (t *avl) Min() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
 	}
@@ -215,15 +278,15 @@ func (t *bst) Min() (interface{}, interface{}) {
 	return n.key, n.value
 }
 
-func (t *bst) _max(n *bstNode) *bstNode {
+func (t *avl) _max(n *avlNode) *avlNode {
 	if n.right == nil {
 		return n
 	}
 	return t._max(n.right)
 }
 
-// Max returns the maximum key and its value in BST.
-func (t *bst) Max() (interface{}, interface{}) {
+// Max returns the maximum key and its value in AVL tree.
+func (t *avl) Max() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
 	}
@@ -232,7 +295,7 @@ func (t *bst) Max() (interface{}, interface{}) {
 	return n.key, n.value
 }
 
-func (t *bst) _floor(n *bstNode, key interface{}) *bstNode {
+func (t *avl) _floor(n *avlNode, key interface{}) *avlNode {
 	if n == nil || key == nil {
 		return nil
 	}
@@ -251,8 +314,8 @@ func (t *bst) _floor(n *bstNode, key interface{}) *bstNode {
 	return n
 }
 
-// Floor returns the largest key in BST less than or equal to key.
-func (t *bst) Floor(key interface{}) (interface{}, interface{}) {
+// Floor returns the largest key in AVL tree less than or equal to key.
+func (t *avl) Floor(key interface{}) (interface{}, interface{}) {
 	n := t._floor(t.root, key)
 	if n == nil {
 		return nil, nil
@@ -260,7 +323,7 @@ func (t *bst) Floor(key interface{}) (interface{}, interface{}) {
 	return n.key, n.value
 }
 
-func (t *bst) _ceiling(n *bstNode, key interface{}) *bstNode {
+func (t *avl) _ceiling(n *avlNode, key interface{}) *avlNode {
 	if n == nil || key == nil {
 		return nil
 	}
@@ -279,8 +342,8 @@ func (t *bst) _ceiling(n *bstNode, key interface{}) *bstNode {
 	return n
 }
 
-// Ceiling returns the smallest key in BST greater than or equal to key.
-func (t *bst) Ceiling(key interface{}) (interface{}, interface{}) {
+// Ceiling returns the smallest key in AVL tree greater than or equal to key.
+func (t *avl) Ceiling(key interface{}) (interface{}, interface{}) {
 	n := t._ceiling(t.root, key)
 	if n == nil {
 		return nil, nil
@@ -288,7 +351,7 @@ func (t *bst) Ceiling(key interface{}) (interface{}, interface{}) {
 	return n.key, n.value
 }
 
-func (t *bst) _rank(n *bstNode, key interface{}) int {
+func (t *avl) _rank(n *avlNode, key interface{}) int {
 	if n == nil {
 		return 0
 	}
@@ -304,8 +367,8 @@ func (t *bst) _rank(n *bstNode, key interface{}) int {
 	}
 }
 
-// Rank returns the number of keys in BST less than key.
-func (t *bst) Rank(key interface{}) int {
+// Rank returns the number of keys in AVL tree less than key.
+func (t *avl) Rank(key interface{}) int {
 	if key == nil {
 		return -1
 	}
@@ -313,7 +376,7 @@ func (t *bst) Rank(key interface{}) int {
 	return t._rank(t.root, key)
 }
 
-func (t *bst) _select(n *bstNode, rank int) *bstNode {
+func (t *avl) _select(n *avlNode, rank int) *avlNode {
 	if n == nil {
 		return nil
 	}
@@ -329,8 +392,8 @@ func (t *bst) _select(n *bstNode, rank int) *bstNode {
 	}
 }
 
-// Select return the k-th smallest key in BST.
-func (t *bst) Select(rank int) (interface{}, interface{}) {
+// Select return the k-th smallest key in AVL tree.
+func (t *avl) Select(rank int) (interface{}, interface{}) {
 	if rank < 0 || rank >= t.Size() {
 		return nil, nil
 	}
@@ -339,52 +402,53 @@ func (t *bst) Select(rank int) (interface{}, interface{}) {
 	return n.key, n.value
 }
 
-func (t *bst) _deleteMin(n *bstNode) (*bstNode, *bstNode) {
+func (t *avl) _deleteMin(n *avlNode) (*avlNode, *avlNode) {
 	if n.left == nil {
 		return n.right, n
 	}
 
-	var min *bstNode
+	var min *avlNode
 	n.left, min = t._deleteMin(n.left)
 	n.size = 1 + t.size(n.left) + t.size(n.right)
-	return n, min
+	n.height = 1 + max(t.height(n.left), t.height(n.right))
+	return t.balance(n), min
 }
 
-// DeleteMin removes the smallest key and associated value from BST.
-func (t *bst) DeleteMin() (interface{}, interface{}) {
+// DeleteMin removes the smallest key and associated value from AVL tree.
+func (t *avl) DeleteMin() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
 	}
 
-	var min *bstNode
+	var min *avlNode
 	t.root, min = t._deleteMin(t.root)
 	return min.key, min.value
 }
 
-func (t *bst) _deleteMax(n *bstNode) (*bstNode, *bstNode) {
+func (t *avl) _deleteMax(n *avlNode) (*avlNode, *avlNode) {
 	if n.right == nil {
 		return n.left, n
 	}
 
-	var max *bstNode
+	var max *avlNode
 	n.right, max = t._deleteMax(n.right)
 	n.size = 1 + t.size(n.left) + t.size(n.right)
-	return n, max
+	return t.balance(n), max
 }
 
-// DeleteMax removes the largest key and associated value from BST.
-func (t *bst) DeleteMax() (interface{}, interface{}) {
+// DeleteMax removes the largest key and associated value from AVL tree.
+func (t *avl) DeleteMax() (interface{}, interface{}) {
 	if t.root == nil {
 		return nil, nil
 	}
 
-	var max *bstNode
+	var max *avlNode
 	t.root, max = t._deleteMax(t.root)
 	return max.key, max.value
 }
 
-// RangeSize returns the number of keys in BST between two given keys.
-func (t *bst) RangeSize(lo, hi interface{}) int {
+// RangeSize returns the number of keys in AVL tree between two given keys.
+func (t *avl) RangeSize(lo, hi interface{}) int {
 	if lo == nil || hi == nil {
 		return -1
 	}
@@ -398,7 +462,7 @@ func (t *bst) RangeSize(lo, hi interface{}) int {
 	}
 }
 
-func (t *bst) _range(n *bstNode, kvs *[]KeyValue, lo, hi interface{}) int {
+func (t *avl) _range(n *avlNode, kvs *[]KeyValue, lo, hi interface{}) int {
 	if n == nil {
 		return 0
 	}
@@ -421,8 +485,8 @@ func (t *bst) _range(n *bstNode, kvs *[]KeyValue, lo, hi interface{}) int {
 	return len
 }
 
-// Range returns all keys and associated values in BST between two given keys.
-func (t *bst) Range(lo, hi interface{}) []KeyValue {
+// Range returns all keys and associated values in AVL tree between two given keys.
+func (t *avl) Range(lo, hi interface{}) []KeyValue {
 	if lo == nil || hi == nil {
 		return nil
 	}
@@ -432,7 +496,7 @@ func (t *bst) Range(lo, hi interface{}) []KeyValue {
 	return kvs[0:len]
 }
 
-func (t *bst) _traverse(n *bstNode, order TraverseOrder, visit func(*bstNode) bool) bool {
+func (t *avl) _traverse(n *avlNode, order TraverseOrder, visit func(*avlNode) bool) bool {
 	if n == nil {
 		return true
 	}
@@ -455,23 +519,23 @@ func (t *bst) _traverse(n *bstNode, order TraverseOrder, visit func(*bstNode) bo
 	}
 }
 
-// Traverse is used for visiting all key-value pairs in BST.
-func (t *bst) Traverse(order TraverseOrder, visit VisitFunc) {
+// Traverse is used for visiting all key-value pairs in AVL tree.
+func (t *avl) Traverse(order TraverseOrder, visit VisitFunc) {
 	if order != PreOrder && order != InOrder && order != PostOrder {
 		return
 	}
 
-	t._traverse(t.root, order, func(n *bstNode) bool {
+	t._traverse(t.root, order, func(n *avlNode) bool {
 		return visit(n.key, n.value)
 	})
 }
 
-// Graphviz returns a visualization of BST in Graphviz format.
-func (t *bst) Graphviz() string {
+// Graphviz returns a visualization of AVL tree in Graphviz format.
+func (t *avl) Graphviz() string {
 	var parent, left, right, label string
-	graph := graphviz.NewGraph(true, true, "BST", "", "", "", graphviz.ShapeOval)
+	graph := graphviz.NewGraph(true, true, "AVL", "", "", "", graphviz.ShapeOval)
 
-	t._traverse(t.root, PreOrder, func(n *bstNode) bool {
+	t._traverse(t.root, PreOrder, func(n *avlNode) bool {
 		parent = fmt.Sprintf("%v", n.key)
 		label = fmt.Sprintf("%v,%v", n.key, n.value)
 		graph.AddNode(graphviz.NewNode(parent, "", label, "", "", "", "", ""))
