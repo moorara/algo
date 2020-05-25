@@ -8,7 +8,7 @@
 package graph
 
 import (
-	"github.com/moorara/algo/ds/list"
+	"github.com/moorara/algo/list"
 )
 
 const (

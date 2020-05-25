@@ -6,7 +6,7 @@
 
 # algo
 
-A collection of common algorithms and data structures for Go applications.
+A collection of common data structures and algorithms for Go applications.
 
 ## Development
 

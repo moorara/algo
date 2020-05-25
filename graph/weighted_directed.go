@@ -3,52 +3,83 @@ package graph
 import (
 	"fmt"
 
-	"github.com/moorara/algo/ds/list"
+	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/pkg/graphviz"
 )
 
-// Undirected represents an undirected graph data type.
-type Undirected struct {
-	v, e int
-	adj  [][]int
+// DirectedEdge represents a weighted directed edge data type.
+type DirectedEdge struct {
+	from, to int
+	weight   float64
 }
 
-// NewUndirected creates a new undirected graph.
-func NewUndirected(V int, edges ...[2]int) *Undirected {
-	adj := make([][]int, V)
+// From returns the vertex this edge points from.
+func (e DirectedEdge) From() int {
+	return e.from
+}
+
+// To returns the vertex this edge points to.
+func (e DirectedEdge) To() int {
+	return e.to
+}
+
+// Weight returns the weight of this edge.
+func (e DirectedEdge) Weight() float64 {
+	return e.weight
+}
+
+// WeightedDirected represents a weighted directed graph data type.
+type WeightedDirected struct {
+	v, e int
+	ins  []int
+	adj  [][]DirectedEdge
+}
+
+// NewWeightedDirected creates a new weighted directed graph.
+func NewWeightedDirected(V int, edges ...DirectedEdge) *WeightedDirected {
+	adj := make([][]DirectedEdge, V)
 	for i := range adj {
-		adj[i] = make([]int, 0)
+		adj[i] = make([]DirectedEdge, 0)
 	}
 
-	g := &Undirected{
+	g := &WeightedDirected{
 		v:   V, // no. of vertices
 		e:   0, // no. of edges
+		ins: make([]int, V),
 		adj: adj,
 	}
 
 	for _, e := range edges {
-		g.AddEdge(e[0], e[1])
+		g.AddEdge(e)
 	}
 
 	return g
 }
 
 // V returns the number of vertices.
-func (g *Undirected) V() int {
+func (g *WeightedDirected) V() int {
 	return g.v
 }
 
 // E returns the number of edges.
-func (g *Undirected) E() int {
+func (g *WeightedDirected) E() int {
 	return g.e
 }
 
-func (g *Undirected) isVertexValid(v int) bool {
+func (g *WeightedDirected) isVertexValid(v int) bool {
 	return v >= 0 && v < g.v
 }
 
-// Degree returns the degree of a vertext.
-func (g *Undirected) Degree(v int) int {
+// InDegree returns the number of directed edges incident to a vertex.
+func (g *WeightedDirected) InDegree(v int) int {
+	if !g.isVertexValid(v) {
+		return -1
+	}
+	return g.ins[v]
+}
+
+// OutDegree returns the number of directed edges incident from a vertex.
+func (g *WeightedDirected) OutDegree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
 	}
@@ -56,7 +87,7 @@ func (g *Undirected) Degree(v int) int {
 }
 
 // Adj returns the vertices adjacent from vertex.
-func (g *Undirected) Adj(v int) []int {
+func (g *WeightedDirected) Adj(v int) []DirectedEdge {
 	if !g.isVertexValid(v) {
 		return nil
 	}
@@ -64,16 +95,41 @@ func (g *Undirected) Adj(v int) []int {
 }
 
 // AddEdge adds a new edge to the graph.
-func (g *Undirected) AddEdge(v, w int) {
+func (g *WeightedDirected) AddEdge(e DirectedEdge) {
+	v := e.From()
+	w := e.To()
+
 	if g.isVertexValid(v) && g.isVertexValid(w) {
 		g.e++
-		g.adj[v] = append(g.adj[v], w)
-		g.adj[w] = append(g.adj[w], v)
+		g.ins[w]++
+		g.adj[v] = append(g.adj[v], e)
 	}
 }
 
+// Edges returns all directed edges in the graph.
+func (g *WeightedDirected) Edges() []DirectedEdge {
+	edges := make([]DirectedEdge, 0)
+	for _, adjEdges := range g.adj {
+		edges = append(edges, adjEdges...)
+	}
+
+	return edges
+}
+
+// Reverse returns the reverse of the directed graph.
+func (g *WeightedDirected) Reverse() *WeightedDirected {
+	rev := NewWeightedDirected(g.V())
+	for v := 0; v < g.V(); v++ {
+		for _, e := range g.adj[v] {
+			rev.AddEdge(DirectedEdge{e.To(), e.From(), e.Weight()})
+		}
+	}
+
+	return rev
+}
+
 // DFS Traversal (Recursion)
-func (g *Undirected) traverseDFS(v int, visited []bool, visitors *Visitors) {
+func (g *WeightedDirected) traverseDFS(v int, visited []bool, visitors *Visitors) {
 	visited[v] = true
 
 	if visitors != nil && visitors.VertexPreOrder != nil {
@@ -82,10 +138,11 @@ func (g *Undirected) traverseDFS(v int, visited []bool, visitors *Visitors) {
 		}
 	}
 
-	for _, w := range g.adj[v] {
+	for _, e := range g.adj[v] {
+		w := e.To()
 		if !visited[w] {
 			if visitors != nil && visitors.EdgePreOrder != nil {
-				if !visitors.EdgePreOrder(v, w, 0) {
+				if !visitors.EdgePreOrder(v, w, e.Weight()) {
 					return
 				}
 			}
@@ -102,7 +159,7 @@ func (g *Undirected) traverseDFS(v int, visited []bool, visitors *Visitors) {
 }
 
 // Iterative DFS Traversal
-func (g *Undirected) traverseDFSi(s int, visited []bool, visitors *Visitors) {
+func (g *WeightedDirected) traverseDFSi(s int, visited []bool, visitors *Visitors) {
 	stack := list.NewStack(listNodeSize)
 
 	visited[s] = true
@@ -123,7 +180,8 @@ func (g *Undirected) traverseDFSi(s int, visited []bool, visitors *Visitors) {
 			}
 		}
 
-		for _, w := range g.adj[v] {
+		for _, e := range g.adj[v] {
+			w := e.To()
 			if !visited[w] {
 				visited[w] = true
 				stack.Push(w)
@@ -135,7 +193,7 @@ func (g *Undirected) traverseDFSi(s int, visited []bool, visitors *Visitors) {
 				}
 
 				if visitors != nil && visitors.EdgePreOrder != nil {
-					if !visitors.EdgePreOrder(v, w, 0) {
+					if !visitors.EdgePreOrder(v, w, e.Weight()) {
 						return
 					}
 				}
@@ -145,7 +203,7 @@ func (g *Undirected) traverseDFSi(s int, visited []bool, visitors *Visitors) {
 }
 
 // BFS Traversal
-func (g *Undirected) traverseBFS(s int, visited []bool, visitors *Visitors) {
+func (g *WeightedDirected) traverseBFS(s int, visited []bool, visitors *Visitors) {
 	queue := list.NewQueue(listNodeSize)
 
 	visited[s] = true
@@ -166,7 +224,8 @@ func (g *Undirected) traverseBFS(s int, visited []bool, visitors *Visitors) {
 			}
 		}
 
-		for _, w := range g.adj[v] {
+		for _, e := range g.adj[v] {
+			w := e.To()
 			if !visited[w] {
 				visited[w] = true
 				queue.Enqueue(w)
@@ -178,7 +237,7 @@ func (g *Undirected) traverseBFS(s int, visited []bool, visitors *Visitors) {
 				}
 
 				if visitors != nil && visitors.EdgePreOrder != nil {
-					if !visitors.EdgePreOrder(v, w, 0) {
+					if !visitors.EdgePreOrder(v, w, e.Weight()) {
 						return
 					}
 				}
@@ -188,7 +247,7 @@ func (g *Undirected) traverseBFS(s int, visited []bool, visitors *Visitors) {
 }
 
 // Traverse is used for visiting all vertices and edges in graph.
-func (g *Undirected) Traverse(s int, strategy TraversalStrategy, visitors *Visitors) {
+func (g *WeightedDirected) Traverse(s int, strategy TraversalStrategy, visitors *Visitors) {
 	if !g.isVertexValid(s) {
 		return
 	}
@@ -206,7 +265,7 @@ func (g *Undirected) Traverse(s int, strategy TraversalStrategy, visitors *Visit
 }
 
 // Paths finds all paths from a source vertex to every other vertex.
-func (g *Undirected) Paths(s int, strategy TraversalStrategy) *Paths {
+func (g *WeightedDirected) Paths(s int, strategy TraversalStrategy) *Paths {
 	p := &Paths{
 		s:       s,
 		visited: make([]bool, g.V()),
@@ -215,7 +274,7 @@ func (g *Undirected) Paths(s int, strategy TraversalStrategy) *Paths {
 
 	if g.isVertexValid(s) && isStrategyValid(strategy) {
 		visitors := &Visitors{
-			EdgePreOrder: func(v, w int, _ float64) bool {
+			EdgePreOrder: func(v, w int, weight float64) bool {
 				p.edgeTo[w] = v
 				return true
 			},
@@ -235,7 +294,7 @@ func (g *Undirected) Paths(s int, strategy TraversalStrategy) *Paths {
 }
 
 // Orders determines ordering of vertices in the graph.
-func (g *Undirected) Orders(strategy TraversalStrategy) *Orders {
+func (g *WeightedDirected) Orders(strategy TraversalStrategy) *Orders {
 	o := &Orders{
 		preRank:   make([]int, g.V()),
 		postRank:  make([]int, g.V()),
@@ -278,9 +337,9 @@ func (g *Undirected) Orders(strategy TraversalStrategy) *Orders {
 	return o
 }
 
-// ConnectedComponents determines all the connected components in the graph.
-func (g *Undirected) ConnectedComponents() *ConnectedComponents {
-	cc := &ConnectedComponents{
+// StronglyConnectedComponents determines all the connected components in the graph.
+func (g *WeightedDirected) StronglyConnectedComponents() *StronglyConnectedComponents {
+	scc := &StronglyConnectedComponents{
 		count: 0,
 		id:    make([]int, g.V()),
 	}
@@ -288,35 +347,47 @@ func (g *Undirected) ConnectedComponents() *ConnectedComponents {
 	visited := make([]bool, g.V())
 	visitors := &Visitors{
 		VertexPreOrder: func(v int) bool {
-			cc.id[v] = cc.count
+			scc.id[v] = scc.count
 			return true
 		},
 	}
 
-	for v := 0; v < g.V(); v++ {
+	order := g.Reverse().Orders(DFS).ReversePostOrder()
+	for _, v := range order {
 		if !visited[v] {
 			g.traverseDFS(v, visited, visitors)
-			cc.count++
+			scc.count++
 		}
 	}
 
-	return cc
+	return scc
+}
+
+// Cycle determines if the graph has a cyclic path.
+func (g *WeightedDirected) Cycle() *DirectedCycle {
+	c := &DirectedCycle{
+		edgeTo:  make([]int, g.V()),
+		onStack: make([]bool, g.V()),
+		cycle:   nil,
+	}
+
+	return c
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.
-func (g *Undirected) Graphviz() string {
-	graph := graphviz.NewGraph(true, false, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
+func (g *WeightedDirected) Graphviz() string {
+	graph := graphviz.NewGraph(true, true, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
 
 	for i := 0; i < g.v; i++ {
 		name := fmt.Sprintf("%d", i)
-		graph.AddNode(graphviz.NewNode(name, "", name, "", "", "", "", ""))
+		graph.AddNode(graphviz.NewNode("", "", name, "", "", "", "", ""))
 	}
 
 	for v := range g.adj {
-		for _, w := range g.adj[v] {
-			from := fmt.Sprintf("%d", v)
-			to := fmt.Sprintf("%d", w)
-			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeUndirected, "", "", "", "", ""))
+		for _, e := range g.adj[v] {
+			from := fmt.Sprintf("%d", e.From())
+			to := fmt.Sprintf("%d", e.To())
+			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", "", "", "", ""))
 		}
 	}
 
