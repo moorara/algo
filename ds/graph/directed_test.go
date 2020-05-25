@@ -44,6 +44,23 @@ func TestDirected(t *testing.T) {
 		expectedIsStronglyConnected bool
 	}
 
+	type directedCycleTest struct {
+		expectedCycle []int
+		expectedOK    bool
+	}
+
+	type topologicalRankTest struct {
+		v            int
+		expectedRank int
+		expectedOK   bool
+	}
+
+	type topologicalTest struct {
+		expectedOrder        []int
+		expectedOK           bool
+		topologicalRankTests []topologicalRankTest
+	}
+
 	tests := []struct {
 		name                                string
 		V                                   int
@@ -59,52 +76,54 @@ func TestDirected(t *testing.T) {
 		ordersTests                         []ordersTest
 		expectedStronglyConnectedComponents [][]int
 		strongConnectivityTests             []strongConnectivityTest
+		directedCycleTest                   directedCycleTest
+		topologicalTest                     topologicalTest
 	}{
 		{
 			name: "Digraph",
 			V:    13,
 			edges: [][2]int{
-				[2]int{0, 1},
-				[2]int{0, 5},
-				[2]int{2, 0},
-				[2]int{2, 3},
-				[2]int{3, 2},
-				[2]int{3, 5},
-				[2]int{4, 2},
-				[2]int{4, 3},
-				[2]int{5, 4},
-				[2]int{6, 0},
-				[2]int{6, 4},
-				[2]int{6, 9},
-				[2]int{7, 6},
-				[2]int{7, 8},
-				[2]int{8, 7},
-				[2]int{8, 9},
-				[2]int{9, 10},
-				[2]int{9, 11},
-				[2]int{10, 12},
-				[2]int{11, 4},
-				[2]int{11, 12},
-				[2]int{12, 9},
+				{0, 1},
+				{0, 5},
+				{2, 0},
+				{2, 3},
+				{3, 2},
+				{3, 5},
+				{4, 2},
+				{4, 3},
+				{5, 4},
+				{6, 0},
+				{6, 4},
+				{6, 9},
+				{7, 6},
+				{7, 8},
+				{8, 7},
+				{8, 9},
+				{9, 10},
+				{9, 11},
+				{10, 12},
+				{11, 4},
+				{11, 12},
+				{12, 9},
 			},
 			expectedV:          13,
 			expectedE:          22,
 			expectedInDegrees:  []int{2, 1, 2, 2, 3, 2, 1, 1, 1, 3, 1, 1, 2},
 			expectedOutDegrees: []int{2, 0, 2, 2, 2, 1, 3, 2, 2, 2, 1, 2, 1},
 			expectedAdjacents: [][]int{
-				[]int{1, 5},
-				[]int{},
-				[]int{0, 3},
-				[]int{2, 5},
-				[]int{2, 3},
-				[]int{4},
-				[]int{0, 4, 9},
-				[]int{6, 8},
-				[]int{7, 9},
-				[]int{10, 11},
-				[]int{12},
-				[]int{4, 12},
-				[]int{9},
+				{1, 5},
+				{},
+				{0, 3},
+				{2, 5},
+				{2, 3},
+				{4},
+				{0, 4, 9},
+				{6, 8},
+				{7, 9},
+				{10, 11},
+				{12},
+				{4, 12},
+				{9},
 			},
 			expectedReverse: &Directed{
 				v:   13,
@@ -267,11 +286,11 @@ func TestDirected(t *testing.T) {
 				},
 			},
 			expectedStronglyConnectedComponents: [][]int{
-				[]int{1},
-				[]int{0, 2, 3, 4, 5},
-				[]int{9, 10, 11, 12},
-				[]int{6},
-				[]int{7, 8},
+				{1},
+				{0, 2, 3, 4, 5},
+				{9, 10, 11, 12},
+				{6},
+				{7, 8},
 			},
 			strongConnectivityTests: []strongConnectivityTest{
 				{
@@ -331,6 +350,286 @@ func TestDirected(t *testing.T) {
 					expectedIsStronglyConnected: false,
 				},
 			},
+			directedCycleTest: directedCycleTest{
+				expectedCycle: []int{2, 0, 5, 4, 2},
+				expectedOK:    true,
+			},
+			topologicalTest: topologicalTest{
+				expectedOrder: nil,
+				expectedOK:    false,
+				topologicalRankTests: []topologicalRankTest{
+					{
+						v:            0,
+						expectedRank: -1,
+						expectedOK:   false,
+					},
+				},
+			},
+		},
+		{
+			name: "DAG",
+			V:    13,
+			edges: [][2]int{
+				{0, 1},
+				{0, 5},
+				{0, 6},
+				{2, 0},
+				{2, 3},
+				{3, 5},
+				{5, 4},
+				{6, 4},
+				{6, 9},
+				{7, 6},
+				{8, 7},
+				{9, 10},
+				{9, 11},
+				{9, 12},
+				{11, 12},
+			},
+			expectedV:          13,
+			expectedE:          15,
+			expectedInDegrees:  []int{1, 1, 0, 1, 2, 2, 2, 1, 0, 1, 1, 1, 2},
+			expectedOutDegrees: []int{3, 0, 2, 1, 0, 1, 2, 1, 1, 3, 0, 1, 0},
+			expectedAdjacents: [][]int{
+				{1, 5, 6},
+				{},
+				{0, 3},
+				{5},
+				{},
+				{4},
+				{4, 9},
+				{6},
+				{7},
+				{10, 11, 12},
+				{},
+				{12},
+				{},
+			},
+			expectedReverse: &Directed{
+				v:   13,
+				e:   15,
+				ins: []int{3, 0, 2, 1, 0, 1, 2, 1, 1, 3, 0, 1, 0},
+				adj: [][]int{
+					[]int{2},
+					[]int{0},
+					[]int{},
+					[]int{2},
+					[]int{5, 6},
+					[]int{0, 3},
+					[]int{0, 7},
+					[]int{8},
+					[]int{},
+					[]int{6},
+					[]int{9},
+					[]int{9},
+					[]int{9, 11},
+				},
+			},
+			traverseTests: []traverseTest{
+				{
+					name:                          "InvalidVertex",
+					source:                        -1,
+					expectedVertexPreOrderVisits:  []int{},
+					expectedVertexPostOrderVisits: []int{},
+					expectedEdgePreOrderVisits:    [][2]int{},
+				},
+				{
+					name:                          "InvalidStrategy",
+					source:                        0,
+					strategy:                      -1,
+					expectedVertexPreOrderVisits:  []int{},
+					expectedVertexPostOrderVisits: []int{},
+					expectedEdgePreOrderVisits:    [][2]int{},
+				},
+				{
+					name:                          "DFS",
+					source:                        0,
+					strategy:                      DFS,
+					expectedVertexPreOrderVisits:  []int{0, 1, 5, 4, 6, 9, 10, 11, 12},
+					expectedVertexPostOrderVisits: []int{1, 4, 5, 10, 12, 11, 9, 6, 0},
+					expectedEdgePreOrderVisits: [][2]int{
+						{0, 1},
+						{0, 5},
+						{5, 4},
+						{0, 6},
+						{6, 9},
+						{9, 10},
+						{9, 11},
+						{11, 12},
+					},
+				},
+				{
+					name:                          "DFSi",
+					source:                        0,
+					strategy:                      DFSi,
+					expectedVertexPreOrderVisits:  []int{0, 1, 5, 6, 4, 9, 10, 11, 12},
+					expectedVertexPostOrderVisits: []int{0, 6, 9, 12, 11, 10, 4, 5, 1},
+					expectedEdgePreOrderVisits: [][2]int{
+						{0, 1},
+						{0, 5},
+						{0, 6},
+						{6, 4},
+						{6, 9},
+						{9, 10},
+						{9, 11},
+						{9, 12},
+					},
+				},
+				{
+					name:                          "BFS",
+					source:                        0,
+					strategy:                      BFS,
+					expectedVertexPreOrderVisits:  []int{0, 1, 5, 6, 4, 9, 10, 11, 12},
+					expectedVertexPostOrderVisits: []int{0, 1, 5, 6, 4, 9, 10, 11, 12},
+					expectedEdgePreOrderVisits: [][2]int{
+						{0, 1},
+						{0, 5},
+						{0, 6},
+						{5, 4},
+						{6, 9},
+						{9, 10},
+						{9, 11},
+						{9, 12},
+					},
+				},
+			},
+			pathsTests: []pathsTest{
+				{
+					name:         "InvalidVertex",
+					source:       -1,
+					expectedPath: nil,
+					expectedOK:   false,
+				},
+				{
+					name:         "InvalidStrategy",
+					source:       0,
+					strategy:     -1,
+					expectedPath: nil,
+					expectedOK:   false,
+				},
+				{
+					name:         "DFS",
+					source:       0,
+					strategy:     DFS,
+					vertex:       12,
+					expectedPath: []int{0, 6, 9, 11, 12},
+					expectedOK:   true,
+				},
+				{
+					name:         "DFSi",
+					source:       0,
+					strategy:     DFSi,
+					vertex:       12,
+					expectedPath: []int{0, 6, 9, 12},
+					expectedOK:   true,
+				},
+				{
+					name:         "BFS",
+					source:       0,
+					strategy:     BFS,
+					vertex:       12,
+					expectedPath: []int{0, 6, 9, 12},
+					expectedOK:   true,
+				},
+			},
+			ordersTests: []ordersTest{
+				{
+					name:                     "InvalidStrategy",
+					strategy:                 -1,
+					v:                        0,
+					expectedPreRank:          0,
+					expectedPostRank:         0,
+					expectedPreOrder:         []int{},
+					expectedPostOrder:        []int{},
+					expectedReversePostOrder: []int{},
+				},
+				{
+					name:                     "DFS",
+					strategy:                 DFS,
+					v:                        10,
+					expectedPreRank:          6,
+					expectedPostRank:         3,
+					expectedPreOrder:         []int{0, 1, 5, 4, 6, 9, 10, 11, 12, 2, 3, 7, 8},
+					expectedPostOrder:        []int{1, 4, 5, 10, 12, 11, 9, 6, 0, 3, 2, 7, 8},
+					expectedReversePostOrder: []int{8, 7, 2, 3, 0, 6, 9, 11, 12, 10, 5, 4, 1},
+				},
+				{
+					name:                     "DFSi",
+					strategy:                 DFSi,
+					v:                        10,
+					expectedPreRank:          6,
+					expectedPostRank:         5,
+					expectedPreOrder:         []int{0, 1, 5, 6, 4, 9, 10, 11, 12, 2, 3, 7, 8},
+					expectedPostOrder:        []int{0, 6, 9, 12, 11, 10, 4, 5, 1, 2, 3, 7, 8},
+					expectedReversePostOrder: []int{8, 7, 3, 2, 1, 5, 4, 10, 11, 12, 9, 6, 0},
+				},
+				{
+					name:                     "BFS",
+					strategy:                 BFS,
+					v:                        10,
+					expectedPreRank:          6,
+					expectedPostRank:         6,
+					expectedPreOrder:         []int{0, 1, 5, 6, 4, 9, 10, 11, 12, 2, 3, 7, 8},
+					expectedPostOrder:        []int{0, 1, 5, 6, 4, 9, 10, 11, 12, 2, 3, 7, 8},
+					expectedReversePostOrder: []int{8, 7, 3, 2, 12, 11, 10, 9, 4, 6, 5, 1, 0},
+				},
+			},
+			expectedStronglyConnectedComponents: [][]int{
+				{12},
+				{11},
+				{10},
+				{9},
+				{4},
+				{6},
+				{7},
+				{8},
+				{5},
+				{3},
+				{1},
+				{0},
+				{2},
+			},
+			strongConnectivityTests: []strongConnectivityTest{
+				{
+					name:                        "Disconnected#1",
+					v:                           0,
+					w:                           10,
+					expectedID:                  11,
+					expectedIsStronglyConnected: false,
+				},
+				{
+					name:                        "Disconnected#2",
+					v:                           1,
+					w:                           11,
+					expectedID:                  10,
+					expectedIsStronglyConnected: false,
+				},
+			},
+			directedCycleTest: directedCycleTest{
+				expectedCycle: nil,
+				expectedOK:    false,
+			},
+			topologicalTest: topologicalTest{
+				expectedOrder: []int{8, 7, 2, 3, 0, 6, 9, 11, 12, 10, 5, 4, 1},
+				expectedOK:    true,
+				topologicalRankTests: []topologicalRankTest{
+					{
+						v:            0,
+						expectedRank: 4,
+						expectedOK:   true,
+					},
+					{
+						v:            6,
+						expectedRank: 5,
+						expectedOK:   true,
+					},
+					{
+						v:            12,
+						expectedRank: 8,
+						expectedOK:   true,
+					},
+				},
+			},
 		},
 	}
 
@@ -352,12 +651,16 @@ func TestDirected(t *testing.T) {
 				assert.Equal(t, expectedOutDegree, g.OutDegree(v))
 			}
 
-			assert.Nil(t, g.Adj(-1))
-			for v, expectedAdj := range tc.expectedAdjacents {
-				assert.Equal(t, expectedAdj, g.Adj(v))
-			}
+			t.Run("Adjacency", func(t *testing.T) {
+				assert.Nil(t, g.Adj(-1))
+				for v, expectedAdj := range tc.expectedAdjacents {
+					assert.Equal(t, expectedAdj, g.Adj(v))
+				}
+			})
 
-			assert.Equal(t, tc.expectedReverse, g.Reverse())
+			t.Run("Reverse", func(t *testing.T) {
+				assert.Equal(t, tc.expectedReverse, g.Reverse())
+			})
 
 			t.Run("Traverse", func(t *testing.T) {
 				for _, tc := range tc.traverseTests {
@@ -402,6 +705,24 @@ func TestDirected(t *testing.T) {
 						assert.Equal(t, tc.expectedID, scc.ID(tc.v))
 						assert.Equal(t, tc.expectedIsStronglyConnected, scc.IsStronglyConnected(tc.v, tc.w))
 					})
+				}
+			})
+
+			t.Run("DirectedCycle", func(t *testing.T) {
+				cycle, ok := g.DirectedCycle().Cycle()
+				assert.Equal(t, tc.directedCycleTest.expectedCycle, cycle)
+				assert.Equal(t, tc.directedCycleTest.expectedOK, ok)
+			})
+
+			t.Run("Topological", func(t *testing.T) {
+				tp := g.Topological()
+				order, ok := tp.Order()
+				assert.Equal(t, tc.topologicalTest.expectedOrder, order)
+				assert.Equal(t, tc.topologicalTest.expectedOK, ok)
+				for _, tc := range tc.topologicalTest.topologicalRankTests {
+					rank, ok := tp.Rank(tc.v)
+					assert.Equal(t, tc.expectedRank, rank)
+					assert.Equal(t, tc.expectedOK, ok)
 				}
 			})
 

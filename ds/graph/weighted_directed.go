@@ -280,8 +280,6 @@ func (g *WeightedDirected) Paths(s int, strategy TraversalStrategy) *Paths {
 			},
 		}
 
-		p.edgeTo[s] = s
-
 		switch strategy {
 		case DFS:
 			g.traverseDFS(s, p.visited, visitors)
@@ -363,6 +361,17 @@ func (g *WeightedDirected) StronglyConnectedComponents() *StronglyConnectedCompo
 	}
 
 	return scc
+}
+
+// Cycle determines if the graph has a cyclic path.
+func (g *WeightedDirected) Cycle() *DirectedCycle {
+	c := &DirectedCycle{
+		edgeTo:  make([]int, g.V()),
+		onStack: make([]bool, g.V()),
+		cycle:   nil,
+	}
+
+	return c
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.

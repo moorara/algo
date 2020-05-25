@@ -6,6 +6,7 @@ type testVisitors struct {
 	postOrderVertices []int
 	preOrderEdges     [][2]int
 	preOrderWeights   []float64
+	skippedVertices   []int
 }
 
 func newTestVisitors() *testVisitors {
