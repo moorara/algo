@@ -265,8 +265,6 @@ func (g *WeightedUndirected) Paths(s int, strategy TraversalStrategy) *Paths {
 			},
 		}
 
-		p.edgeTo[s] = s
-
 		switch strategy {
 		case DFS:
 			g.traverseDFS(s, p.visited, visitors)

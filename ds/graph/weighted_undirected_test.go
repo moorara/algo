@@ -108,48 +108,48 @@ func TestWeightedGraph(t *testing.T) {
 			expectedE:       16,
 			expectedDegrees: []int{4, 4, 5, 3, 4, 3, 4},
 			expectedAdjacents: [][]UndirectedEdge{
-				[]UndirectedEdge{
+				{
 					{0, 2, 0.26},
 					{0, 4, 0.38},
 					{0, 6, 0.58},
 					{0, 7, 0.16},
 				},
-				[]UndirectedEdge{
+				{
 					{1, 2, 0.36},
 					{1, 3, 0.29},
 					{1, 5, 0.32},
 					{1, 7, 0.19},
 				},
-				[]UndirectedEdge{
+				{
 					{0, 2, 0.26},
 					{1, 2, 0.36},
 					{2, 3, 0.17},
 					{2, 6, 0.40},
 					{2, 7, 0.34},
 				},
-				[]UndirectedEdge{
+				{
 					{1, 3, 0.29},
 					{2, 3, 0.17},
 					{3, 6, 0.52},
 				},
-				[]UndirectedEdge{
+				{
 					{0, 4, 0.38},
 					{4, 5, 0.35},
 					{4, 6, 0.93},
 					{4, 7, 0.37},
 				},
-				[]UndirectedEdge{
+				{
 					{1, 5, 0.32},
 					{4, 5, 0.35},
 					{5, 7, 0.28},
 				},
-				[]UndirectedEdge{
+				{
 					{0, 6, 0.58},
 					{2, 6, 0.40},
 					{3, 6, 0.52},
 					{4, 6, 0.93},
 				},
-				[]UndirectedEdge{
+				{
 					{0, 7, 0.16},
 					{1, 7, 0.19},
 					{2, 7, 0.34},
@@ -327,7 +327,7 @@ func TestWeightedGraph(t *testing.T) {
 				},
 			},
 			expectedConnectedComponents: [][]int{
-				[]int{0, 1, 2, 3, 4, 5, 6, 7},
+				{0, 1, 2, 3, 4, 5, 6, 7},
 			},
 			connectivityTests: []connectivityTest{
 				{
@@ -361,12 +361,16 @@ func TestWeightedGraph(t *testing.T) {
 				assert.Equal(t, expectedDegree, g.Degree(v))
 			}
 
-			assert.Nil(t, g.Adj(-1))
-			for v, expectedAdj := range tc.expectedAdjacents {
-				assert.Equal(t, expectedAdj, g.Adj(v))
-			}
+			t.Run("Adjacency", func(t *testing.T) {
+				assert.Nil(t, g.Adj(-1))
+				for v, expectedAdj := range tc.expectedAdjacents {
+					assert.Equal(t, expectedAdj, g.Adj(v))
+				}
+			})
 
-			assert.Equal(t, tc.expectedEdges, g.Edges())
+			t.Run("Edges", func(t *testing.T) {
+				assert.Equal(t, tc.expectedEdges, g.Edges())
+			})
 
 			t.Run("Traverse", func(t *testing.T) {
 				for _, tc := range tc.traverseTests {

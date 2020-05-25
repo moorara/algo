@@ -109,34 +109,34 @@ func TestWeightedDirected(t *testing.T) {
 			expectedInDegrees:  []int{1, 1, 2, 2, 3, 2, 1, 3},
 			expectedOutDegrees: []int{2, 1, 1, 1, 2, 3, 3, 2},
 			expectedAdjacents: [][]DirectedEdge{
-				[]DirectedEdge{
+				{
 					{0, 2, 0.26},
 					{0, 4, 0.38},
 				},
-				[]DirectedEdge{
+				{
 					{1, 3, 0.29},
 				},
-				[]DirectedEdge{
+				{
 					{2, 7, 0.34},
 				},
-				[]DirectedEdge{
+				{
 					{3, 6, 0.52},
 				},
-				[]DirectedEdge{
+				{
 					{4, 5, 0.35},
 					{4, 7, 0.37},
 				},
-				[]DirectedEdge{
+				{
 					{5, 1, 0.32},
 					{5, 4, 0.35},
 					{5, 7, 0.28},
 				},
-				[]DirectedEdge{
+				{
 					{6, 0, 0.58},
 					{6, 2, 0.40},
 					{6, 4, 0.93},
 				},
-				[]DirectedEdge{
+				{
 					{7, 3, 0.39},
 					{7, 5, 0.28},
 				},
@@ -348,7 +348,7 @@ func TestWeightedDirected(t *testing.T) {
 				},
 			},
 			expectedStronglyConnectedComponents: [][]int{
-				[]int{0, 1, 2, 3, 4, 5, 6, 7},
+				{0, 1, 2, 3, 4, 5, 6, 7},
 			},
 			strongConnectivityTests: []strongConnectivityTest{
 				{
@@ -401,13 +401,20 @@ func TestWeightedDirected(t *testing.T) {
 				assert.Equal(t, expectedOutDegree, g.OutDegree(v))
 			}
 
-			assert.Nil(t, g.Adj(-1))
-			for v, expectedAdj := range tc.expectedAdjacents {
-				assert.Equal(t, expectedAdj, g.Adj(v))
-			}
+			t.Run("Adjacency", func(t *testing.T) {
+				assert.Nil(t, g.Adj(-1))
+				for v, expectedAdj := range tc.expectedAdjacents {
+					assert.Equal(t, expectedAdj, g.Adj(v))
+				}
+			})
 
-			assert.Equal(t, tc.expectedEdges, g.Edges())
-			assert.Equal(t, tc.expectedReverse, g.Reverse())
+			t.Run("Edges", func(t *testing.T) {
+				assert.Equal(t, tc.expectedEdges, g.Edges())
+			})
+
+			t.Run("Reverse", func(t *testing.T) {
+				assert.Equal(t, tc.expectedReverse, g.Reverse())
+			})
 
 			t.Run("Traverse", func(t *testing.T) {
 				for _, tc := range tc.traverseTests {

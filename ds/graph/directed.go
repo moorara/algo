@@ -243,8 +243,6 @@ func (g *Directed) Paths(s int, strategy TraversalStrategy) *Paths {
 			},
 		}
 
-		p.edgeTo[s] = s
-
 		switch strategy {
 		case DFS:
 			g.traverseDFS(s, p.visited, visitors)
@@ -326,6 +324,31 @@ func (g *Directed) StronglyConnectedComponents() *StronglyConnectedComponents {
 	}
 
 	return scc
+}
+
+// DirectedCycle determines if the graph has a cyclic path.
+func (g *Directed) DirectedCycle() *DirectedCycle {
+	return newDirectedCycle(g)
+}
+
+// Topological determines the topological sort of the graph.
+// If the graph has a directed cycle (not DAG), it does not have a topological order.
+func (g *Directed) Topological() *Topological {
+	t := &Topological{
+		order: nil,
+		rank:  nil,
+	}
+
+	if _, ok := g.DirectedCycle().Cycle(); !ok {
+		t.order = g.Orders(DFS).ReversePostOrder()
+
+		t.rank = make([]int, g.V())
+		for i, v := range t.order {
+			t.rank[v] = i
+		}
+	}
+
+	return t
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.

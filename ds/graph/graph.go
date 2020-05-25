@@ -171,3 +171,93 @@ func (c *StronglyConnectedComponents) Components() [][]int {
 
 	return comps
 }
+
+// DirectedCycle is used for determining if a directed graph has a cycle.
+// A cycle is a path whose first and last vertices are the same.
+type DirectedCycle struct {
+	visited []bool
+	edgeTo  []int
+	onStack []bool
+	cycle   list.Stack
+}
+
+func newDirectedCycle(g *Directed) *DirectedCycle {
+	c := &DirectedCycle{
+		visited: make([]bool, g.V()),
+		edgeTo:  make([]int, g.V()),
+		onStack: make([]bool, g.V()),
+	}
+
+	for v := 0; v < g.V(); v++ {
+		if !c.visited[v] && c.cycle == nil {
+			c.dfs(g, v)
+		}
+	}
+
+	return c
+}
+
+func (c *DirectedCycle) dfs(g *Directed, v int) {
+	c.onStack[v] = true
+
+	c.visited[v] = true
+	for _, w := range g.adj[v] {
+		if c.cycle != nil { // short circuit if a cycle already found
+			return
+		} else if !c.visited[w] {
+			c.edgeTo[w] = v
+			c.dfs(g, w)
+		} else if c.onStack[w] { // cycle detected
+			c.cycle = list.NewStack(listNodeSize)
+			for x := v; x != w; x = c.edgeTo[x] {
+				c.cycle.Push(x)
+			}
+			c.cycle.Push(w)
+			c.cycle.Push(v)
+		}
+	}
+
+	c.onStack[v] = false
+}
+
+// Cycle returns a cyclic path.
+// If no cycle exists, the second return value will be false.
+func (c *DirectedCycle) Cycle() ([]int, bool) {
+	if c.cycle == nil {
+		return nil, false
+	}
+
+	cycle := make([]int, 0)
+	for !c.cycle.IsEmpty() {
+		cycle = append(cycle, c.cycle.Pop().(int))
+	}
+
+	return cycle, true
+}
+
+// Topological is used for determining the topological order of a directed acyclic graph (DAG).
+// A directed graph has a topological order if and only if it is a DAG (no directed cycle exists).
+type Topological struct {
+	order []int // holds the topological order
+	rank  []int // determines rank of a vertex in the topological order
+}
+
+// Order returns a topological order of the directed graph.
+// If the directed graph does not have a topologial order (has a cycle), the second return value will be false.
+func (t *Topological) Order() ([]int, bool) {
+	if t.order == nil {
+		return nil, false
+	}
+
+	return t.order, true
+}
+
+// Rank returns the rank of a vertex in the topological order.
+// If the directed graph does not have a topologial order (has a cycle), the second return value will be false.
+func (t *Topological) Rank(v int) (int, bool) {
+	if t.rank == nil {
+		return -1, false
+	}
+
+	return t.rank[v], true
+}

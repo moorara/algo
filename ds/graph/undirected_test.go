@@ -62,37 +62,37 @@ func TestUndirected(t *testing.T) {
 			name: "Graph",
 			V:    13,
 			edges: [][2]int{
-				[2]int{0, 1},
-				[2]int{0, 2},
-				[2]int{0, 5},
-				[2]int{0, 6},
-				[2]int{3, 4},
-				[2]int{3, 5},
-				[2]int{4, 5},
-				[2]int{4, 6},
-				[2]int{7, 8},
-				[2]int{9, 10},
-				[2]int{9, 11},
-				[2]int{9, 12},
-				[2]int{11, 12},
+				{0, 1},
+				{0, 2},
+				{0, 5},
+				{0, 6},
+				{3, 4},
+				{3, 5},
+				{4, 5},
+				{4, 6},
+				{7, 8},
+				{9, 10},
+				{9, 11},
+				{9, 12},
+				{11, 12},
 			},
 			expectedV:       13,
 			expectedE:       13,
 			expectedDegrees: []int{4, 1, 1, 2, 3, 3, 2, 1, 1, 3, 1, 2, 2},
 			expectedAdjacents: [][]int{
-				[]int{1, 2, 5, 6},
-				[]int{0},
-				[]int{0},
-				[]int{4, 5},
-				[]int{3, 5, 6},
-				[]int{0, 3, 4},
-				[]int{0, 4},
-				[]int{8},
-				[]int{7},
-				[]int{10, 11, 12},
-				[]int{9},
-				[]int{9, 12},
-				[]int{9, 11},
+				{1, 2, 5, 6},
+				{0},
+				{0},
+				{4, 5},
+				{3, 5, 6},
+				{0, 3, 4},
+				{0, 4},
+				{8},
+				{7},
+				{10, 11, 12},
+				{9},
+				{9, 12},
+				{9, 11},
 			},
 			traverseTests: []traverseTest{
 				{
@@ -238,9 +238,9 @@ func TestUndirected(t *testing.T) {
 				},
 			},
 			expectedConnectedComponents: [][]int{
-				[]int{0, 1, 2, 3, 4, 5, 6},
-				[]int{7, 8},
-				[]int{9, 10, 11, 12},
+				{0, 1, 2, 3, 4, 5, 6},
+				{7, 8},
+				{9, 10, 11, 12},
 			},
 			connectivityTests: []connectivityTest{
 				{
@@ -302,10 +302,12 @@ func TestUndirected(t *testing.T) {
 				assert.Equal(t, expectedDegree, g.Degree(v))
 			}
 
-			assert.Nil(t, g.Adj(-1))
-			for v, expectedAdj := range tc.expectedAdjacents {
-				assert.Equal(t, expectedAdj, g.Adj(v))
-			}
+			t.Run("Adjacency", func(t *testing.T) {
+				assert.Nil(t, g.Adj(-1))
+				for v, expectedAdj := range tc.expectedAdjacents {
+					assert.Equal(t, expectedAdj, g.Adj(v))
+				}
+			})
 
 			t.Run("Traverse", func(t *testing.T) {
 				for _, tc := range tc.traverseTests {
