@@ -9,10 +9,9 @@ func partition(a []interface{}, lo, hi int, compare CompareFunc) int {
 		}
 		for j--; j > lo && compare(a[j], v) > 0; j-- {
 		}
-		if i >= j {
-			break
+		if i < j {
+			a[i], a[j] = a[j], a[i]
 		}
-		a[i], a[j] = a[j], a[i]
 	}
 	a[lo], a[j] = a[j], a[lo]
 
