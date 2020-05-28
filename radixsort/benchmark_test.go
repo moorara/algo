@@ -32,12 +32,7 @@ func randStringSlice(size, keyLen int) []string {
 		a[i] = randStringKey(keyLen)
 	}
 
-	// shuffle
-	n := len(a)
-	for i := 0; i < n; i++ {
-		r := i + rand.Intn(n-i)
-		a[i], a[r] = a[r], a[i]
-	}
+	shuffleString(a)
 
 	return a
 }
@@ -54,6 +49,12 @@ func BenchmarkString(b *testing.B) {
 	b.Run("MSDString", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			MSDString(items)
+		}
+	})
+
+	b.Run("Quick3WayString", func(b *testing.B) {
+		for n := 0; n < b.N; n++ {
+			Quick3WayString(items)
 		}
 	})
 }
