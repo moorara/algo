@@ -432,7 +432,7 @@ func (t *bst) Range(lo, hi interface{}) []KeyValue {
 	return kvs[0:len]
 }
 
-func (t *bst) _traverse(n *bstNode, order TraverseOrder, visit func(*bstNode) bool) bool {
+func (t *bst) _traverse(n *bstNode, order TraversalOrder, visit func(*bstNode) bool) bool {
 	if n == nil {
 		return true
 	}
@@ -456,7 +456,7 @@ func (t *bst) _traverse(n *bstNode, order TraverseOrder, visit func(*bstNode) bo
 }
 
 // Traverse is used for visiting all key-value pairs in BST.
-func (t *bst) Traverse(order TraverseOrder, visit VisitFunc) {
+func (t *bst) Traverse(order TraversalOrder, visit VisitFunc) {
 	if order != PreOrder && order != InOrder && order != PostOrder {
 		return
 	}

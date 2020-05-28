@@ -622,7 +622,7 @@ func (t *redBlack) Range(lo, hi interface{}) []KeyValue {
 	return kvs[0:len]
 }
 
-func (t *redBlack) _traverse(n *rbNode, order TraverseOrder, visit func(*rbNode) bool) bool {
+func (t *redBlack) _traverse(n *rbNode, order TraversalOrder, visit func(*rbNode) bool) bool {
 	if n == nil {
 		return true
 	}
@@ -646,7 +646,7 @@ func (t *redBlack) _traverse(n *rbNode, order TraverseOrder, visit func(*rbNode)
 }
 
 // Traverse is used for visiting all key-value pairs in Red-Black tree.
-func (t *redBlack) Traverse(order TraverseOrder, visit VisitFunc) {
+func (t *redBlack) Traverse(order TraversalOrder, visit VisitFunc) {
 	if order != PreOrder && order != InOrder && order != PostOrder {
 		return
 	}
