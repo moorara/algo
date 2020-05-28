@@ -496,7 +496,7 @@ func (t *avl) Range(lo, hi interface{}) []KeyValue {
 	return kvs[0:len]
 }
 
-func (t *avl) _traverse(n *avlNode, order TraverseOrder, visit func(*avlNode) bool) bool {
+func (t *avl) _traverse(n *avlNode, order TraversalOrder, visit func(*avlNode) bool) bool {
 	if n == nil {
 		return true
 	}
@@ -520,7 +520,7 @@ func (t *avl) _traverse(n *avlNode, order TraverseOrder, visit func(*avlNode) bo
 }
 
 // Traverse is used for visiting all key-value pairs in AVL tree.
-func (t *avl) Traverse(order TraverseOrder, visit VisitFunc) {
+func (t *avl) Traverse(order TraversalOrder, visit VisitFunc) {
 	if order != PreOrder && order != InOrder && order != PostOrder {
 		return
 	}

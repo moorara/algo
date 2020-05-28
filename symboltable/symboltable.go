@@ -4,12 +4,12 @@
 // Symbol tables can be ordered or unordered.
 package symboltable
 
-// TraverseOrder specifies the order for traversing nodes of a tree.
-type TraverseOrder int
+// TraversalOrder is the order for traversing nodes in a tree.
+type TraversalOrder int
 
 const (
 	// PreOrder is pre-order traversal.
-	PreOrder = iota
+	PreOrder TraversalOrder = iota
 	// InOrder is in-order traversal.
 	InOrder
 	// PostOrder is post-order traversal.
@@ -54,7 +54,7 @@ type (
 		DeleteMax() (interface{}, interface{})
 		RangeSize(interface{}, interface{}) int
 		Range(interface{}, interface{}) []KeyValue
-		Traverse(TraverseOrder, VisitFunc)
+		Traverse(TraversalOrder, VisitFunc)
 		Graphviz() string
 	}
 )
