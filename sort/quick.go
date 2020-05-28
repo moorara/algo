@@ -60,7 +60,7 @@ func quick3Way(a []interface{}, lo, hi int, compare CompareFunc) {
 	}
 
 	v := a[lo]
-	var lt, i, gt int = lo, lo + 1, hi
+	lt, i, gt := lo, lo+1, hi
 
 	for i <= gt {
 		c := compare(a[i], v)

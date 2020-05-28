@@ -1,25 +1,9 @@
 package radixsort
 
-import "strings"
-
 const cutoff = 15
 
-func charAt(s string, d int) int {
-	if d < len(s) {
-		return int(s[d])
-	}
-	return -1
-}
-
-func insertionString(a []string, lo, hi, d int) {
-	for i := lo; i <= hi; i++ {
-		for j := i; j > 0 && strings.Compare(a[j], a[j-1]) < 0; j-- {
-			a[j], a[j-1] = a[j-1], a[j]
-		}
-	}
-}
-
 func msdString(a, aux []string, lo, hi, d int) {
+	// cutoff to insertion sort for small subarrays
 	if hi <= lo+cutoff {
 		insertionString(a, lo, hi, d)
 		return
