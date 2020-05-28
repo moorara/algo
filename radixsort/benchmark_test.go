@@ -43,12 +43,17 @@ func randStringSlice(size, keyLen int) []string {
 }
 
 func BenchmarkString(b *testing.B) {
-	b.Run("LSDString", func(b *testing.B) {
-		items := randStringSlice(size, keyLen)
-		b.ResetTimer()
+	items := randStringSlice(size, keyLen)
 
+	b.Run("LSDString", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			LSDString(items, keyLen)
+		}
+	})
+
+	b.Run("MSDString", func(b *testing.B) {
+		for n := 0; n < b.N; n++ {
+			MSDString(items)
 		}
 	})
 }
