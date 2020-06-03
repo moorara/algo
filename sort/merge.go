@@ -44,7 +44,7 @@ func mergeRec(a, aux []interface{}, lo, hi int, cmp CompareFunc) {
 		return
 	}
 
-	mid := lo + (hi-lo)/2
+	mid := (lo+hi)/2
 	mergeRec(a, aux, lo, mid, cmp)
 	mergeRec(a, aux, mid+1, hi, cmp)
 	if cmp(a[mid+1], a[mid]) >= 0 {
