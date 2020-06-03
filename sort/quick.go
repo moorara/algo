@@ -5,10 +5,8 @@ func partition(a []interface{}, lo, hi int, compare CompareFunc) int {
 	var i, j int = lo, hi + 1
 
 	for {
-		for i++; i < hi && compare(a[i], v) < 0; i++ {
-		}
-		for j--; j > lo && compare(a[j], v) > 0; j-- {
-		}
+		for i++; i < hi && compare(a[i], v) < 0; i++ {}
+		for j--; j > lo && compare(a[j], v) > 0; j-- {}
 		if i >= j {
 			break
 		}
