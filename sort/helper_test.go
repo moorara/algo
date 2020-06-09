@@ -35,7 +35,7 @@ func sorted(items []interface{}, compare CompareFunc) bool {
 	return true
 }
 
-func genIntSlice(size, min, max int) []interface{} {
+func randIntSlice(size, min, max int) []interface{} {
 	items := make([]interface{}, size)
 	for i := 0; i < len(items); i++ {
 		items[i] = min + rand.Intn(max-min+1)
