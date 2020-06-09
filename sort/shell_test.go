@@ -2,6 +2,8 @@ package sort
 
 import (
 	"testing"
+
+	"github.com/moorara/algo/compare"
 )
 
 func TestShellInt(t *testing.T) {
@@ -15,9 +17,9 @@ func TestShellInt(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Shell(tc.items, compareInt)
+		Shell(tc.items, compare.Int)
 
-		if !sorted(tc.items, compareInt) {
+		if !sorted(tc.items, compare.Int) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
@@ -34,9 +36,9 @@ func TestShellString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Shell(tc.items, compareString)
+		Shell(tc.items, compare.String)
 
-		if !sorted(tc.items, compareString) {
+		if !sorted(tc.items, compare.String) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}

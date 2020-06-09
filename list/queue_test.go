@@ -3,13 +3,14 @@ package list
 import (
 	"testing"
 
+	"github.com/moorara/algo/compare"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestQueue(t *testing.T) {
 	tests := []struct {
 		name                 string
-		cmp                  CompareFunc
+		cmp                  compare.Func
 		nodeSize             int
 		enqueueItems         []string
 		expectedSize         int
@@ -20,7 +21,7 @@ func TestQueue(t *testing.T) {
 	}{
 		{
 			"Empty",
-			compareString,
+			compare.String,
 			2,
 			[]string{},
 			0, true,
@@ -30,7 +31,7 @@ func TestQueue(t *testing.T) {
 		},
 		{
 			"OneNode",
-			compareString,
+			compare.String,
 			2,
 			[]string{"a", "b"},
 			2, false,
@@ -40,7 +41,7 @@ func TestQueue(t *testing.T) {
 		},
 		{
 			"TwoNodes",
-			compareString,
+			compare.String,
 			2,
 			[]string{"a", "b", "c"},
 			3, false,
@@ -50,7 +51,7 @@ func TestQueue(t *testing.T) {
 		},
 		{
 			"MoreNodes",
-			compareString,
+			compare.String,
 			2,
 			[]string{"a", "b", "c", "d", "e", "f", "g"},
 			7, false,

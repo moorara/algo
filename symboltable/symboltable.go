@@ -17,9 +17,6 @@ const (
 )
 
 type (
-	// The CompareFunc type is a function for comparing two values of the same type.
-	CompareFunc func(interface{}, interface{}) int
-
 	// The VisitFunc type is a function for visiting a key-value pair.
 	VisitFunc func(interface{}, interface{}) bool
 

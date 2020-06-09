@@ -1,6 +1,10 @@
 package sort
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/moorara/algo/compare"
+)
 
 func TestHeapInt(t *testing.T) {
 	tests := []struct {
@@ -13,9 +17,9 @@ func TestHeapInt(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Heap(tc.items, compareInt)
+		Heap(tc.items, compare.Int)
 
-		if !sorted(tc.items, compareInt) {
+		if !sorted(tc.items, compare.Int) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
@@ -32,9 +36,9 @@ func TestHeapString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Heap(tc.items, compareString)
+		Heap(tc.items, compare.String)
 
-		if !sorted(tc.items, compareString) {
+		if !sorted(tc.items, compare.String) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}

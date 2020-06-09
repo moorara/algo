@@ -1,11 +1,13 @@
 package heap
 
+import "github.com/moorara/algo/compare"
+
 type minHeap struct {
 	n      int           // No. of items on heap
 	keys   []interface{} // binary heap of keys (priorities) using 1-based indexing
 	values []interface{} // binary heap of values using 1-based indexing
-	cmpKey CompareFunc
-	cmpVal CompareFunc
+	cmpKey compare.Func
+	cmpVal compare.Func
 }
 
 // NewMinHeap creates a new minimum heap (priority queue).
@@ -13,7 +15,7 @@ type minHeap struct {
 //
 // initialCapacity is the initial capacity of heap (priority queue).
 // cmpKey and cmpVal are comparator functions for keys and values respectively.
-func NewMinHeap(initialCapacity int, cmpKey, cmpVal CompareFunc) Heap {
+func NewMinHeap(initialCapacity int, cmpKey, cmpVal compare.Func) Heap {
 	return &minHeap{
 		n:      0,
 		keys:   make([]interface{}, initialCapacity+1),

@@ -1,5 +1,7 @@
 package heap
 
+import "github.com/moorara/algo/compare"
+
 type indexMinHeap struct {
 	capacity int           // maximum number of items on heap
 	n        int           // current number of items on heap
@@ -7,8 +9,8 @@ type indexMinHeap struct {
 	pos      []int         // Map of indices to positions on heap
 	keys     []interface{} // Map of indices to keys (priorities)
 	values   []interface{} // Map of indices to values
-	cmpKey   CompareFunc
-	cmpVal   CompareFunc
+	cmpKey   compare.Func
+	cmpVal   compare.Func
 }
 
 // NewIndexMinHeap creates a new indexed minimum heap (priority queue).
@@ -18,7 +20,7 @@ type indexMinHeap struct {
 //
 // capacity is the maximum number of items on heap (priority queue).
 // cmpKey and cmpVal are comparator functions for keys and values respectively.
-func NewIndexMinHeap(capacity int, cmpKey, cmpVal CompareFunc) IndexHeap {
+func NewIndexMinHeap(capacity int, cmpKey, cmpVal compare.Func) IndexHeap {
 	pos := make([]int, capacity)
 	for i := range pos {
 		pos[i] = -1

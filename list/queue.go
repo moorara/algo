@@ -1,5 +1,7 @@
 package list
 
+import "github.com/moorara/algo/compare"
+
 // Queue represents a queue abstract data type.
 type Queue interface {
 	Size() int
@@ -7,7 +9,7 @@ type Queue interface {
 	Enqueue(interface{})
 	Dequeue() interface{}
 	Peek() interface{}
-	Contains(interface{}, CompareFunc) bool
+	Contains(interface{}, compare.Func) bool
 }
 
 type arrayQueue struct {
@@ -89,7 +91,7 @@ func (q *arrayQueue) Peek() interface{} {
 }
 
 // Contains returns true if a given item is already in queue.
-func (q *arrayQueue) Contains(item interface{}, cmp CompareFunc) bool {
+func (q *arrayQueue) Contains(item interface{}, cmp compare.Func) bool {
 	n := q.frontNode
 	i := q.frontNodeIndex
 

@@ -1,6 +1,10 @@
 package sort
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/moorara/algo/compare"
+)
 
 func TestMergeInt(t *testing.T) {
 	tests := []struct {
@@ -13,9 +17,9 @@ func TestMergeInt(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Merge(tc.items, compareInt)
+		Merge(tc.items, compare.Int)
 
-		if !sorted(tc.items, compareInt) {
+		if !sorted(tc.items, compare.Int) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
@@ -32,9 +36,9 @@ func TestMergeString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Merge(tc.items, compareString)
+		Merge(tc.items, compare.String)
 
-		if !sorted(tc.items, compareString) {
+		if !sorted(tc.items, compare.String) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
@@ -51,9 +55,9 @@ func TestMergeRecInt(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		MergeRec(tc.items, compareInt)
+		MergeRec(tc.items, compare.Int)
 
-		if !sorted(tc.items, compareInt) {
+		if !sorted(tc.items, compare.Int) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
@@ -70,9 +74,9 @@ func TestMergeRecString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		MergeRec(tc.items, compareString)
+		MergeRec(tc.items, compare.String)
 
-		if !sorted(tc.items, compareString) {
+		if !sorted(tc.items, compare.String) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}

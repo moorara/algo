@@ -3,6 +3,7 @@ package symboltable
 import (
 	"fmt"
 
+	"github.com/moorara/algo/compare"
 	"github.com/moorara/algo/pkg/graphviz"
 )
 
@@ -16,7 +17,7 @@ type bstNode struct {
 
 type bst struct {
 	root   *bstNode
-	cmpKey CompareFunc
+	cmpKey compare.Func
 }
 
 // NewBST creates a new binary search tree.
@@ -25,7 +26,7 @@ type bst struct {
 // Every node's key is:
 //   Larger than all keys in its left sub-tree.
 //   Smaller than all keys in its right sub-tree.
-func NewBST(cmpKey CompareFunc) OrderedSymbolTable {
+func NewBST(cmpKey compare.Func) OrderedSymbolTable {
 	return &bst{
 		root:   nil,
 		cmpKey: cmpKey,

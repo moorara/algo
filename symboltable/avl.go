@@ -3,6 +3,7 @@ package symboltable
 import (
 	"fmt"
 
+	"github.com/moorara/algo/compare"
 	"github.com/moorara/algo/pkg/graphviz"
 )
 
@@ -17,14 +18,14 @@ type avlNode struct {
 
 type avl struct {
 	root   *avlNode
-	cmpKey CompareFunc
+	cmpKey compare.Func
 }
 
 // NewAVL creates a new AVL tree.
 //
 // AVL tree is a self-balancing binary search tree.
 // In an AVL tree, the heights of the left and right subtrees of any node differ by at most 1.
-func NewAVL(cmpKey CompareFunc) OrderedSymbolTable {
+func NewAVL(cmpKey compare.Func) OrderedSymbolTable {
 	return &avl{
 		root:   nil,
 		cmpKey: cmpKey,

@@ -1,5 +1,7 @@
 package sort
 
+import "github.com/moorara/algo/compare"
+
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -7,7 +9,7 @@ func min(a, b int) int {
 	return b
 }
 
-func merge(a, aux []interface{}, lo, mid, hi int, cmp CompareFunc) {
+func merge(a, aux []interface{}, lo, mid, hi int, cmp compare.Func) {
 	var i, j int = lo, mid + 1
 	copy(aux[lo:hi+1], a[lo:hi+1])
 	for k := lo; k <= hi; k++ {
@@ -29,7 +31,7 @@ func merge(a, aux []interface{}, lo, mid, hi int, cmp CompareFunc) {
 }
 
 // Merge implements the iterative version of merge sort algorithm.
-func Merge(a []interface{}, cmp CompareFunc) {
+func Merge(a []interface{}, cmp compare.Func) {
 	n := len(a)
 	aux := make([]interface{}, n)
 	for sz := 1; sz < n; sz += sz {
@@ -39,12 +41,12 @@ func Merge(a []interface{}, cmp CompareFunc) {
 	}
 }
 
-func mergeRec(a, aux []interface{}, lo, hi int, cmp CompareFunc) {
+func mergeRec(a, aux []interface{}, lo, hi int, cmp compare.Func) {
 	if hi <= lo {
 		return
 	}
 
-	mid := (lo+hi)/2
+	mid := (lo + hi) / 2
 	mergeRec(a, aux, lo, mid, cmp)
 	mergeRec(a, aux, mid+1, hi, cmp)
 	if cmp(a[mid+1], a[mid]) >= 0 {
@@ -54,7 +56,7 @@ func mergeRec(a, aux []interface{}, lo, hi int, cmp CompareFunc) {
 }
 
 // MergeRec implements the recursive version of merge sort algorithm.
-func MergeRec(a []interface{}, cmp CompareFunc) {
+func MergeRec(a []interface{}, cmp compare.Func) {
 	n := len(a)
 	aux := make([]interface{}, n)
 
