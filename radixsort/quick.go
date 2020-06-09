@@ -35,6 +35,6 @@ func quick3WayString(a []string, lo, hi, d int) {
 
 // Quick3WayString is the 3-Way Radix Quick sorting algorithm for string keys with variable length.
 func Quick3WayString(a []string) {
-	shuffleString(a)
+	shuffleStringSlice(a)
 	quick3WayString(a, 0, len(a)-1, 0)
 }

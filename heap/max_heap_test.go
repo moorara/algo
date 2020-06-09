@@ -9,121 +9,198 @@ import (
 )
 
 func TestMaxHeap(t *testing.T) {
+	type keyValue struct {
+		key   int
+		value string
+	}
+
 	tests := []struct {
-		name                  string
-		initialSize           int
-		cmpKey            CompareFunc
-		cmpVal          CompareFunc
-		insertKeys            []int
-		insertValues          []string
-		expectedSize          int
-		expectedIsEmpty       bool
-		expectedPeekKey       int
-		expectedPeekValue     string
-		expectedContainsKey   []int
-		expectedContainsValue []string
-		expectedDeleteKeys    []int
-		expectedDeleteValues  []string
+		name             string
+		initialCapacity  int
+		cmpKey           CompareFunc
+		cmpVal           CompareFunc
+		insertTests      []keyValue
+		expectedSize     int
+		expectedIsEmpty  bool
+		expectedPeek     keyValue
+		expectedContains []keyValue
+		expectedDelete   []keyValue
 	}{
 		{
-			"Empty",
-			2,
-			compareInt, compareString,
-			[]int{}, []string{},
-			0, true,
-			0, "",
-			[]int{}, []string{},
-			[]int{}, []string{},
+			name:             "Empty",
+			initialCapacity:  2,
+			cmpKey:           compareInt,
+			cmpVal:           compareString,
+			insertTests:      []keyValue{},
+			expectedSize:     0,
+			expectedIsEmpty:  true,
+			expectedPeek:     keyValue{0, ""},
+			expectedContains: []keyValue{},
+			expectedDelete:   []keyValue{},
 		},
 		{
-			"FewPairs",
-			2,
-			compareInt, compareString,
-			[]int{10, 30, 20}, []string{"ten", "thirty", "twenty"},
-			3, false,
-			30, "thirty",
-			[]int{30, 20, 10}, []string{"thirty", "twenty", "ten"},
-			[]int{30, 20, 10}, []string{"thirty", "twenty", "ten"},
+			name:            "FewPairs",
+			initialCapacity: 2,
+			cmpKey:          compareInt,
+			cmpVal:          compareString,
+			insertTests: []keyValue{
+				{10, "ten"},
+				{30, "thirty"},
+				{20, "twenty"},
+			},
+			expectedSize:    3,
+			expectedIsEmpty: false,
+			expectedPeek:    keyValue{30, "thirty"},
+			expectedContains: []keyValue{
+				{30, "thirty"},
+				{20, "twenty"},
+				{10, "ten"},
+			},
+			expectedDelete: []keyValue{
+				{30, "thirty"},
+				{20, "twenty"},
+				{10, "ten"},
+			},
 		},
 		{
-			"SomePairs",
-			4,
-			compareInt, compareString,
-			[]int{10, 30, 20, 50, 40}, []string{"ten", "thirty", "twenty", "fifty", "forty"},
-			5, false,
-			50, "fifty",
-			[]int{50, 40, 30, 20, 10}, []string{"fifty", "forty", "thirty", "twenty", "ten"},
-			[]int{50, 40, 30, 20, 10}, []string{"fifty", "forty", "thirty", "twenty", "ten"},
+			name:            "SomePairs",
+			initialCapacity: 4,
+			cmpKey:          compareInt,
+			cmpVal:          compareString,
+			insertTests: []keyValue{
+				{10, "ten"},
+				{30, "thirty"},
+				{20, "twenty"},
+				{50, "fifty"},
+				{40, "forty"},
+			},
+			expectedSize:    5,
+			expectedIsEmpty: false,
+			expectedPeek:    keyValue{50, "fifty"},
+			expectedContains: []keyValue{
+				{50, "fifty"},
+				{40, "forty"},
+				{30, "thirty"},
+				{20, "twenty"},
+				{10, "ten"},
+			},
+			expectedDelete: []keyValue{
+				{50, "fifty"},
+				{40, "forty"},
+				{30, "thirty"},
+				{20, "twenty"},
+				{10, "ten"},
+			},
 		},
 		{
-			"MorePairs",
-			4,
-			compareInt, compareString,
-			[]int{10, 30, 20, 50, 40, 60, 70, 90, 80}, []string{"ten", "thirty", "twenty", "fifty", "forty", "sixty", "seventy", "ninety", "eighty"},
-			9, false,
-			90, "ninety",
-			[]int{90, 80, 70, 60, 50, 40, 30, 20, 10}, []string{"ninety", "eighty", "seventy", "sixty", "fifty", "forty", "thirty", "twenty", "ten"},
-			[]int{90, 80, 70, 60, 50, 40, 30, 20, 10}, []string{"ninety", "eighty", "seventy", "sixty", "fifty", "forty", "thirty", "twenty", "ten"},
+			name:            "MorePairs",
+			initialCapacity: 4,
+			cmpKey:          compareInt,
+			cmpVal:          compareString,
+			insertTests: []keyValue{
+				{10, "ten"},
+				{30, "thirty"},
+				{20, "twenty"},
+				{50, "fifty"},
+				{40, "forty"},
+				{60, "sixty"},
+				{70, "seventy"},
+				{90, "ninety"},
+				{80, "eighty"},
+			},
+			expectedSize:    9,
+			expectedIsEmpty: false,
+			expectedPeek:    keyValue{90, "ninety"},
+			expectedContains: []keyValue{
+				{90, "ninety"},
+				{80, "eighty"},
+				{70, "seventy"},
+				{60, "sixty"},
+				{50, "fifty"},
+				{40, "forty"},
+				{30, "thirty"},
+				{20, "twenty"},
+				{10, "ten"},
+			},
+			expectedDelete: []keyValue{
+				{90, "ninety"},
+				{80, "eighty"},
+				{70, "seventy"},
+				{60, "sixty"},
+				{50, "fifty"},
+				{40, "forty"},
+				{30, "thirty"},
+				{20, "twenty"},
+				{10, "ten"},
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			heap := NewMaxHeap(tc.initialSize, tc.cmpKey, tc.cmpVal)
+			heap := NewMaxHeap(tc.initialCapacity, tc.cmpKey, tc.cmpVal)
 
 			// Heap initially should be empty
-			peekKey, peekValue := heap.Peek()
-			deleteKey, deleteValue := heap.Delete()
-			assert.Nil(t, peekKey)
-			assert.Nil(t, peekValue)
-			assert.Nil(t, deleteKey)
-			assert.Nil(t, deleteValue)
 			assert.Zero(t, heap.Size())
 			assert.True(t, heap.IsEmpty())
 			assert.False(t, heap.ContainsKey(nil))
 			assert.False(t, heap.ContainsValue(nil))
 
-			for i := 0; i < len(tc.insertKeys); i++ {
-				heap.Insert(tc.insertKeys[i], tc.insertValues[i])
+			peekKey, peekValue, peekOK := heap.Peek()
+			assert.Nil(t, peekKey)
+			assert.Nil(t, peekValue)
+			assert.False(t, peekOK)
+
+			deleteKey, deleteValue, deleteOK := heap.Delete()
+			assert.Nil(t, deleteKey)
+			assert.Nil(t, deleteValue)
+			assert.False(t, deleteOK)
+
+			for _, entry := range tc.insertTests {
+				heap.Insert(entry.key, entry.value)
 			}
 
 			assert.Equal(t, tc.expectedSize, heap.Size())
 			assert.Equal(t, tc.expectedIsEmpty, heap.IsEmpty())
 
-			peekKey, peekValue = heap.Peek()
+			peekKey, peekValue, peekOK = heap.Peek()
 			if tc.expectedSize == 0 {
 				assert.Nil(t, peekKey)
 				assert.Nil(t, peekValue)
+				assert.False(t, peekOK)
 			} else {
-				assert.Equal(t, tc.expectedPeekKey, peekKey)
-				assert.Equal(t, tc.expectedPeekValue, peekValue)
+				assert.Equal(t, tc.expectedPeek.key, peekKey)
+				assert.Equal(t, tc.expectedPeek.value, peekValue)
+				assert.True(t, peekOK)
 			}
 
-			for _, key := range tc.expectedContainsKey {
-				assert.True(t, heap.ContainsKey(key))
+			for _, entry := range tc.expectedContains {
+				assert.True(t, heap.ContainsKey(entry.key))
+				assert.True(t, heap.ContainsValue(entry.value))
 			}
 
-			for _, value := range tc.expectedContainsValue {
-				assert.True(t, heap.ContainsValue(value))
-			}
-
-			for i := 0; i < len(tc.expectedDeleteKeys); i++ {
-				deleteKey, deleteValue = heap.Delete()
-				assert.Equal(t, tc.expectedDeleteKeys[i], deleteKey)
-				assert.Equal(t, tc.expectedDeleteValues[i], deleteValue)
+			for _, entry := range tc.expectedDelete {
+				deleteKey, deleteValue, deleteOK = heap.Delete()
+				assert.Equal(t, entry.key, deleteKey)
+				assert.Equal(t, entry.value, deleteValue)
+				assert.True(t, deleteOK)
 			}
 
 			// Heap should be empty at the end
-			peekKey, peekValue = heap.Peek()
-			deleteKey, deleteValue = heap.Delete()
-			assert.Nil(t, peekKey)
-			assert.Nil(t, peekValue)
-			assert.Nil(t, deleteKey)
-			assert.Nil(t, deleteValue)
 			assert.Zero(t, heap.Size())
 			assert.True(t, heap.IsEmpty())
 			assert.False(t, heap.ContainsKey(nil))
 			assert.False(t, heap.ContainsValue(nil))
+
+			peekKey, peekValue, peekOK = heap.Peek()
+			assert.Nil(t, peekKey)
+			assert.Nil(t, peekValue)
+			assert.False(t, peekOK)
+
+			deleteKey, deleteValue, deleteOK = heap.Delete()
+			assert.Nil(t, deleteKey)
+			assert.Nil(t, deleteValue)
+			assert.False(t, peekOK, deleteOK)
 		})
 	}
 }
@@ -137,22 +214,25 @@ func BenchmarkMaxHeap(b *testing.B) {
 
 	b.Run("Insert", func(b *testing.B) {
 		heap := NewMaxHeap(heapSize, compareInt, compareString)
-		items := genIntSlice(b.N, minInt, maxInt)
-		b.ResetTimer()
+		keys := randIntSlice(b.N, minInt, maxInt)
+		values := randStringSlice(b.N)
 
+		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			heap.Insert(items[n], "")
+			heap.Insert(keys[n], values[n])
 		}
 	})
 
 	b.Run("Delete", func(b *testing.B) {
 		heap := NewMaxHeap(heapSize, compareInt, compareString)
-		items := genIntSlice(b.N, minInt, maxInt)
-		for n := 0; n < b.N; n++ {
-			heap.Insert(items[n], "")
-		}
-		b.ResetTimer()
+		keys := randIntSlice(b.N, minInt, maxInt)
+		values := randStringSlice(b.N)
 
+		for n := 0; n < b.N; n++ {
+			heap.Insert(keys[n], values[n])
+		}
+
+		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
 			heap.Delete()
 		}

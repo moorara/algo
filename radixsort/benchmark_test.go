@@ -14,11 +14,13 @@ const (
 )
 
 func randStringKey(l int) string {
+	n := len(chars)
 	b := make([]byte, l)
+
 	for i := range b {
-		n := len(chars)
 		b[i] = chars[rand.Intn(n)]
 	}
+
 	return string(b)
 }
 
@@ -27,14 +29,14 @@ func randStringSlice(size, keyLen int) []string {
 	rand.Seed(seed)
 
 	// generate
-	a := make([]string, size)
-	for i := range a {
-		a[i] = randStringKey(keyLen)
+	s := make([]string, size)
+	for i := range s {
+		s[i] = randStringKey(keyLen)
 	}
 
-	shuffleString(a)
+	shuffleStringSlice(s)
 
-	return a
+	return s
 }
 
 func BenchmarkString(b *testing.B) {

@@ -7,11 +7,9 @@ import (
 	"github.com/moorara/algo/sort"
 )
 
-const (
-	seed = 27
-)
+const seed = 27
 
-func getIntSlice(size int) []interface{} {
+func genIntSlice(size int) []interface{} {
 	items := make([]interface{}, size)
 	for i := 0; i < len(items); i++ {
 		items[i] = i
@@ -22,7 +20,7 @@ func getIntSlice(size int) []interface{} {
 }
 
 func runPutBenchmark(b *testing.B, ost OrderedSymbolTable) {
-	items := getIntSlice(b.N)
+	items := genIntSlice(b.N)
 	rand.Seed(seed)
 	sort.Shuffle(items)
 	b.ResetTimer()
@@ -33,7 +31,7 @@ func runPutBenchmark(b *testing.B, ost OrderedSymbolTable) {
 }
 
 func runGetBenchmark(b *testing.B, ost OrderedSymbolTable) {
-	items := getIntSlice(b.N)
+	items := genIntSlice(b.N)
 	rand.Seed(seed)
 	sort.Shuffle(items)
 	for n := 0; n < b.N; n++ {

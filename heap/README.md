@@ -1,6 +1,8 @@
 # heap
 
-| Heap    | Description             |
-|---------|-------------------------|
-| MinHeap | Min-Heap priority queue |
-| MaxHeap | Max-Heap priority queue |
+| Heap         | Description                           |
+|--------------|---------------------------------------|
+| MinHeap      | Minimum Heap (priority queue)         |
+| MaxHeap      | Maximum Heap (priority queue)         |
+| IndexMinHeap | Indexed Minimum Heap (priority queue) |
+| IndexMaxHeap | Indexed Maximum Heap (priority queue) |

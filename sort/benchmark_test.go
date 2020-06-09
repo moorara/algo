@@ -13,26 +13,27 @@ const (
 	maxInt = 1000000
 )
 
-type GenricSlice []interface{}
+// sliceInterface implements sort.Interface
+type sliceInterface []interface{}
 
-func (s GenricSlice) Len() int {
+func (s sliceInterface) Len() int {
 	return len(s)
 }
 
-func (s GenricSlice) Swap(i, j int) {
+func (s sliceInterface) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func (s GenricSlice) Less(i, j int) bool {
+func (s sliceInterface) Less(i, j int) bool {
 	return compareInt(s[i], s[j]) < 0
 }
 
 func BenchmarkSort(b *testing.B) {
 	b.Run("sort.Sort", func(b *testing.B) {
 		rand.Seed(seed)
-		items := GenricSlice(genIntSlice(size, minInt, maxInt))
-		b.ResetTimer()
+		items := sliceInterface(randIntSlice(size, minInt, maxInt))
 
+		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
 			sort.Sort(items)
@@ -41,9 +42,9 @@ func BenchmarkSort(b *testing.B) {
 
 	b.Run("Heap", func(b *testing.B) {
 		rand.Seed(seed)
-		items := genIntSlice(size, minInt, maxInt)
-		b.ResetTimer()
+		items := randIntSlice(size, minInt, maxInt)
 
+		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
 			Heap(items, compareInt)
@@ -52,9 +53,9 @@ func BenchmarkSort(b *testing.B) {
 
 	b.Run("Insertion", func(b *testing.B) {
 		rand.Seed(seed)
-		items := genIntSlice(size, minInt, maxInt)
-		b.ResetTimer()
+		items := randIntSlice(size, minInt, maxInt)
 
+		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
 			Insertion(items, compareInt)
@@ -63,9 +64,9 @@ func BenchmarkSort(b *testing.B) {
 
 	b.Run("Merge", func(b *testing.B) {
 		rand.Seed(seed)
-		items := genIntSlice(size, minInt, maxInt)
-		b.ResetTimer()
+		items := randIntSlice(size, minInt, maxInt)
 
+		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
 			Merge(items, compareInt)
@@ -74,9 +75,9 @@ func BenchmarkSort(b *testing.B) {
 
 	b.Run("MergeRec", func(b *testing.B) {
 		rand.Seed(seed)
-		items := genIntSlice(size, minInt, maxInt)
-		b.ResetTimer()
+		items := randIntSlice(size, minInt, maxInt)
 
+		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
 			MergeRec(items, compareInt)
@@ -85,9 +86,9 @@ func BenchmarkSort(b *testing.B) {
 
 	b.Run("Quick", func(b *testing.B) {
 		rand.Seed(seed)
-		items := genIntSlice(size, minInt, maxInt)
-		b.ResetTimer()
+		items := randIntSlice(size, minInt, maxInt)
 
+		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
 			Quick(items, compareInt)
@@ -96,9 +97,9 @@ func BenchmarkSort(b *testing.B) {
 
 	b.Run("Quick3Way", func(b *testing.B) {
 		rand.Seed(seed)
-		items := genIntSlice(size, minInt, maxInt)
-		b.ResetTimer()
+		items := randIntSlice(size, minInt, maxInt)
 
+		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
 			Quick3Way(items, compareInt)
@@ -107,9 +108,9 @@ func BenchmarkSort(b *testing.B) {
 
 	b.Run("Shell", func(b *testing.B) {
 		rand.Seed(seed)
-		items := genIntSlice(size, minInt, maxInt)
-		b.ResetTimer()
+		items := randIntSlice(size, minInt, maxInt)
 
+		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
 			Shuffle(items)
 			Shell(items, compareInt)

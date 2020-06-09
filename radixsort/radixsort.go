@@ -24,7 +24,7 @@ func insertionString(a []string, lo, hi, d int) {
 	}
 }
 
-func shuffleString(a []string) {
+func shuffleStringSlice(a []string) {
 	n := len(a)
 	for i := 0; i < n; i++ {
 		r := i + rand.Intn(n-i)
