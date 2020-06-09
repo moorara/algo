@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/moorara/algo/compare"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,8 +19,8 @@ func TestIndexMinHeap(t *testing.T) {
 	tests := []struct {
 		name                string
 		capacity            int
-		cmpKey              CompareFunc
-		cmpVal              CompareFunc
+		cmpKey              compare.Func
+		cmpVal              compare.Func
 		insertTests         []indexKeyValue
 		changeKeyTests      []indexKeyValue
 		expectedSize        int
@@ -33,8 +34,8 @@ func TestIndexMinHeap(t *testing.T) {
 		{
 			name:                "Empty",
 			capacity:            10,
-			cmpKey:              compareInt,
-			cmpVal:              compareString,
+			cmpKey:              compare.Int,
+			cmpVal:              compare.String,
 			insertTests:         []indexKeyValue{},
 			changeKeyTests:      []indexKeyValue{},
 			expectedSize:        0,
@@ -48,8 +49,8 @@ func TestIndexMinHeap(t *testing.T) {
 		{
 			name:     "FewPairs",
 			capacity: 10,
-			cmpKey:   compareInt,
-			cmpVal:   compareString,
+			cmpKey:   compare.Int,
+			cmpVal:   compare.String,
 			insertTests: []indexKeyValue{
 				{0, 30, "thirty"},
 				{1, 1, "ten"},
@@ -83,8 +84,8 @@ func TestIndexMinHeap(t *testing.T) {
 		{
 			name:     "SomePairs",
 			capacity: 10,
-			cmpKey:   compareInt,
-			cmpVal:   compareString,
+			cmpKey:   compare.Int,
+			cmpVal:   compare.String,
 			insertTests: []indexKeyValue{
 				{0, 50, "fifty"},
 				{1, 30, "thirty"},
@@ -127,8 +128,8 @@ func TestIndexMinHeap(t *testing.T) {
 		{
 			name:     "MorePairs",
 			capacity: 10,
-			cmpKey:   compareInt,
-			cmpVal:   compareString,
+			cmpKey:   compare.Int,
+			cmpVal:   compare.String,
 			insertTests: []indexKeyValue{
 				{0, 90, "ninety"},
 				{1, 80, "eighty"},
@@ -313,7 +314,7 @@ func BenchmarkIndexMinHeap(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	b.Run("Insert", func(b *testing.B) {
-		heap := NewIndexMinHeap(b.N, compareInt, compareString)
+		heap := NewIndexMinHeap(b.N, compare.Int, compare.String)
 		keys := randIntSlice(b.N, minInt, maxInt)
 		values := randStringSlice(b.N)
 
@@ -324,7 +325,7 @@ func BenchmarkIndexMinHeap(b *testing.B) {
 	})
 
 	b.Run("Delete", func(b *testing.B) {
-		heap := NewIndexMinHeap(b.N, compareInt, compareString)
+		heap := NewIndexMinHeap(b.N, compare.Int, compare.String)
 		keys := randIntSlice(b.N, minInt, maxInt)
 		values := randStringSlice(b.N)
 

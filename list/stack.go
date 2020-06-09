@@ -1,5 +1,7 @@
 package list
 
+import "github.com/moorara/algo/compare"
+
 // Stack represents a stack abstract data type.
 type Stack interface {
 	Size() int
@@ -7,7 +9,7 @@ type Stack interface {
 	Push(interface{})
 	Pop() interface{}
 	Peek() interface{}
-	Contains(interface{}, CompareFunc) bool
+	Contains(interface{}, compare.Func) bool
 }
 
 type arrayStack struct {
@@ -84,7 +86,7 @@ func (s *arrayStack) Peek() interface{} {
 }
 
 // Contains returns true if a given item is already on stack.
-func (s *arrayStack) Contains(item interface{}, cmp CompareFunc) bool {
+func (s *arrayStack) Contains(item interface{}, cmp compare.Func) bool {
 	n := s.topNode
 	i := s.nodeIndex
 

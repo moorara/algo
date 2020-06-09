@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/moorara/algo/compare"
 	"github.com/moorara/algo/sort"
 )
 
@@ -46,32 +47,32 @@ func runGetBenchmark(b *testing.B, ost OrderedSymbolTable) {
 
 func BenchmarkOrderedSymbolTable(b *testing.B) {
 	b.Run("BST.Put", func(b *testing.B) {
-		ost := NewBST(compareInt)
+		ost := NewBST(compare.Int)
 		runPutBenchmark(b, ost)
 	})
 
 	b.Run("BST.Get", func(b *testing.B) {
-		ost := NewBST(compareInt)
+		ost := NewBST(compare.Int)
 		runGetBenchmark(b, ost)
 	})
 
 	b.Run("AVL.Put", func(b *testing.B) {
-		ost := NewAVL(compareInt)
+		ost := NewAVL(compare.Int)
 		runPutBenchmark(b, ost)
 	})
 
 	b.Run("AVL.Get", func(b *testing.B) {
-		ost := NewAVL(compareInt)
+		ost := NewAVL(compare.Int)
 		runGetBenchmark(b, ost)
 	})
 
 	b.Run("RedBlack.Put", func(b *testing.B) {
-		ost := NewRedBlack(compareInt)
+		ost := NewRedBlack(compare.Int)
 		runPutBenchmark(b, ost)
 	})
 
 	b.Run("RedBlack.Get", func(b *testing.B) {
-		ost := NewRedBlack(compareInt)
+		ost := NewRedBlack(compare.Int)
 		runGetBenchmark(b, ost)
 	})
 }

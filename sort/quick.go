@@ -1,12 +1,16 @@
 package sort
 
-func partition(a []interface{}, lo, hi int, compare CompareFunc) int {
+import "github.com/moorara/algo/compare"
+
+func partition(a []interface{}, lo, hi int, compare compare.Func) int {
 	v := a[lo]
 	var i, j int = lo, hi + 1
 
 	for {
-		for i++; i < hi && compare(a[i], v) < 0; i++ {}
-		for j--; j > lo && compare(a[j], v) > 0; j-- {}
+		for i++; i < hi && compare(a[i], v) < 0; i++ {
+		}
+		for j--; j > lo && compare(a[j], v) > 0; j-- {
+		}
 		if i >= j {
 			break
 		}
@@ -18,7 +22,7 @@ func partition(a []interface{}, lo, hi int, compare CompareFunc) int {
 }
 
 // Select finds the kth smallest item of an array in O(n) time on average.
-func Select(a []interface{}, k int, compare CompareFunc) interface{} {
+func Select(a []interface{}, k int, compare compare.Func) interface{} {
 	Shuffle(a)
 	var lo, hi int = 0, len(a) - 1
 	for lo < hi {
@@ -36,7 +40,7 @@ func Select(a []interface{}, k int, compare CompareFunc) interface{} {
 	return a[k]
 }
 
-func quick(a []interface{}, lo, hi int, compare CompareFunc) {
+func quick(a []interface{}, lo, hi int, compare compare.Func) {
 	if lo >= hi {
 		return
 	}
@@ -47,12 +51,12 @@ func quick(a []interface{}, lo, hi int, compare CompareFunc) {
 }
 
 // Quick implements the quick sort algorithm.
-func Quick(a []interface{}, compare CompareFunc) {
+func Quick(a []interface{}, compare compare.Func) {
 	Shuffle(a)
 	quick(a, 0, len(a)-1, compare)
 }
 
-func quick3Way(a []interface{}, lo, hi int, compare CompareFunc) {
+func quick3Way(a []interface{}, lo, hi int, compare compare.Func) {
 	if lo >= hi {
 		return
 	}
@@ -80,6 +84,6 @@ func quick3Way(a []interface{}, lo, hi int, compare CompareFunc) {
 }
 
 // Quick3Way implements the 3-way version of quick sort algorithm.
-func Quick3Way(a []interface{}, compare CompareFunc) {
+func Quick3Way(a []interface{}, compare compare.Func) {
 	quick3Way(a, 0, len(a)-1, compare)
 }

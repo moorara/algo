@@ -3,6 +3,7 @@ package symboltable
 import (
 	"testing"
 
+	"github.com/moorara/algo/compare"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -10,7 +11,7 @@ type (
 	symbolTableTest struct {
 		name            string
 		symbolTable     string
-		cmpKey      CompareFunc
+		cmpKey          compare.Func
 		keyValues       []KeyValue
 		expectedSize    int
 		expectedIsEmpty bool
@@ -19,7 +20,7 @@ type (
 	orderedSymbolTableTest struct {
 		name                      string
 		symbolTable               string
-		cmpKey                CompareFunc
+		cmpKey                    compare.Func
 		keyValues                 []KeyValue
 		expectedSize              int
 		expectedHeight            int
@@ -55,7 +56,7 @@ func getSymbolTableTests() []symbolTableTest {
 		{
 			name:            "",
 			symbolTable:     "",
-			cmpKey:      compareString,
+			cmpKey:          compare.String,
 			keyValues:       []KeyValue{},
 			expectedSize:    0,
 			expectedIsEmpty: true,
@@ -67,7 +68,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest {
 	return []orderedSymbolTableTest{
 		{
 			name:                 "Empty",
-			cmpKey:           compareString,
+			cmpKey:               compare.String,
 			keyValues:            []KeyValue{},
 			expectedSize:         0,
 			expectedIsEmpty:      true,
@@ -92,8 +93,8 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest {
 			expectedRange:        nil,
 		},
 		{
-			name:       "ABC",
-			cmpKey: compareString,
+			name:   "ABC",
+			cmpKey: compare.String,
 			keyValues: []KeyValue{
 				{"B", 2},
 				{"A", 1},
@@ -126,8 +127,8 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest {
 			},
 		},
 		{
-			name:       "ABCDE",
-			cmpKey: compareString,
+			name:   "ABCDE",
+			cmpKey: compare.String,
 			keyValues: []KeyValue{
 				{"B", 2},
 				{"A", 1},
@@ -162,8 +163,8 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest {
 			},
 		},
 		{
-			name:       "ADGJMPS",
-			cmpKey: compareString,
+			name:   "ADGJMPS",
+			cmpKey: compare.String,
 			keyValues: []KeyValue{
 				{"J", 10},
 				{"A", 1},

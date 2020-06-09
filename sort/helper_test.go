@@ -2,30 +2,11 @@ package sort
 
 import (
 	"math/rand"
-	"strings"
+
+	"github.com/moorara/algo/compare"
 )
 
-func compareInt(a, b interface{}) int {
-	intA, _ := a.(int)
-	intB, _ := b.(int)
-	diff := intA - intB
-	switch {
-	case diff < 0:
-		return -1
-	case diff > 0:
-		return 1
-	default:
-		return 0
-	}
-}
-
-func compareString(a, b interface{}) int {
-	strA, _ := a.(string)
-	strB, _ := b.(string)
-	return strings.Compare(strA, strB)
-}
-
-func sorted(items []interface{}, compare CompareFunc) bool {
+func sorted(items []interface{}, compare compare.Func) bool {
 	for i := 0; i < len(items)-1; i++ {
 		if compare(items[i], items[i+1]) > 0 {
 			return false

@@ -1,6 +1,10 @@
 package sort
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/moorara/algo/compare"
+)
 
 func TestSelectInt(t *testing.T) {
 	tests := []struct {
@@ -15,7 +19,7 @@ func TestSelectInt(t *testing.T) {
 
 	for _, tc := range tests {
 		for k := 0; k < len(tc.items); k++ {
-			item := Select(tc.items, k, compareInt)
+			item := Select(tc.items, k, compare.Int)
 
 			if item != tc.expectedItems[k] {
 				t.Fatalf("expected selection: %d, actual selection: %d", tc.expectedItems[k], item)
@@ -35,9 +39,9 @@ func TestQuickInt(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Quick(tc.items, compareInt)
+		Quick(tc.items, compare.Int)
 
-		if !sorted(tc.items, compareInt) {
+		if !sorted(tc.items, compare.Int) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
@@ -54,9 +58,9 @@ func TestQuickString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Quick(tc.items, compareString)
+		Quick(tc.items, compare.String)
 
-		if !sorted(tc.items, compareString) {
+		if !sorted(tc.items, compare.String) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
@@ -73,9 +77,9 @@ func TestQuick3WayInt(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Quick3Way(tc.items, compareInt)
+		Quick3Way(tc.items, compare.Int)
 
-		if !sorted(tc.items, compareInt) {
+		if !sorted(tc.items, compare.Int) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
@@ -92,9 +96,9 @@ func TestQuick3WayString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		Quick3Way(tc.items, compareString)
+		Quick3Way(tc.items, compare.String)
 
-		if !sorted(tc.items, compareString) {
+		if !sorted(tc.items, compare.String) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}

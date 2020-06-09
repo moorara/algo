@@ -3,6 +3,7 @@ package symboltable
 import (
 	"fmt"
 
+	"github.com/moorara/algo/compare"
 	"github.com/moorara/algo/pkg/graphviz"
 )
 
@@ -23,7 +24,7 @@ type rbNode struct {
 // redBlack is a left-leaning Red-Black tree.
 type redBlack struct {
 	root   *rbNode
-	cmpKey CompareFunc
+	cmpKey compare.Func
 }
 
 // NewRedBlack creates a new Red-Black tree.
@@ -34,7 +35,7 @@ type redBlack struct {
 //   Red links lean lef.
 //   No node has two red links connect to it.
 //   Every path from root to null link has the same number of black links.
-func NewRedBlack(cmpKey CompareFunc) OrderedSymbolTable {
+func NewRedBlack(cmpKey compare.Func) OrderedSymbolTable {
 	return &redBlack{
 		root:   nil,
 		cmpKey: cmpKey,
