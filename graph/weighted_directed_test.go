@@ -67,6 +67,15 @@ func TestWeightedDirected(t *testing.T) {
 		expectedIsStronglyConnected bool
 	}
 
+	type shortestPathTest struct {
+		name             string
+		source           int
+		vertex           int
+		expectedPath     []DirectedEdge
+		expectedDistance float64
+		expectedOK       bool
+	}
+
 	tests := []struct {
 		name                                string
 		V                                   int
@@ -83,6 +92,7 @@ func TestWeightedDirected(t *testing.T) {
 		ordersTests                         []ordersTest
 		expectedStronglyConnectedComponents [][]int
 		strongConnectivityTests             []strongConnectivityTest
+		shortestPathTests                   []shortestPathTest
 	}{
 		{
 			name: "WeightedDigraph",
@@ -380,6 +390,33 @@ func TestWeightedDirected(t *testing.T) {
 					expectedIsStronglyConnected: true,
 				},
 			},
+			shortestPathTests: []shortestPathTest{
+				{
+					name:   "Path#1",
+					source: 0,
+					vertex: 1,
+					expectedPath: []DirectedEdge{
+						{0, 4, 0.38},
+						{4, 5, 0.35},
+						{5, 1, 0.32},
+					},
+					expectedDistance: 1.05,
+					expectedOK:       true,
+				},
+				{
+					name:   "Path#2",
+					source: 0,
+					vertex: 6,
+					expectedPath: []DirectedEdge{
+						{0, 2, 0.26},
+						{2, 7, 0.34},
+						{7, 3, 0.39},
+						{3, 6, 0.52},
+					},
+					expectedDistance: 1.51,
+					expectedOK:       true,
+				},
+			},
 		},
 	}
 
@@ -459,6 +496,18 @@ func TestWeightedDirected(t *testing.T) {
 					t.Run(tc.name, func(t *testing.T) {
 						assert.Equal(t, tc.expectedID, scc.ID(tc.v))
 						assert.Equal(t, tc.expectedIsStronglyConnected, scc.IsStronglyConnected(tc.v, tc.w))
+					})
+				}
+			})
+
+			t.Run("ShortestPathTree", func(t *testing.T) {
+				for _, tc := range tc.shortestPathTests {
+					t.Run(tc.name, func(t *testing.T) {
+						spt := g.ShortestPathTree(tc.source)
+						path, dist, ok := spt.PathTo(tc.vertex)
+						assert.Equal(t, tc.expectedPath, path)
+						assert.InEpsilon(t, tc.expectedDistance, dist, 1e-9)
+						assert.Equal(t, tc.expectedOK, ok)
 					})
 				}
 			})

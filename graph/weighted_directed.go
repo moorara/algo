@@ -363,15 +363,9 @@ func (g *WeightedDirected) StronglyConnectedComponents() *StronglyConnectedCompo
 	return scc
 }
 
-// Cycle determines if the graph has a cyclic path.
-func (g *WeightedDirected) Cycle() *DirectedCycle {
-	c := &DirectedCycle{
-		edgeTo:  make([]int, g.V()),
-		onStack: make([]bool, g.V()),
-		cycle:   nil,
-	}
-
-	return c
+// ShortestPathTree calculates the shortest path tree of the graph.
+func (g *WeightedDirected) ShortestPathTree(s int) *ShortestPathTree {
+	return newShortestPathTree(g, s)
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.

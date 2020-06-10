@@ -24,6 +24,7 @@ func TestUndirectedEdge(t *testing.T) {
 			assert.Equal(t, tc.v, e.Either())
 			assert.Equal(t, tc.v, e.Other(tc.w))
 			assert.Equal(t, tc.w, e.Other(tc.v))
+			assert.Equal(t, -1, e.Other(99))
 			assert.Equal(t, tc.weight, e.Weight())
 		})
 	}
@@ -82,6 +83,8 @@ func TestWeightedGraph(t *testing.T) {
 		ordersTests                 []ordersTest
 		expectedConnectedComponents [][]int
 		connectivityTests           []connectivityTest
+		expectedMSTWeight           float64
+		expectedMSTEdges            []UndirectedEdge
 	}{
 		{
 			name: "WeightedGraph",
@@ -345,6 +348,16 @@ func TestWeightedGraph(t *testing.T) {
 					expectedIsConnected: true,
 				},
 			},
+			expectedMSTWeight: 1.81,
+			expectedMSTEdges: []UndirectedEdge{
+				{0, 7, 0.16},
+				{0, 2, 0.26},
+				{1, 7, 0.19},
+				{2, 3, 0.17},
+				{2, 6, 0.40},
+				{4, 5, 0.35},
+				{5, 7, 0.28},
+			},
 		},
 	}
 
@@ -416,6 +429,15 @@ func TestWeightedGraph(t *testing.T) {
 						assert.Equal(t, tc.expectedID, cc.ID(tc.v))
 						assert.Equal(t, tc.expectedIsConnected, cc.IsConnected(tc.v, tc.w))
 					})
+				}
+			})
+
+			t.Run("MinimumSpanningTree", func(t *testing.T) {
+				mst := g.MinimumSpanningTree()
+				edges := mst.Edges()
+				assert.InEpsilon(t, tc.expectedMSTWeight, mst.Weight(), 1e-9)
+				for _, expectedMSTEdge := range tc.expectedMSTEdges {
+					assert.Contains(t, edges, expectedMSTEdge)
 				}
 			})
 

@@ -8,6 +8,10 @@
 package graph
 
 import (
+	"math"
+
+	"github.com/moorara/algo/compare"
+	"github.com/moorara/algo/heap"
 	"github.com/moorara/algo/list"
 )
 
@@ -15,7 +19,7 @@ const (
 	listNodeSize = 1024
 )
 
-// TraversalStrategy specifies the strategy for traversing vertices in a graph.
+// TraversalStrategy is the strategy for traversing vertices in a graph.
 type TraversalStrategy int
 
 const (
@@ -30,6 +34,18 @@ const (
 func isStrategyValid(strategy TraversalStrategy) bool {
 	return strategy == DFS || strategy == DFSi || strategy == BFS
 }
+
+// OptimizationStrategy is the strategy for optimizing weighted graphs.
+type OptimizationStrategy int
+
+const (
+	// None ignores edge weights.
+	None OptimizationStrategy = iota
+	// Minimize picks the edges with minimum weight.
+	Minimize
+	// Maximize picks the edges with maximum weight.
+	Maximize
+)
 
 // Visitors provides a method for visiting vertices and edges when traversing a graph.
 // VertexPreOrder is called when visiting a vertex in a graph.
@@ -50,7 +66,7 @@ type Paths struct {
 	edgeTo  []int
 }
 
-// To returns a path between the source vertex (s) and a vertex (v).
+// To returns a path between the source vertex (s) and vertex (v).
 // If no such path exists, the second return value will be false.
 func (p *Paths) To(v int) ([]int, bool) {
 	if !p.visited[v] {
@@ -260,4 +276,161 @@ func (t *Topological) Rank(v int) (int, bool) {
 	}
 
 	return t.rank[v], true
+}
+
+// MinimumSpanningTree is used for calculating the minimum spanning trees (forest) of a weighted undirected graph.
+// Given an edge-weighted undirected graph G with positive edge weights, an MST of G is a sub-graph T that is:
+//   Tree: connected and acyclic
+//   Spanning: includes all of the vertices
+//   Minimum: sum of the edge wights are minimum
+type MinimumSpanningTree struct {
+	visited []bool           // visited[v] = true if v on tree, false otherwise
+	edgeTo  []UndirectedEdge // edgeTo[v] = shortest edge from tree vertex to non-tree vertex
+	distTo  []float64        // distTo[v] = weight of shortest such edge (edgeTo[v].weight())
+	pq      heap.IndexHeap   // indexed priority queue of vertices connected by an edge to tree
+}
+
+func newMinimumSpanningTree(g *WeightedUndirected) *MinimumSpanningTree {
+	mst := &MinimumSpanningTree{
+		visited: make([]bool, g.V()),
+		edgeTo:  make([]UndirectedEdge, g.V()),
+		distTo:  make([]float64, g.V()),
+		pq:      heap.NewIndexMinHeap(g.V(), compare.Float64, nil),
+	}
+
+	for v := 0; v < g.V(); v++ {
+		mst.distTo[v] = math.MaxFloat64
+	}
+
+	// run from each vertex to find minimum spanning forest
+	for v := 0; v < g.V(); v++ {
+		if !mst.visited[v] {
+			mst.prim(g, v)
+		}
+	}
+
+	return mst
+}
+
+// Prim's algorithm (eager version) for calculating minimum spanning tree.
+func (mst *MinimumSpanningTree) prim(g *WeightedUndirected, s int) {
+	mst.distTo[s] = 0.0
+	mst.pq.Insert(s, mst.distTo[s], nil)
+
+	for !mst.pq.IsEmpty() {
+		v, _, _, _ := mst.pq.Delete()
+		mst.visited[v] = true
+
+		for _, e := range g.Adj(v) {
+			w := e.Other(v)
+			if mst.visited[w] {
+				continue
+			}
+
+			if e.Weight() < mst.distTo[w] {
+				mst.edgeTo[w] = e
+				mst.distTo[w] = e.Weight()
+
+				if mst.pq.ContainsIndex(w) {
+					mst.pq.ChangeKey(w, mst.distTo[w])
+				} else {
+					mst.pq.Insert(w, mst.distTo[w], nil)
+				}
+			}
+		}
+	}
+}
+
+// Edges returns the edges in a minimum spanning tree (or forest).
+func (mst *MinimumSpanningTree) Edges() []UndirectedEdge {
+	zero := UndirectedEdge{}
+	edges := make([]UndirectedEdge, 0)
+	for _, e := range mst.edgeTo {
+		if e != zero {
+			edges = append(edges, e)
+		}
+	}
+
+	return edges
+}
+
+// Weight returns the sum of the edge weights in a minimum spanning tree (or forest).
+func (mst *MinimumSpanningTree) Weight() float64 {
+	var weight float64
+	for _, e := range mst.Edges() {
+		weight += e.Weight()
+	}
+
+	return weight
+}
+
+// ShortestPathTree is used for calculating the shortest path tree of a weighted directed graph.
+// A shortest path from vertex s to vertex t in a weighted directed graph is a directed path from s to t such that no other path has a lower weight.
+type ShortestPathTree struct {
+	edgeTo []DirectedEdge // edgeTo[v] = last edge on shortest path s->v
+	distTo []float64      // distTo[v] = distance of shortest path s->v
+	pq     heap.IndexHeap // indexed priority queue of vertices
+}
+
+func newShortestPathTree(g *WeightedDirected, s int) *ShortestPathTree {
+	spt := &ShortestPathTree{
+		edgeTo: make([]DirectedEdge, g.V()),
+		distTo: make([]float64, g.V()),
+		pq:     heap.NewIndexMinHeap(g.V(), compare.Float64, nil),
+	}
+
+	for v := 0; v < g.V(); v++ {
+		spt.distTo[v] = math.MaxFloat64
+	}
+
+	spt.dijkstra(g, s)
+
+	return spt
+}
+
+// Dijkstra's algorithm (eager version) for calculating shortest path tree.
+func (spt *ShortestPathTree) dijkstra(g *WeightedDirected, s int) {
+	spt.distTo[s] = 0.0
+	spt.pq.Insert(s, spt.distTo[s], nil)
+
+	for !spt.pq.IsEmpty() {
+		v, _, _, _ := spt.pq.Delete()
+
+		// Relaxing edges
+		for _, e := range g.Adj(v) {
+			v, w := e.From(), e.To()
+			if dist := spt.distTo[v] + e.Weight(); dist < spt.distTo[w] {
+				spt.edgeTo[w] = e
+				spt.distTo[w] = dist
+
+				if spt.pq.ContainsIndex(w) {
+					spt.pq.ChangeKey(w, spt.distTo[w])
+				} else {
+					spt.pq.Insert(w, spt.distTo[w], nil)
+				}
+			}
+		}
+	}
+}
+
+// PathTo returns shortest path from the source vertex (s) to vertex (v).
+// The second return value is distance from the source vertex (s) to vertex (v).
+// If no such path exists, the last return value will be false.
+func (spt *ShortestPathTree) PathTo(v int) ([]DirectedEdge, float64, bool) {
+	if spt.distTo[v] == math.MaxFloat64 {
+		return nil, -1, false
+	}
+
+	zero := DirectedEdge{}
+	stack := list.NewStack(listNodeSize)
+	for e := spt.edgeTo[v]; e != zero; e = spt.edgeTo[e.From()] {
+		stack.Push(e)
+	}
+
+	path := make([]DirectedEdge, stack.Size())
+	for i := range path {
+		path[i] = stack.Pop().(DirectedEdge)
+	}
+
+	return path, spt.distTo[v], true
 }
