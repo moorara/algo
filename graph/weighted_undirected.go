@@ -19,11 +19,15 @@ func (e UndirectedEdge) Either() int {
 }
 
 // Other returns the other vertext of this edge.
-func (e UndirectedEdge) Other(vertex int) int {
-	if vertex == e.v {
+func (e UndirectedEdge) Other(v int) int {
+	switch v {
+	case e.v:
 		return e.w
+	case e.w:
+		return e.v
+	default:
+		return -1
 	}
-	return e.v
 }
 
 // Weight returns the weight of this edge.
@@ -345,6 +349,11 @@ func (g *WeightedUndirected) ConnectedComponents() *ConnectedComponents {
 	}
 
 	return cc
+}
+
+// MinimumSpanningTree calculates the minimum spanning tree (or forest) of the graph.
+func (g *WeightedUndirected) MinimumSpanningTree() *MinimumSpanningTree {
+	return newMinimumSpanningTree(g)
 }
 
 // Graphviz returns a visualization of the graph in Graphviz format.
