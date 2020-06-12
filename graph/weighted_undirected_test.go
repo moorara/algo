@@ -435,7 +435,7 @@ func TestWeightedGraph(t *testing.T) {
 			t.Run("MinimumSpanningTree", func(t *testing.T) {
 				mst := g.MinimumSpanningTree()
 				edges := mst.Edges()
-				assert.InEpsilon(t, tc.expectedMSTWeight, mst.Weight(), 1e-9)
+				assert.InEpsilon(t, tc.expectedMSTWeight, mst.Weight(), float64Epsilon)
 				for _, expectedMSTEdge := range tc.expectedMSTEdges {
 					assert.Contains(t, edges, expectedMSTEdge)
 				}

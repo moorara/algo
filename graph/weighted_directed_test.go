@@ -506,7 +506,7 @@ func TestWeightedDirected(t *testing.T) {
 						spt := g.ShortestPathTree(tc.source)
 						path, dist, ok := spt.PathTo(tc.vertex)
 						assert.Equal(t, tc.expectedPath, path)
-						assert.InEpsilon(t, tc.expectedDistance, dist, 1e-9)
+						assert.InEpsilon(t, tc.expectedDistance, dist, float64Epsilon)
 						assert.Equal(t, tc.expectedOK, ok)
 					})
 				}
