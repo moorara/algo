@@ -2,7 +2,7 @@
 
 ## Tests
 
-### Undirect
+### Undirected
 
 ### Directed
 
