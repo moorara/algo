@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	listNodeSize = 1024
+	listNodeSize   = 1024
+	float64Epsilon = 1e-9
 )
 
 // TraversalStrategy is the strategy for traversing vertices in a graph.
