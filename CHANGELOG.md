@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.1](https://github.com/moorara/algo/tree/v0.2.1) (2020-06-18)
+
+[Full Changelog](https://github.com/moorara/algo/compare/v0.2.0...v0.2.1)
+
+**Merged pull requests:**
+
+- Update IndexHeap document [\#51](https://github.com/moorara/algo/pull/51) ([moorara](https://github.com/moorara))
+
 ## [v0.2.0](https://github.com/moorara/algo/tree/v0.2.0) (2020-06-13)
 
 [Full Changelog](https://github.com/moorara/algo/compare/v0.1.2...v0.2.0)
