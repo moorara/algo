@@ -14,7 +14,7 @@ type Heap interface {
 	ContainsValue(interface{}) bool
 }
 
-// IndexHeap TODO:
+// IndexHeap represents an indexed heap (priority queue) abstract data type.
 type IndexHeap interface {
 	Size() int
 	IsEmpty() bool
