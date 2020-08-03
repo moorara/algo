@@ -8,7 +8,7 @@
 
 A collection of common data structures and algorithms for Go applications.
 
-## Algorithms & Data Structures
+## Summary
 
   - **Algorithms**
     - Sorts
