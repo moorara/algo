@@ -8,6 +8,45 @@
 
 A collection of common data structures and algorithms for Go applications.
 
+## Algorithms & Data Structures
+
+  - **Algorithms**
+    - Sorts
+      - Selection Sort
+      - Insertion Sort
+      - Shell Sort
+      - Merge Sort
+      - Quick Sort
+      - 3-Way Quick Sort
+      - Heap Sort
+     - Radix Sorts
+       - Least Significant Digit
+       - Most Significant Digit
+       - 3-Way Quick Sort
+     - Misc
+       - Shuffle
+       - Quick Select
+  - **Data Structures**
+    - Lists
+      - Queue
+      - Stack
+    - Heaps
+      - Min Heap
+      - Max Heap
+      - Indexed Min Heap
+      - Indexed Max Heap
+    - Symbol Tables
+      - Unordered
+      - Ordered
+        - BST
+        - AVL Tree
+        - Red-Black Tree
+    - Graphs
+      - Undirected Graph
+      - Directed Graph
+      - Weighted Undirected Graph
+      - Weighted Directed Graph
+
 ## Development
 
 | Command          | Purpose                                     |
