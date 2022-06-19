@@ -11,13 +11,13 @@ func TestSubgraph(t *testing.T) {
 		name            string
 		subgraphName    string
 		label           string
-		color           string
-		style           string
-		rank            string
-		rankdir         string
-		nodeColor       string
-		nodeStyle       string
-		nodeShape       string
+		color           Color
+		style           Style
+		rank            Rank
+		rankDir         RankDir
+		nodeColor       Color
+		nodeStyle       Style
+		nodeShape       Shape
 		nodes           []Node
 		edges           []Edge
 		subgraphs       []Subgraph
@@ -78,7 +78,7 @@ func TestSubgraph(t *testing.T) {
 			"SubgraphWithNodesAndEdges",
 			"cluster0",
 			"Left", ColorPink, "",
-			"", RankdirLR,
+			"", RankDirLR,
 			ColorRoyalBlue, "", "",
 			[]Node{
 				Node{Name: "c0", Label: "C0", Shape: ShapeBox},
@@ -197,7 +197,7 @@ func TestSubgraph(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			sg := NewSubgraph(tc.subgraphName, tc.label, tc.color, tc.style, tc.rank, tc.rankdir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
+			sg := NewSubgraph(tc.subgraphName, tc.label, tc.color, tc.style, tc.rank, tc.rankDir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
 			sg.AddNode(tc.nodes...)
 			sg.AddEdge(tc.edges...)
 			sg.AddSubgraph(tc.subgraphs...)

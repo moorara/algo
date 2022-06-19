@@ -6,27 +6,27 @@ import "bytes"
 type Subgraph struct {
 	Name      string
 	Label     string
-	Color     string
-	Style     string
-	Rank      string
-	Rankdir   string
-	NodeColor string
-	NodeStyle string
-	NodeShape string
+	Color     Color
+	Style     Style
+	Rank      Rank
+	RankDir   RankDir
+	NodeColor Color
+	NodeStyle Style
+	NodeShape Shape
 	Nodes     []Node
 	Edges     []Edge
 	Subgraphs []Subgraph
 }
 
 // NewSubgraph creates a new subgraph.
-func NewSubgraph(name, label, color, style, rank, rankdir, nodeColor, nodeStyle, nodeShape string) Subgraph {
+func NewSubgraph(name, label string, color Color, style Style, rank Rank, rankDir RankDir, nodeColor Color, nodeStyle Style, nodeShape Shape) Subgraph {
 	return Subgraph{
 		Name:      name,
 		Label:     label,
 		Color:     color,
 		Style:     style,
 		Rank:      rank,
-		Rankdir:   rankdir,
+		RankDir:   rankDir,
 		NodeColor: nodeColor,
 		NodeStyle: nodeStyle,
 		NodeShape: nodeShape,
@@ -65,17 +65,17 @@ func (s *Subgraph) DotCode(indent int) string {
 	buf.WriteString("{\n")
 
 	first = addAttr(buf, first, indent+2, "label", `"`+s.Label+`"`)
-	first = addAttr(buf, first, indent+2, "color", s.Color)
-	first = addAttr(buf, first, indent+2, "style", s.Style)
-	first = addAttr(buf, first, indent+2, "rank", s.Rank)
-	first = addAttr(buf, first, indent+2, "rankdir", s.Rankdir)
+	first = addAttr(buf, first, indent+2, "color", string(s.Color))
+	first = addAttr(buf, first, indent+2, "style", string(s.Style))
+	first = addAttr(buf, first, indent+2, "rank", string(s.Rank))
+	first = addAttr(buf, first, indent+2, "rankdir", string(s.RankDir))
 
 	first = true
 	addIndent(buf, indent+2)
 	buf.WriteString("node [")
-	first = addListAttr(buf, first, "color", s.NodeColor)
-	first = addListAttr(buf, first, "style", s.NodeStyle)
-	first = addListAttr(buf, first, "shape", s.NodeShape)
+	first = addListAttr(buf, first, "color", string(s.NodeColor))
+	first = addListAttr(buf, first, "style", string(s.NodeStyle))
+	first = addListAttr(buf, first, "shape", string(s.NodeShape))
 	buf.WriteString("];\n")
 	first = false
 

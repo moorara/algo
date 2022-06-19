@@ -11,12 +11,12 @@ func TestEdge(t *testing.T) {
 		name            string
 		from            string
 		to              string
-		edgeType        string
-		edgeDir         string
+		edgeType        EdgeType
+		edgeDir         EdgeDir
 		label           string
-		color           string
-		style           string
-		arrowhead       string
+		color           Color
+		style           Style
+		arrowhead       Arrowhead
 		expectedDotCode string
 	}{
 		{

@@ -54,6 +54,7 @@ func msdInt(a, aux []int, lo, hi, d int) {
 
 // MSDInt is the MSD (most significant digit) sorting algorithm for integer numbers.
 func MSDInt(a []int) {
-	// TODO:
-	// Ref: https://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/MSD.java.html
+	n := len(a)
+	aux := make([]int, n)
+	msdInt(a, aux, 0, n-1, 0)
 }

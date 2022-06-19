@@ -9,12 +9,12 @@ import (
 func TestNewArrayNode(t *testing.T) {
 	tests := []struct {
 		size int
-		next *arrayNode
+		next *arrayNode[string]
 	}{
 		{64, nil},
 		{256, nil},
-		{1024, &arrayNode{}},
-		{4096, &arrayNode{}},
+		{1024, &arrayNode[string]{}},
+		{4096, &arrayNode[string]{}},
 	}
 
 	for _, tc := range tests {

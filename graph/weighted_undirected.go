@@ -3,8 +3,8 @@ package graph
 import (
 	"fmt"
 
+	"github.com/moorara/algo/internal/graphviz"
 	"github.com/moorara/algo/list"
-	"github.com/moorara/algo/pkg/graphviz"
 )
 
 // UndirectedEdge represents a weighted undirected edge data type.
@@ -149,7 +149,7 @@ func (g *WeightedUndirected) traverseDFS(v int, visited []bool, visitors *Visito
 
 // Iterative DFS Traversal
 func (g *WeightedUndirected) traverseDFSi(s int, visited []bool, visitors *Visitors) {
-	stack := list.NewStack(listNodeSize)
+	stack := list.NewStack[int](listNodeSize, nil)
 
 	visited[s] = true
 	stack.Push(s)
@@ -161,7 +161,7 @@ func (g *WeightedUndirected) traverseDFSi(s int, visited []bool, visitors *Visit
 	}
 
 	for !stack.IsEmpty() {
-		v := stack.Pop().(int)
+		v, _ := stack.Pop()
 
 		if visitors != nil && visitors.VertexPostOrder != nil {
 			if !visitors.VertexPostOrder(v) {
@@ -193,7 +193,7 @@ func (g *WeightedUndirected) traverseDFSi(s int, visited []bool, visitors *Visit
 
 // BFS Traversal
 func (g *WeightedUndirected) traverseBFS(s int, visited []bool, visitors *Visitors) {
-	queue := list.NewQueue(listNodeSize)
+	queue := list.NewQueue[int](listNodeSize, nil)
 
 	visited[s] = true
 	queue.Enqueue(s)
@@ -205,7 +205,7 @@ func (g *WeightedUndirected) traverseBFS(s int, visited []bool, visitors *Visito
 	}
 
 	for !queue.IsEmpty() {
-		v := queue.Dequeue().(int)
+		v, _ := queue.Dequeue()
 
 		if visitors != nil && visitors.VertexPostOrder != nil {
 			if !visitors.VertexPostOrder(v) {

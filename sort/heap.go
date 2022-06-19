@@ -1,8 +1,8 @@
 package sort
 
-import "github.com/moorara/algo/compare"
+import "github.com/moorara/algo/common"
 
-func sink(a []interface{}, k, n int, cmp compare.Func) {
+func sink[T any](a []T, k, n int, cmp common.CompareFunc[T]) {
 	for 2*k <= n {
 		j := 2 * k
 		if j < n && cmp(a[j], a[j+1]) < 0 {
@@ -16,26 +16,27 @@ func sink(a []interface{}, k, n int, cmp compare.Func) {
 	}
 }
 
-func heap(a []interface{}, cmp compare.Func) {
+func heap[T any](a []T, cmp common.CompareFunc[T]) {
 	n := len(a) - 1
 
 	// build max-heap bottom-up
 	for k := n / 2; k >= 1; k-- {
-		sink(a, k, n, cmp)
+		sink[T](a, k, n, cmp)
 	}
 
 	// remove the maximum, one at a time
 	for n > 1 {
 		a[1], a[n] = a[n], a[1]
 		n--
-		sink(a, 1, n, cmp)
+		sink[T](a, 1, n, cmp)
 	}
 }
 
 // Heap implements the heap sort algorithm.
-func Heap(a []interface{}, cmp compare.Func) {
+func Heap[T any](a []T, cmp common.CompareFunc[T]) {
 	// Heap elements need to start from position 1
-	aux := append([]interface{}{nil}, a...)
-	heap(aux, cmp)
+	var zero T
+	aux := append([]T{zero}, a...)
+	heap[T](aux, cmp)
 	copy(a, aux[1:])
 }

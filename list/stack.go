@@ -1,101 +1,106 @@
 package list
 
-import "github.com/moorara/algo/compare"
+import "github.com/moorara/algo/common"
 
 // Stack represents a stack abstract data type.
-type Stack interface {
+type Stack[T any] interface {
 	Size() int
 	IsEmpty() bool
-	Push(interface{})
-	Pop() interface{}
-	Peek() interface{}
-	Contains(interface{}, compare.Func) bool
+	Push(T)
+	Pop() (T, bool)
+	Peek() (T, bool)
+	Contains(T) bool
 }
 
-type arrayStack struct {
-	listSize  int
-	nodeSize  int
-	nodeIndex int
-	topNode   *arrayNode
+type arrayStack[T any] struct {
+	nodeSize int
+	equal    common.EqualFunc[T]
+
+	listSize int
+	topIndex int
+	topNode  *arrayNode[T]
 }
 
 // NewStack creates a new array-list stack.
-func NewStack(nodeSize int) Stack {
-	return &arrayStack{
-		listSize:  0,
-		nodeSize:  nodeSize,
-		nodeIndex: -1,
-		topNode:   nil,
+func NewStack[T any](nodeSize int, equal common.EqualFunc[T]) Stack[T] {
+	return &arrayStack[T]{
+		nodeSize: nodeSize,
+		equal:    equal,
+
+		listSize: 0,
+		topIndex: -1,
+		topNode:  nil,
 	}
 }
 
-// Size returns the number of items on stack.
-func (s *arrayStack) Size() int {
+// Size returns the number of values on stack.
+func (s *arrayStack[T]) Size() int {
 	return s.listSize
 }
 
 // IsEmpty returns true if stack is empty.
-func (s *arrayStack) IsEmpty() bool {
+func (s *arrayStack[T]) IsEmpty() bool {
 	return s.listSize == 0
 }
 
-// Enqueue adds a new item to stack.
-func (s *arrayStack) Push(item interface{}) {
+// Enqueue adds a new value to stack.
+func (s *arrayStack[T]) Push(val T) {
 	s.listSize++
-	s.nodeIndex++
+	s.topIndex++
 
 	if s.topNode == nil {
-		s.topNode = newArrayNode(s.nodeSize, nil)
-	} else {
-		if s.nodeIndex == s.nodeSize {
-			s.nodeIndex = 0
-			s.topNode = newArrayNode(s.nodeSize, s.topNode)
-		}
+		s.topNode = newArrayNode[T](s.nodeSize, nil)
+	} else if s.topIndex == s.nodeSize {
+		s.topNode = newArrayNode[T](s.nodeSize, s.topNode)
+		s.topIndex = 0
 	}
 
-	s.topNode.block[s.nodeIndex] = item
+	s.topNode.block[s.topIndex] = val
 }
 
-// Dequeue removes an item from stack.
-func (s *arrayStack) Pop() interface{} {
-	if s.listSize == 0 {
-		return nil
+// Dequeue removes a value from stack.
+func (s *arrayStack[T]) Pop() (T, bool) {
+	if s.IsEmpty() {
+		var zero T
+		return zero, false
 	}
 
-	item := s.topNode.block[s.nodeIndex]
-	s.nodeIndex--
+	val := s.topNode.block[s.topIndex]
+	s.topIndex--
 	s.listSize--
 
-	if s.nodeIndex == -1 {
+	if s.topIndex == -1 {
 		s.topNode = s.topNode.next
 		if s.topNode != nil {
-			s.nodeIndex = s.nodeSize - 1
+			s.topIndex = s.nodeSize - 1
 		}
 	}
 
-	return item
+	return val, true
 }
 
-// Peek returns the next item on stack without removing it from stack.
-func (s *arrayStack) Peek() interface{} {
-	if s.listSize == 0 {
-		return nil
+// Peek returns the next value on stack without removing it from stack.
+func (s *arrayStack[T]) Peek() (T, bool) {
+	if s.IsEmpty() {
+		var zero T
+		return zero, false
 	}
 
-	return s.topNode.block[s.nodeIndex]
+	return s.topNode.block[s.topIndex], true
 }
 
-// Contains returns true if a given item is already on stack.
-func (s *arrayStack) Contains(item interface{}, cmp compare.Func) bool {
+// Contains returns true if a given value is already on stack.
+func (s *arrayStack[T]) Contains(val T) bool {
 	n := s.topNode
-	i := s.nodeIndex
+	i := s.topIndex
 
 	for n != nil {
-		if cmp(n.block[i], item) == 0 {
+		if s.equal(n.block[i], val) {
 			return true
 		}
 
 		i--
+
 		if i < 0 {
 			n = n.next
 			i = s.nodeSize - 1

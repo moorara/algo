@@ -10,7 +10,7 @@ package graph
 import (
 	"math"
 
-	"github.com/moorara/algo/compare"
+	"github.com/moorara/algo/common"
 	"github.com/moorara/algo/heap"
 	"github.com/moorara/algo/list"
 )
@@ -74,7 +74,7 @@ func (p *Paths) To(v int) ([]int, bool) {
 		return nil, false
 	}
 
-	stack := list.NewStack(listNodeSize)
+	stack := list.NewStack[int](listNodeSize, nil)
 	for x := v; x != p.s; x = p.edgeTo[x] {
 		stack.Push(x)
 	}
@@ -82,7 +82,8 @@ func (p *Paths) To(v int) ([]int, bool) {
 
 	path := make([]int, 0)
 	for !stack.IsEmpty() {
-		path = append(path, stack.Pop().(int))
+		v, _ := stack.Pop()
+		path = append(path, v)
 	}
 
 	return path, true
@@ -195,7 +196,7 @@ type DirectedCycle struct {
 	visited []bool
 	edgeTo  []int
 	onStack []bool
-	cycle   list.Stack
+	cycle   list.Stack[int]
 }
 
 func newDirectedCycle(g *Directed) *DirectedCycle {
@@ -225,7 +226,7 @@ func (c *DirectedCycle) dfs(g *Directed, v int) {
 			c.edgeTo[w] = v
 			c.dfs(g, w)
 		} else if c.onStack[w] { // cycle detected
-			c.cycle = list.NewStack(listNodeSize)
+			c.cycle = list.NewStack[int](listNodeSize, nil)
 			for x := v; x != w; x = c.edgeTo[x] {
 				c.cycle.Push(x)
 			}
@@ -246,7 +247,8 @@ func (c *DirectedCycle) Cycle() ([]int, bool) {
 
 	cycle := make([]int, 0)
 	for !c.cycle.IsEmpty() {
-		cycle = append(cycle, c.cycle.Pop().(int))
+		v, _ := c.cycle.Pop()
+		cycle = append(cycle, v)
 	}
 
 	return cycle, true
@@ -285,10 +287,10 @@ func (t *Topological) Rank(v int) (int, bool) {
 //   Spanning: includes all of the vertices
 //   Minimum: sum of the edge wights are minimum
 type MinimumSpanningTree struct {
-	visited []bool           // visited[v] = true if v on tree, false otherwise
-	edgeTo  []UndirectedEdge // edgeTo[v] = shortest edge from tree vertex to non-tree vertex
-	distTo  []float64        // distTo[v] = weight of shortest such edge (edgeTo[v].weight())
-	pq      heap.IndexHeap   // indexed priority queue of vertices connected by an edge to tree
+	visited []bool                       // visited[v] = true if v on tree, false otherwise
+	edgeTo  []UndirectedEdge             // edgeTo[v] = shortest edge from tree vertex to non-tree vertex
+	distTo  []float64                    // distTo[v] = weight of shortest such edge (edgeTo[v].weight())
+	pq      heap.IndexHeap[float64, any] // indexed priority queue of vertices connected by an edge to tree
 }
 
 func newMinimumSpanningTree(g *WeightedUndirected) *MinimumSpanningTree {
@@ -296,7 +298,7 @@ func newMinimumSpanningTree(g *WeightedUndirected) *MinimumSpanningTree {
 		visited: make([]bool, g.V()),
 		edgeTo:  make([]UndirectedEdge, g.V()),
 		distTo:  make([]float64, g.V()),
-		pq:      heap.NewIndexMinHeap(g.V(), compare.Float64, nil),
+		pq:      heap.NewIndexMinHeap[float64, any](g.V(), common.NewCompareFunc[float64](), nil),
 	}
 
 	for v := 0; v < g.V(); v++ {
@@ -368,16 +370,16 @@ func (mst *MinimumSpanningTree) Weight() float64 {
 // ShortestPathTree is used for calculating the shortest path tree of a weighted directed graph.
 // A shortest path from vertex s to vertex t in a weighted directed graph is a directed path from s to t such that no other path has a lower weight.
 type ShortestPathTree struct {
-	edgeTo []DirectedEdge // edgeTo[v] = last edge on shortest path s->v
-	distTo []float64      // distTo[v] = distance of shortest path s->v
-	pq     heap.IndexHeap // indexed priority queue of vertices
+	edgeTo []DirectedEdge               // edgeTo[v] = last edge on shortest path s->v
+	distTo []float64                    // distTo[v] = distance of shortest path s->v
+	pq     heap.IndexHeap[float64, any] // indexed priority queue of vertices
 }
 
 func newShortestPathTree(g *WeightedDirected, s int) *ShortestPathTree {
 	spt := &ShortestPathTree{
 		edgeTo: make([]DirectedEdge, g.V()),
 		distTo: make([]float64, g.V()),
-		pq:     heap.NewIndexMinHeap(g.V(), compare.Float64, nil),
+		pq:     heap.NewIndexMinHeap[float64, any](g.V(), common.NewCompareFunc[float64](), nil),
 	}
 
 	for v := 0; v < g.V(); v++ {
@@ -423,14 +425,14 @@ func (spt *ShortestPathTree) PathTo(v int) ([]DirectedEdge, float64, bool) {
 	}
 
 	zero := DirectedEdge{}
-	stack := list.NewStack(listNodeSize)
+	stack := list.NewStack[DirectedEdge](listNodeSize, nil)
 	for e := spt.edgeTo[v]; e != zero; e = spt.edgeTo[e.From()] {
 		stack.Push(e)
 	}
 
 	path := make([]DirectedEdge, stack.Size())
 	for i := range path {
-		path[i] = stack.Pop().(DirectedEdge)
+		path[i], _ = stack.Pop()
 	}
 
 	return path, spt.distTo[v], true

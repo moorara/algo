@@ -5,21 +5,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/moorara/algo/compare"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moorara/algo/common"
 )
 
 func TestMaxHeap(t *testing.T) {
 	type keyValue struct {
-		key   int
-		value string
+		key int
+		val string
 	}
 
 	tests := []struct {
 		name             string
-		initialCapacity  int
-		cmpKey           compare.Func
-		cmpVal           compare.Func
+		size             int
 		insertTests      []keyValue
 		expectedSize     int
 		expectedIsEmpty  bool
@@ -29,9 +28,7 @@ func TestMaxHeap(t *testing.T) {
 	}{
 		{
 			name:             "Empty",
-			initialCapacity:  2,
-			cmpKey:           compare.Int,
-			cmpVal:           compare.String,
+			size:             2,
 			insertTests:      []keyValue{},
 			expectedSize:     0,
 			expectedIsEmpty:  true,
@@ -40,10 +37,8 @@ func TestMaxHeap(t *testing.T) {
 			expectedDelete:   []keyValue{},
 		},
 		{
-			name:            "FewPairs",
-			initialCapacity: 2,
-			cmpKey:          compare.Int,
-			cmpVal:          compare.String,
+			name: "FewPairs",
+			size: 2,
 			insertTests: []keyValue{
 				{10, "ten"},
 				{30, "thirty"},
@@ -64,10 +59,8 @@ func TestMaxHeap(t *testing.T) {
 			},
 		},
 		{
-			name:            "SomePairs",
-			initialCapacity: 4,
-			cmpKey:          compare.Int,
-			cmpVal:          compare.String,
+			name: "SomePairs",
+			size: 4,
 			insertTests: []keyValue{
 				{10, "ten"},
 				{30, "thirty"},
@@ -94,10 +87,8 @@ func TestMaxHeap(t *testing.T) {
 			},
 		},
 		{
-			name:            "MorePairs",
-			initialCapacity: 4,
-			cmpKey:          compare.Int,
-			cmpVal:          compare.String,
+			name: "MorePairs",
+			size: 4,
 			insertTests: []keyValue{
 				{10, "ten"},
 				{30, "thirty"},
@@ -139,69 +130,75 @@ func TestMaxHeap(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			heap := NewMaxHeap(tc.initialCapacity, tc.cmpKey, tc.cmpVal)
+			cmpKey := common.NewCompareFunc[int]()
+			eqVal := common.NewEqualFunc[string]()
+			heap := NewMaxHeap[int, string](tc.size, cmpKey, eqVal)
 
-			// Heap initially should be empty
-			assert.Zero(t, heap.Size())
-			assert.True(t, heap.IsEmpty())
-			assert.False(t, heap.ContainsKey(nil))
-			assert.False(t, heap.ContainsValue(nil))
+			t.Run("BeforeInsert", func(t *testing.T) {
+				assert.Zero(t, heap.Size())
+				assert.True(t, heap.IsEmpty())
+				assert.False(t, heap.ContainsKey(0))
+				assert.False(t, heap.ContainsValue(""))
 
-			peekKey, peekValue, peekOK := heap.Peek()
-			assert.Nil(t, peekKey)
-			assert.Nil(t, peekValue)
-			assert.False(t, peekOK)
-
-			deleteKey, deleteValue, deleteOK := heap.Delete()
-			assert.Nil(t, deleteKey)
-			assert.Nil(t, deleteValue)
-			assert.False(t, deleteOK)
-
-			for _, entry := range tc.insertTests {
-				heap.Insert(entry.key, entry.value)
-			}
-
-			assert.Equal(t, tc.expectedSize, heap.Size())
-			assert.Equal(t, tc.expectedIsEmpty, heap.IsEmpty())
-
-			peekKey, peekValue, peekOK = heap.Peek()
-			if tc.expectedSize == 0 {
-				assert.Nil(t, peekKey)
-				assert.Nil(t, peekValue)
+				peekKey, peekVal, peekOK := heap.Peek()
+				assert.Zero(t, peekKey)
+				assert.Empty(t, peekVal)
 				assert.False(t, peekOK)
-			} else {
-				assert.Equal(t, tc.expectedPeek.key, peekKey)
-				assert.Equal(t, tc.expectedPeek.value, peekValue)
-				assert.True(t, peekOK)
-			}
 
-			for _, entry := range tc.expectedContains {
-				assert.True(t, heap.ContainsKey(entry.key))
-				assert.True(t, heap.ContainsValue(entry.value))
-			}
+				deleteKey, deleteVal, deleteOK := heap.Delete()
+				assert.Zero(t, deleteKey)
+				assert.Empty(t, deleteVal)
+				assert.False(t, deleteOK)
+			})
 
-			for _, entry := range tc.expectedDelete {
-				deleteKey, deleteValue, deleteOK = heap.Delete()
-				assert.Equal(t, entry.key, deleteKey)
-				assert.Equal(t, entry.value, deleteValue)
-				assert.True(t, deleteOK)
-			}
+			t.Run("AfterInsert", func(t *testing.T) {
+				for _, entry := range tc.insertTests {
+					heap.Insert(entry.key, entry.val)
+				}
 
-			// Heap should be empty at the end
-			assert.Zero(t, heap.Size())
-			assert.True(t, heap.IsEmpty())
-			assert.False(t, heap.ContainsKey(nil))
-			assert.False(t, heap.ContainsValue(nil))
+				assert.Equal(t, tc.expectedSize, heap.Size())
+				assert.Equal(t, tc.expectedIsEmpty, heap.IsEmpty())
 
-			peekKey, peekValue, peekOK = heap.Peek()
-			assert.Nil(t, peekKey)
-			assert.Nil(t, peekValue)
-			assert.False(t, peekOK)
+				peekKey, peekVal, peekOK := heap.Peek()
+				if tc.expectedSize == 0 {
+					assert.Zero(t, peekKey)
+					assert.Empty(t, peekVal)
+					assert.False(t, peekOK)
+				} else {
+					assert.Equal(t, tc.expectedPeek.key, peekKey)
+					assert.Equal(t, tc.expectedPeek.val, peekVal)
+					assert.True(t, peekOK)
+				}
 
-			deleteKey, deleteValue, deleteOK = heap.Delete()
-			assert.Nil(t, deleteKey)
-			assert.Nil(t, deleteValue)
-			assert.False(t, peekOK, deleteOK)
+				for _, entry := range tc.expectedContains {
+					assert.True(t, heap.ContainsKey(entry.key))
+					assert.True(t, heap.ContainsValue(entry.val))
+				}
+
+				for _, entry := range tc.expectedDelete {
+					deleteKey, deleteVal, deleteOK := heap.Delete()
+					assert.Equal(t, entry.key, deleteKey)
+					assert.Equal(t, entry.val, deleteVal)
+					assert.True(t, deleteOK)
+				}
+			})
+
+			t.Run("AfterDelete", func(t *testing.T) {
+				assert.Zero(t, heap.Size())
+				assert.True(t, heap.IsEmpty())
+				assert.False(t, heap.ContainsKey(0))
+				assert.False(t, heap.ContainsValue(""))
+
+				peekKey, peekVal, peekOK := heap.Peek()
+				assert.Zero(t, peekKey)
+				assert.Empty(t, peekVal)
+				assert.False(t, peekOK)
+
+				deleteKey, deleteVal, deleteOK := heap.Delete()
+				assert.Zero(t, deleteKey)
+				assert.Empty(t, deleteVal)
+				assert.False(t, peekOK, deleteOK)
+			})
 		})
 	}
 }
@@ -214,23 +211,27 @@ func BenchmarkMaxHeap(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	b.Run("Insert", func(b *testing.B) {
-		heap := NewMaxHeap(heapSize, compare.Int, compare.String)
+		cmpKey := common.NewCompareFunc[int]()
+		heap := NewMaxHeap[int, string](heapSize, cmpKey, nil)
+
 		keys := randIntSlice(b.N, minInt, maxInt)
-		values := randStringSlice(b.N)
+		vals := randStringSlice(b.N)
 
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			heap.Insert(keys[n], values[n])
+			heap.Insert(keys[n], vals[n])
 		}
 	})
 
 	b.Run("Delete", func(b *testing.B) {
-		heap := NewMaxHeap(heapSize, compare.Int, compare.String)
+		cmpKey := common.NewCompareFunc[int]()
+		heap := NewMaxHeap[int, string](heapSize, cmpKey, nil)
+
 		keys := randIntSlice(b.N, minInt, maxInt)
-		values := randStringSlice(b.N)
+		vals := randStringSlice(b.N)
 
 		for n := 0; n < b.N; n++ {
-			heap.Insert(keys[n], values[n])
+			heap.Insert(keys[n], vals[n])
 		}
 
 		b.ResetTimer()

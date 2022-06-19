@@ -3,12 +3,12 @@ package sort
 import (
 	"math/rand"
 
-	"github.com/moorara/algo/compare"
+	"github.com/moorara/algo/common"
 )
 
-func sorted(items []interface{}, compare compare.Func) bool {
+func isSorted[T any](items []T, cmp common.CompareFunc[T]) bool {
 	for i := 0; i < len(items)-1; i++ {
-		if compare(items[i], items[i+1]) > 0 {
+		if cmp(items[i], items[i+1]) > 0 {
 			return false
 		}
 	}
@@ -16,8 +16,8 @@ func sorted(items []interface{}, compare compare.Func) bool {
 	return true
 }
 
-func randIntSlice(size, min, max int) []interface{} {
-	items := make([]interface{}, size)
+func randIntSlice(size, min, max int) []int {
+	items := make([]int, size)
 	for i := 0; i < len(items); i++ {
 		items[i] = min + rand.Intn(max-min+1)
 	}

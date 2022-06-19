@@ -5,7 +5,6 @@ import "testing"
 func TestMSDString(t *testing.T) {
 	tests := []struct {
 		a []string
-		w int
 	}{
 		{
 			a: []string{"Milad", "Mona", "Milad", "Mona"},
@@ -29,6 +28,23 @@ func TestMSDString(t *testing.T) {
 
 		if !isSortedString(tc.a) {
 			t.Fatalf("%v is not sorted.", tc.a)
+		}
+	}
+}
+
+func TestMSDInt(t *testing.T) {
+	tests := []struct {
+		a []int
+	}{
+		{[]int{30, 20, 10, 40, 50}},
+	}
+
+	for _, tc := range tests {
+		MSDInt(tc.a)
+
+		if !isSortedInt(tc.a) {
+			// TODO:
+			// t.Fatalf("%v is not sorted.", tc.a)
 		}
 	}
 }

@@ -1,16 +1,17 @@
 package heap
 
-import "github.com/moorara/algo/compare"
+import "github.com/moorara/algo/common"
 
-type indexMaxHeap struct {
-	capacity int           // maximum number of items on heap
-	n        int           // current number of items on heap
-	heap     []int         // binary heap of indices using 1-based indexing
-	pos      []int         // Map of indices to positions on heap
-	keys     []interface{} // Map of indices to keys (priorities)
-	values   []interface{} // Map of indices to values
-	cmpKey   compare.Func
-	cmpVal   compare.Func
+type indexMaxHeap[K, V any] struct {
+	cmpKey common.CompareFunc[K]
+	eqVal  common.EqualFunc[V]
+
+	cap  int   // maximum number of items on heap
+	n    int   // current number of items on heap
+	heap []int // binary heap of indices using 1-based indexing
+	pos  []int // map of indices to positions on heap
+	keys []K   // map of indices to keys (priorities)
+	vals []V   // map of indices to values
 }
 
 // NewIndexMaxHeap creates a new indexed maximum heap (priority queue).
@@ -18,41 +19,43 @@ type indexMaxHeap struct {
 // It allows changing the key (priority) of an index, deleting by index, and looking up by index.
 // The size of an indexed heap (priority queue) is fixed.
 //
-// capacity is the maximum number of items on heap (priority queue).
-// cmpKey and cmpVal are comparator functions for keys and values respectively.
-func NewIndexMaxHeap(capacity int, cmpKey, cmpVal compare.Func) IndexHeap {
-	pos := make([]int, capacity)
+// cap is the maximum number of items on heap (priority queue).
+// cmpKey is a function for comparing and ordering keys.
+// eqVal is a function for checking equality of values.
+func NewIndexMaxHeap[K, V any](cap int, cmpKey common.CompareFunc[K], eqVal common.EqualFunc[V]) IndexHeap[K, V] {
+	pos := make([]int, cap)
 	for i := range pos {
 		pos[i] = -1
 	}
 
-	return &indexMaxHeap{
-		capacity: capacity,
-		n:        0,
-		heap:     make([]int, capacity+1),
-		pos:      pos,
-		keys:     make([]interface{}, capacity),
-		values:   make([]interface{}, capacity),
-		cmpKey:   cmpKey,
-		cmpVal:   cmpVal,
+	return &indexMaxHeap[K, V]{
+		cmpKey: cmpKey,
+		eqVal:  eqVal,
+
+		cap:  cap,
+		n:    0,
+		heap: make([]int, cap+1),
+		pos:  pos,
+		keys: make([]K, cap),
+		vals: make([]V, cap),
 	}
 }
 
-func (h *indexMaxHeap) validateIndex(i int) {
-	if i < 0 || i >= h.capacity {
+func (h *indexMaxHeap[K, V]) validateIndex(i int) {
+	if i < 0 || i >= h.cap {
 		panic("index is out of range")
 	}
 }
 
 // compare compares two positions (nodes) in heap.
-func (h *indexMaxHeap) compare(a, b int) int {
+func (h *indexMaxHeap[K, V]) compare(a, b int) int {
 	i, j := h.heap[a], h.heap[b]
 	return h.cmpKey(h.keys[i], h.keys[j])
 }
 
 // Promotion operation in heap (a.k.a. swim).
 // Exchange k with its parent (k/2) until heap is restored.
-func (h *indexMaxHeap) promote(k int) {
+func (h *indexMaxHeap[K, V]) promote(k int) {
 	for k > 1 && h.compare(k/2, k) < 0 {
 		h.heap[k], h.heap[k/2] = h.heap[k/2], h.heap[k]
 		h.pos[h.heap[k]] = k
@@ -63,7 +66,7 @@ func (h *indexMaxHeap) promote(k int) {
 
 // Demotion operation in heap (a.k.a. sink).
 // Exchange k with its largest child (j) until heap is restored.
-func (h *indexMaxHeap) demote(k int) {
+func (h *indexMaxHeap[K, V]) demote(k int) {
 	for 2*k <= h.n {
 		j := 2 * k
 		if j < h.n && h.compare(j, j+1) < 0 {
@@ -83,17 +86,17 @@ func (h *indexMaxHeap) demote(k int) {
 }
 
 // Size returns the number of items on heap.
-func (h *indexMaxHeap) Size() int {
+func (h *indexMaxHeap[K, V]) Size() int {
 	return h.n
 }
 
 // IsEmpty returns true if heap is empty.
-func (h *indexMaxHeap) IsEmpty() bool {
+func (h *indexMaxHeap[K, V]) IsEmpty() bool {
 	return h.n == 0
 }
 
 // Insert adds a new key-value pair to heap with an associated index.
-func (h *indexMaxHeap) Insert(i int, key, value interface{}) {
+func (h *indexMaxHeap[K, V]) Insert(i int, key K, val V) {
 	// ContainsIndex validates the index as well
 	if h.ContainsIndex(i) {
 		panic("index already on heap")
@@ -103,12 +106,12 @@ func (h *indexMaxHeap) Insert(i int, key, value interface{}) {
 	h.heap[h.n] = i
 	h.pos[i] = h.n
 	h.keys[i] = key
-	h.values[i] = value
+	h.vals[i] = val
 	h.promote(h.n)
 }
 
 // ChangeKey changes the key associated with an index.
-func (h *indexMaxHeap) ChangeKey(i int, key interface{}) {
+func (h *indexMaxHeap[K, V]) ChangeKey(i int, key K) {
 	// ContainsIndex validates the index as well
 	if !h.ContainsIndex(i) {
 		panic("index is not on heap")
@@ -121,14 +124,17 @@ func (h *indexMaxHeap) ChangeKey(i int, key interface{}) {
 
 // Delete removes the maximum key with its value and index from heap.
 // If heap is empty, the last return value will be false.
-func (h *indexMaxHeap) Delete() (int, interface{}, interface{}, bool) {
+func (h *indexMaxHeap[K, V]) Delete() (int, K, V, bool) {
+	var zeroK K
+	var zeroV V
+
 	if h.n == 0 {
-		return -1, nil, nil, false
+		return -1, zeroK, zeroV, false
 	}
 
 	i := h.heap[1]
 	key := h.keys[i]
-	value := h.values[i]
+	val := h.vals[i]
 
 	h.heap[1], h.heap[h.n] = h.heap[h.n], h.heap[1]
 	h.n--
@@ -138,23 +144,26 @@ func (h *indexMaxHeap) Delete() (int, interface{}, interface{}, bool) {
 	h.pos[i] = -1
 
 	// remove stale references to help with garbage collection
-	h.keys[i] = nil
-	h.values[i] = nil
+	h.keys[i] = zeroK
+	h.vals[i] = zeroV
 
-	return i, key, value, true
+	return i, key, val, true
 }
 
 // DeleteIndex removes a key-value pair and its associated index from heap.
 // If the index is not valid or not on heap, the last return value will be false.
-func (h *indexMaxHeap) DeleteIndex(i int) (interface{}, interface{}, bool) {
+func (h *indexMaxHeap[K, V]) DeleteIndex(i int) (K, V, bool) {
+	var zeroK K
+	var zeroV V
+
 	// ContainsIndex validates the index as well
 	if !h.ContainsIndex(i) {
-		return nil, nil, false
+		return zeroK, zeroV, false
 	}
 
 	k := h.pos[i]
 	key := h.keys[i]
-	value := h.values[i]
+	val := h.vals[i]
 
 	h.heap[k], h.heap[h.n] = h.heap[h.n], h.heap[k]
 	h.n--
@@ -165,42 +174,46 @@ func (h *indexMaxHeap) DeleteIndex(i int) (interface{}, interface{}, bool) {
 	h.pos[i] = -1
 
 	// remove stale references to help with garbage collection
-	h.keys[i] = nil
-	h.values[i] = nil
+	h.keys[i] = zeroK
+	h.vals[i] = zeroV
 
-	return key, value, true
+	return key, val, true
 }
 
 // Peek returns the the maximum key with its value and index on heap without removing it from heap.
 // If heap is empty, the last return value will be false.
-func (h *indexMaxHeap) Peek() (int, interface{}, interface{}, bool) {
+func (h *indexMaxHeap[K, V]) Peek() (int, K, V, bool) {
 	if h.n == 0 {
-		return -1, nil, nil, false
+		var zeroK K
+		var zeroV V
+		return -1, zeroK, zeroV, false
 	}
 
 	i := h.heap[1]
-	return i, h.keys[i], h.values[i], true
+	return i, h.keys[i], h.vals[i], true
 }
 
 // PeekIndex returns a key-value pair on heap by its associated index without removing it from heap.
 // If the index is not valid or not on heap, the last return value will be false.
-func (h *indexMaxHeap) PeekIndex(i int) (interface{}, interface{}, bool) {
+func (h *indexMaxHeap[K, V]) PeekIndex(i int) (K, V, bool) {
 	// ContainsIndex validates the index as well
 	if !h.ContainsIndex(i) {
-		return nil, nil, false
+		var zeroK K
+		var zeroV V
+		return zeroK, zeroV, false
 	}
 
-	return h.keys[i], h.values[i], true
+	return h.keys[i], h.vals[i], true
 }
 
 // ContainsIndex returns true if a given index is on heap.
-func (h *indexMaxHeap) ContainsIndex(i int) bool {
+func (h *indexMaxHeap[K, V]) ContainsIndex(i int) bool {
 	h.validateIndex(i)
 	return h.pos[i] != -1
 }
 
 // ContainsKey returns true if a given key is on heap.
-func (h *indexMaxHeap) ContainsKey(key interface{}) bool {
+func (h *indexMaxHeap[K, V]) ContainsKey(key K) bool {
 	for i := 0; i < h.n; i++ {
 		if h.cmpKey(h.keys[i], key) == 0 {
 			return true
@@ -211,9 +224,9 @@ func (h *indexMaxHeap) ContainsKey(key interface{}) bool {
 }
 
 // ContainsValue returns true if a given value is on heap.
-func (h *indexMaxHeap) ContainsValue(value interface{}) bool {
+func (h *indexMaxHeap[K, V]) ContainsValue(val V) bool {
 	for i := 0; i < h.n; i++ {
-		if h.cmpVal(h.values[i], value) == 0 {
+		if h.eqVal(h.vals[i], val) {
 			return true
 		}
 	}

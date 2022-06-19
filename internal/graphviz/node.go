@@ -7,15 +7,15 @@ type Node struct {
 	Name      string
 	Group     string
 	Label     string
-	Color     string
-	Style     string
-	Shape     string
-	FontColor string
+	Color     Color
+	Style     Style
+	Shape     Shape
+	FontColor Color
 	FontName  string
 }
 
 // NewNode creates a new node.
-func NewNode(name, group, label, color, style, shape, fontcolor, fontname string) Node {
+func NewNode(name, group, label string, color Color, style Style, shape Shape, fontcolor Color, fontname string) Node {
 	return Node{
 		Name:      name,
 		Group:     group,
@@ -36,10 +36,10 @@ func (n *Node) DotCode() string {
 	buf.WriteString(n.Name + " [")
 	first = addListAttr(buf, first, "group", n.Group)
 	first = addListAttr(buf, first, "label", `"`+n.Label+`"`)
-	first = addListAttr(buf, first, "color", n.Color)
-	first = addListAttr(buf, first, "style", n.Style)
-	first = addListAttr(buf, first, "shape", n.Shape)
-	first = addListAttr(buf, first, "fontcolor", n.FontColor)
+	first = addListAttr(buf, first, "color", string(n.Color))
+	first = addListAttr(buf, first, "style", string(n.Style))
+	first = addListAttr(buf, first, "shape", string(n.Shape))
+	first = addListAttr(buf, first, "fontcolor", string(n.FontColor))
 	first = addListAttr(buf, first, "fontname", `"`+n.FontName+`"`)
 	buf.WriteString("];")
 

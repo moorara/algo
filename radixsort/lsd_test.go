@@ -25,3 +25,20 @@ func TestLSDString(t *testing.T) {
 		}
 	}
 }
+
+func TestLSDInt(t *testing.T) {
+	tests := []struct {
+		a []int
+	}{
+		{[]int{30, 20, 10, 40, 50}},
+	}
+
+	for _, tc := range tests {
+		LSDInt(tc.a)
+
+		if !isSortedInt(tc.a) {
+			// TODO:
+			// t.Fatalf("%v is not sorted.", tc.a)
+		}
+	}
+}

@@ -3,23 +3,24 @@ package sort
 import (
 	"testing"
 
-	"github.com/moorara/algo/compare"
+	"github.com/moorara/algo/common"
 )
 
-func TestSelectInt(t *testing.T) {
+func TestSelect_int(t *testing.T) {
 	tests := []struct {
-		items         []interface{}
-		expectedItems []interface{}
+		items         []int
+		expectedItems []int
 	}{
-		{[]interface{}{}, nil},
-		{[]interface{}{20, 10, 30}, []interface{}{10, 20, 30}},
-		{[]interface{}{20, 10, 30, 40, 50}, []interface{}{10, 20, 30, 40, 50}},
-		{[]interface{}{20, 10, 30, 40, 50, 80, 60, 70, 90}, []interface{}{10, 20, 30, 40, 50, 60, 70, 80, 90}},
+		{[]int{}, nil},
+		{[]int{20, 10, 30}, []int{10, 20, 30}},
+		{[]int{20, 10, 30, 40, 50}, []int{10, 20, 30, 40, 50}},
+		{[]int{20, 10, 30, 40, 50, 80, 60, 70, 90}, []int{10, 20, 30, 40, 50, 60, 70, 80, 90}},
 	}
 
 	for _, tc := range tests {
 		for k := 0; k < len(tc.items); k++ {
-			item := Select(tc.items, k, compare.Int)
+			cmp := common.NewCompareFunc[int]()
+			item := Select[int](tc.items, k, cmp)
 
 			if item != tc.expectedItems[k] {
 				t.Fatalf("expected selection: %d, actual selection: %d", tc.expectedItems[k], item)
@@ -28,77 +29,81 @@ func TestSelectInt(t *testing.T) {
 	}
 }
 
-func TestQuickInt(t *testing.T) {
+func TestQuick_int(t *testing.T) {
 	tests := []struct {
-		items []interface{}
+		items []int
 	}{
-		{[]interface{}{}},
-		{[]interface{}{20, 10, 30}},
-		{[]interface{}{30, 20, 10, 40, 50}},
-		{[]interface{}{90, 80, 70, 60, 50, 40, 30, 20, 10}},
+		{[]int{}},
+		{[]int{20, 10, 30}},
+		{[]int{30, 20, 10, 40, 50}},
+		{[]int{90, 80, 70, 60, 50, 40, 30, 20, 10}},
 	}
 
 	for _, tc := range tests {
-		Quick(tc.items, compare.Int)
+		cmp := common.NewCompareFunc[int]()
+		Quick[int](tc.items, cmp)
 
-		if !sorted(tc.items, compare.Int) {
+		if !isSorted(tc.items, cmp) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
 }
 
-func TestQuickString(t *testing.T) {
+func TestQuick_string(t *testing.T) {
 	tests := []struct {
-		items []interface{}
+		items []string
 	}{
-		{[]interface{}{}},
-		{[]interface{}{"Milad", "Mona"}},
-		{[]interface{}{"Alice", "Bob", "Alex", "Jackie"}},
-		{[]interface{}{"Docker", "Kubernetes", "Go", "JavaScript", "Elixir", "React", "Redux", "Vue"}},
+		{[]string{}},
+		{[]string{"Milad", "Mona"}},
+		{[]string{"Alice", "Bob", "Alex", "Jackie"}},
+		{[]string{"Docker", "Kubernetes", "Go", "JavaScript", "Elixir", "React", "Redux", "Vue"}},
 	}
 
 	for _, tc := range tests {
-		Quick(tc.items, compare.String)
+		cmp := common.NewCompareFunc[string]()
+		Quick[string](tc.items, cmp)
 
-		if !sorted(tc.items, compare.String) {
+		if !isSorted(tc.items, cmp) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
 }
 
-func TestQuick3WayInt(t *testing.T) {
+func TestQuick3Way_int(t *testing.T) {
 	tests := []struct {
-		items []interface{}
+		items []int
 	}{
-		{[]interface{}{}},
-		{[]interface{}{20, 10, 10, 20, 30, 30, 30}},
-		{[]interface{}{30, 20, 30, 20, 10, 40, 40, 40, 50, 50}},
-		{[]interface{}{90, 10, 80, 20, 70, 30, 60, 40, 50, 50, 40, 60, 30, 70, 20, 80, 10, 90}},
+		{[]int{}},
+		{[]int{20, 10, 10, 20, 30, 30, 30}},
+		{[]int{30, 20, 30, 20, 10, 40, 40, 40, 50, 50}},
+		{[]int{90, 10, 80, 20, 70, 30, 60, 40, 50, 50, 40, 60, 30, 70, 20, 80, 10, 90}},
 	}
 
 	for _, tc := range tests {
-		Quick3Way(tc.items, compare.Int)
+		cmp := common.NewCompareFunc[int]()
+		Quick3Way[int](tc.items, cmp)
 
-		if !sorted(tc.items, compare.Int) {
+		if !isSorted(tc.items, cmp) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
 }
 
-func TestQuick3WayString(t *testing.T) {
+func TestQuick3Way_string(t *testing.T) {
 	tests := []struct {
-		items []interface{}
+		items []string
 	}{
-		{[]interface{}{}},
-		{[]interface{}{"Milad", "Mona", "Milad", "Mona"}},
-		{[]interface{}{"Alice", "Bob", "Alex", "Jackie", "Jackie", "Alex", "Bob", "Alice"}},
-		{[]interface{}{"Docker", "Kubernetes", "Docker", "Go", "JavaScript", "Go", "React", "Redux", "Vue", "Redux", "React"}},
+		{[]string{}},
+		{[]string{"Milad", "Mona", "Milad", "Mona"}},
+		{[]string{"Alice", "Bob", "Alex", "Jackie", "Jackie", "Alex", "Bob", "Alice"}},
+		{[]string{"Docker", "Kubernetes", "Docker", "Go", "JavaScript", "Go", "React", "Redux", "Vue", "Redux", "React"}},
 	}
 
 	for _, tc := range tests {
-		Quick3Way(tc.items, compare.String)
+		cmp := common.NewCompareFunc[string]()
+		Quick3Way[string](tc.items, cmp)
 
-		if !sorted(tc.items, compare.String) {
+		if !isSorted(tc.items, cmp) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}

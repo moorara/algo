@@ -4,27 +4,27 @@
 package heap
 
 // Heap represents a heap (priority queue) abstract data type.
-type Heap interface {
+type Heap[K, V any] interface {
 	Size() int
 	IsEmpty() bool
-	Insert(interface{}, interface{})
-	Delete() (interface{}, interface{}, bool)
-	Peek() (interface{}, interface{}, bool)
-	ContainsKey(interface{}) bool
-	ContainsValue(interface{}) bool
+	Insert(K, V)
+	Delete() (K, V, bool)
+	Peek() (K, V, bool)
+	ContainsKey(K) bool
+	ContainsValue(V) bool
 }
 
 // IndexHeap represents an indexed heap (priority queue) abstract data type.
-type IndexHeap interface {
+type IndexHeap[K, V any] interface {
 	Size() int
 	IsEmpty() bool
-	Insert(int, interface{}, interface{})
-	ChangeKey(int, interface{})
-	Delete() (int, interface{}, interface{}, bool)
-	DeleteIndex(int) (interface{}, interface{}, bool)
-	Peek() (int, interface{}, interface{}, bool)
-	PeekIndex(int) (interface{}, interface{}, bool)
+	Insert(int, K, V)
+	ChangeKey(int, K)
+	Delete() (int, K, V, bool)
+	DeleteIndex(int) (K, V, bool)
+	Peek() (int, K, V, bool)
+	PeekIndex(int) (K, V, bool)
 	ContainsIndex(int) bool
-	ContainsKey(interface{}) bool
-	ContainsValue(interface{}) bool
+	ContainsKey(K) bool
+	ContainsValue(V) bool
 }

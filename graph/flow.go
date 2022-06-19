@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/moorara/algo/pkg/graphviz"
+	"github.com/moorara/algo/internal/graphviz"
 )
 
 // FlowEdge represents a capacitated edge data type.

@@ -12,10 +12,10 @@ func TestGraph(t *testing.T) {
 		strict          bool
 		diagraph        bool
 		graphName       string
-		rankdir         string
-		nodeColor       string
-		nodeStyle       string
-		nodeShape       string
+		rankDir         RankDir
+		nodeColor       Color
+		nodeStyle       Style
+		nodeShape       Shape
 		nodes           []Node
 		edges           []Edge
 		subgraphs       []Subgraph
@@ -110,7 +110,7 @@ func TestGraph(t *testing.T) {
 		{
 			"ComplexGraph",
 			true, true, "DG",
-			RankdirLR,
+			RankDirLR,
 			ColorSteelBlue, StyleFilled, ShapeMrecord,
 			[]Node{
 				Node{Name: "start", Label: "Start", Color: ColorBlue, Shape: ShapeBox},
@@ -185,7 +185,7 @@ func TestGraph(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			g := NewGraph(tc.strict, tc.diagraph, tc.graphName, tc.rankdir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
+			g := NewGraph(tc.strict, tc.diagraph, tc.graphName, tc.rankDir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
 			g.AddNode(tc.nodes...)
 			g.AddEdge(tc.edges...)
 			g.AddSubgraph(tc.subgraphs...)

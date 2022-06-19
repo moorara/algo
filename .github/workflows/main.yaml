@@ -1,15 +1,16 @@
 name: Main
 on: push
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-      - name: Lint
-        uses: gardenbed/actions/go-lint@main
+  # TODO: Enable once linting generics is supported
+  # lint:
+  #   name: Lint
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 2
+  #     - name: Lint
+  #       uses: gardenbed/actions/go-lint@main
   test:
     name: Test
     runs-on: ubuntu-latest

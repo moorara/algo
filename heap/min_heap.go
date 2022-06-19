@@ -1,53 +1,56 @@
 package heap
 
-import "github.com/moorara/algo/compare"
+import "github.com/moorara/algo/common"
 
-type minHeap struct {
-	n      int           // No. of items on heap
-	keys   []interface{} // binary heap of keys (priorities) using 1-based indexing
-	values []interface{} // binary heap of values using 1-based indexing
-	cmpKey compare.Func
-	cmpVal compare.Func
+type minHeap[K, V any] struct {
+	cmpKey common.CompareFunc[K]
+	eqVal  common.EqualFunc[V]
+
+	n    int // no. of items on heap
+	keys []K // binary heap of keys (priorities) using 1-based indexing
+	vals []V // binary heap of values using 1-based indexing
 }
 
 // NewMinHeap creates a new minimum heap (priority queue).
 // The heap (priority queue) will be expanded or shrunk when needed.
 //
-// initialCapacity is the initial capacity of heap (priority queue).
-// cmpKey and cmpVal are comparator functions for keys and values respectively.
-func NewMinHeap(initialCapacity int, cmpKey, cmpVal compare.Func) Heap {
-	return &minHeap{
-		n:      0,
-		keys:   make([]interface{}, initialCapacity+1),
-		values: make([]interface{}, initialCapacity+1),
+// size is the initial size of heap (priority queue).
+// cmpKey is a function for comparing and ordering keys.
+// eqVal is a function for checking equality of values.
+func NewMinHeap[K, V any](size int, cmpKey common.CompareFunc[K], eqVal common.EqualFunc[V]) Heap[K, V] {
+	return &minHeap[K, V]{
 		cmpKey: cmpKey,
-		cmpVal: cmpVal,
+		eqVal:  eqVal,
+
+		n:    0,
+		keys: make([]K, size+1),
+		vals: make([]V, size+1),
 	}
 }
 
-func (h *minHeap) resize(newSize int) {
-	newKeys := make([]interface{}, newSize)
-	newValues := make([]interface{}, newSize)
+func (h *minHeap[K, V]) resize(size int) {
+	newKeys := make([]K, size)
+	newVals := make([]V, size)
 
 	copy(newKeys, h.keys)
-	copy(newValues, h.values)
+	copy(newVals, h.vals)
 
 	h.keys = newKeys
-	h.values = newValues
+	h.vals = newVals
 }
 
 // Size returns the number of items on heap.
-func (h *minHeap) Size() int {
+func (h *minHeap[K, V]) Size() int {
 	return h.n
 }
 
 // IsEmpty returns true if heap is empty.
-func (h *minHeap) IsEmpty() bool {
+func (h *minHeap[K, V]) IsEmpty() bool {
 	return h.n == 0
 }
 
 // Insert adds a new key-value pair to heap.
-func (h *minHeap) Insert(key, value interface{}) {
+func (h *minHeap[K, V]) Insert(key K, val V) {
 	if h.n == len(h.keys)-1 {
 		h.resize(len(h.keys) * 2)
 	}
@@ -59,24 +62,27 @@ func (h *minHeap) Insert(key, value interface{}) {
 	var k int
 	for k = h.n; k > 1 && h.cmpKey(h.keys[k/2], key) > 0; k /= 2 {
 		h.keys[k] = h.keys[k/2]
-		h.values[k] = h.values[k/2]
+		h.vals[k] = h.vals[k/2]
 	}
 
 	h.keys[k] = key
-	h.values[k] = value
+	h.vals[k] = val
 }
 
 // Delete removes the minimum key with its value from heap.
 // If heap is empty, the last return value will be false.
-func (h *minHeap) Delete() (interface{}, interface{}, bool) {
+func (h *minHeap[K, V]) Delete() (K, V, bool) {
+	var zeroK K
+	var zeroV V
+
 	if h.n == 0 {
-		return nil, nil, false
+		return zeroK, zeroV, false
 	}
 
 	minKey := h.keys[1]
-	minValue := h.values[1]
+	minVal := h.vals[1]
 	key := h.keys[h.n]
-	value := h.values[h.n]
+	val := h.vals[h.n]
 
 	h.n--
 
@@ -91,35 +97,37 @@ func (h *minHeap) Delete() (interface{}, interface{}, bool) {
 			break
 		}
 		h.keys[k] = h.keys[j]
-		h.values[k] = h.values[j]
+		h.vals[k] = h.vals[j]
 	}
 
 	h.keys[k] = key
-	h.values[k] = value
+	h.vals[k] = val
 
 	// remove stale references to help with garbage collection
-	h.keys[h.n+1] = nil
-	h.values[h.n+1] = nil
+	h.keys[h.n+1] = zeroK
+	h.vals[h.n+1] = zeroV
 
 	if h.n < len(h.keys)/4 {
 		h.resize(len(h.keys) / 2)
 	}
 
-	return minKey, minValue, true
+	return minKey, minVal, true
 }
 
 // Peek returns the the minimum key with its value on heap without removing it from heap.
 // If heap is empty, the last return value will be false.
-func (h *minHeap) Peek() (interface{}, interface{}, bool) {
+func (h *minHeap[K, V]) Peek() (K, V, bool) {
 	if h.n == 0 {
-		return nil, nil, false
+		var zeroK K
+		var zeroV V
+		return zeroK, zeroV, false
 	}
 
-	return h.keys[1], h.values[1], true
+	return h.keys[1], h.vals[1], true
 }
 
 // ContainsKey returns true if a given key is on heap.
-func (h *minHeap) ContainsKey(key interface{}) bool {
+func (h *minHeap[K, V]) ContainsKey(key K) bool {
 	for i := 1; i <= h.n; i++ {
 		if h.cmpKey(h.keys[i], key) == 0 {
 			return true
@@ -130,9 +138,9 @@ func (h *minHeap) ContainsKey(key interface{}) bool {
 }
 
 // ContainsValue returns true if a given value is on heap.
-func (h *minHeap) ContainsValue(value interface{}) bool {
+func (h *minHeap[K, V]) ContainsValue(val V) bool {
 	for i := 1; i <= h.n; i++ {
-		if h.cmpVal(h.values[i], value) == 0 {
+		if h.eqVal(h.vals[i], val) {
 			return true
 		}
 	}

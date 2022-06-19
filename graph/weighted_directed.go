@@ -3,8 +3,8 @@ package graph
 import (
 	"fmt"
 
+	"github.com/moorara/algo/internal/graphviz"
 	"github.com/moorara/algo/list"
-	"github.com/moorara/algo/pkg/graphviz"
 )
 
 // DirectedEdge represents a weighted directed edge data type.
@@ -160,7 +160,7 @@ func (g *WeightedDirected) traverseDFS(v int, visited []bool, visitors *Visitors
 
 // Iterative DFS Traversal
 func (g *WeightedDirected) traverseDFSi(s int, visited []bool, visitors *Visitors) {
-	stack := list.NewStack(listNodeSize)
+	stack := list.NewStack[int](listNodeSize, nil)
 
 	visited[s] = true
 	stack.Push(s)
@@ -172,7 +172,7 @@ func (g *WeightedDirected) traverseDFSi(s int, visited []bool, visitors *Visitor
 	}
 
 	for !stack.IsEmpty() {
-		v := stack.Pop().(int)
+		v, _ := stack.Pop()
 
 		if visitors != nil && visitors.VertexPostOrder != nil {
 			if !visitors.VertexPostOrder(v) {
@@ -204,7 +204,7 @@ func (g *WeightedDirected) traverseDFSi(s int, visited []bool, visitors *Visitor
 
 // BFS Traversal
 func (g *WeightedDirected) traverseBFS(s int, visited []bool, visitors *Visitors) {
-	queue := list.NewQueue(listNodeSize)
+	queue := list.NewQueue[int](listNodeSize, nil)
 
 	visited[s] = true
 	queue.Enqueue(s)
@@ -216,7 +216,7 @@ func (g *WeightedDirected) traverseBFS(s int, visited []bool, visitors *Visitors
 	}
 
 	for !queue.IsEmpty() {
-		v := queue.Dequeue().(int)
+		v, _ := queue.Dequeue()
 
 		if visitors != nil && visitors.VertexPostOrder != nil {
 			if !visitors.VertexPostOrder(v) {

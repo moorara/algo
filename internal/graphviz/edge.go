@@ -6,16 +6,16 @@ import "bytes"
 type Edge struct {
 	From      string
 	To        string
-	EdgeType  string
-	EdgeDir   string
+	EdgeType  EdgeType
+	EdgeDir   EdgeDir
 	Label     string
-	Color     string
-	Style     string
-	Arrowhead string
+	Color     Color
+	Style     Style
+	Arrowhead Arrowhead
 }
 
 // NewEdge creates a new edge.
-func NewEdge(from, to, edgeType, edgeDir, label, color, style, arrowhead string) Edge {
+func NewEdge(from, to string, edgeType EdgeType, edgeDir EdgeDir, label string, color Color, style Style, arrowhead Arrowhead) Edge {
 	return Edge{
 		From:      from,
 		To:        to,
@@ -33,12 +33,12 @@ func (e *Edge) DotCode() string {
 	first := true
 	buf := new(bytes.Buffer)
 
-	buf.WriteString(e.From + " " + e.EdgeType + " " + e.To + " [")
-	first = addListAttr(buf, first, "dirType", e.EdgeDir)
+	buf.WriteString(e.From + " " + string(e.EdgeType) + " " + e.To + " [")
+	first = addListAttr(buf, first, "dirType", string(e.EdgeDir))
 	first = addListAttr(buf, first, "label", `"`+e.Label+`"`)
-	first = addListAttr(buf, first, "color", e.Color)
-	first = addListAttr(buf, first, "style", e.Style)
-	first = addListAttr(buf, first, "arrowhead", e.Arrowhead)
+	first = addListAttr(buf, first, "color", string(e.Color))
+	first = addListAttr(buf, first, "style", string(e.Style))
+	first = addListAttr(buf, first, "arrowhead", string(e.Arrowhead))
 	buf.WriteString("];")
 
 	return buf.String()

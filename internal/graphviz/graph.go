@@ -7,22 +7,22 @@ type Graph struct {
 	Strict    bool
 	Digraph   bool
 	Name      string
-	Rankdir   string
-	NodeColor string
-	NodeStyle string
-	NodeShape string
+	RankDir   RankDir
+	NodeColor Color
+	NodeStyle Style
+	NodeShape Shape
 	Nodes     []Node
 	Edges     []Edge
 	Subgraphs []Subgraph
 }
 
 // NewGraph creates a new graph.
-func NewGraph(strict, digraph bool, name, rankdir, nodeColor, nodeStyle, nodeShape string) Graph {
+func NewGraph(strict, digraph bool, name string, rankDir RankDir, nodeColor Color, nodeStyle Style, nodeShape Shape) Graph {
 	return Graph{
 		Strict:    strict,
 		Digraph:   digraph,
 		Name:      name,
-		Rankdir:   rankdir,
+		RankDir:   rankDir,
 		NodeColor: nodeColor,
 		NodeStyle: nodeStyle,
 		NodeShape: nodeShape,
@@ -69,14 +69,14 @@ func (g *Graph) DotCode() string {
 
 	buf.WriteString("{\n")
 
-	first = addAttr(buf, first, 2, "rankdir", g.Rankdir)
+	first = addAttr(buf, first, 2, "rankdir", string(g.RankDir))
 
 	first = true
 	addIndent(buf, 2)
 	buf.WriteString("node [")
-	first = addListAttr(buf, first, "color", g.NodeColor)
-	first = addListAttr(buf, first, "style", g.NodeStyle)
-	first = addListAttr(buf, first, "shape", g.NodeShape)
+	first = addListAttr(buf, first, "color", string(g.NodeColor))
+	first = addListAttr(buf, first, "style", string(g.NodeStyle))
+	first = addListAttr(buf, first, "shape", string(g.NodeShape))
 	buf.WriteString("];\n")
 	first = false
 
