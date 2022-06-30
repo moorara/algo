@@ -11,11 +11,12 @@ type Edge struct {
 	Label     string
 	Color     Color
 	Style     Style
-	Arrowhead Arrowhead
+	ArrowHead ArrowType
+	ArrowTail ArrowType
 }
 
 // NewEdge creates a new edge.
-func NewEdge(from, to string, edgeType EdgeType, edgeDir EdgeDir, label string, color Color, style Style, arrowhead Arrowhead) Edge {
+func NewEdge(from, to string, edgeType EdgeType, edgeDir EdgeDir, label string, color Color, style Style, arrowHead, arrowTail ArrowType) Edge {
 	return Edge{
 		From:      from,
 		To:        to,
@@ -24,11 +25,12 @@ func NewEdge(from, to string, edgeType EdgeType, edgeDir EdgeDir, label string, 
 		Label:     label,
 		Color:     color,
 		Style:     style,
-		Arrowhead: arrowhead,
+		ArrowHead: arrowHead,
+		ArrowTail: arrowTail,
 	}
 }
 
-// DotCode generates Graph dot language code for this edge.
+// DotCode generates the Graphviz dot language code.
 func (e *Edge) DotCode() string {
 	first := true
 	buf := new(bytes.Buffer)
@@ -38,7 +40,8 @@ func (e *Edge) DotCode() string {
 	first = addListAttr(buf, first, "label", `"`+e.Label+`"`)
 	first = addListAttr(buf, first, "color", string(e.Color))
 	first = addListAttr(buf, first, "style", string(e.Style))
-	first = addListAttr(buf, first, "arrowhead", string(e.Arrowhead))
+	first = addListAttr(buf, first, "arrowhead", string(e.ArrowHead))
+	first = addListAttr(buf, first, "arrowtail", string(e.ArrowTail))
 	buf.WriteString("];")
 
 	return buf.String()

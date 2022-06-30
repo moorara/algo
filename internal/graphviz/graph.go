@@ -1,6 +1,9 @@
 package graphviz
 
-import "bytes"
+import (
+	"bytes"
+	"fmt"
+)
 
 // Graph represents a graph.
 type Graph struct {
@@ -18,6 +21,10 @@ type Graph struct {
 
 // NewGraph creates a new graph.
 func NewGraph(strict, digraph bool, name string, rankDir RankDir, nodeColor Color, nodeStyle Style, nodeShape Shape) Graph {
+	if name != "" {
+		name = fmt.Sprintf("%q", name)
+	}
+
 	return Graph{
 		Strict:    strict,
 		Digraph:   digraph,
@@ -47,7 +54,7 @@ func (g *Graph) AddSubgraph(subgraphs ...Subgraph) {
 	g.Subgraphs = append(g.Subgraphs, subgraphs...)
 }
 
-// DotCode generates Graph dot language code for this graph.
+// DotCode generates the Graphviz dot language code.
 func (g *Graph) DotCode() string {
 	first := true
 	buf := new(bytes.Buffer)

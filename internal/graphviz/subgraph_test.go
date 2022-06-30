@@ -87,9 +87,9 @@ func TestSubgraph(t *testing.T) {
 				Node{Name: "c3", Label: "C3", Shape: ShapeBox},
 			},
 			[]Edge{
-				Edge{From: "c0", To: "c1", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadDot},
-				Edge{From: "c0", To: "c2", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadDot},
-				Edge{From: "c1", To: "c3", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadDot},
+				Edge{From: "c0", To: "c1", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeDot, ArrowTail: ArrowTypeDot},
+				Edge{From: "c0", To: "c2", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeDot, ArrowTail: ArrowTypeDot},
+				Edge{From: "c1", To: "c3", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeDot, ArrowTail: ArrowTypeDot},
 			},
 			[]Subgraph{
 				Subgraph{Name: "thread", Label: "Thread"},
@@ -110,9 +110,9 @@ func TestSubgraph(t *testing.T) {
   c2 [label="C2", shape=box];
   c3 [label="C3", shape=box];
 
-  c0 -- c1 [dirType=both, arrowhead=dot];
-  c0 -- c2 [dirType=both, arrowhead=dot];
-  c1 -- c3 [dirType=both, arrowhead=dot];
+  c0 -- c1 [dirType=both, arrowhead=dot, arrowtail=dot];
+  c0 -- c2 [dirType=both, arrowhead=dot, arrowtail=dot];
+  c1 -- c3 [dirType=both, arrowhead=dot, arrowtail=dot];
 }`,
 		},
 		{

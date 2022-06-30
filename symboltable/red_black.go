@@ -32,7 +32,7 @@ type redBlack[K, V any] struct {
 // A Red-Black tree is 2-3 Tree represented as a binary search tree.
 // In a left-leaning Red-Black tree, left-leaning red links are used to construct 3-nodes.
 // A left-leaning Red-Black tree is a BST such that:
-//   Red links lean lef.
+//   Red links lean left.
 //   No node has two red links connect to it.
 //   Every path from root to null link has the same number of black links.
 func NewRedBlack[K, V any](cmpKey common.CompareFunc[K]) OrderedSymbolTable[K, V] {
@@ -43,14 +43,14 @@ func NewRedBlack[K, V any](cmpKey common.CompareFunc[K]) OrderedSymbolTable[K, V
 }
 
 func (t *redBlack[K, V]) verify() bool {
-	return t.isBST(t.root, nil, nil) &&
-		t.isRedBlack(t.root) &&
-		t.isSizeOK(t.root) &&
-		t.isRankOK() &&
-		t.isBalanced()
+	return t._isBST(t.root, nil, nil) &&
+		t._isRedBlack(t.root) &&
+		t._isSizeOK(t.root) &&
+		t._isRankOK() &&
+		t._isBalanced()
 }
 
-func (t *redBlack[K, V]) isBST(n *rbNode[K, V], min, max *K) bool {
+func (t *redBlack[K, V]) _isBST(n *rbNode[K, V], min, max *K) bool {
 	if n == nil {
 		return true
 	}
@@ -60,11 +60,11 @@ func (t *redBlack[K, V]) isBST(n *rbNode[K, V], min, max *K) bool {
 		return false
 	}
 
-	return t.isBST(n.left, min, &n.key) && t.isBST(n.right, &n.key, max)
+	return t._isBST(n.left, min, &n.key) && t._isBST(n.right, &n.key, max)
 }
 
 // A Red-Black tree should have no red right links, and at most one left red links in a row on any path.
-func (t *redBlack[K, V]) isRedBlack(n *rbNode[K, V]) bool {
+func (t *redBlack[K, V]) _isRedBlack(n *rbNode[K, V]) bool {
 	if n == nil {
 		return true
 	}
@@ -77,19 +77,19 @@ func (t *redBlack[K, V]) isRedBlack(n *rbNode[K, V]) bool {
 	return true
 }
 
-func (t *redBlack[K, V]) isSizeOK(n *rbNode[K, V]) bool {
+func (t *redBlack[K, V]) _isSizeOK(n *rbNode[K, V]) bool {
 	if n == nil {
 		return true
 	}
 
-	if n.size != 1+t.size(n.left)+t.size(n.right) {
+	if n.size != 1+t._size(n.left)+t._size(n.right) {
 		return false
 	}
 
-	return t.isSizeOK(n.left) && t.isSizeOK(n.right)
+	return t._isSizeOK(n.left) && t._isSizeOK(n.right)
 }
 
-func (t *redBlack[K, V]) isRankOK() bool {
+func (t *redBlack[K, V]) _isRankOK() bool {
 	for i := 0; i < t.Size(); i++ {
 		k, _, _ := t.Select(i)
 		if t.Rank(k) != i {
@@ -108,7 +108,7 @@ func (t *redBlack[K, V]) isRankOK() bool {
 }
 
 // All paths from root to leaf should have same number of black edges.
-func (t *redBlack[K, V]) isBalanced() bool {
+func (t *redBlack[K, V]) _isBalanced() bool {
 	count := 0
 	var n *rbNode[K, V]
 	for n = t.root; n != nil; n = n.left {
@@ -117,10 +117,10 @@ func (t *redBlack[K, V]) isBalanced() bool {
 		}
 	}
 
-	return t._isBalanced(t.root, count)
+	return t._isBalancedAt(t.root, count)
 }
 
-func (t *redBlack[K, V]) _isBalanced(n *rbNode[K, V], count int) bool {
+func (t *redBlack[K, V]) _isBalancedAt(n *rbNode[K, V], count int) bool {
 	if n == nil {
 		return count == 0
 	}
@@ -129,7 +129,7 @@ func (t *redBlack[K, V]) _isBalanced(n *rbNode[K, V], count int) bool {
 		count--
 	}
 
-	return t._isBalanced(n.left, count) && t._isBalanced(n.right, count)
+	return t._isBalancedAt(n.left, count) && t._isBalancedAt(n.right, count)
 }
 
 func (t *redBlack[K, V]) isRed(n *rbNode[K, V]) bool {
@@ -156,7 +156,7 @@ func (t *redBlack[K, V]) balance(n *rbNode[K, V]) *rbNode[K, V] {
 		t.flipColors(n)
 	}
 
-	n.size = 1 + t.size(n.left) + t.size(n.right)
+	n.size = 1 + t._size(n.left) + t._size(n.right)
 
 	return n
 }
@@ -169,7 +169,7 @@ func (t *redBlack[K, V]) rotateLeft(n *rbNode[K, V]) *rbNode[K, V] {
 	r.color = r.left.color
 	r.left.color = red
 	r.size = n.size
-	n.size = 1 + t.size(n.left) + t.size(n.right)
+	n.size = 1 + t._size(n.left) + t._size(n.right)
 
 	return r
 }
@@ -182,7 +182,7 @@ func (t *redBlack[K, V]) rotateRight(n *rbNode[K, V]) *rbNode[K, V] {
 	l.color = l.right.color
 	l.right.color = red
 	l.size = n.size
-	n.size = 1 + t.size(n.left) + t.size(n.right)
+	n.size = 1 + t._size(n.left) + t._size(n.right)
 
 	return l
 }
@@ -224,10 +224,10 @@ func (t *redBlack[K, V]) moveRedRight(n *rbNode[K, V]) *rbNode[K, V] {
 
 // Size returns the number of key-value pairs in Red-Black tree.
 func (t *redBlack[K, V]) Size() int {
-	return t.size(t.root)
+	return t._size(t.root)
 }
 
-func (t *redBlack[K, V]) size(n *rbNode[K, V]) int {
+func (t *redBlack[K, V]) _size(n *rbNode[K, V]) int {
 	if n == nil {
 		return 0
 	}
@@ -237,15 +237,15 @@ func (t *redBlack[K, V]) size(n *rbNode[K, V]) int {
 
 // Height returns the height of Red-Black tree.
 func (t *redBlack[K, V]) Height() int {
-	return t.height(t.root)
+	return t._height(t.root)
 }
 
-func (t *redBlack[K, V]) height(n *rbNode[K, V]) int {
+func (t *redBlack[K, V]) _height(n *rbNode[K, V]) int {
 	if n == nil {
 		return 0
 	}
 
-	return 1 + max(t.height(n.left), t.height(n.right))
+	return 1 + max(t._height(n.left), t._height(n.right))
 }
 
 // IsEmpty returns true if Red-Black tree is empty.
@@ -290,7 +290,7 @@ func (t *redBlack[K, V]) _put(n *rbNode[K, V], key K, val V) *rbNode[K, V] {
 		t.flipColors(n)
 	}
 
-	n.size = 1 + t.size(n.left) + t.size(n.right)
+	n.size = 1 + t._size(n.left) + t._size(n.right)
 
 	return n
 }
@@ -332,6 +332,7 @@ func (t *redBlack[K, V]) Delete(key K) (val V, ok bool) {
 	if t.root != nil {
 		t.root.color = black
 	}
+
 	return val, ok
 }
 
@@ -386,10 +387,9 @@ func (t *redBlack[K, V]) KeyValues() []KeyValue[K, V] {
 
 // Min returns the minimum key and its value in Red-Black tree.
 func (t *redBlack[K, V]) Min() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -407,10 +407,9 @@ func (t *redBlack[K, V]) _min(n *rbNode[K, V]) *rbNode[K, V] {
 
 // Max returns the maximum key and its value in Red-Black tree.
 func (t *redBlack[K, V]) Max() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -428,11 +427,10 @@ func (t *redBlack[K, V]) _max(n *rbNode[K, V]) *rbNode[K, V] {
 
 // Floor returns the largest key in Red-Black tree less than or equal to key.
 func (t *redBlack[K, V]) Floor(key K) (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	n := t._floor(t.root, key)
 	if n == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -459,11 +457,10 @@ func (t *redBlack[K, V]) _floor(n *rbNode[K, V], key K) *rbNode[K, V] {
 
 // Ceiling returns the smallest key in Red-Black tree greater than or equal to key.
 func (t *redBlack[K, V]) Ceiling(key K) (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	n := t._ceiling(t.root, key)
 	if n == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -490,10 +487,9 @@ func (t *redBlack[K, V]) _ceiling(n *rbNode[K, V], key K) *rbNode[K, V] {
 
 // DeleteMin removes the smallest key and associated value from Red-Black tree.
 func (t *redBlack[K, V]) DeleteMin() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -526,10 +522,9 @@ func (t *redBlack[K, V]) _deleteMin(n *rbNode[K, V]) (*rbNode[K, V], *rbNode[K, 
 
 // DeleteMax removes the largest key and associated value from Red-Black tree.
 func (t *redBlack[K, V]) DeleteMax() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -566,15 +561,13 @@ func (t *redBlack[K, V]) _deleteMax(n *rbNode[K, V]) (*rbNode[K, V], *rbNode[K, 
 
 // Select return the k-th smallest key in Red-Black tree.
 func (t *redBlack[K, V]) Select(rank int) (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if rank < 0 || rank >= t.Size() {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
 	n := t._select(t.root, rank)
-
 	return n.key, n.val, true
 }
 
@@ -583,7 +576,7 @@ func (t *redBlack[K, V]) _select(n *rbNode[K, V], rank int) *rbNode[K, V] {
 		return nil
 	}
 
-	s := t.size(n.left)
+	s := t._size(n.left)
 	switch {
 	case rank < s:
 		return t._select(n.left, rank)
@@ -609,9 +602,9 @@ func (t *redBlack[K, V]) _rank(n *rbNode[K, V], key K) int {
 	case cmp < 0:
 		return t._rank(n.left, key)
 	case cmp > 0:
-		return 1 + t.size(n.left) + t._rank(n.right, key)
+		return 1 + t._size(n.left) + t._rank(n.right, key)
 	default:
-		return t.size(n.left)
+		return t._size(n.left)
 	}
 }
 
@@ -659,7 +652,7 @@ func (t *redBlack[K, V]) _range(n *rbNode[K, V], kvs *[]KeyValue[K, V], lo, hi K
 // Traverse is used for visiting all key-value pairs in Red-Black tree.
 func (t *redBlack[K, V]) Traverse(order TraversalOrder, visit VisitFunc[K, V]) {
 	if order != PreOrder && order != InOrder && order != PostOrder {
-		return
+		panic(fmt.Sprintf("invalid traversal order: %d", order))
 	}
 
 	t._traverse(t.root, order, func(n *rbNode[K, V]) bool {
@@ -692,13 +685,22 @@ func (t *redBlack[K, V]) _traverse(n *rbNode[K, V], order TraversalOrder, visit 
 
 // Graphviz returns a visualization of Red-Black tree in Graphviz format.
 func (t *redBlack[K, V]) Graphviz() string {
-	var node, label, left, right string
+	// Create a map of node --> id
+	var id int
+	nodeID := map[*rbNode[K, V]]int{}
+	t._traverse(t.root, PreOrder, func(n *rbNode[K, V]) bool {
+		id++
+		nodeID[n] = id
+		return true
+	})
+
+	var name, label, left, right string
 	var nodeColor, fontColor, edgeColor graphviz.Color
 
-	graph := graphviz.NewGraph(true, true, "RedBlack", "", "", graphviz.StyleFilled, graphviz.ShapeOval)
+	graph := graphviz.NewGraph(true, true, "Red-Black", "", "", graphviz.StyleFilled, graphviz.ShapeOval)
 
 	t._traverse(t.root, PreOrder, func(n *rbNode[K, V]) bool {
-		node = fmt.Sprintf("%d", t.Rank(n.key))
+		name = fmt.Sprintf("%d", nodeID[n])
 		label = fmt.Sprintf("%v,%v", n.key, n.val)
 
 		if t.isRed(n) {
@@ -709,21 +711,21 @@ func (t *redBlack[K, V]) Graphviz() string {
 			fontColor = graphviz.ColorWhite
 		}
 
-		graph.AddNode(graphviz.NewNode(node, "", label, nodeColor, "", "", fontColor, ""))
+		graph.AddNode(graphviz.NewNode(name, "", label, nodeColor, "", "", fontColor, ""))
 
 		if n.left != nil {
-			left = fmt.Sprintf("%d", t.Rank(n.left.key))
+			left = fmt.Sprintf("%d", nodeID[n.left])
 			if t.isRed(n.left) {
 				edgeColor = graphviz.ColorRed
 			} else {
 				edgeColor = graphviz.ColorBlack
 			}
-			graph.AddEdge(graphviz.NewEdge(node, left, graphviz.EdgeTypeDirected, "", "", edgeColor, "", ""))
+			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", edgeColor, "", "", ""))
 		}
 
 		if n.right != nil {
-			right = fmt.Sprintf("%d", t.Rank(n.right.key))
-			graph.AddEdge(graphviz.NewEdge(node, right, graphviz.EdgeTypeDirected, "", "", "", "", ""))
+			right = fmt.Sprintf("%d", nodeID[n.right])
+			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		return true

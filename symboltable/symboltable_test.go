@@ -385,14 +385,6 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 				assert.Equal(t, -1, test.cmpKey(kvs[i].key, kvs[i+1].key))
 			}
 
-			// Invalid Traversal
-			i = 0
-			ost.Traverse(-1, func(_ string, _ int) bool {
-				i++
-				return true
-			})
-			assert.Zero(t, i)
-
 			// Pre-Order Traversal
 			i = 0
 			ost.Traverse(PreOrder, func(key string, val int) bool {

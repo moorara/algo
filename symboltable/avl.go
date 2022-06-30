@@ -33,13 +33,13 @@ func NewAVL[K, V any](cmpKey common.CompareFunc[K]) OrderedSymbolTable[K, V] {
 }
 
 func (t *avl[K, V]) verify() bool {
-	return t.isBST(t.root, nil, nil) &&
-		t.isAVL(t.root) &&
-		t.isSizeOK(t.root) &&
-		t.isRankOK()
+	return t._isBST(t.root, nil, nil) &&
+		t._isAVL(t.root) &&
+		t._isSizeOK(t.root) &&
+		t._isRankOK()
 }
 
-func (t *avl[K, V]) isBST(n *avlNode[K, V], min, max *K) bool {
+func (t *avl[K, V]) _isBST(n *avlNode[K, V], min, max *K) bool {
 	if n == nil {
 		return true
 	}
@@ -49,10 +49,10 @@ func (t *avl[K, V]) isBST(n *avlNode[K, V], min, max *K) bool {
 		return false
 	}
 
-	return t.isBST(n.left, min, &n.key) && t.isBST(n.right, &n.key, max)
+	return t._isBST(n.left, min, &n.key) && t._isBST(n.right, &n.key, max)
 }
 
-func (t *avl[K, V]) isAVL(n *avlNode[K, V]) bool {
+func (t *avl[K, V]) _isAVL(n *avlNode[K, V]) bool {
 	if n == nil {
 		return true
 	}
@@ -62,22 +62,22 @@ func (t *avl[K, V]) isAVL(n *avlNode[K, V]) bool {
 		return false
 	}
 
-	return t.isAVL(n.left) && t.isAVL(n.right)
+	return t._isAVL(n.left) && t._isAVL(n.right)
 }
 
-func (t *avl[K, V]) isSizeOK(n *avlNode[K, V]) bool {
+func (t *avl[K, V]) _isSizeOK(n *avlNode[K, V]) bool {
 	if n == nil {
 		return true
 	}
 
-	if n.size != 1+t.size(n.left)+t.size(n.right) {
+	if n.size != 1+t._size(n.left)+t._size(n.right) {
 		return false
 	}
 
-	return t.isSizeOK(n.left) && t.isSizeOK(n.right)
+	return t._isSizeOK(n.left) && t._isSizeOK(n.right)
 }
 
-func (t *avl[K, V]) isRankOK() bool {
+func (t *avl[K, V]) _isRankOK() bool {
 	for i := 0; i < t.Size(); i++ {
 		k, _, _ := t.Select(i)
 		if t.Rank(k) != i {
@@ -112,7 +112,7 @@ func (t *avl[K, V]) balance(n *avlNode[K, V]) *avlNode[K, V] {
 }
 
 func (t *avl[K, V]) balanceFactor(n *avlNode[K, V]) int {
-	return t.height(n.left) - t.height(n.right)
+	return t._height(n.left) - t._height(n.right)
 }
 
 func (t *avl[K, V]) rotateLeft(n *avlNode[K, V]) *avlNode[K, V] {
@@ -121,9 +121,9 @@ func (t *avl[K, V]) rotateLeft(n *avlNode[K, V]) *avlNode[K, V] {
 	r.left = n
 
 	r.size = n.size
-	n.size = 1 + t.size(n.left) + t.size(n.right)
-	n.height = 1 + max(t.height(n.left), t.height(n.right))
-	r.height = 1 + max(t.height(r.left), t.height(r.right))
+	n.size = 1 + t._size(n.left) + t._size(n.right)
+	n.height = 1 + max(t._height(n.left), t._height(n.right))
+	r.height = 1 + max(t._height(r.left), t._height(r.right))
 
 	return r
 }
@@ -134,19 +134,19 @@ func (t *avl[K, V]) rotateRight(n *avlNode[K, V]) *avlNode[K, V] {
 	l.right = n
 
 	l.size = n.size
-	n.size = 1 + t.size(n.left) + t.size(n.right)
-	n.height = 1 + max(t.height(n.left), t.height(n.right))
-	l.height = 1 + max(t.height(l.left), t.height(l.right))
+	n.size = 1 + t._size(n.left) + t._size(n.right)
+	n.height = 1 + max(t._height(n.left), t._height(n.right))
+	l.height = 1 + max(t._height(l.left), t._height(l.right))
 
 	return l
 }
 
 // Size returns the number of key-value pairs in AVL tree.
 func (t *avl[K, V]) Size() int {
-	return t.size(t.root)
+	return t._size(t.root)
 }
 
-func (t *avl[K, V]) size(n *avlNode[K, V]) int {
+func (t *avl[K, V]) _size(n *avlNode[K, V]) int {
 	if n == nil {
 		return 0
 	}
@@ -156,10 +156,10 @@ func (t *avl[K, V]) size(n *avlNode[K, V]) int {
 
 // Height returns the height of AVL tree.
 func (t *avl[K, V]) Height() int {
-	return t.height(t.root)
+	return t._height(t.root)
 }
 
-func (t *avl[K, V]) height(n *avlNode[K, V]) int {
+func (t *avl[K, V]) _height(n *avlNode[K, V]) int {
 	if n == nil {
 		return 0
 	}
@@ -198,8 +198,8 @@ func (t *avl[K, V]) _put(n *avlNode[K, V], key K, val V) *avlNode[K, V] {
 		return n
 	}
 
-	n.size = 1 + t.size(n.left) + t.size(n.right)
-	n.height = 1 + max(t.height(n.left), t.height(n.right))
+	n.size = 1 + t._size(n.left) + t._size(n.right)
+	n.height = 1 + max(t._height(n.left), t._height(n.right))
 
 	return t.balance(n)
 }
@@ -262,8 +262,8 @@ func (t *avl[K, V]) _delete(n *avlNode[K, V], key K) (*avlNode[K, V], V, bool) {
 		}
 	}
 
-	n.size = 1 + t.size(n.left) + t.size(n.right)
-	n.height = 1 + max(t.height(n.left), t.height(n.right))
+	n.size = 1 + t._size(n.left) + t._size(n.right)
+	n.height = 1 + max(t._height(n.left), t._height(n.right))
 	return t.balance(n), val, ok
 }
 
@@ -283,10 +283,9 @@ func (t *avl[K, V]) KeyValues() []KeyValue[K, V] {
 
 // Min returns the minimum key and its value in AVL tree.
 func (t *avl[K, V]) Min() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -304,10 +303,9 @@ func (t *avl[K, V]) _min(n *avlNode[K, V]) *avlNode[K, V] {
 
 // Max returns the maximum key and its value in AVL tree.
 func (t *avl[K, V]) Max() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -325,11 +323,10 @@ func (t *avl[K, V]) _max(n *avlNode[K, V]) *avlNode[K, V] {
 
 // Floor returns the largest key in AVL tree less than or equal to key.
 func (t *avl[K, V]) Floor(key K) (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	n := t._floor(t.root, key)
 	if n == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -356,11 +353,10 @@ func (t *avl[K, V]) _floor(n *avlNode[K, V], key K) *avlNode[K, V] {
 
 // Ceiling returns the smallest key in AVL tree greater than or equal to key.
 func (t *avl[K, V]) Ceiling(key K) (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	n := t._ceiling(t.root, key)
 	if n == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -387,16 +383,14 @@ func (t *avl[K, V]) _ceiling(n *avlNode[K, V], key K) *avlNode[K, V] {
 
 // DeleteMin removes the smallest key and associated value from AVL tree.
 func (t *avl[K, V]) DeleteMin() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
 	var min *avlNode[K, V]
 	t.root, min = t._deleteMin(t.root)
-
 	return min.key, min.val, true
 }
 
@@ -407,23 +401,21 @@ func (t *avl[K, V]) _deleteMin(n *avlNode[K, V]) (*avlNode[K, V], *avlNode[K, V]
 
 	var min *avlNode[K, V]
 	n.left, min = t._deleteMin(n.left)
-	n.size = 1 + t.size(n.left) + t.size(n.right)
-	n.height = 1 + max(t.height(n.left), t.height(n.right))
+	n.size = 1 + t._size(n.left) + t._size(n.right)
+	n.height = 1 + max(t._height(n.left), t._height(n.right))
 	return t.balance(n), min
 }
 
 // DeleteMax removes the largest key and associated value from AVL tree.
 func (t *avl[K, V]) DeleteMax() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
 	var max *avlNode[K, V]
 	t.root, max = t._deleteMax(t.root)
-
 	return max.key, max.val, true
 }
 
@@ -434,21 +426,19 @@ func (t *avl[K, V]) _deleteMax(n *avlNode[K, V]) (*avlNode[K, V], *avlNode[K, V]
 
 	var max *avlNode[K, V]
 	n.right, max = t._deleteMax(n.right)
-	n.size = 1 + t.size(n.left) + t.size(n.right)
+	n.size = 1 + t._size(n.left) + t._size(n.right)
 	return t.balance(n), max
 }
 
 // Select return the k-th smallest key in AVL tree.
 func (t *avl[K, V]) Select(rank int) (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if rank < 0 || rank >= t.Size() {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
 	n := t._select(t.root, rank)
-
 	return n.key, n.val, true
 }
 
@@ -457,7 +447,7 @@ func (t *avl[K, V]) _select(n *avlNode[K, V], rank int) *avlNode[K, V] {
 		return nil
 	}
 
-	s := t.size(n.left)
+	s := t._size(n.left)
 	switch {
 	case rank < s:
 		return t._select(n.left, rank)
@@ -483,9 +473,9 @@ func (t *avl[K, V]) _rank(n *avlNode[K, V], key K) int {
 	case cmp < 0:
 		return t._rank(n.left, key)
 	case cmp > 0:
-		return 1 + t.size(n.left) + t._rank(n.right, key)
+		return 1 + t._size(n.left) + t._rank(n.right, key)
 	default:
-		return t.size(n.left)
+		return t._size(n.left)
 	}
 }
 
@@ -533,7 +523,7 @@ func (t *avl[K, V]) _range(n *avlNode[K, V], kvs *[]KeyValue[K, V], lo, hi K) in
 // Traverse is used for visiting all key-value pairs in AVL tree.
 func (t *avl[K, V]) Traverse(order TraversalOrder, visit VisitFunc[K, V]) {
 	if order != PreOrder && order != InOrder && order != PostOrder {
-		return
+		panic(fmt.Sprintf("invalid traversal order: %d", order))
 	}
 
 	t._traverse(t.root, order, func(n *avlNode[K, V]) bool {
@@ -566,24 +556,33 @@ func (t *avl[K, V]) _traverse(n *avlNode[K, V], order TraversalOrder, visit func
 
 // Graphviz returns a visualization of AVL tree in Graphviz format.
 func (t *avl[K, V]) Graphviz() string {
-	var node, label, left, right string
+	// Create a map of node --> id
+	var id int
+	nodeID := map[*avlNode[K, V]]int{}
+	t._traverse(t.root, PreOrder, func(n *avlNode[K, V]) bool {
+		id++
+		nodeID[n] = id
+		return true
+	})
+
+	var name, label, left, right string
 
 	graph := graphviz.NewGraph(true, true, "AVL", "", "", "", graphviz.ShapeOval)
 
 	t._traverse(t.root, PreOrder, func(n *avlNode[K, V]) bool {
-		node = fmt.Sprintf("%d", t.Rank(n.key))
+		name = fmt.Sprintf("%d", nodeID[n])
 		label = fmt.Sprintf("%v,%v", n.key, n.val)
 
-		graph.AddNode(graphviz.NewNode(node, "", label, "", "", "", "", ""))
+		graph.AddNode(graphviz.NewNode(name, "", label, "", "", "", "", ""))
 
 		if n.left != nil {
-			left = fmt.Sprintf("%d", t.Rank(n.left.key))
-			graph.AddEdge(graphviz.NewEdge(node, left, graphviz.EdgeTypeDirected, "", "", "", "", ""))
+			left = fmt.Sprintf("%d", nodeID[n.left])
+			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		if n.right != nil {
-			right = fmt.Sprintf("%d", t.Rank(n.right.key))
-			graph.AddEdge(graphviz.NewEdge(node, right, graphviz.EdgeTypeDirected, "", "", "", "", ""))
+			right = fmt.Sprintf("%d", nodeID[n.right])
+			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		return true

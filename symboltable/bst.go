@@ -34,12 +34,12 @@ func NewBST[K, V any](cmpKey common.CompareFunc[K]) OrderedSymbolTable[K, V] {
 }
 
 func (t *bst[K, V]) verify() bool {
-	return t.isBST(t.root, nil, nil) &&
-		t.isSizeOK(t.root) &&
-		t.isRankOK()
+	return t._isBST(t.root, nil, nil) &&
+		t._isSizeOK(t.root) &&
+		t._isRankOK()
 }
 
-func (t *bst[K, V]) isBST(n *bstNode[K, V], min, max *K) bool {
+func (t *bst[K, V]) _isBST(n *bstNode[K, V], min, max *K) bool {
 	if n == nil {
 		return true
 	}
@@ -49,22 +49,22 @@ func (t *bst[K, V]) isBST(n *bstNode[K, V], min, max *K) bool {
 		return false
 	}
 
-	return t.isBST(n.left, min, &n.key) && t.isBST(n.right, &n.key, max)
+	return t._isBST(n.left, min, &n.key) && t._isBST(n.right, &n.key, max)
 }
 
-func (t *bst[K, V]) isSizeOK(n *bstNode[K, V]) bool {
+func (t *bst[K, V]) _isSizeOK(n *bstNode[K, V]) bool {
 	if n == nil {
 		return true
 	}
 
-	if n.size != 1+t.size(n.left)+t.size(n.right) {
+	if n.size != 1+t._size(n.left)+t._size(n.right) {
 		return false
 	}
 
-	return t.isSizeOK(n.left) && t.isSizeOK(n.right)
+	return t._isSizeOK(n.left) && t._isSizeOK(n.right)
 }
 
-func (t *bst[K, V]) isRankOK() bool {
+func (t *bst[K, V]) _isRankOK() bool {
 	for i := 0; i < t.Size(); i++ {
 		k, _, _ := t.Select(i)
 		if t.Rank(k) != i {
@@ -84,10 +84,10 @@ func (t *bst[K, V]) isRankOK() bool {
 
 // Size returns the number of key-value pairs in BST.
 func (t *bst[K, V]) Size() int {
-	return t.size(t.root)
+	return t._size(t.root)
 }
 
-func (t *bst[K, V]) size(n *bstNode[K, V]) int {
+func (t *bst[K, V]) _size(n *bstNode[K, V]) int {
 	if n == nil {
 		return 0
 	}
@@ -97,15 +97,15 @@ func (t *bst[K, V]) size(n *bstNode[K, V]) int {
 
 // Height returns the height of BST.
 func (t *bst[K, V]) Height() int {
-	return t.height(t.root)
+	return t._height(t.root)
 }
 
-func (t *bst[K, V]) height(n *bstNode[K, V]) int {
+func (t *bst[K, V]) _height(n *bstNode[K, V]) int {
 	if n == nil {
 		return 0
 	}
 
-	return 1 + max(t.height(n.left), t.height(n.right))
+	return 1 + max(t._height(n.left), t._height(n.right))
 }
 
 // IsEmpty returns true if BST is empty.
@@ -137,7 +137,7 @@ func (t *bst[K, V]) _put(n *bstNode[K, V], key K, val V) *bstNode[K, V] {
 		n.val = val
 	}
 
-	n.size = 1 + t.size(n.left) + t.size(n.right)
+	n.size = 1 + t._size(n.left) + t._size(n.right)
 
 	return n
 }
@@ -200,7 +200,7 @@ func (t *bst[K, V]) _delete(n *bstNode[K, V], key K) (*bstNode[K, V], V, bool) {
 		}
 	}
 
-	n.size = 1 + t.size(n.left) + t.size(n.right)
+	n.size = 1 + t._size(n.left) + t._size(n.right)
 	return n, val, ok
 }
 
@@ -220,10 +220,9 @@ func (t *bst[K, V]) KeyValues() []KeyValue[K, V] {
 
 // Min returns the minimum key and its value in BST.
 func (t *bst[K, V]) Min() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -241,10 +240,9 @@ func (t *bst[K, V]) _min(n *bstNode[K, V]) *bstNode[K, V] {
 
 // Max returns the maximum key and its value in BST.
 func (t *bst[K, V]) Max() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -262,11 +260,10 @@ func (t *bst[K, V]) _max(n *bstNode[K, V]) *bstNode[K, V] {
 
 // Floor returns the largest key in BST less than or equal to key.
 func (t *bst[K, V]) Floor(key K) (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	n := t._floor(t.root, key)
 	if n == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -293,11 +290,10 @@ func (t *bst[K, V]) _floor(n *bstNode[K, V], key K) *bstNode[K, V] {
 
 // Ceiling returns the smallest key in BST greater than or equal to key.
 func (t *bst[K, V]) Ceiling(key K) (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	n := t._ceiling(t.root, key)
 	if n == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
@@ -324,16 +320,14 @@ func (t *bst[K, V]) _ceiling(n *bstNode[K, V], key K) *bstNode[K, V] {
 
 // DeleteMin removes the smallest key and associated value from BST.
 func (t *bst[K, V]) DeleteMin() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
 	var min *bstNode[K, V]
 	t.root, min = t._deleteMin(t.root)
-
 	return min.key, min.val, true
 }
 
@@ -344,22 +338,20 @@ func (t *bst[K, V]) _deleteMin(n *bstNode[K, V]) (*bstNode[K, V], *bstNode[K, V]
 
 	var min *bstNode[K, V]
 	n.left, min = t._deleteMin(n.left)
-	n.size = 1 + t.size(n.left) + t.size(n.right)
+	n.size = 1 + t._size(n.left) + t._size(n.right)
 	return n, min
 }
 
 // DeleteMax removes the largest key and associated value from BST.
 func (t *bst[K, V]) DeleteMax() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if t.root == nil {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
 	var max *bstNode[K, V]
 	t.root, max = t._deleteMax(t.root)
-
 	return max.key, max.val, true
 }
 
@@ -370,21 +362,19 @@ func (t *bst[K, V]) _deleteMax(n *bstNode[K, V]) (*bstNode[K, V], *bstNode[K, V]
 
 	var max *bstNode[K, V]
 	n.right, max = t._deleteMax(n.right)
-	n.size = 1 + t.size(n.left) + t.size(n.right)
+	n.size = 1 + t._size(n.left) + t._size(n.right)
 	return n, max
 }
 
 // Select return the k-th smallest key in BST.
 func (t *bst[K, V]) Select(rank int) (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if rank < 0 || rank >= t.Size() {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
 	n := t._select(t.root, rank)
-
 	return n.key, n.val, true
 }
 
@@ -393,7 +383,7 @@ func (t *bst[K, V]) _select(n *bstNode[K, V], rank int) *bstNode[K, V] {
 		return nil
 	}
 
-	s := t.size(n.left)
+	s := t._size(n.left)
 	switch {
 	case rank < s:
 		return t._select(n.left, rank)
@@ -419,9 +409,9 @@ func (t *bst[K, V]) _rank(n *bstNode[K, V], key K) int {
 	case cmp < 0:
 		return t._rank(n.left, key)
 	case cmp > 0:
-		return 1 + t.size(n.left) + t._rank(n.right, key)
+		return 1 + t._size(n.left) + t._rank(n.right, key)
 	default:
-		return t.size(n.left)
+		return t._size(n.left)
 	}
 }
 
@@ -469,7 +459,7 @@ func (t *bst[K, V]) _range(n *bstNode[K, V], kvs *[]KeyValue[K, V], lo, hi K) in
 // Traverse is used for visiting all key-value pairs in BST.
 func (t *bst[K, V]) Traverse(order TraversalOrder, visit VisitFunc[K, V]) {
 	if order != PreOrder && order != InOrder && order != PostOrder {
-		return
+		panic(fmt.Sprintf("invalid traversal order: %d", order))
 	}
 
 	t._traverse(t.root, order, func(n *bstNode[K, V]) bool {
@@ -502,24 +492,33 @@ func (t *bst[K, V]) _traverse(n *bstNode[K, V], order TraversalOrder, visit func
 
 // Graphviz returns a visualization of BST in Graphviz format.
 func (t *bst[K, V]) Graphviz() string {
-	var node, label, left, right string
+	// Create a map of node --> id
+	var id int
+	nodeID := map[*bstNode[K, V]]int{}
+	t._traverse(t.root, PreOrder, func(n *bstNode[K, V]) bool {
+		id++
+		nodeID[n] = id
+		return true
+	})
+
+	var name, label, left, right string
 
 	graph := graphviz.NewGraph(true, true, "BST", "", "", "", graphviz.ShapeOval)
 
 	t._traverse(t.root, PreOrder, func(n *bstNode[K, V]) bool {
-		node = fmt.Sprintf("%d", t.Rank(n.key))
+		name = fmt.Sprintf("%d", nodeID[n])
 		label = fmt.Sprintf("%v,%v", n.key, n.val)
 
-		graph.AddNode(graphviz.NewNode(node, "", label, "", "", "", "", ""))
+		graph.AddNode(graphviz.NewNode(name, "", label, "", "", "", "", ""))
 
 		if n.left != nil {
-			left = fmt.Sprintf("%d", t.Rank(n.left.key))
-			graph.AddEdge(graphviz.NewEdge(node, left, graphviz.EdgeTypeDirected, "", "", "", "", ""))
+			left = fmt.Sprintf("%d", nodeID[n.left])
+			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		if n.right != nil {
-			right = fmt.Sprintf("%d", t.Rank(n.right.key))
-			graph.AddEdge(graphviz.NewEdge(node, right, graphviz.EdgeTypeDirected, "", "", "", "", ""))
+			right = fmt.Sprintf("%d", nodeID[n.right])
+			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		return true

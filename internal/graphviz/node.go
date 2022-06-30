@@ -28,7 +28,7 @@ func NewNode(name, group, label string, color Color, style Style, shape Shape, f
 	}
 }
 
-// DotCode generates Graph dot language code for this node.
+// DotCode generates the Graphviz dot language code.
 func (n *Node) DotCode() string {
 	first := true
 	buf := new(bytes.Buffer)

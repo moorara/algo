@@ -371,7 +371,7 @@ func (g *WeightedUndirected) Graphviz() string {
 				from := fmt.Sprintf("%d", v)
 				to := fmt.Sprintf("%d", e.Other(v))
 				weight := fmt.Sprintf("%f", e.Weight())
-				graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeUndirected, "", weight, "", "", ""))
+				graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeUndirected, "", weight, "", "", "", ""))
 			}
 		}
 	}

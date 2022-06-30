@@ -364,7 +364,7 @@ func (g *Directed) Graphviz() string {
 		for _, w := range g.adj[v] {
 			from := fmt.Sprintf("%d", v)
 			to := fmt.Sprintf("%d", w)
-			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", "", "", "", ""))
+			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 	}
 

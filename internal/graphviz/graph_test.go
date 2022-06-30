@@ -58,7 +58,7 @@ func TestGraph(t *testing.T) {
 				Edge{From: "b0", To: "b2", EdgeType: EdgeTypeUndirected, Color: ColorBlack},
 			},
 			[]Subgraph{},
-			`strict graph G {
+			`strict graph "G" {
   node [];
 
   b0 [label="B0"];
@@ -81,9 +81,9 @@ func TestGraph(t *testing.T) {
 				Node{Name: "c3", Label: "C3", Shape: ShapePlain},
 			},
 			[]Edge{
-				Edge{From: "c0", To: "c1", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadOpen},
-				Edge{From: "c0", To: "c2", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadOpen},
-				Edge{From: "c2", To: "c3", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadOpen},
+				Edge{From: "c0", To: "c1", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
+				Edge{From: "c0", To: "c2", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
+				Edge{From: "c2", To: "c3", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
 			},
 			[]Subgraph{
 				Subgraph{Name: "", Label: "Thread", Rank: RankSame},
@@ -102,9 +102,9 @@ func TestGraph(t *testing.T) {
   c2 [label="C2", shape=plain];
   c3 [label="C3", shape=plain];
 
-  c0 -> c1 [dirType=both, arrowhead=open];
-  c0 -> c2 [dirType=both, arrowhead=open];
-  c2 -> c3 [dirType=both, arrowhead=open];
+  c0 -> c1 [dirType=both, arrowhead=open, arrowtail=dot];
+  c0 -> c2 [dirType=both, arrowhead=open, arrowtail=dot];
+  c2 -> c3 [dirType=both, arrowhead=open, arrowtail=dot];
 }`,
 		},
 		{
@@ -144,7 +144,7 @@ func TestGraph(t *testing.T) {
 					},
 				},
 			},
-			`strict digraph DG {
+			`strict digraph "DG" {
   rankdir=LR;
   node [color=steelblue, style=filled, shape=Mrecord];
 

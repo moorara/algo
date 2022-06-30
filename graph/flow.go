@@ -190,7 +190,7 @@ func (g *FlowNetwork) Graphviz() string {
 			from := fmt.Sprintf("%d", e.From())
 			to := fmt.Sprintf("%d", e.To())
 			label := fmt.Sprintf("%f/%f", e.Flow(), e.Capacity())
-			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", label, "", "", ""))
+			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", label, "", "", "", ""))
 		}
 	}
 
