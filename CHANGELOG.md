@@ -1,5 +1,28 @@
 # Changelog
 
+## [v0.3.0](https://github.com/moorara/algo/tree/v0.3.0) (2022-07-06)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.2.1...v0.3.0)
+
+**Closed Issues:**
+
+  - Action Required: Fix Renovate Configuration [#57](https://github.com/moorara/algo/issues/57) ([renovate[bot]](https://github.com/apps/renovate))
+
+**Merged Changes:**
+
+  - Generics 🎉 [#64](https://github.com/moorara/algo/pull/64) ([moorara](https://github.com/moorara))
+  - fix(deps): update module github.com/stretchr/testify to v1.8.0 [#66](https://github.com/moorara/algo/pull/66) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update module github.com/stretchr/testify to v1.7.5 [#65](https://github.com/moorara/algo/pull/65) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Update Go modules [#63](https://github.com/moorara/algo/pull/63) ([moorara](https://github.com/moorara))
+  - fix(deps): update module github.com/stretchr/testify to v1.7.1 [#62](https://github.com/moorara/algo/pull/62) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Update push.yml [#61](https://github.com/moorara/algo/pull/61) ([moorara](https://github.com/moorara))
+  - chore(deps): update module stretchr/testify to v1.7.0 [#56](https://github.com/moorara/algo/pull/56) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Update Go doc badge [#55](https://github.com/moorara/algo/pull/55) ([moorara](https://github.com/moorara))
+  - chore(deps): update actions/upload-artifact action to v2 [#54](https://github.com/moorara/algo/pull/54) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Housekeeping [#53](https://github.com/moorara/algo/pull/53) ([moorara](https://github.com/moorara))
+  - Update README.md [#52](https://github.com/moorara/algo/pull/52) ([moorara](https://github.com/moorara))
+
+
 ## [v0.2.1](https://github.com/moorara/algo/tree/v0.2.1) (2020-06-18)
 
 [Full Changelog](https://github.com/moorara/algo/compare/v0.2.0...v0.2.1)
