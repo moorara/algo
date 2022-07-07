@@ -1,8 +1,6 @@
 package heap
 
-import (
-	"math/rand"
-)
+import "math/rand"
 
 const (
 	minLen = 10
@@ -10,13 +8,13 @@ const (
 	chars  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
-func randIntSlice(size, min, max int) []interface{} {
-	items := make([]interface{}, size)
-	for i := 0; i < len(items); i++ {
-		items[i] = min + rand.Intn(max-min+1)
+func randIntSlice(size, min, max int) []int {
+	vals := make([]int, size)
+	for i := 0; i < len(vals); i++ {
+		vals[i] = min + rand.Intn(max-min+1)
 	}
 
-	return items
+	return vals
 }
 
 func randStringKey(minLen, maxLen int) string {

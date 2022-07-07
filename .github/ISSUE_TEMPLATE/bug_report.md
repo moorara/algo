@@ -1,7 +1,7 @@
 ---
 name: Bug Report
-about: Report a bug for this package/library
-title: ''
+about: Report a bug for this project
+title: ""
 labels: bug
 assignees: ''
 ---

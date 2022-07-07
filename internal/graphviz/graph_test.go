@@ -12,10 +12,10 @@ func TestGraph(t *testing.T) {
 		strict          bool
 		diagraph        bool
 		graphName       string
-		rankdir         string
-		nodeColor       string
-		nodeStyle       string
-		nodeShape       string
+		rankDir         RankDir
+		nodeColor       Color
+		nodeStyle       Style
+		nodeShape       Shape
 		nodes           []Node
 		edges           []Edge
 		subgraphs       []Subgraph
@@ -58,7 +58,7 @@ func TestGraph(t *testing.T) {
 				Edge{From: "b0", To: "b2", EdgeType: EdgeTypeUndirected, Color: ColorBlack},
 			},
 			[]Subgraph{},
-			`strict graph G {
+			`strict graph "G" {
   node [];
 
   b0 [label="B0"];
@@ -81,9 +81,9 @@ func TestGraph(t *testing.T) {
 				Node{Name: "c3", Label: "C3", Shape: ShapePlain},
 			},
 			[]Edge{
-				Edge{From: "c0", To: "c1", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadOpen},
-				Edge{From: "c0", To: "c2", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadOpen},
-				Edge{From: "c2", To: "c3", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadOpen},
+				Edge{From: "c0", To: "c1", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
+				Edge{From: "c0", To: "c2", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
+				Edge{From: "c2", To: "c3", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
 			},
 			[]Subgraph{
 				Subgraph{Name: "", Label: "Thread", Rank: RankSame},
@@ -102,15 +102,15 @@ func TestGraph(t *testing.T) {
   c2 [label="C2", shape=plain];
   c3 [label="C3", shape=plain];
 
-  c0 -> c1 [dirType=both, arrowhead=open];
-  c0 -> c2 [dirType=both, arrowhead=open];
-  c2 -> c3 [dirType=both, arrowhead=open];
+  c0 -> c1 [dirType=both, arrowhead=open, arrowtail=dot];
+  c0 -> c2 [dirType=both, arrowhead=open, arrowtail=dot];
+  c2 -> c3 [dirType=both, arrowhead=open, arrowtail=dot];
 }`,
 		},
 		{
 			"ComplexGraph",
 			true, true, "DG",
-			RankdirLR,
+			RankDirLR,
 			ColorSteelBlue, StyleFilled, ShapeMrecord,
 			[]Node{
 				Node{Name: "start", Label: "Start", Color: ColorBlue, Shape: ShapeBox},
@@ -144,7 +144,7 @@ func TestGraph(t *testing.T) {
 					},
 				},
 			},
-			`strict digraph DG {
+			`strict digraph "DG" {
   rankdir=LR;
   node [color=steelblue, style=filled, shape=Mrecord];
 
@@ -185,7 +185,7 @@ func TestGraph(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			g := NewGraph(tc.strict, tc.diagraph, tc.graphName, tc.rankdir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
+			g := NewGraph(tc.strict, tc.diagraph, tc.graphName, tc.rankDir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
 			g.AddNode(tc.nodes...)
 			g.AddEdge(tc.edges...)
 			g.AddSubgraph(tc.subgraphs...)

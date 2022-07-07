@@ -27,7 +27,7 @@ func TestQuick3WayString(t *testing.T) {
 	for _, tc := range tests {
 		Quick3WayString(tc.a)
 
-		if !isSortedString(tc.a) {
+		if !isSorted[string](tc.a) {
 			t.Fatalf("%v is not sorted.", tc.a)
 		}
 	}

@@ -3,42 +3,44 @@ package sort
 import (
 	"testing"
 
-	"github.com/moorara/algo/compare"
+	"github.com/moorara/algo/common"
 )
 
-func TestShellInt(t *testing.T) {
+func TestShell_int(t *testing.T) {
 	tests := []struct {
-		items []interface{}
+		items []int
 	}{
-		{[]interface{}{}},
-		{[]interface{}{20, 10, 30}},
-		{[]interface{}{30, 20, 10, 40, 50}},
-		{[]interface{}{90, 80, 70, 60, 50, 40, 30, 20, 10}},
+		{[]int{}},
+		{[]int{20, 10, 30}},
+		{[]int{30, 20, 10, 40, 50}},
+		{[]int{90, 80, 70, 60, 50, 40, 30, 20, 10}},
 	}
 
 	for _, tc := range tests {
-		Shell(tc.items, compare.Int)
+		cmp := common.NewCompareFunc[int]()
+		Shell[int](tc.items, cmp)
 
-		if !sorted(tc.items, compare.Int) {
+		if !isSorted(tc.items, cmp) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}
 }
 
-func TestShellString(t *testing.T) {
+func TestShell_string(t *testing.T) {
 	tests := []struct {
-		items []interface{}
+		items []string
 	}{
-		{[]interface{}{}},
-		{[]interface{}{"Milad", "Mona"}},
-		{[]interface{}{"Alice", "Bob", "Alex", "Jackie"}},
-		{[]interface{}{"Docker", "Kubernetes", "Go", "JavaScript", "Elixir", "React", "Redux", "Vue"}},
+		{[]string{}},
+		{[]string{"Milad", "Mona"}},
+		{[]string{"Alice", "Bob", "Alex", "Jackie"}},
+		{[]string{"Docker", "Kubernetes", "Go", "JavaScript", "Elixir", "React", "Redux", "Vue"}},
 	}
 
 	for _, tc := range tests {
-		Shell(tc.items, compare.String)
+		cmp := common.NewCompareFunc[string]()
+		Shell[string](tc.items, cmp)
 
-		if !sorted(tc.items, compare.String) {
+		if !isSorted(tc.items, cmp) {
 			t.Fatalf("%v is not sorted.", tc.items)
 		}
 	}

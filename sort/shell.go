@@ -1,9 +1,9 @@
 package sort
 
-import "github.com/moorara/algo/compare"
+import "github.com/moorara/algo/common"
 
 // Shell implements the shell sort algorithm.
-func Shell(a []interface{}, cmp compare.Func) {
+func Shell[T any](a []T, cmp common.CompareFunc[T]) {
 	n := len(a)
 	h := 1
 	for h < n/3 {

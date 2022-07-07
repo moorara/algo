@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/moorara/algo/compare"
+	"github.com/moorara/algo/common"
 )
 
 const (
@@ -15,29 +15,16 @@ const (
 	maxInt = 1000000
 )
 
-// sliceInterface implements sort.Interface
-type sliceInterface []interface{}
-
-func (s sliceInterface) Len() int {
-	return len(s)
-}
-
-func (s sliceInterface) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func (s sliceInterface) Less(i, j int) bool {
-	return compare.Int(s[i], s[j]) < 0
-}
-
 func BenchmarkSort(b *testing.B) {
+	cmp := common.NewCompareFunc[int]()
+
 	b.Run("sort.Sort", func(b *testing.B) {
 		rand.Seed(seed)
-		items := sliceInterface(randIntSlice(size, minInt, maxInt))
+		items := sort.IntSlice(randIntSlice(size, minInt, maxInt))
 
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			Shuffle(items)
+			Shuffle[int](items)
 			sort.Sort(items)
 		}
 	})
@@ -48,8 +35,8 @@ func BenchmarkSort(b *testing.B) {
 
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			Shuffle(items)
-			Heap(items, compare.Int)
+			Shuffle[int](items)
+			Heap[int](items, cmp)
 		}
 	})
 
@@ -59,8 +46,8 @@ func BenchmarkSort(b *testing.B) {
 
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			Shuffle(items)
-			Insertion(items, compare.Int)
+			Shuffle[int](items)
+			Insertion[int](items, cmp)
 		}
 	})
 
@@ -70,8 +57,8 @@ func BenchmarkSort(b *testing.B) {
 
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			Shuffle(items)
-			Merge(items, compare.Int)
+			Shuffle[int](items)
+			Merge[int](items, cmp)
 		}
 	})
 
@@ -81,8 +68,8 @@ func BenchmarkSort(b *testing.B) {
 
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			Shuffle(items)
-			MergeRec(items, compare.Int)
+			Shuffle[int](items)
+			MergeRec[int](items, cmp)
 		}
 	})
 
@@ -92,8 +79,8 @@ func BenchmarkSort(b *testing.B) {
 
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			Shuffle(items)
-			Quick(items, compare.Int)
+			Shuffle[int](items)
+			Quick[int](items, cmp)
 		}
 	})
 
@@ -103,8 +90,8 @@ func BenchmarkSort(b *testing.B) {
 
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			Shuffle(items)
-			Quick3Way(items, compare.Int)
+			Shuffle[int](items)
+			Quick3Way[int](items, cmp)
 		}
 	})
 
@@ -114,8 +101,8 @@ func BenchmarkSort(b *testing.B) {
 
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			Shuffle(items)
-			Shell(items, compare.Int)
+			Shuffle[int](items)
+			Shell[int](items, cmp)
 		}
 	})
 }

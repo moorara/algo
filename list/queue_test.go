@@ -3,25 +3,24 @@ package list
 import (
 	"testing"
 
-	"github.com/moorara/algo/compare"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moorara/algo/common"
 )
 
 func TestQueue(t *testing.T) {
 	tests := []struct {
-		name                 string
-		cmp                  compare.Func
-		nodeSize             int
-		enqueueItems         []string
-		expectedSize         int
-		expectedIsEmpty      bool
-		expectedPeek         string
-		expectedContains     []string
-		expectedDequeueItems []string
+		name                  string
+		nodeSize              int
+		enqueueValues         []string
+		expectedSize          int
+		expectedIsEmpty       bool
+		expectedPeek          string
+		expectedContains      []string
+		expectedDequeueValues []string
 	}{
 		{
 			"Empty",
-			compare.String,
 			2,
 			[]string{},
 			0, true,
@@ -31,7 +30,6 @@ func TestQueue(t *testing.T) {
 		},
 		{
 			"OneNode",
-			compare.String,
 			2,
 			[]string{"a", "b"},
 			2, false,
@@ -41,7 +39,6 @@ func TestQueue(t *testing.T) {
 		},
 		{
 			"TwoNodes",
-			compare.String,
 			2,
 			[]string{"a", "b", "c"},
 			3, false,
@@ -51,7 +48,6 @@ func TestQueue(t *testing.T) {
 		},
 		{
 			"MoreNodes",
-			compare.String,
 			2,
 			[]string{"a", "b", "c", "d", "e", "f", "g"},
 			7, false,
@@ -63,63 +59,88 @@ func TestQueue(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			queue := NewQueue(tc.nodeSize)
+			equal := common.NewEqualFunc[string]()
+			queue := NewQueue[string](tc.nodeSize, equal)
 
-			// Queue initially should be empty
-			assert.Zero(t, queue.Size())
-			assert.True(t, queue.IsEmpty())
-			assert.Nil(t, queue.Peek())
-			queue.Contains(nil, tc.cmp)
-			assert.Nil(t, queue.Dequeue())
+			t.Run("BeforeEnqueue", func(t *testing.T) {
+				assert.Zero(t, queue.Size())
+				assert.True(t, queue.IsEmpty())
 
-			for _, item := range tc.enqueueItems {
-				queue.Enqueue(item)
-			}
+				val, ok := queue.Dequeue()
+				assert.False(t, ok)
+				assert.Empty(t, val)
 
-			assert.Equal(t, tc.expectedSize, queue.Size())
-			assert.Equal(t, tc.expectedIsEmpty, queue.IsEmpty())
+				val, ok = queue.Peek()
+				assert.False(t, ok)
+				assert.Empty(t, val)
 
-			if tc.expectedSize == 0 {
-				assert.Nil(t, queue.Peek())
-			} else {
-				assert.Equal(t, tc.expectedPeek, queue.Peek())
-			}
+				assert.False(t, queue.Contains(""))
+			})
 
-			for _, item := range tc.expectedContains {
-				assert.True(t, queue.Contains(item, tc.cmp))
-			}
+			t.Run("AfterEnqueue", func(t *testing.T) {
+				for _, val := range tc.enqueueValues {
+					queue.Enqueue(val)
+				}
 
-			for _, item := range tc.expectedDequeueItems {
-				assert.Equal(t, item, queue.Dequeue())
-			}
+				assert.Equal(t, tc.expectedSize, queue.Size())
+				assert.Equal(t, tc.expectedIsEmpty, queue.IsEmpty())
 
-			// Queue should be empty at the end
-			assert.Zero(t, queue.Size())
-			assert.True(t, queue.IsEmpty())
-			assert.Nil(t, queue.Peek())
-			queue.Contains(nil, tc.cmp)
-			assert.Nil(t, queue.Dequeue())
+				val, ok := queue.Peek()
+
+				if tc.expectedSize == 0 {
+					assert.False(t, ok)
+					assert.Empty(t, val)
+				} else {
+					assert.True(t, ok)
+					assert.Equal(t, tc.expectedPeek, val)
+				}
+
+				for _, val := range tc.expectedContains {
+					assert.True(t, queue.Contains(val))
+				}
+
+				for _, val := range tc.expectedDequeueValues {
+					v, ok := queue.Dequeue()
+					assert.True(t, ok)
+					assert.Equal(t, val, v)
+				}
+			})
+
+			t.Run("AfterDequeue", func(t *testing.T) {
+				assert.Zero(t, queue.Size())
+				assert.True(t, queue.IsEmpty())
+
+				val, ok := queue.Dequeue()
+				assert.False(t, ok)
+				assert.Empty(t, val)
+
+				val, ok = queue.Peek()
+				assert.False(t, ok)
+				assert.Empty(t, val)
+
+				assert.False(t, queue.Contains(""))
+			})
 		})
 	}
 }
 
 func BenchmarkQueue(b *testing.B) {
 	nodeSize := 1024
-	item := 27
+	val := 27
 
 	b.Run("Enqueue", func(b *testing.B) {
-		queue := NewQueue(nodeSize)
+		queue := NewQueue[int](nodeSize, nil)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
-			queue.Enqueue(item)
+			queue.Enqueue(val)
 		}
 	})
 
 	b.Run("Dequeue", func(b *testing.B) {
-		queue := NewQueue(nodeSize)
+		queue := NewQueue[int](nodeSize, nil)
 		for n := 0; n < b.N; n++ {
-			queue.Enqueue(item)
+			queue.Enqueue(val)
 		}
 		b.ResetTimer()
 

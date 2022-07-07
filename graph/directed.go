@@ -3,8 +3,8 @@ package graph
 import (
 	"fmt"
 
+	"github.com/moorara/algo/internal/graphviz"
 	"github.com/moorara/algo/list"
-	"github.com/moorara/algo/pkg/graphviz"
 )
 
 // Directed represents a directed graph data type.
@@ -125,7 +125,7 @@ func (g *Directed) traverseDFS(v int, visited []bool, visitors *Visitors) {
 
 // Iterative DFS Traversal
 func (g *Directed) traverseDFSi(s int, visited []bool, visitors *Visitors) {
-	stack := list.NewStack(listNodeSize)
+	stack := list.NewStack[int](listNodeSize, nil)
 
 	visited[s] = true
 	stack.Push(s)
@@ -137,7 +137,7 @@ func (g *Directed) traverseDFSi(s int, visited []bool, visitors *Visitors) {
 	}
 
 	for !stack.IsEmpty() {
-		v := stack.Pop().(int)
+		v, _ := stack.Pop()
 
 		if visitors != nil && visitors.VertexPostOrder != nil {
 			if !visitors.VertexPostOrder(v) {
@@ -168,7 +168,7 @@ func (g *Directed) traverseDFSi(s int, visited []bool, visitors *Visitors) {
 
 // BFS Traversal
 func (g *Directed) traverseBFS(s int, visited []bool, visitors *Visitors) {
-	queue := list.NewQueue(listNodeSize)
+	queue := list.NewQueue[int](listNodeSize, nil)
 
 	visited[s] = true
 	queue.Enqueue(s)
@@ -180,7 +180,7 @@ func (g *Directed) traverseBFS(s int, visited []bool, visitors *Visitors) {
 	}
 
 	for !queue.IsEmpty() {
-		v := queue.Dequeue().(int)
+		v, _ := queue.Dequeue()
 
 		if visitors != nil && visitors.VertexPostOrder != nil {
 			if !visitors.VertexPostOrder(v) {
@@ -364,7 +364,7 @@ func (g *Directed) Graphviz() string {
 		for _, w := range g.adj[v] {
 			from := fmt.Sprintf("%d", v)
 			to := fmt.Sprintf("%d", w)
-			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", "", "", "", ""))
+			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 	}
 

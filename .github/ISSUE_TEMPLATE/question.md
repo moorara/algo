@@ -1,9 +1,9 @@
 ---
 name: Question
-about: Ask a question about this package/library
-title: ''
+about: Ask a question about this project
+title: ""
 labels: question
 assignees: ''
 ---
 
-**Question:**
+## Question

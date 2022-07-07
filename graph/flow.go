@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/moorara/algo/pkg/graphviz"
+	"github.com/moorara/algo/internal/graphviz"
 )
 
 // FlowEdge represents a capacitated edge data type.
@@ -190,7 +190,7 @@ func (g *FlowNetwork) Graphviz() string {
 			from := fmt.Sprintf("%d", e.From())
 			to := fmt.Sprintf("%d", e.To())
 			label := fmt.Sprintf("%f/%f", e.Flow(), e.Capacity())
-			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", label, "", "", ""))
+			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", label, "", "", "", ""))
 		}
 	}
 

@@ -1,15 +1,15 @@
 package sort
 
-import "github.com/moorara/algo/compare"
+import "github.com/moorara/algo/common"
 
-func partition(a []interface{}, lo, hi int, compare compare.Func) int {
+func partition[T any](a []T, lo, hi int, cmp common.CompareFunc[T]) int {
 	v := a[lo]
 	var i, j int = lo, hi + 1
 
 	for {
-		for i++; i < hi && compare(a[i], v) < 0; i++ {
+		for i++; i < hi && cmp(a[i], v) < 0; i++ {
 		}
-		for j--; j > lo && compare(a[j], v) > 0; j-- {
+		for j--; j > lo && cmp(a[j], v) > 0; j-- {
 		}
 		if i >= j {
 			break
@@ -22,11 +22,11 @@ func partition(a []interface{}, lo, hi int, compare compare.Func) int {
 }
 
 // Select finds the kth smallest item of an array in O(n) time on average.
-func Select(a []interface{}, k int, compare compare.Func) interface{} {
-	Shuffle(a)
+func Select[T any](a []T, k int, cmp common.CompareFunc[T]) T {
+	Shuffle[T](a)
 	var lo, hi int = 0, len(a) - 1
 	for lo < hi {
-		j := partition(a, lo, hi, compare)
+		j := partition[T](a, lo, hi, cmp)
 		switch {
 		case j < k:
 			lo = j + 1
@@ -40,23 +40,23 @@ func Select(a []interface{}, k int, compare compare.Func) interface{} {
 	return a[k]
 }
 
-func quick(a []interface{}, lo, hi int, compare compare.Func) {
+func quick[T any](a []T, lo, hi int, cmp common.CompareFunc[T]) {
 	if lo >= hi {
 		return
 	}
 
-	j := partition(a, lo, hi, compare)
-	quick(a, lo, j-1, compare)
-	quick(a, j+1, hi, compare)
+	j := partition[T](a, lo, hi, cmp)
+	quick[T](a, lo, j-1, cmp)
+	quick[T](a, j+1, hi, cmp)
 }
 
 // Quick implements the quick sort algorithm.
-func Quick(a []interface{}, compare compare.Func) {
-	Shuffle(a)
-	quick(a, 0, len(a)-1, compare)
+func Quick[T any](a []T, cmp common.CompareFunc[T]) {
+	Shuffle[T](a)
+	quick[T](a, 0, len(a)-1, cmp)
 }
 
-func quick3Way(a []interface{}, lo, hi int, compare compare.Func) {
+func quick3Way[T any](a []T, lo, hi int, cmp common.CompareFunc[T]) {
 	if lo >= hi {
 		return
 	}
@@ -65,7 +65,7 @@ func quick3Way(a []interface{}, lo, hi int, compare compare.Func) {
 	lt, i, gt := lo, lo+1, hi
 
 	for i <= gt {
-		c := compare(a[i], v)
+		c := cmp(a[i], v)
 		switch {
 		case c < 0:
 			a[lt], a[i] = a[i], a[lt]
@@ -79,11 +79,11 @@ func quick3Way(a []interface{}, lo, hi int, compare compare.Func) {
 		}
 	}
 
-	quick3Way(a, lo, lt-1, compare)
-	quick3Way(a, gt+1, hi, compare)
+	quick3Way[T](a, lo, lt-1, cmp)
+	quick3Way[T](a, gt+1, hi, cmp)
 }
 
 // Quick3Way implements the 3-way version of quick sort algorithm.
-func Quick3Way(a []interface{}, compare compare.Func) {
-	quick3Way(a, 0, len(a)-1, compare)
+func Quick3Way[T any](a []T, cmp common.CompareFunc[T]) {
+	quick3Way[T](a, 0, len(a)-1, cmp)
 }

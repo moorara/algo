@@ -1,9 +1,17 @@
 package radixsort
 
+// Quick3WayString is the 3-Way Radix Quick sorting algorithm for string keys with variable length.
+func Quick3WayString(a []string) {
+	shuffle[string](a)
+	quick3WayString(a, 0, len(a)-1, 0)
+}
+
 func quick3WayString(a []string, lo, hi, d int) {
+	const CUTOFF = 15
+
 	// cutoff to insertion sort for small subarrays
-	if hi <= lo+cutoff {
-		insertionString(a, lo, hi, d)
+	if hi <= lo+CUTOFF {
+		insertion[string](a, lo, hi)
 		return
 	}
 
@@ -23,18 +31,12 @@ func quick3WayString(a []string, lo, hi, d int) {
 		default:
 			i++
 		}
-
-		// a[lo..lt-1] < v = a[lt..gt] < a[gt+1..hi]
-		quick3WayString(a, lo, lt-1, d)
-		if v >= 0 {
-			quick3WayString(a, lt, gt, d+1)
-		}
-		quick3WayString(a, gt+1, hi, d)
 	}
-}
 
-// Quick3WayString is the 3-Way Radix Quick sorting algorithm for string keys with variable length.
-func Quick3WayString(a []string) {
-	shuffleStringSlice(a)
-	quick3WayString(a, 0, len(a)-1, 0)
+	// a[lo..lt-1] < v = a[lt..gt] < a[gt+1..hi]
+	quick3WayString(a, lo, lt-1, d)
+	if v >= 0 {
+		quick3WayString(a, lt, gt, d+1)
+	}
+	quick3WayString(a, gt+1, hi, d)
 }

@@ -12,10 +12,10 @@ func TestNode(t *testing.T) {
 		nodeName        string
 		group           string
 		label           string
-		color           string
-		style           string
-		shape           string
-		fontcolor       string
+		color           Color
+		style           Style
+		shape           Shape
+		fontcolor       Color
 		fontname        string
 		expectedDotCode string
 	}{

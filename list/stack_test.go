@@ -3,25 +3,24 @@ package list
 import (
 	"testing"
 
-	"github.com/moorara/algo/compare"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moorara/algo/common"
 )
 
 func TestStack(t *testing.T) {
 	tests := []struct {
-		name             string
-		cmp              compare.Func
-		nodeSize         int
-		pushItems        []string
-		expectedSize     int
-		expectedIsEmpty  bool
-		expectedPeek     string
-		expectedContains []string
-		expectedPopItems []string
+		name              string
+		nodeSize          int
+		pushValues        []string
+		expectedSize      int
+		expectedIsEmpty   bool
+		expectedPeek      string
+		expectedContains  []string
+		expectedPopValues []string
 	}{
 		{
 			"Empty",
-			compare.String,
 			2,
 			[]string{},
 			0, true,
@@ -31,7 +30,6 @@ func TestStack(t *testing.T) {
 		},
 		{
 			"OneNode",
-			compare.String,
 			2,
 			[]string{"a", "b"},
 			2, false,
@@ -41,7 +39,6 @@ func TestStack(t *testing.T) {
 		},
 		{
 			"TwoNodes",
-			compare.String,
 			2,
 			[]string{"a", "b", "c"},
 			3, false,
@@ -51,7 +48,6 @@ func TestStack(t *testing.T) {
 		},
 		{
 			"MoreNodes",
-			compare.String,
 			2,
 			[]string{"a", "b", "c", "d", "e", "f", "g"},
 			7, false,
@@ -63,63 +59,88 @@ func TestStack(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			stack := NewStack(tc.nodeSize)
+			equal := common.NewEqualFunc[string]()
+			stack := NewStack[string](tc.nodeSize, equal)
 
-			// Stack initially should be empty
-			assert.Zero(t, stack.Size())
-			assert.True(t, stack.IsEmpty())
-			assert.Nil(t, stack.Pop())
-			assert.Nil(t, stack.Peek())
-			assert.False(t, stack.Contains(nil, tc.cmp))
+			t.Run("BeforePush", func(t *testing.T) {
+				assert.Zero(t, stack.Size())
+				assert.True(t, stack.IsEmpty())
 
-			for _, item := range tc.pushItems {
-				stack.Push(item)
-			}
+				val, ok := stack.Pop()
+				assert.False(t, ok)
+				assert.Empty(t, val)
 
-			assert.Equal(t, tc.expectedSize, stack.Size())
-			assert.Equal(t, tc.expectedIsEmpty, stack.IsEmpty())
+				val, ok = stack.Peek()
+				assert.False(t, ok)
+				assert.Empty(t, val)
 
-			if tc.expectedSize == 0 {
-				assert.Nil(t, stack.Peek())
-			} else {
-				assert.Equal(t, tc.expectedPeek, stack.Peek())
-			}
+				assert.False(t, stack.Contains(""))
+			})
 
-			for _, item := range tc.expectedContains {
-				assert.True(t, stack.Contains(item, tc.cmp))
-			}
+			t.Run("AfterPush", func(t *testing.T) {
+				for _, val := range tc.pushValues {
+					stack.Push(val)
+				}
 
-			for _, item := range tc.expectedPopItems {
-				assert.Equal(t, item, stack.Pop())
-			}
+				assert.Equal(t, tc.expectedSize, stack.Size())
+				assert.Equal(t, tc.expectedIsEmpty, stack.IsEmpty())
 
-			// Stack should be empty at the end
-			assert.Zero(t, stack.Size())
-			assert.True(t, stack.IsEmpty())
-			assert.Nil(t, stack.Pop())
-			assert.Nil(t, stack.Peek())
-			assert.False(t, stack.Contains(nil, tc.cmp))
+				val, ok := stack.Peek()
+
+				if tc.expectedSize == 0 {
+					assert.False(t, ok)
+					assert.Empty(t, val)
+				} else {
+					assert.True(t, ok)
+					assert.Equal(t, tc.expectedPeek, val)
+				}
+
+				for _, val := range tc.expectedContains {
+					assert.True(t, stack.Contains(val))
+				}
+
+				for _, val := range tc.expectedPopValues {
+					v, ok := stack.Pop()
+					assert.True(t, ok)
+					assert.Equal(t, val, v)
+				}
+			})
+
+			t.Run("AfterPop", func(t *testing.T) {
+				assert.Zero(t, stack.Size())
+				assert.True(t, stack.IsEmpty())
+
+				val, ok := stack.Pop()
+				assert.False(t, ok)
+				assert.Empty(t, val)
+
+				val, ok = stack.Peek()
+				assert.False(t, ok)
+				assert.Empty(t, val)
+
+				assert.False(t, stack.Contains(""))
+			})
 		})
 	}
 }
 
 func BenchmarkStack(b *testing.B) {
 	nodeSize := 1024
-	item := 27
+	val := 27
 
 	b.Run("Push", func(b *testing.B) {
-		stack := NewStack(nodeSize)
+		stack := NewStack[int](nodeSize, nil)
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
-			stack.Push(item)
+			stack.Push(val)
 		}
 	})
 
 	b.Run("Pop", func(b *testing.B) {
-		stack := NewStack(nodeSize)
+		stack := NewStack[int](nodeSize, nil)
 		for n := 0; n < b.N; n++ {
-			stack.Push(item)
+			stack.Push(val)
 		}
 		b.ResetTimer()
 

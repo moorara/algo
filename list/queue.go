@@ -1,106 +1,111 @@
 package list
 
-import "github.com/moorara/algo/compare"
+import "github.com/moorara/algo/common"
 
 // Queue represents a queue abstract data type.
-type Queue interface {
+type Queue[T any] interface {
 	Size() int
 	IsEmpty() bool
-	Enqueue(interface{})
-	Dequeue() interface{}
-	Peek() interface{}
-	Contains(interface{}, compare.Func) bool
+	Enqueue(T)
+	Dequeue() (T, bool)
+	Peek() (T, bool)
+	Contains(T) bool
 }
 
-type arrayQueue struct {
-	listSize       int
-	nodeSize       int
-	frontNodeIndex int
-	rearNodeIndex  int
-	frontNode      *arrayNode
-	rearNode       *arrayNode
+type arrayQueue[T any] struct {
+	nodeSize int
+	equal    common.EqualFunc[T]
+
+	listSize   int
+	frontIndex int
+	rearIndex  int
+	frontNode  *arrayNode[T]
+	rearNode   *arrayNode[T]
 }
 
 // NewQueue creates a new array-list queue.
-func NewQueue(nodeSize int) Queue {
-	return &arrayQueue{
-		listSize:       0,
-		nodeSize:       nodeSize,
-		frontNodeIndex: -1,
-		rearNodeIndex:  -1,
-		frontNode:      nil,
-		rearNode:       nil,
+func NewQueue[T any](nodeSize int, equal common.EqualFunc[T]) Queue[T] {
+	return &arrayQueue[T]{
+		nodeSize: nodeSize,
+		equal:    equal,
+
+		listSize:   0,
+		frontIndex: -1,
+		rearIndex:  -1,
+		frontNode:  nil,
+		rearNode:   nil,
 	}
 }
 
-// Size returns the number of items in queue.
-func (q *arrayQueue) Size() int {
+// Size returns the number of values in queue.
+func (q *arrayQueue[T]) Size() int {
 	return q.listSize
 }
 
 // IsEmpty returns true if queue is empty.
-func (q *arrayQueue) IsEmpty() bool {
+func (q *arrayQueue[T]) IsEmpty() bool {
 	return q.listSize == 0
 }
 
-// Enqueue adds a new item to queue.
-func (q *arrayQueue) Enqueue(item interface{}) {
-	if q.frontNode == nil && q.rearNode == nil {
-		q.frontNodeIndex = 0
-		q.rearNodeIndex = 0
-		q.frontNode = newArrayNode(q.nodeSize, nil)
-		q.rearNode = q.frontNode
-	}
-
+// Enqueue adds a new value to queue.
+func (q *arrayQueue[T]) Enqueue(val T) {
 	q.listSize++
-	q.rearNode.block[q.rearNodeIndex] = item
-	q.rearNodeIndex++
+	q.rearIndex++
 
-	if q.rearNodeIndex == q.nodeSize {
-		q.rearNodeIndex = 0
-		q.rearNode.next = newArrayNode(q.nodeSize, nil)
+	if q.frontNode == nil {
+		q.frontIndex = 0
+		q.frontNode = newArrayNode[T](q.nodeSize, nil)
+		q.rearNode = q.frontNode
+	} else if q.rearIndex == q.nodeSize {
+		q.rearNode.next = newArrayNode[T](q.nodeSize, nil)
 		q.rearNode = q.rearNode.next
+		q.rearIndex = 0
 	}
+
+	q.rearNode.block[q.rearIndex] = val
 }
 
-// Dequeue removes an item from queue.
-func (q *arrayQueue) Dequeue() interface{} {
-	if q.listSize == 0 {
-		return nil
+// Dequeue removes a value from queue.
+func (q *arrayQueue[T]) Dequeue() (T, bool) {
+	if q.IsEmpty() {
+		var zero T
+		return zero, false
 	}
 
+	val := q.frontNode.block[q.frontIndex]
+	q.frontIndex++
 	q.listSize--
-	item := q.frontNode.block[q.frontNodeIndex]
-	q.frontNodeIndex++
 
-	if q.frontNodeIndex == q.nodeSize {
-		q.frontNodeIndex = 0
+	if q.frontIndex == q.nodeSize {
 		q.frontNode = q.frontNode.next
+		q.frontIndex = 0
 	}
 
-	return item
+	return val, true
 }
 
-// Peek returns the next item in queue without removing it from queue.
-func (q *arrayQueue) Peek() interface{} {
-	if q.listSize == 0 {
-		return nil
+// Peek returns the next value in queue without removing it from queue.
+func (q *arrayQueue[T]) Peek() (T, bool) {
+	if q.IsEmpty() {
+		var zero T
+		return zero, false
 	}
 
-	return q.frontNode.block[q.frontNodeIndex]
+	return q.frontNode.block[q.frontIndex], true
 }
 
-// Contains returns true if a given item is already in queue.
-func (q *arrayQueue) Contains(item interface{}, cmp compare.Func) bool {
+// Contains returns true if a given value is already in queue.
+func (q *arrayQueue[T]) Contains(val T) bool {
 	n := q.frontNode
-	i := q.frontNodeIndex
+	i := q.frontIndex
 
-	for n != nil && (n != q.rearNode || i <= q.rearNodeIndex) {
-		if cmp(n.block[i], item) == 0 {
+	for n != nil && (n != q.rearNode || i <= q.rearIndex) {
+		if q.equal(n.block[i], val) {
 			return true
 		}
 
 		i++
+
 		if i == q.nodeSize {
 			n = n.next
 			i = 0

@@ -11,13 +11,13 @@ func TestSubgraph(t *testing.T) {
 		name            string
 		subgraphName    string
 		label           string
-		color           string
-		style           string
-		rank            string
-		rankdir         string
-		nodeColor       string
-		nodeStyle       string
-		nodeShape       string
+		color           Color
+		style           Style
+		rank            Rank
+		rankDir         RankDir
+		nodeColor       Color
+		nodeStyle       Style
+		nodeShape       Shape
 		nodes           []Node
 		edges           []Edge
 		subgraphs       []Subgraph
@@ -78,7 +78,7 @@ func TestSubgraph(t *testing.T) {
 			"SubgraphWithNodesAndEdges",
 			"cluster0",
 			"Left", ColorPink, "",
-			"", RankdirLR,
+			"", RankDirLR,
 			ColorRoyalBlue, "", "",
 			[]Node{
 				Node{Name: "c0", Label: "C0", Shape: ShapeBox},
@@ -87,9 +87,9 @@ func TestSubgraph(t *testing.T) {
 				Node{Name: "c3", Label: "C3", Shape: ShapeBox},
 			},
 			[]Edge{
-				Edge{From: "c0", To: "c1", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadDot},
-				Edge{From: "c0", To: "c2", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadDot},
-				Edge{From: "c1", To: "c3", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, Arrowhead: ArrowheadDot},
+				Edge{From: "c0", To: "c1", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeDot, ArrowTail: ArrowTypeDot},
+				Edge{From: "c0", To: "c2", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeDot, ArrowTail: ArrowTypeDot},
+				Edge{From: "c1", To: "c3", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeDot, ArrowTail: ArrowTypeDot},
 			},
 			[]Subgraph{
 				Subgraph{Name: "thread", Label: "Thread"},
@@ -110,9 +110,9 @@ func TestSubgraph(t *testing.T) {
   c2 [label="C2", shape=box];
   c3 [label="C3", shape=box];
 
-  c0 -- c1 [dirType=both, arrowhead=dot];
-  c0 -- c2 [dirType=both, arrowhead=dot];
-  c1 -- c3 [dirType=both, arrowhead=dot];
+  c0 -- c1 [dirType=both, arrowhead=dot, arrowtail=dot];
+  c0 -- c2 [dirType=both, arrowhead=dot, arrowtail=dot];
+  c1 -- c3 [dirType=both, arrowhead=dot, arrowtail=dot];
 }`,
 		},
 		{
@@ -197,7 +197,7 @@ func TestSubgraph(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			sg := NewSubgraph(tc.subgraphName, tc.label, tc.color, tc.style, tc.rank, tc.rankdir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
+			sg := NewSubgraph(tc.subgraphName, tc.label, tc.color, tc.style, tc.rank, tc.rankDir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
 			sg.AddNode(tc.nodes...)
 			sg.AddEdge(tc.edges...)
 			sg.AddSubgraph(tc.subgraphs...)

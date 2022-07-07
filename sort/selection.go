@@ -1,9 +1,9 @@
 package sort
 
-import "github.com/moorara/algo/compare"
+import "github.com/moorara/algo/common"
 
 // Selection implements the selection sort algorithm.
-func Selection(a []interface{}, cmp compare.Func) {
+func Selection[T any](a []T, cmp common.CompareFunc[T]) {
 	n := len(a)
 	for i := 0; i < n; i++ {
 		min := i

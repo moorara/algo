@@ -18,40 +18,40 @@ const (
 
 type (
 	// The VisitFunc type is a function for visiting a key-value pair.
-	VisitFunc func(interface{}, interface{}) bool
+	VisitFunc[K, V any] func(K, V) bool
 
 	// KeyValue represents a key-value pair.
-	KeyValue struct {
-		key   interface{}
-		value interface{}
-	}
-
-	// SymbolTable represents an unordered symbol table abstract data type.
-	SymbolTable interface {
-		verify() bool
-		Size() int
-		Height() int
-		IsEmpty() bool
-		Put(interface{}, interface{})
-		Get(interface{}) (interface{}, bool)
-		Delete(interface{}) (interface{}, bool)
-		KeyValues() []KeyValue
-	}
-
-	// OrderedSymbolTable represents an ordered symbol table abstract data type.
-	OrderedSymbolTable interface {
-		SymbolTable
-		Min() (interface{}, interface{})
-		Max() (interface{}, interface{})
-		Floor(interface{}) (interface{}, interface{})
-		Ceiling(interface{}) (interface{}, interface{})
-		Rank(interface{}) int
-		Select(int) (interface{}, interface{})
-		DeleteMin() (interface{}, interface{})
-		DeleteMax() (interface{}, interface{})
-		RangeSize(interface{}, interface{}) int
-		Range(interface{}, interface{}) []KeyValue
-		Traverse(TraversalOrder, VisitFunc)
-		Graphviz() string
+	KeyValue[K, V any] struct {
+		key K
+		val V
 	}
 )
+
+// SymbolTable represents an unordered symbol table abstract data type.
+type SymbolTable[K, V any] interface {
+	verify() bool
+	Size() int
+	Height() int
+	IsEmpty() bool
+	Put(K, V)
+	Get(K) (V, bool)
+	Delete(K) (V, bool)
+	KeyValues() []KeyValue[K, V]
+}
+
+// OrderedSymbolTable represents an ordered symbol table abstract data type.
+type OrderedSymbolTable[K, V any] interface {
+	SymbolTable[K, V]
+	Min() (K, V, bool)
+	Max() (K, V, bool)
+	Floor(K) (K, V, bool)
+	Ceiling(K) (K, V, bool)
+	DeleteMin() (K, V, bool)
+	DeleteMax() (K, V, bool)
+	Select(int) (K, V, bool)
+	Rank(K) int
+	RangeSize(K, K) int
+	Range(K, K) []KeyValue[K, V]
+	Traverse(TraversalOrder, VisitFunc[K, V])
+	Graphviz() string
+}
