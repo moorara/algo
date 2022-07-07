@@ -1,19 +1,10 @@
 package radixsort
 
-import "strings"
+import "golang.org/x/exp/constraints"
 
-func isSortedString(vals []string) bool {
-	for i := 0; i < len(vals)-1; i++ {
-		if strings.Compare(vals[i], vals[i+1]) > 0 {
-			return false
-		}
-	}
-	return true
-}
-
-func isSortedInt(vals []int) bool {
-	for i := 0; i < len(vals)-1; i++ {
-		if vals[i] > vals[i+1] {
+func isSorted[T constraints.Ordered](a []T) bool {
+	for i := 0; i < len(a)-1; i++ {
+		if a[i] > a[i+1] {
 			return false
 		}
 	}
