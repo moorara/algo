@@ -8,12 +8,10 @@ import (
 )
 
 type avlNode[K, V any] struct {
-	key    K
-	val    V
-	left   *avlNode[K, V]
-	right  *avlNode[K, V]
-	size   int
-	height int
+	key          K
+	val          V
+	left, right  *avlNode[K, V]
+	size, height int
 }
 
 type avl[K, V any] struct {
@@ -58,7 +56,7 @@ func (t *avl[K, V]) _isAVL(n *avlNode[K, V]) bool {
 	}
 
 	bf := t.balanceFactor(n)
-	if bf > 1 || bf < -1 {
+	if bf < -1 || 1 < bf {
 		return false
 	}
 
@@ -97,7 +95,7 @@ func (t *avl[K, V]) _isRankOK() bool {
 
 func (t *avl[K, V]) balance(n *avlNode[K, V]) *avlNode[K, V] {
 	if t.balanceFactor(n) == 2 {
-		if t.balanceFactor(n) == -1 {
+		if t.balanceFactor(n.left) == -1 {
 			n.left = t.rotateLeft(n.left)
 		}
 		n = t.rotateRight(n)
@@ -122,8 +120,8 @@ func (t *avl[K, V]) rotateLeft(n *avlNode[K, V]) *avlNode[K, V] {
 
 	r.size = n.size
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + max(t._height(n.left), t._height(n.right))
-	r.height = 1 + max(t._height(r.left), t._height(r.right))
+	n.height = 1 + common.Max[int](t._height(n.left), t._height(n.right))
+	r.height = 1 + common.Max[int](t._height(r.left), t._height(r.right))
 
 	return r
 }
@@ -135,8 +133,8 @@ func (t *avl[K, V]) rotateRight(n *avlNode[K, V]) *avlNode[K, V] {
 
 	l.size = n.size
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + max(t._height(n.left), t._height(n.right))
-	l.height = 1 + max(t._height(l.left), t._height(l.right))
+	n.height = 1 + common.Max[int](t._height(n.left), t._height(n.right))
+	l.height = 1 + common.Max[int](t._height(l.left), t._height(l.right))
 
 	return l
 }
@@ -199,7 +197,7 @@ func (t *avl[K, V]) _put(n *avlNode[K, V], key K, val V) *avlNode[K, V] {
 	}
 
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + max(t._height(n.left), t._height(n.right))
+	n.height = 1 + common.Max[int](t._height(n.left), t._height(n.right))
 
 	return t.balance(n)
 }
@@ -263,18 +261,15 @@ func (t *avl[K, V]) _delete(n *avlNode[K, V], key K) (*avlNode[K, V], V, bool) {
 	}
 
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + max(t._height(n.left), t._height(n.right))
+	n.height = 1 + common.Max[int](t._height(n.left), t._height(n.right))
 	return t.balance(n), val, ok
 }
 
 // KeyValues returns all key-value pairs in AVL tree.
 func (t *avl[K, V]) KeyValues() []KeyValue[K, V] {
-	i := 0
-	kvs := make([]KeyValue[K, V], t.Size())
-
-	t._traverse(t.root, InOrder, func(n *avlNode[K, V]) bool {
-		kvs[i] = KeyValue[K, V]{n.key, n.val}
-		i++
+	kvs := make([]KeyValue[K, V], 0, t.Size())
+	t._traverse(t.root, Ascending, func(n *avlNode[K, V]) bool {
+		kvs = append(kvs, KeyValue[K, V]{n.key, n.val})
 		return true
 	})
 
@@ -402,7 +397,7 @@ func (t *avl[K, V]) _deleteMin(n *avlNode[K, V]) (*avlNode[K, V], *avlNode[K, V]
 	var min *avlNode[K, V]
 	n.left, min = t._deleteMin(n.left)
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + max(t._height(n.left), t._height(n.right))
+	n.height = 1 + common.Max[int](t._height(n.left), t._height(n.right))
 	return t.balance(n), min
 }
 
@@ -430,7 +425,7 @@ func (t *avl[K, V]) _deleteMax(n *avlNode[K, V]) (*avlNode[K, V], *avlNode[K, V]
 	return t.balance(n), max
 }
 
-// Select return the k-th smallest key in AVL tree.
+// Select returns the k-th smallest key in AVL tree.
 func (t *avl[K, V]) Select(rank int) (K, V, bool) {
 	if rank < 0 || rank >= t.Size() {
 		var zeroK K
@@ -522,10 +517,6 @@ func (t *avl[K, V]) _range(n *avlNode[K, V], kvs *[]KeyValue[K, V], lo, hi K) in
 
 // Traverse is used for visiting all key-value pairs in AVL tree.
 func (t *avl[K, V]) Traverse(order TraversalOrder, visit VisitFunc[K, V]) {
-	if order != PreOrder && order != InOrder && order != PostOrder {
-		panic(fmt.Sprintf("invalid traversal order: %d", order))
-	}
-
 	t._traverse(t.root, order, func(n *avlNode[K, V]) bool {
 		return visit(n.key, n.val)
 	})
@@ -537,18 +528,18 @@ func (t *avl[K, V]) _traverse(n *avlNode[K, V], order TraversalOrder, visit func
 	}
 
 	switch order {
-	case PreOrder:
-		return visit(n) &&
-			t._traverse(n.left, order, visit) &&
-			t._traverse(n.right, order, visit)
-	case InOrder:
-		return t._traverse(n.left, order, visit) &&
-			visit(n) &&
-			t._traverse(n.right, order, visit)
-	case PostOrder:
-		return t._traverse(n.left, order, visit) &&
-			t._traverse(n.right, order, visit) &&
-			visit(n)
+	case VLR:
+		return visit(n) && t._traverse(n.left, order, visit) && t._traverse(n.right, order, visit)
+	case VRL:
+		return visit(n) && t._traverse(n.right, order, visit) && t._traverse(n.left, order, visit)
+	case LVR, Ascending:
+		return t._traverse(n.left, order, visit) && visit(n) && t._traverse(n.right, order, visit)
+	case RVL, Descending:
+		return t._traverse(n.right, order, visit) && visit(n) && t._traverse(n.left, order, visit)
+	case LRV:
+		return t._traverse(n.left, order, visit) && t._traverse(n.right, order, visit) && visit(n)
+	case RLV:
+		return t._traverse(n.right, order, visit) && t._traverse(n.left, order, visit) && visit(n)
 	default:
 		return false
 	}
@@ -559,29 +550,27 @@ func (t *avl[K, V]) Graphviz() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*avlNode[K, V]]int{}
-	t._traverse(t.root, PreOrder, func(n *avlNode[K, V]) bool {
+	t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
 		id++
 		nodeID[n] = id
 		return true
 	})
 
-	var name, label, left, right string
+	graph := graphviz.NewGraph(true, true, false, "AVL", "", "", "", graphviz.ShapeOval)
 
-	graph := graphviz.NewGraph(true, true, "AVL", "", "", "", graphviz.ShapeOval)
-
-	t._traverse(t.root, PreOrder, func(n *avlNode[K, V]) bool {
-		name = fmt.Sprintf("%d", nodeID[n])
-		label = fmt.Sprintf("%v,%v", n.key, n.val)
+	t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
+		name := fmt.Sprintf("%d", nodeID[n])
+		label := fmt.Sprintf("%v,%v", n.key, n.val)
 
 		graph.AddNode(graphviz.NewNode(name, "", label, "", "", "", "", ""))
 
 		if n.left != nil {
-			left = fmt.Sprintf("%d", nodeID[n.left])
+			left := fmt.Sprintf("%d", nodeID[n.left])
 			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		if n.right != nil {
-			right = fmt.Sprintf("%d", nodeID[n.right])
+			right := fmt.Sprintf("%d", nodeID[n.right])
 			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 

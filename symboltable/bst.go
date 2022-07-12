@@ -8,11 +8,10 @@ import (
 )
 
 type bstNode[K, V any] struct {
-	key   K
-	val   V
-	left  *bstNode[K, V]
-	right *bstNode[K, V]
-	size  int
+	key         K
+	val         V
+	left, right *bstNode[K, V]
+	size        int
 }
 
 type bst[K, V any] struct {
@@ -24,8 +23,9 @@ type bst[K, V any] struct {
 //
 // A binary search tree (BST) is a binary tree in symmetric order.
 // Every node's key is:
-//   Larger than all keys in its left sub-tree.
-//   Smaller than all keys in its right sub-tree.
+//
+//	Larger than all keys in its left sub-tree.
+//	Smaller than all keys in its right sub-tree.
 func NewBST[K, V any](cmpKey common.CompareFunc[K]) OrderedSymbolTable[K, V] {
 	return &bst[K, V]{
 		root:   nil,
@@ -105,7 +105,7 @@ func (t *bst[K, V]) _height(n *bstNode[K, V]) int {
 		return 0
 	}
 
-	return 1 + max(t._height(n.left), t._height(n.right))
+	return 1 + common.Max[int](t._height(n.left), t._height(n.right))
 }
 
 // IsEmpty returns true if BST is empty.
@@ -206,12 +206,9 @@ func (t *bst[K, V]) _delete(n *bstNode[K, V], key K) (*bstNode[K, V], V, bool) {
 
 // KeyValues returns all key-value pairs in BST.
 func (t *bst[K, V]) KeyValues() []KeyValue[K, V] {
-	i := 0
-	kvs := make([]KeyValue[K, V], t.Size())
-
-	t._traverse(t.root, InOrder, func(n *bstNode[K, V]) bool {
-		kvs[i] = KeyValue[K, V]{n.key, n.val}
-		i++
+	kvs := make([]KeyValue[K, V], 0, t.Size())
+	t._traverse(t.root, Ascending, func(n *bstNode[K, V]) bool {
+		kvs = append(kvs, KeyValue[K, V]{n.key, n.val})
 		return true
 	})
 
@@ -366,7 +363,7 @@ func (t *bst[K, V]) _deleteMax(n *bstNode[K, V]) (*bstNode[K, V], *bstNode[K, V]
 	return n, max
 }
 
-// Select return the k-th smallest key in BST.
+// Select returns the k-th smallest key in BST.
 func (t *bst[K, V]) Select(rank int) (K, V, bool) {
 	if rank < 0 || rank >= t.Size() {
 		var zeroK K
@@ -458,10 +455,6 @@ func (t *bst[K, V]) _range(n *bstNode[K, V], kvs *[]KeyValue[K, V], lo, hi K) in
 
 // Traverse is used for visiting all key-value pairs in BST.
 func (t *bst[K, V]) Traverse(order TraversalOrder, visit VisitFunc[K, V]) {
-	if order != PreOrder && order != InOrder && order != PostOrder {
-		panic(fmt.Sprintf("invalid traversal order: %d", order))
-	}
-
 	t._traverse(t.root, order, func(n *bstNode[K, V]) bool {
 		return visit(n.key, n.val)
 	})
@@ -473,18 +466,18 @@ func (t *bst[K, V]) _traverse(n *bstNode[K, V], order TraversalOrder, visit func
 	}
 
 	switch order {
-	case PreOrder:
-		return visit(n) &&
-			t._traverse(n.left, order, visit) &&
-			t._traverse(n.right, order, visit)
-	case InOrder:
-		return t._traverse(n.left, order, visit) &&
-			visit(n) &&
-			t._traverse(n.right, order, visit)
-	case PostOrder:
-		return t._traverse(n.left, order, visit) &&
-			t._traverse(n.right, order, visit) &&
-			visit(n)
+	case VLR:
+		return visit(n) && t._traverse(n.left, order, visit) && t._traverse(n.right, order, visit)
+	case VRL:
+		return visit(n) && t._traverse(n.right, order, visit) && t._traverse(n.left, order, visit)
+	case LVR, Ascending:
+		return t._traverse(n.left, order, visit) && visit(n) && t._traverse(n.right, order, visit)
+	case RVL, Descending:
+		return t._traverse(n.right, order, visit) && visit(n) && t._traverse(n.left, order, visit)
+	case LRV:
+		return t._traverse(n.left, order, visit) && t._traverse(n.right, order, visit) && visit(n)
+	case RLV:
+		return t._traverse(n.right, order, visit) && t._traverse(n.left, order, visit) && visit(n)
 	default:
 		return false
 	}
@@ -495,29 +488,27 @@ func (t *bst[K, V]) Graphviz() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*bstNode[K, V]]int{}
-	t._traverse(t.root, PreOrder, func(n *bstNode[K, V]) bool {
+	t._traverse(t.root, VLR, func(n *bstNode[K, V]) bool {
 		id++
 		nodeID[n] = id
 		return true
 	})
 
-	var name, label, left, right string
+	graph := graphviz.NewGraph(true, true, false, "BST", "", "", "", graphviz.ShapeOval)
 
-	graph := graphviz.NewGraph(true, true, "BST", "", "", "", graphviz.ShapeOval)
-
-	t._traverse(t.root, PreOrder, func(n *bstNode[K, V]) bool {
-		name = fmt.Sprintf("%d", nodeID[n])
-		label = fmt.Sprintf("%v,%v", n.key, n.val)
+	t._traverse(t.root, VLR, func(n *bstNode[K, V]) bool {
+		name := fmt.Sprintf("%d", nodeID[n])
+		label := fmt.Sprintf("%v,%v", n.key, n.val)
 
 		graph.AddNode(graphviz.NewNode(name, "", label, "", "", "", "", ""))
 
 		if n.left != nil {
-			left = fmt.Sprintf("%d", nodeID[n.left])
+			left := fmt.Sprintf("%d", nodeID[n.left])
 			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		if n.right != nil {
-			right = fmt.Sprintf("%d", nodeID[n.right])
+			right := fmt.Sprintf("%d", nodeID[n.right])
 			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 

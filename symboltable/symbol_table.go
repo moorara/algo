@@ -8,12 +8,22 @@ package symboltable
 type TraversalOrder int
 
 const (
-	// PreOrder is pre-order traversal.
-	PreOrder TraversalOrder = iota
-	// InOrder is in-order traversal.
-	InOrder
-	// PostOrder is post-order traversal.
-	PostOrder
+	// VLR is a pre-order traversal from left to right.
+	VLR TraversalOrder = iota
+	// VLR is a pre-order traversal from right to left.
+	VRL
+	// VLR is an in-order traversal from left to right.
+	LVR
+	// RVL is an in-order traversal from right to left.
+	RVL
+	// LRV is a post-order traversal from left to right.
+	LRV
+	// LRV is a post-order traversal from right to left.
+	RLV
+	// Ascending is key-ascending traversal.
+	Ascending
+	// Descending is key-descending traversal.
+	Descending
 )
 
 type (
@@ -42,6 +52,7 @@ type SymbolTable[K, V any] interface {
 // OrderedSymbolTable represents an ordered symbol table abstract data type.
 type OrderedSymbolTable[K, V any] interface {
 	SymbolTable[K, V]
+
 	Min() (K, V, bool)
 	Max() (K, V, bool)
 	Floor(K) (K, V, bool)

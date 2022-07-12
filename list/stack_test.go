@@ -1,7 +1,9 @@
 package list
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -125,23 +127,26 @@ func TestStack(t *testing.T) {
 }
 
 func BenchmarkStack(b *testing.B) {
-	nodeSize := 1024
-	val := 27
+	const nodeSize = 1024
+
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	b.Run("Push", func(b *testing.B) {
 		stack := NewStack[int](nodeSize, nil)
+
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
-			stack.Push(val)
+			stack.Push(rand.Int())
 		}
 	})
 
 	b.Run("Pop", func(b *testing.B) {
 		stack := NewStack[int](nodeSize, nil)
 		for n := 0; n < b.N; n++ {
-			stack.Push(val)
+			stack.Push(rand.Int())
 		}
+
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {

@@ -204,9 +204,7 @@ func TestMaxHeap(t *testing.T) {
 }
 
 func BenchmarkMaxHeap(b *testing.B) {
-	heapSize := 1024
-	minInt := 0
-	maxInt := 1000000
+	const heapSize = 1024
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -214,10 +212,11 @@ func BenchmarkMaxHeap(b *testing.B) {
 		cmpKey := common.NewCompareFunc[int]()
 		heap := NewMaxHeap[int, string](heapSize, cmpKey, nil)
 
-		keys := randIntSlice(b.N, minInt, maxInt)
+		keys := randIntSlice(b.N)
 		vals := randStringSlice(b.N)
 
 		b.ResetTimer()
+
 		for n := 0; n < b.N; n++ {
 			heap.Insert(keys[n], vals[n])
 		}
@@ -227,7 +226,7 @@ func BenchmarkMaxHeap(b *testing.B) {
 		cmpKey := common.NewCompareFunc[int]()
 		heap := NewMaxHeap[int, string](heapSize, cmpKey, nil)
 
-		keys := randIntSlice(b.N, minInt, maxInt)
+		keys := randIntSlice(b.N)
 		vals := randStringSlice(b.N)
 
 		for n := 0; n < b.N; n++ {
@@ -235,6 +234,7 @@ func BenchmarkMaxHeap(b *testing.B) {
 		}
 
 		b.ResetTimer()
+
 		for n := 0; n < b.N; n++ {
 			heap.Delete()
 		}

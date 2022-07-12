@@ -15,45 +15,51 @@ type (
 		cmpKey          common.CompareFunc[K]
 		keyVals         []KeyValue[K, V]
 		expectedSize    int
+		expectedHeight  int
 		expectedIsEmpty bool
 	}
 
 	orderedSymbolTableTest[K, V any] struct {
-		name                      string
-		symbolTable               string
-		cmpKey                    common.CompareFunc[K]
-		keyVals                   []KeyValue[K, V]
-		expectedSize              int
-		expectedHeight            int
-		expectedIsEmpty           bool
-		expectedMinKey            K
-		expectedMinVal            V
-		expectedMinOK             bool
-		expectedMaxKey            K
-		expectedMaxVal            V
-		expectedMaxOK             bool
-		floorKey                  string
-		expectedFloorKey          K
-		expectedFloorVal          V
-		expectedFloorOK           bool
-		ceilingKey                string
-		expectedCeilingKey        K
-		expectedCeilingVal        V
-		expectedCeilingOK         bool
-		selectRank                int
-		expectedSelectKey         K
-		expectedSelectVal         V
-		expectedSelectOK          bool
-		rankKey                   string
-		expectedRank              int
-		rangeKeyLo                string
-		rangeKeyHi                string
-		expectedRangeSize         int
-		expectedRange             []KeyValue[K, V]
-		expectedPreOrderTraverse  []KeyValue[K, V]
-		expectedInOrderTraverse   []KeyValue[K, V]
-		expectedPostOrderTraverse []KeyValue[K, V]
-		expectedDotCode           string
+		name                       string
+		symbolTable                string
+		cmpKey                     common.CompareFunc[K]
+		keyVals                    []KeyValue[K, V]
+		expectedSize               int
+		expectedHeight             int
+		expectedIsEmpty            bool
+		expectedMinKey             K
+		expectedMinVal             V
+		expectedMinOK              bool
+		expectedMaxKey             K
+		expectedMaxVal             V
+		expectedMaxOK              bool
+		floorKey                   string
+		expectedFloorKey           K
+		expectedFloorVal           V
+		expectedFloorOK            bool
+		ceilingKey                 string
+		expectedCeilingKey         K
+		expectedCeilingVal         V
+		expectedCeilingOK          bool
+		selectRank                 int
+		expectedSelectKey          K
+		expectedSelectVal          V
+		expectedSelectOK           bool
+		rankKey                    string
+		expectedRank               int
+		rangeKeyLo                 string
+		rangeKeyHi                 string
+		expectedRangeSize          int
+		expectedRange              []KeyValue[K, V]
+		expectedVLRTraverse        []KeyValue[K, V]
+		expectedVRLTraverse        []KeyValue[K, V]
+		expectedLVRTraverse        []KeyValue[K, V]
+		expectedRVLTraverse        []KeyValue[K, V]
+		expectedLRVTraverse        []KeyValue[K, V]
+		expectedRLVTraverse        []KeyValue[K, V]
+		expectedAscendingTraverse  []KeyValue[K, V]
+		expectedDescendingTraverse []KeyValue[K, V]
+		expectedDotCode            string
 	}
 )
 
@@ -76,41 +82,6 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 	cmpKey := common.NewCompareFunc[string]()
 
 	return []orderedSymbolTableTest[string, int]{
-		{
-			name:   "Zero",
-			cmpKey: cmpKey,
-			keyVals: []KeyValue[string, int]{
-				{"", 0},
-			},
-			expectedSize:       1,
-			expectedIsEmpty:    false,
-			expectedMinKey:     "",
-			expectedMinVal:     0,
-			expectedMinOK:      true,
-			expectedMaxKey:     "",
-			expectedMaxVal:     0,
-			expectedMaxOK:      true,
-			floorKey:           "",
-			expectedFloorKey:   "",
-			expectedFloorVal:   0,
-			expectedFloorOK:    true,
-			ceilingKey:         "",
-			expectedCeilingKey: "",
-			expectedCeilingVal: 0,
-			expectedCeilingOK:  true,
-			selectRank:         0,
-			expectedSelectKey:  "",
-			expectedSelectVal:  0,
-			expectedSelectOK:   true,
-			rankKey:            "",
-			expectedRank:       0,
-			rangeKeyLo:         "",
-			rangeKeyHi:         "",
-			expectedRangeSize:  1,
-			expectedRange: []KeyValue[string, int]{
-				{"", 0},
-			},
-		},
 		{
 			name:   "ABC",
 			cmpKey: cmpKey,
@@ -236,6 +207,50 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"P", 16},
 			},
 		},
+		{
+			name:   "Words",
+			cmpKey: cmpKey,
+			keyVals: []KeyValue[string, int]{
+				{"box", 2},
+				{"dad", 3},
+				{"baby", 5},
+				{"dome", 7},
+				{"band", 11},
+				{"dance", 13},
+				{"balloon", 17},
+			},
+			expectedSize:       7,
+			expectedIsEmpty:    false,
+			expectedMinKey:     "baby",
+			expectedMinVal:     5,
+			expectedMinOK:      true,
+			expectedMaxKey:     "dome",
+			expectedMaxVal:     7,
+			expectedMaxOK:      true,
+			floorKey:           "bold",
+			expectedFloorKey:   "band",
+			expectedFloorVal:   11,
+			expectedFloorOK:    true,
+			ceilingKey:         "breeze",
+			expectedCeilingKey: "dad",
+			expectedCeilingVal: 3,
+			expectedCeilingOK:  true,
+			selectRank:         3,
+			expectedSelectKey:  "box",
+			expectedSelectVal:  2,
+			expectedSelectOK:   true,
+			rankKey:            "dance",
+			expectedRank:       5,
+			rangeKeyLo:         "a",
+			rangeKeyHi:         "c",
+			expectedRangeSize:  4,
+			expectedRange: []KeyValue[string, int]{
+				{"box", 2},
+				{"baby", 5},
+				{"band", 11},
+				{"balloon", 17},
+			},
+		},
 	}
 }
 
@@ -260,7 +275,6 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 
 func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int], test orderedSymbolTableTest[string, int]) {
 	t.Run(test.name, func(t *testing.T) {
-		var i int
 		var kvs []KeyValue[string, int]
 		var minKey, maxKey, floorKey, ceilingKey, selectKey string
 		var minVal, maxVal, floorVal, ceilingVal, selectVal int
@@ -370,7 +384,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			for _, kv := range test.expectedRange { // Completeness
 				assert.Contains(t, kvs, kv)
 			}
-			for i = 0; i < len(kvs)-1; i++ { // Sorted Ascending
+			for i := 0; i < len(kvs)-1; i++ { // Sorted Ascending
 				assert.Equal(t, -1, test.cmpKey(kvs[i].key, kvs[i+1].key))
 			}
 
@@ -381,36 +395,73 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			for _, kv := range test.keyVals { // Completeness
 				assert.Contains(t, kvs, kv)
 			}
-			for i = 0; i < len(kvs)-1; i++ { // Sorted Ascending
+			for i := 0; i < len(kvs)-1; i++ { // Sorted Ascending
 				assert.Equal(t, -1, test.cmpKey(kvs[i].key, kvs[i+1].key))
 			}
 
-			// Pre-Order Traversal
-			i = 0
-			ost.Traverse(PreOrder, func(key string, val int) bool {
-				assert.Equal(t, test.expectedPreOrderTraverse[i].key, key)
-				assert.Equal(t, test.expectedPreOrderTraverse[i].val, val)
-				i++
+			// VLR Traversal
+			kvs = []KeyValue[string, int]{}
+			ost.Traverse(VLR, func(key string, val int) bool {
+				kvs = append(kvs, KeyValue[string, int]{key, val})
 				return true
 			})
+			assert.Equal(t, test.expectedVLRTraverse, kvs)
 
-			// In-Order Traversal
-			i = 0
-			ost.Traverse(InOrder, func(key string, val int) bool {
-				assert.Equal(t, test.expectedInOrderTraverse[i].key, key)
-				assert.Equal(t, test.expectedInOrderTraverse[i].val, val)
-				i++
+			// VRL Traversal
+			kvs = []KeyValue[string, int]{}
+			ost.Traverse(VRL, func(key string, val int) bool {
+				kvs = append(kvs, KeyValue[string, int]{key, val})
 				return true
 			})
+			assert.Equal(t, test.expectedVRLTraverse, kvs)
 
-			// Post-Order Traversal
-			i = 0
-			ost.Traverse(PostOrder, func(key string, val int) bool {
-				assert.Equal(t, test.expectedPostOrderTraverse[i].key, key)
-				assert.Equal(t, test.expectedPostOrderTraverse[i].val, val)
-				i++
+			// LVR Traversal
+			kvs = []KeyValue[string, int]{}
+			ost.Traverse(LVR, func(key string, val int) bool {
+				kvs = append(kvs, KeyValue[string, int]{key, val})
 				return true
 			})
+			assert.Equal(t, test.expectedLVRTraverse, kvs)
+
+			// RVL Traversal
+			kvs = []KeyValue[string, int]{}
+			ost.Traverse(RVL, func(key string, val int) bool {
+				kvs = append(kvs, KeyValue[string, int]{key, val})
+				return true
+			})
+			assert.Equal(t, test.expectedRVLTraverse, kvs)
+
+			// LRV Traversal
+			kvs = []KeyValue[string, int]{}
+			ost.Traverse(LRV, func(key string, val int) bool {
+				kvs = append(kvs, KeyValue[string, int]{key, val})
+				return true
+			})
+			assert.Equal(t, test.expectedLRVTraverse, kvs)
+
+			// RLV Traversal
+			kvs = []KeyValue[string, int]{}
+			ost.Traverse(RLV, func(key string, val int) bool {
+				kvs = append(kvs, KeyValue[string, int]{key, val})
+				return true
+			})
+			assert.Equal(t, test.expectedRLVTraverse, kvs)
+
+			// Ascending Traversal
+			kvs = []KeyValue[string, int]{}
+			ost.Traverse(Ascending, func(key string, val int) bool {
+				kvs = append(kvs, KeyValue[string, int]{key, val})
+				return true
+			})
+			assert.Equal(t, test.expectedAscendingTraverse, kvs)
+
+			// Descending Traversal
+			kvs = []KeyValue[string, int]{}
+			ost.Traverse(Descending, func(key string, val int) bool {
+				kvs = append(kvs, KeyValue[string, int]{key, val})
+				return true
+			})
+			assert.Equal(t, test.expectedDescendingTraverse, kvs)
 
 			// Graphviz dot language code
 			assert.Equal(t, test.expectedDotCode, ost.Graphviz())
