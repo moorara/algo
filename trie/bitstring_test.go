@@ -56,6 +56,14 @@ func TestBitString_String(t *testing.T) {
 			b:              newBitString("Alice"),
 			expectedString: "Alice",
 		},
+		{
+			name: "Partial",
+			b: &bitString{
+				bits: []byte{0b11110000},
+				len:  4,
+			},
+			expectedString: "0x0f",
+		},
 	}
 
 	for _, tc := range tests {
@@ -97,27 +105,26 @@ func TestBitString_Bit(t *testing.T) {
 	tests := []struct {
 		name         string
 		b            *bitString
-		expectedBits []int
+		expectedBits []bool
 	}{
 		{
 			name: "OK",
 			b:    newBitString("Alice"),
-			expectedBits: []int{
-				-1,
-				0, 1, 0, 0, 0, 0, 0, 1,
-				0, 1, 1, 0, 1, 1, 0, 0,
-				0, 1, 1, 0, 1, 0, 0, 1,
-				0, 1, 1, 0, 0, 0, 1, 1,
-				0, 1, 1, 0, 0, 1, 0, 1,
-				0, 0, 0, 0, 0, 0, 0, 0, // Trailing zeros
+			expectedBits: []bool{
+				false, true, false, false, false, false, false, true,
+				false, true, true, false, true, true, false, false,
+				false, true, true, false, true, false, false, true,
+				false, true, true, false, false, false, true, true,
+				false, true, true, false, false, true, false, true,
+				false, false, false, false, false, false, false, false, // Trailing zeros
 			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			for pos, expectedBit := range tc.expectedBits {
-				assert.Equal(t, expectedBit, tc.b.Bit(pos))
+			for i, expectedBit := range tc.expectedBits {
+				assert.Equal(t, expectedBit, tc.b.Bit(i+1))
 			}
 		})
 	}
@@ -226,21 +233,21 @@ func TestBitString_Sub(t *testing.T) {
 			b:           newBitString("Alice"),
 			start:       0,
 			end:         10,
-			expectedSub: nil,
+			expectedSub: empty,
 		},
 		{
 			name:        "Second",
 			b:           newBitString("Alice"),
 			start:       20,
 			end:         10,
-			expectedSub: nil,
+			expectedSub: empty,
 		},
 		{
 			name:        "Third",
 			b:           newBitString("Alice"),
 			start:       1,
 			end:         100,
-			expectedSub: nil,
+			expectedSub: empty,
 		},
 		{
 			name:  "Fourth",

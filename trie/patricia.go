@@ -8,7 +8,7 @@ import (
 )
 
 type patriciaNode[V any] struct {
-	bitPos      int
+	bp          int // bit pos
 	key         *bitString
 	val         V
 	left, right *patriciaNode[V]
@@ -25,9 +25,74 @@ type patricia[V any] struct {
 // Patricia tree is a special case of Radix trie with a radix of two (r = 2^x, x = 1).
 // As a result, each node has only two children, like a binary tree.
 //
-// The root node always only has a left child.
-// Keys are sequence of bits and stored in nodes (the number of nodes equals the number of keys).
+// The root node's bit position is always zero and it always only has a left child.
+// Keys are a sequence of bits stored in nodes (the number of nodes equals the number of keys).
 // Patricia is a threaded tree in which nil links are also utilized.
+//
+// A Patricia tree is derived from a digital search tree in few steps.
+//
+// A digital search tree is a binary tree in which keys are a sequence of bits stored in nodes.
+// The i'th level in a DST corresponds to the i'th bit of the keys.
+// At any given node at the i'th level, the left sub-tree includes all the keys with i'th bit set to zero
+// and the right sub-tree includes all the keys with i'th bit set to one.
+//
+//	               ┌──<1000>──┐
+//	               │          │
+//	         ┌──<0010>      <1001>──┐
+//	         │                      │
+//	   ┌──<0011>──┐               <1100>
+//	   │          │
+//	<0000>      <0011>
+//
+// For searching (or inserting) a key in a DST, we start from the root node.
+// At a given node at the i'th level, we compare the search key with the key in the node.
+// If keys are not equal, we look at the i'th bit of the search key;
+// If zero we continue the search with the left sub-tree, and if one we continue the search with the right sub-tree.
+//
+// To reduce the number of compares required, we introduce the binary trie.
+// A binary trie is binary tree with two kinds of nodes: internal nodes and leaf nodes.
+// Internals nodes are only for guiding the search and leaf nodes contain the keys.
+// Similar to digital search trees, the i'th level corresponds to the i'th bit of the keys.
+//
+//	                     ┌───────────[    ]───────────┐
+//	                     │                            │
+//	               ┌──[    ]                     ┌──[    ]──┐
+//	               │                             │          │
+//	         ┌──[    ]──┐                  ┌──[    ]      <1100>
+//	         │          │                  │
+//	   ┌──[    ]──┐   <0010>         ┌──[    ]──┐
+//	   │          │                  │          │
+//	<0000>      <0001>            <1000>      <1001>
+//
+// We can further optimize a binary trie and build a compressed binary trie.
+// To do so, we merge the internal nodes with only one child and add a bit position field to each internal node.
+// The bit position at a given internal node determines which i'th bit of the keys should be tested at that node.
+//
+//	               ┌────────[ 1  ]────────┐
+//	               │                      │
+//	         ┌──[  3 ]──┐            ┌──[ 2  ]──┐
+//	         │          │            │          │
+//	   ┌──[  4 ]──┐   <0010>   ┌──[  4 ]──┐   <1100>
+//	   │          │            │          │
+//	<0000>      <0001>      <1000>      <1001>
+//
+// We can finally derive a Patricia tree from a compressed binary trie.
+// To this end, we substitute every internal node with a Patricia node.
+// Since the number of internal nodes is one less than the number of leaf nodes, we add an extra Patricia node.
+// This extra Patricia node is the root of the tree, its bit position is always zero,
+// its left child points to the rest of the tree, and its right child is always nil.
+// We move keys from leaf nodes to Patricia nodes in such a way that
+// the bit number in Patricia nodes is equal to or less than the bit number in the parent node of the leaf node.
+// Pointers from internal nodes to leaf nodes become thread pointers in the Patricia tree.
+//
+//	.......................... ┌────────(0|1100)...
+//	:                        : │                  :
+//	:             ┌────────(1|0000)────────┐      :
+//	:             │                        │      :
+//	:      ┌──(3|0010)...            ┌──(2|1001)..:
+//	:      │      :.....:            │     :
+//	:..(4|0001)...            ...(4|1000)..:
+//	       :.....:            :.....:
 //
 // Decent implementations of Patricia tree can often outperform balanced binary trees, and even hash tables.
 // Patricia tree performs admirably when its bit-testing loops are well tuned.
@@ -55,12 +120,12 @@ func (t *patricia[V]) _isPatricia(prev, curr *patriciaNode[V], prefix *bitString
 		return false
 	}
 
-	if curr.bitPos <= prev.bitPos {
+	if curr.bp <= prev.bp {
 		return true
 	}
 
 	// Determine the new prefix for children
-	prefix = curr.key.Sub(1, curr.bitPos-1)
+	prefix = curr.key.Sub(1, curr.bp-1)
 
 	return t._isPatricia(curr, curr.left, prefix.Concat(zero)) &&
 		t._isPatricia(curr, curr.right, prefix.Concat(one))
@@ -106,12 +171,12 @@ func (t *patricia[V]) search(bitKey *bitString) *patriciaNode[V] {
 	// Always take the left child of the root
 	curr := t.root.left
 
-	for prev := t.root; curr.bitPos > prev.bitPos; {
+	for prev := t.root; curr.bp > prev.bp; {
 		prev = curr
-		if bitKey.Bit(curr.bitPos) == 0 {
-			curr = curr.left
-		} else {
+		if bitKey.Bit(curr.bp) {
 			curr = curr.right
+		} else {
+			curr = curr.left
 		}
 	}
 
@@ -120,45 +185,39 @@ func (t *patricia[V]) search(bitKey *bitString) *patriciaNode[V] {
 
 // remove removes a given node from the tree.
 //
-//	z is the node to delete (target)
-//	y is the node pointing to z with a thread (referrer)
-//	x is the parent node of y (referrer parent)
-//	p is the node pointing to z with a link (parent)
-func (t *patricia[V]) remove(z, y, x, p *patriciaNode[V]) {
-	if z == y { // Case 1: remove a leaf node
-		var c *patriciaNode[V]
-		if z != t.root && z.key.Bit(z.bitPos) == 0 {
-			c = z.right
-		} else {
-			c = z.left
-		}
+//	n is the node to delete (target)
+//	r is the node pointing to z with a thread (referrer)
+//	rp is the parent node of y (referrer parent)
+//	np is the node pointing to z with a link (parent)
+func (t *patricia[V]) remove(n, r, rp, np *patriciaNode[V]) {
+	var c *patriciaNode[V] // the other child of the referrer
+	if r == t.root || n.key.Bit(r.bp) {
+		c = r.left
+	} else {
+		c = r.right
+	}
 
-		if p == t.root || z.key.Bit(p.bitPos) == 0 {
-			p.left = c
+	if n == r { // Case 1: remove a leaf node
+		if np != t.root && n.key.Bit(np.bp) {
+			np.right = c
 		} else {
-			p.right = c
+			np.left = c
 		}
 	} else { // Case 2: remove a non-leaf node
-		var c *patriciaNode[V]
-		if y != t.root && z.key.Bit(y.bitPos) == 0 {
-			c = y.right
+		if rp != t.root && n.key.Bit(rp.bp) {
+			rp.right = c
 		} else {
-			c = y.left
+			rp.left = c
 		}
 
-		if x == t.root || z.key.Bit(x.bitPos) == 0 {
-			x.left = c
+		if np != t.root && n.key.Bit(np.bp) {
+			np.right = r
 		} else {
-			x.right = c
+			np.left = r
 		}
 
-		if p == t.root || z.key.Bit(p.bitPos) == 0 {
-			p.left = y
-		} else {
-			p.right = y
-		}
-
-		y.bitPos, y.left, y.right = z.bitPos, z.left, z.right
+		r.bp = n.bp
+		r.left, r.right = n.left, n.right
 	}
 
 	if t.size--; t.size == 0 {
@@ -181,7 +240,7 @@ func (t *patricia[V]) Height() int {
 }
 
 func (t *patricia[V]) _height(prev, curr *patriciaNode[V]) int {
-	if curr.bitPos <= prev.bitPos {
+	if curr.bp <= prev.bp {
 		return 0
 	}
 
@@ -195,46 +254,48 @@ func (t *patricia[V]) IsEmpty() bool {
 
 // Put adds a new key-value pair to Patricia tree.
 func (t *patricia[V]) Put(key string, val V) {
-	bitKey := newBitString(key)
+	t._put(newBitString(key), val)
+}
 
+func (t *patricia[V]) _put(key *bitString, val V) {
 	if t.root == nil {
 		t.root = &patriciaNode[V]{
-			bitPos: 0,
-			key:    bitKey,
-			val:    val,
+			bp:  0,
+			key: key,
+			val: val,
 		}
 		t.root.left = t.root
 		t.size = 1
 		return
 	}
 
-	last := t.search(bitKey)
-	if last.key.Equals(bitKey) {
+	last := t.search(key)
+	if last.key.Equals(key) {
 		last.val = val // Update value for the existing key
 		return
 	}
 
-	diffPos := last.key.DiffPos(bitKey)
+	diffPos := last.key.DiffPos(key)
 	prev, next := t.root, t.root.left
-	for next.bitPos > prev.bitPos && next.bitPos < diffPos {
+	for next.bp > prev.bp && next.bp < diffPos {
 		prev = next
-		if bitKey.Bit(next.bitPos) == 0 {
-			next = next.left
-		} else {
+		if key.Bit(next.bp) {
 			next = next.right
+		} else {
+			next = next.left
 		}
 	}
 
 	new := &patriciaNode[V]{
-		bitPos: diffPos,
-		key:    bitKey,
-		val:    val,
+		bp:  diffPos,
+		key: key,
+		val: val,
 	}
 
-	if bitKey.Bit(diffPos) == 0 {
-		new.left, new.right = new, next
-	} else {
+	if key.Bit(diffPos) {
 		new.left, new.right = next, new
+	} else {
+		new.left, new.right = new, next
 	}
 
 	if prev.left == next {
@@ -248,8 +309,11 @@ func (t *patricia[V]) Put(key string, val V) {
 
 // Get returns the value of a given key in Patricia tree.
 func (t *patricia[V]) Get(key string) (V, bool) {
-	bitKey := newBitString(key)
-	if n := t.search(bitKey); n != nil && n.key.Equals(bitKey) {
+	return t._get(newBitString(key))
+}
+
+func (t *patricia[V]) _get(key *bitString) (V, bool) {
+	if n := t.search(key); n != nil && n.key.Equals(key) {
 		return n.val, true
 	}
 
@@ -259,43 +323,45 @@ func (t *patricia[V]) Get(key string) (V, bool) {
 
 // Delete removes a key-value pair from Patricia tree.
 func (t *patricia[V]) Delete(key string) (V, bool) {
-	bitKey := newBitString(key)
+	return t._delete(newBitString(key))
+}
 
+func (t *patricia[V]) _delete(key *bitString) (V, bool) {
 	if t.root == nil {
 		var zeroV V
 		return zeroV, false
 	}
 
 	// Find the node to delete (z) along side its two preceding nodes (x and y)
-	var x, y, z *patriciaNode[V]
-	for x, y, z = t.root, t.root, t.root.left; y.bitPos < z.bitPos; {
-		x, y = y, z
-		if bitKey.Bit(z.bitPos) == 0 {
-			z = z.left
+	var rp, r, n *patriciaNode[V]
+	for rp, r, n = t.root, t.root, t.root.left; r.bp < n.bp; {
+		rp, r = r, n
+		if key.Bit(n.bp) {
+			n = n.right
 		} else {
-			z = z.right
+			n = n.left
 		}
 	}
 
-	if !z.key.Equals(bitKey) {
+	if !n.key.Equals(key) {
 		var zeroV V
 		return zeroV, false
 	}
 
 	// Find the node to delete (q) along side its parent node (p)
-	var p, q *patriciaNode[V]
-	for p, q = t.root, t.root.left; q != z; {
-		p = q
-		if bitKey.Bit(q.bitPos) == 0 {
-			q = q.left
+	var np, m *patriciaNode[V]
+	for np, m = t.root, t.root.left; m != n; {
+		np = m
+		if key.Bit(m.bp) {
+			m = m.right
 		} else {
-			q = q.right
+			m = m.left
 		}
 	}
 
-	t.remove(z, y, x, p)
+	t.remove(n, r, rp, np)
 
-	return z.val, true
+	return n.val, true
 }
 
 // KeyValues returns all key-value pairs in Patricia tree.
@@ -320,7 +386,7 @@ func (t *patricia[V]) _min(n *patriciaNode[V]) (string, V, bool) {
 		return "", zeroV, false
 	}
 
-	if n.left.bitPos <= n.bitPos {
+	if n.left.bp <= n.bp {
 		return n.left.key.String(), n.left.val, true
 	}
 
@@ -345,7 +411,7 @@ func (t *patricia[V]) _max(n *patriciaNode[V]) (string, V, bool) {
 		next = n.right
 	}
 
-	if next.bitPos <= n.bitPos {
+	if next.bp <= n.bp {
 		return next.key.String(), next.val, true
 	}
 
@@ -394,20 +460,20 @@ func (t *patricia[V]) DeleteMin() (string, V, bool) {
 	}
 
 	// Find the node to delete (z) along side its two preceding nodes (x and y).
-	var x, y, z *patriciaNode[V]
-	for x, y, z = t.root, t.root, t.root.left; y.bitPos < z.bitPos; {
-		x, y, z = y, z, z.left
+	var rp, r, n *patriciaNode[V]
+	for rp, r, n = t.root, t.root, t.root.left; r.bp < n.bp; {
+		rp, r, n = r, n, n.left
 	}
 
 	// Find the node to delete (q) along side its parent node (p).
-	var p, q *patriciaNode[V]
-	for p, q = t.root, t.root.left; q != z; {
-		p, q = q, q.left
+	var np, m *patriciaNode[V]
+	for np, m = t.root, t.root.left; m != n; {
+		np, m = m, m.left
 	}
 
-	t.remove(z, y, x, p)
+	t.remove(n, r, rp, np)
 
-	return z.key.String(), z.val, true
+	return n.key.String(), n.val, true
 }
 
 // DeleteMax removes the largest key and associated value from Patricia tree.
@@ -418,20 +484,20 @@ func (t *patricia[V]) DeleteMax() (string, V, bool) {
 	}
 
 	// Find the node to delete (z) along side its two preceding nodes (x and y).
-	var x, y, z *patriciaNode[V]
-	for x, y, z = t.root, t.root, t.root.left; y.bitPos < z.bitPos; {
-		x, y, z = y, z, z.right
+	var rp, r, n *patriciaNode[V]
+	for rp, r, n = t.root, t.root, t.root.left; r.bp < n.bp; {
+		rp, r, n = r, n, n.right
 	}
 
 	// Find the node to delete (q) along side its parent node (p).
-	var p, q *patriciaNode[V]
-	for p, q = t.root, t.root.left; q != z; {
-		p, q = q, q.right
+	var np, m *patriciaNode[V]
+	for np, m = t.root, t.root.left; m != n; {
+		np, m = m, m.right
 	}
 
-	t.remove(z, y, x, p)
+	t.remove(n, r, rp, np)
 
-	return z.key.String(), z.val, true
+	return n.key.String(), n.val, true
 }
 
 // Select returns the k-th smallest key in Patricia tree.
@@ -526,8 +592,8 @@ func (t *patricia[V]) _traverse(n *patriciaNode[V], order TraversalOrder, visit 
 		return true
 	}
 
-	isLeftThread := n.left.bitPos <= n.bitPos                  // left links are never nil
-	isRightThread := n != t.root && n.right.bitPos <= n.bitPos // Only the root node has a nil right
+	isLeftThread := n.left.bp <= n.bp                  // left links are never nil
+	isRightThread := n != t.root && n.right.bp <= n.bp // Only the root node has a nil right
 
 	switch order {
 	case VLR:
@@ -600,7 +666,7 @@ func (t *patricia[V]) Graphviz() string {
 					graphviz.NewComplexField(
 						graphviz.NewRecord(
 							graphviz.NewSimpleField("l", "•"),
-							graphviz.NewSimpleField("", fmt.Sprintf("%d", n.bitPos)),
+							graphviz.NewSimpleField("", fmt.Sprintf("%d", n.bp)),
 							graphviz.NewSimpleField("", n.key.BitString()),
 							graphviz.NewSimpleField("r", "•"),
 						),
@@ -617,7 +683,7 @@ func (t *patricia[V]) Graphviz() string {
 		var color graphviz.Color
 		var style graphviz.Style
 
-		if n.left.bitPos > n.bitPos {
+		if n.left.bp > n.bp {
 			color = graphviz.ColorBlue
 		} else {
 			color = graphviz.ColorRed
@@ -633,7 +699,7 @@ func (t *patricia[V]) Graphviz() string {
 			var color graphviz.Color
 			var style graphviz.Style
 
-			if n.right.bitPos > n.bitPos {
+			if n.right.bp > n.bp {
 				color = graphviz.ColorBlue
 			} else {
 				color = graphviz.ColorRed

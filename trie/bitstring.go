@@ -37,7 +37,16 @@ func (b *bitString) Len() int {
 }
 
 func (b *bitString) String() string {
-	return string(b.bits)
+	vals := make([]string, len(b.bits))
+	for i, v := range b.bits {
+		if j := (i + 1) * 8; j <= b.len {
+			vals[i] = string(v)
+		} else { // last partial byte
+			vals[i] = fmt.Sprintf("0x%x", string(v>>(j-b.len)))
+		}
+	}
+
+	return strings.Join(vals, "")
 }
 
 func (b *bitString) BitString() string {
@@ -45,7 +54,7 @@ func (b *bitString) BitString() string {
 	for i, v := range b.bits {
 		if j := (i + 1) * 8; j <= b.len {
 			bits[i] = fmt.Sprintf("%08b", v)
-		} else { // last byte
+		} else { // last partial byte
 			bits[i] = fmt.Sprintf(
 				fmt.Sprintf("%%0%db", b.len-j+8),
 				v>>(j-b.len),
@@ -57,23 +66,14 @@ func (b *bitString) BitString() string {
 }
 
 // Bit returns a given bit by its position (position starts from one).
-func (b *bitString) Bit(pos int) int {
-	if pos < 1 {
-		return -1
-	}
-
+func (b *bitString) Bit(pos int) bool {
 	if pos > b.len {
-		return 0
+		return false
 	}
 
 	i := pos - 1
 	var mask byte = 0x80 >> (i % 8)
-
-	if b.bits[i/8]&mask == 0 {
-		return 0
-	} else {
-		return 1
-	}
+	return b.bits[i/8]&mask != 0
 }
 
 // DiffPos compares two bitstrings and returns the position of the leftmost bit at which they differ.
@@ -127,7 +127,7 @@ func (b *bitString) Equals(c *bitString) bool {
 // Sub returns a sub-bitstring by start and end positions.
 func (b *bitString) Sub(start, end int) *bitString {
 	if start < 1 || end > b.len || start > end {
-		return nil
+		return empty
 	}
 
 	var mask, bb byte
