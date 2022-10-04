@@ -17,6 +17,7 @@ type (
 		expectedSize    int
 		expectedHeight  int
 		expectedIsEmpty bool
+		expectedKeyVals []KeyValue[K, V]
 	}
 
 	orderedSymbolTableTest[K, V any] struct {
@@ -51,6 +52,7 @@ type (
 		rangeKeyHi                 string
 		expectedRangeSize          int
 		expectedRange              []KeyValue[K, V]
+		expectedKeyVals            []KeyValue[K, V]
 		expectedVLRTraverse        []KeyValue[K, V]
 		expectedVRLTraverse        []KeyValue[K, V]
 		expectedLVRTraverse        []KeyValue[K, V]
@@ -74,6 +76,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			keyVals:         []KeyValue[string, int]{},
 			expectedSize:    0,
 			expectedIsEmpty: true,
+			expectedKeyVals: []KeyValue[string, int]{},
 		},
 	}
 }
@@ -120,6 +123,11 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"B", 2},
 				{"C", 3},
 			},
+			expectedKeyVals: []KeyValue[string, int]{
+				{"A", 1},
+				{"B", 2},
+				{"C", 3},
+			},
 		},
 		{
 			name:   "ABCDE",
@@ -160,6 +168,13 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"B", 2},
 				{"C", 3},
 				{"D", 4},
+			},
+			expectedKeyVals: []KeyValue[string, int]{
+				{"A", 1},
+				{"B", 2},
+				{"C", 3},
+				{"D", 4},
+				{"E", 5},
 			},
 		},
 		{
@@ -206,6 +221,15 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"M", 13},
 				{"P", 16},
 			},
+			expectedKeyVals: []KeyValue[string, int]{
+				{"A", 1},
+				{"D", 4},
+				{"G", 7},
+				{"J", 10},
+				{"M", 13},
+				{"P", 16},
+				{"S", 19},
+			},
 		},
 		{
 			name:   "Words",
@@ -245,10 +269,19 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			rangeKeyHi:         "c",
 			expectedRangeSize:  4,
 			expectedRange: []KeyValue[string, int]{
-				{"box", 2},
 				{"baby", 5},
-				{"band", 11},
 				{"balloon", 17},
+				{"band", 11},
+				{"box", 2},
+			},
+			expectedKeyVals: []KeyValue[string, int]{
+				{"baby", 5},
+				{"balloon", 17},
+				{"band", 11},
+				{"box", 2},
+				{"dad", 3},
+				{"dance", 13},
+				{"dome", 7},
 			},
 		},
 	}
@@ -378,26 +411,10 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			assert.Equal(t, test.expectedRangeSize, ost.RangeSize(test.rangeKeyLo, test.rangeKeyHi))
 
 			kvs = ost.Range(test.rangeKeyLo, test.rangeKeyHi)
-			for _, kv := range kvs { // Soundness
-				assert.Contains(t, test.expectedRange, kv)
-			}
-			for _, kv := range test.expectedRange { // Completeness
-				assert.Contains(t, kvs, kv)
-			}
-			for i := 0; i < len(kvs)-1; i++ { // Sorted Ascending
-				assert.Equal(t, -1, test.cmpKey(kvs[i].key, kvs[i+1].key))
-			}
+			assert.Equal(t, test.expectedRange, kvs)
 
 			kvs = ost.KeyValues()
-			for _, kv := range kvs { // Soundness
-				assert.Contains(t, test.keyVals, kv)
-			}
-			for _, kv := range test.keyVals { // Completeness
-				assert.Contains(t, kvs, kv)
-			}
-			for i := 0; i < len(kvs)-1; i++ { // Sorted Ascending
-				assert.Equal(t, -1, test.cmpKey(kvs[i].key, kvs[i+1].key))
-			}
+			assert.Equal(t, test.expectedKeyVals, kvs)
 
 			// VLR Traversal
 			kvs = []KeyValue[string, int]{}
