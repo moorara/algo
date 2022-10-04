@@ -83,7 +83,7 @@ func runDeleteBenchmark(b *testing.B, trie Trie[int]) {
 	}
 }
 
-func BenchmarkOrderedSymbolTable_Put(b *testing.B) {
+func BenchmarkTrie_Put(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	b.Run("BinaryTrie.Put", func(b *testing.B) {
@@ -91,15 +91,13 @@ func BenchmarkOrderedSymbolTable_Put(b *testing.B) {
 		runPutBenchmark(b, trie)
 	})
 
-	// TODO:
-
 	b.Run("Patricia.Put", func(b *testing.B) {
 		trie := NewPatricia[int]()
 		runPutBenchmark(b, trie)
 	})
 }
 
-func BenchmarkOrderedSymbolTable_Get(b *testing.B) {
+func BenchmarkTrie_Get(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	b.Run("BinaryTrie.Get", func(b *testing.B) {
@@ -107,23 +105,19 @@ func BenchmarkOrderedSymbolTable_Get(b *testing.B) {
 		runGetBenchmark(b, trie)
 	})
 
-	// TODO:
-
 	b.Run("Patricia.Get", func(b *testing.B) {
 		trie := NewPatricia[int]()
 		runGetBenchmark(b, trie)
 	})
 }
 
-func BenchmarkOrderedSymbolTable_Delete(b *testing.B) {
+func BenchmarkTrie_Delete(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	b.Run("BinaryTrie.Delete", func(b *testing.B) {
 		trie := NewBinary[int]()
 		runDeleteBenchmark(b, trie)
 	})
-
-	// TODO:
 
 	b.Run("Patricia.Delete", func(b *testing.B) {
 		trie := NewPatricia[int]()

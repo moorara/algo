@@ -50,7 +50,7 @@ type patricia[V any] struct {
 // If zero we continue the search with the left sub-tree, and if one we continue the search with the right sub-tree.
 //
 // To reduce the number of compares required, we introduce the binary trie.
-// A binary trie is binary tree with two kinds of nodes: internal nodes and leaf nodes.
+// A binary trie, in this context, is a binary tree with two kinds of nodes: internal nodes and leaf nodes.
 // Internals nodes are only for guiding the search and leaf nodes contain the keys.
 // Similar to digital search trees, the i'th level corresponds to the i'th bit of the keys.
 //
@@ -214,6 +214,10 @@ func (t *patricia[V]) remove(n, r, rp, np *patriciaNode[V]) {
 			np.right = r
 		} else {
 			np.left = r
+		}
+
+		if n == t.root {
+			t.root = np
 		}
 
 		r.bp = n.bp
@@ -717,11 +721,6 @@ func (t *patricia[V]) Graphviz() string {
 
 // Match returns all the keys and associated values in Patricia tree that match s where * matches any character.
 func (t *patricia[V]) Match(pattern string) []KeyValue[V] {
-	// TODO:
-	return nil
-}
-
-func (t *patricia[V]) _match(pattern string) []KeyValue[V] {
 	// TODO:
 	return nil
 }

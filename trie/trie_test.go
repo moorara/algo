@@ -40,6 +40,7 @@ type trieTest[V any] struct {
 	rangeKeyHi                 string
 	expectedRangeSize          int
 	expectedRange              []KeyValue[V]
+	expectedKeyVals            []KeyValue[V]
 	expectedVLRTraverse        []KeyValue[V]
 	expectedVRLTraverse        []KeyValue[V]
 	expectedLVRTraverse        []KeyValue[V]
@@ -49,6 +50,8 @@ type trieTest[V any] struct {
 	expectedAscendingTraverse  []KeyValue[V]
 	expectedDescendingTraverse []KeyValue[V]
 	expectedDotCode            string
+	matchPattern               string
+	expectedMatch              []KeyValue[V]
 }
 
 func getTrieTests() []trieTest[int] {
@@ -93,6 +96,11 @@ func getTrieTests() []trieTest[int] {
 				{"B", 2},
 				{"C", 3},
 			},
+			expectedKeyVals: []KeyValue[int]{
+				{"A", 1},
+				{"B", 2},
+				{"C", 3},
+			},
 		},
 		{
 			name:   "ABCDE",
@@ -133,6 +141,13 @@ func getTrieTests() []trieTest[int] {
 				{"B", 2},
 				{"C", 3},
 				{"D", 4},
+			},
+			expectedKeyVals: []KeyValue[int]{
+				{"A", 1},
+				{"B", 2},
+				{"C", 3},
+				{"D", 4},
+				{"E", 5},
 			},
 		},
 		{
@@ -179,6 +194,15 @@ func getTrieTests() []trieTest[int] {
 				{"M", 13},
 				{"P", 16},
 			},
+			expectedKeyVals: []KeyValue[int]{
+				{"A", 1},
+				{"D", 4},
+				{"G", 7},
+				{"J", 10},
+				{"M", 13},
+				{"P", 16},
+				{"S", 19},
+			},
 		},
 		{
 			name:   "Words",
@@ -218,10 +242,19 @@ func getTrieTests() []trieTest[int] {
 			rangeKeyHi:         "c",
 			expectedRangeSize:  4,
 			expectedRange: []KeyValue[int]{
-				{"box", 2},
 				{"baby", 5},
-				{"band", 11},
 				{"balloon", 17},
+				{"band", 11},
+				{"box", 2},
+			},
+			expectedKeyVals: []KeyValue[int]{
+				{"baby", 5},
+				{"balloon", 17},
+				{"band", 11},
+				{"box", 2},
+				{"dad", 3},
+				{"dance", 13},
+				{"dome", 7},
 			},
 		},
 	}
@@ -332,26 +365,10 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 			assert.Equal(t, test.expectedRangeSize, trie.RangeSize(test.rangeKeyLo, test.rangeKeyHi))
 
 			kvs = trie.Range(test.rangeKeyLo, test.rangeKeyHi)
-			for _, kv := range kvs { // Soundness
-				assert.Contains(t, test.expectedRange, kv)
-			}
-			for _, kv := range test.expectedRange { // Completeness
-				assert.Contains(t, kvs, kv)
-			}
-			for i := 0; i < len(kvs)-1; i++ { // Sorted Ascending
-				assert.Equal(t, -1, test.cmpKey(kvs[i].key, kvs[i+1].key))
-			}
+			assert.Equal(t, test.expectedRange, kvs)
 
 			kvs = trie.KeyValues()
-			for _, kv := range kvs { // Soundness
-				assert.Contains(t, test.keyVals, kv)
-			}
-			for _, kv := range test.keyVals { // Completeness
-				assert.Contains(t, kvs, kv)
-			}
-			for i := 0; i < len(kvs)-1; i++ { // Sorted Ascending
-				assert.Equal(t, -1, test.cmpKey(kvs[i].key, kvs[i+1].key))
-			}
+			assert.Equal(t, test.expectedKeyVals, kvs)
 
 			// VLR Traversal
 			kvs = []KeyValue[int]{}

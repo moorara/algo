@@ -182,9 +182,9 @@ func (t *binary[V]) _get(n *binaryNode[V], key string) (V, bool) {
 			return n.val, true
 		}
 		return t._get(n.left, key[1:])
-	} else {
-		return t._get(n.right, key)
 	}
+
+	return t._get(n.right, key)
 }
 
 // Delete removes a key-value pair from Trie tree.
@@ -506,11 +506,6 @@ func (t *binary[V]) Graphviz() string {
 
 // Match returns all the keys and associated values in Trie tree that match s where * matches any character.
 func (t *binary[V]) Match(pattern string) []KeyValue[V] {
-	// TODO:
-	return nil
-}
-
-func (t *binary[V]) _match(pattern string) []KeyValue[V] {
 	// TODO:
 	return nil
 }
