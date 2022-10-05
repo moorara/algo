@@ -631,16 +631,16 @@ func (t *patricia[V]) _traverse(n *patriciaNode[V], order TraversalOrder, visit 
 			visit(n)
 
 	case Ascending:
-		return (!isLeftThread || visit(n.left)) &&
-			(isLeftThread || t._traverse(n.left, order, visit)) &&
-			(!isRightThread || visit(n.right)) &&
-			(isRightThread || t._traverse(n.right, order, visit))
+		return (!isLeftThread || visit(n.left)) && // visit the left child only if the left link is threaded (leaf node)
+			(isLeftThread || t._traverse(n.left, order, visit)) && // visit the left sub-tree if the left link is not threaded (internal node)
+			(!isRightThread || visit(n.right)) && // visit the right child only if the right link is threaded (leaf node)
+			(isRightThread || t._traverse(n.right, order, visit)) // visit the right sub-tree if the right link is not threaded (internal node)
 
 	case Descending:
-		return (!isRightThread || visit(n.right)) &&
-			(isRightThread || t._traverse(n.right, order, visit)) &&
-			(!isLeftThread || visit(n.left)) &&
-			(isLeftThread || t._traverse(n.left, order, visit))
+		return (!isRightThread || visit(n.right)) && // visit the right child only if the right link is threaded (leaf node)
+			(isRightThread || t._traverse(n.right, order, visit)) && // visit the right sub-tree if the right link is not threaded (internal node)
+			(!isLeftThread || visit(n.left)) && // visit the left child only if the left link is threaded (leaf node)
+			(isLeftThread || t._traverse(n.left, order, visit)) // visit the left sub-tree if the left link is not threaded (internal node)
 
 	default:
 		return false
@@ -722,25 +722,58 @@ func (t *patricia[V]) Graphviz() string {
 // Match returns all the keys and associated values in Patricia tree
 // that match the given pattern in which * matches any character.
 func (t *patricia[V]) Match(pattern string) []KeyValue[V] {
-	// TODO:
-	return nil
+	kvs := []KeyValue[V]{}
+	t._match(t.root, t.root.left, newBitPattern(pattern), func(n *patriciaNode[V]) {
+		kvs = append(kvs, KeyValue[V]{n.key.String(), n.val})
+	})
+
+	return kvs
 }
 
-func (t *patricia[V]) _match(n *patriciaNode[V], pattern string) []KeyValue[V] {
-	// TODO:
-	return nil
+func (t *patricia[V]) _match(prev, curr *patriciaNode[V], pattern *bitPattern, visit func(n *patriciaNode[V])) {
+	if prev.bp >= curr.bp {
+		if curr.key.Len() == pattern.Len() {
+			visit(curr)
+		}
+		return
+	}
+
+	switch pattern.Bit(curr.bp) {
+	case '0':
+		t._match(curr, curr.left, pattern, visit)
+	case '1':
+		t._match(curr, curr.right, pattern, visit)
+	case '*':
+		t._match(curr, curr.left, pattern, visit)
+		t._match(curr, curr.right, pattern, visit)
+	}
 }
 
 // WithPrefix returns all the keys and associated values in Patricia tree with the given prefix.
 func (t *patricia[V]) WithPrefix(key string) []KeyValue[V] {
-	// TODO:
-	return nil
+	kvs := []KeyValue[V]{}
+	bitKey := newBitString(key)
+
+	if n := t.search(bitKey); n != nil && n.key.Equals(bitKey) {
+		kvs = append(kvs, KeyValue[V]{n.key.String(), n.val})
+	} else {
+		t._traverse(n, Ascending, func(n *patriciaNode[V]) bool {
+			kvs = append(kvs, KeyValue[V]{n.key.String(), n.val})
+			return true
+		})
+	}
+
+	return kvs
 }
 
 // LongestPrefix returns the key and associated value in Patricia tree
 // that is the longest prefix of the given key.
 func (t *patricia[V]) LongestPrefixOf(key string) (string, V, bool) {
-	// TODO:
+	bitKey := newBitString(key)
+	if n := t.search(bitKey); n != nil && bitKey.HasPrefix(n.key) {
+		return n.key.String(), n.val, true
+	}
+
 	var zeroV V
 	return "", zeroV, false
 }

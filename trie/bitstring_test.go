@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBitString(t *testing.T) {
+func TestNewBitString(t *testing.T) {
 	tests := []struct {
 		name string
 		s    string
