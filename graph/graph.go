@@ -1,10 +1,11 @@
 // Package graph implements graph data structures and algorithms.
 //
 // There are four different type of graphs implementd:
-//   Undirected Graph
-//   Directed Graph
-//   Weighted Undirected Graph
-//   Weighted Directed Graph
+//
+//	Undirected Graph
+//	Directed Graph
+//	Weighted Undirected Graph
+//	Weighted Directed Graph
 package graph
 
 import (
@@ -283,9 +284,10 @@ func (t *Topological) Rank(v int) (int, bool) {
 
 // MinimumSpanningTree is used for calculating the minimum spanning trees (forest) of a weighted undirected graph.
 // Given an edge-weighted undirected graph G with positive edge weights, an MST of G is a sub-graph T that is:
-//   Tree: connected and acyclic
-//   Spanning: includes all of the vertices
-//   Minimum: sum of the edge wights are minimum
+//
+//	Tree: connected and acyclic
+//	Spanning: includes all of the vertices
+//	Minimum: sum of the edge wights are minimum
 type MinimumSpanningTree struct {
 	visited []bool                       // visited[v] = true if v on tree, false otherwise
 	edgeTo  []UndirectedEdge             // edgeTo[v] = shortest edge from tree vertex to non-tree vertex
