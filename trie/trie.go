@@ -29,8 +29,8 @@ type (
 
 	// KeyValue represents a key-value pair.
 	KeyValue[V any] struct {
-		key string
-		val V
+		Key string
+		Val V
 	}
 )
 
@@ -60,5 +60,5 @@ type Trie[V any] interface {
 
 	Match(string) []KeyValue[V]
 	WithPrefix(string) []KeyValue[V]
-	LongestPrefix(string) (string, V, bool)
+	LongestPrefixOf(string) (string, V, bool)
 }

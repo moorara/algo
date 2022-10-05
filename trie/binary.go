@@ -72,7 +72,7 @@ func (t *binary[V]) _isTrie(n *binaryNode[V]) bool {
 
 func (t *binary[V]) _isSizeOK() bool {
 	size := 0
-	t._traverse("", t.root.left, VLR, func(_ string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", VLR, func(_ string, n *binaryNode[V]) bool {
 		if n.term {
 			size++
 		}
@@ -91,8 +91,8 @@ func (t *binary[V]) _isRankOK() bool {
 	}
 
 	for _, kv := range t.KeyValues() {
-		k, _, _ := t.Select(t.Rank(kv.key))
-		if kv.key != k {
+		k, _, _ := t.Select(t.Rank(kv.Key))
+		if kv.Key != k {
 			return false
 		}
 	}
@@ -172,13 +172,13 @@ func (t *binary[V]) Get(key string) (V, bool) {
 }
 
 func (t *binary[V]) _get(n *binaryNode[V], key string) (V, bool) {
-	if n == nil || n.char > key[0] { // right links are sorted
+	if n == nil || len(key) == 0 || n.char > key[0] { // right links are sorted
 		var zeroV V
 		return zeroV, false
 	}
 
 	if n.char == key[0] {
-		if len(key) == 1 && n.term {
+		if n.term && len(key) == 1 {
 			return n.val, true
 		}
 		return t._get(n.left, key[1:])
@@ -227,7 +227,7 @@ func (t *binary[V]) _delete(n *binaryNode[V], key string) (*binaryNode[V], V, bo
 // KeyValues returns all key-value pairs in Trie tree.
 func (t *binary[V]) KeyValues() []KeyValue[V] {
 	kvs := make([]KeyValue[V], 0, t.Size())
-	t._traverse("", t.root.left, Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			kvs = append(kvs, KeyValue[V]{k, n.val})
 		}
@@ -243,7 +243,7 @@ func (t *binary[V]) Min() (string, V, bool) {
 	var val V
 	var ok bool
 
-	t._traverse("", t.root.left, Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			key, val, ok = k, n.val, true
 			return false
@@ -260,7 +260,7 @@ func (t *binary[V]) Max() (string, V, bool) {
 	var val V
 	var ok bool
 
-	t._traverse("", t.root.left, Descending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", Descending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			key, val, ok = k, n.val, true
 			return false
@@ -277,7 +277,7 @@ func (t *binary[V]) Floor(key string) (string, V, bool) {
 	var lastVal V
 	var ok bool
 
-	t._traverse("", t.root.left, Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if key < k {
 				return false
@@ -297,7 +297,7 @@ func (t *binary[V]) Ceiling(key string) (string, V, bool) {
 	var lastVal V
 	var ok bool
 
-	t._traverse("", t.root.left, Descending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", Descending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if k < key {
 				return false
@@ -350,7 +350,7 @@ func (t *binary[V]) Select(rank int) (string, V, bool) {
 	}
 
 	i := 0
-	t._traverse("", t.root.left, Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if i == rank {
 				lastKey, lastVal, ok = k, n.val, true
@@ -369,7 +369,7 @@ func (t *binary[V]) Select(rank int) (string, V, bool) {
 // Rank returns the number of keys in Trie tree less than key.
 func (t *binary[V]) Rank(key string) int {
 	i := 0
-	t._traverse("", t.root.left, Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if k == key {
 				return false
@@ -387,7 +387,7 @@ func (t *binary[V]) Rank(key string) int {
 // RangeSize returns the number of keys in Trie tree between two given keys.
 func (t *binary[V]) RangeSize(lo, hi string) int {
 	i := 0
-	t._traverse("", t.root.left, Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if lo <= k && k <= hi {
 				i++
@@ -405,7 +405,7 @@ func (t *binary[V]) RangeSize(lo, hi string) int {
 // Range returns all keys and associated values in Trie tree between two given keys.
 func (t *binary[V]) Range(lo, hi string) []KeyValue[V] {
 	kvs := []KeyValue[V]{}
-	t._traverse("", t.root.left, Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if lo <= k && k <= hi {
 				kvs = append(kvs, KeyValue[V]{k, n.val})
@@ -422,7 +422,7 @@ func (t *binary[V]) Range(lo, hi string) []KeyValue[V] {
 
 // Traverse is used for visiting all key-value pairs in Trie tree.
 func (t *binary[V]) Traverse(order TraversalOrder, visit VisitFunc[V]) {
-	t._traverse("", t.root, order, func(_ string, n *binaryNode[V]) bool {
+	t._traverse(t.root, "", order, func(_ string, n *binaryNode[V]) bool {
 		// Special case of empty string
 		if n == t.root {
 			return visit("", n.val)
@@ -431,7 +431,7 @@ func (t *binary[V]) Traverse(order TraversalOrder, visit VisitFunc[V]) {
 	})
 }
 
-func (t *binary[V]) _traverse(prefix string, n *binaryNode[V], order TraversalOrder, visit func(string, *binaryNode[V]) bool) bool {
+func (t *binary[V]) _traverse(n *binaryNode[V], prefix string, order TraversalOrder, visit func(string, *binaryNode[V]) bool) bool {
 	if n == nil {
 		return true
 	}
@@ -440,17 +440,17 @@ func (t *binary[V]) _traverse(prefix string, n *binaryNode[V], order TraversalOr
 
 	switch order {
 	case VLR, Ascending:
-		return visit(next, n) && t._traverse(next, n.left, order, visit) && t._traverse(prefix, n.right, order, visit)
+		return visit(next, n) && t._traverse(n.left, next, order, visit) && t._traverse(n.right, prefix, order, visit)
 	case VRL:
-		return visit(next, n) && t._traverse(prefix, n.right, order, visit) && t._traverse(next, n.left, order, visit)
+		return visit(next, n) && t._traverse(n.right, prefix, order, visit) && t._traverse(n.left, next, order, visit)
 	case LVR:
-		return t._traverse(next, n.left, order, visit) && visit(next, n) && t._traverse(prefix, n.right, order, visit)
+		return t._traverse(n.left, next, order, visit) && visit(next, n) && t._traverse(n.right, prefix, order, visit)
 	case RVL:
-		return t._traverse(prefix, n.right, order, visit) && visit(next, n) && t._traverse(next, n.left, order, visit)
+		return t._traverse(n.right, prefix, order, visit) && visit(next, n) && t._traverse(n.left, next, order, visit)
 	case LRV:
-		return t._traverse(next, n.left, order, visit) && t._traverse(prefix, n.right, order, visit) && visit(next, n)
+		return t._traverse(n.left, next, order, visit) && t._traverse(n.right, prefix, order, visit) && visit(next, n)
 	case RLV, Descending:
-		return t._traverse(prefix, n.right, order, visit) && t._traverse(next, n.left, order, visit) && visit(next, n)
+		return t._traverse(n.right, prefix, order, visit) && t._traverse(n.left, next, order, visit) && visit(next, n)
 	default:
 		return false
 	}
@@ -461,7 +461,7 @@ func (t *binary[V]) Graphviz() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*binaryNode[V]]int{}
-	t._traverse("", t.root, VLR, func(_ string, n *binaryNode[V]) bool {
+	t._traverse(t.root, "", VLR, func(_ string, n *binaryNode[V]) bool {
 		id++
 		nodeID[n] = id
 		return true
@@ -469,7 +469,7 @@ func (t *binary[V]) Graphviz() string {
 
 	graph := graphviz.NewGraph(true, true, false, "Binary Trie", "", "", "", graphviz.ShapeCircle)
 
-	t._traverse("", t.root, VLR, func(_ string, n *binaryNode[V]) bool {
+	t._traverse(t.root, "", VLR, func(_ string, n *binaryNode[V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 
 		var label string
@@ -504,21 +504,94 @@ func (t *binary[V]) Graphviz() string {
 	return graph.DotCode()
 }
 
-// Match returns all the keys and associated values in Trie tree that match s where * matches any character.
+// Match returns all the keys and associated values in Binary trie
+// that match the given pattern in which * matches any character.
 func (t *binary[V]) Match(pattern string) []KeyValue[V] {
-	// TODO:
-	return nil
+	kvs := []KeyValue[V]{}
+	t._match(t.root.left, "", pattern, func(k string, n *binaryNode[V]) {
+		kvs = append(kvs, KeyValue[V]{k, n.val})
+	})
+
+	return kvs
 }
 
-// WithPrefix returns all the keys and associated values in Trie tree having s as a prefix.
-func (t *binary[V]) WithPrefix(prefix string) []KeyValue[V] {
-	// TODO:
-	return nil
+func (t *binary[V]) _match(n *binaryNode[V], prefix, pattern string, visit func(string, *binaryNode[V])) {
+	if n == nil || len(pattern) == 0 {
+		return
+	}
+
+	if c := pattern[0]; c == '*' || c == n.char {
+		next := prefix + string(n.char)
+		if n.term && len(pattern) == 1 {
+			visit(next, n)
+		}
+		t._match(n.left, next, pattern[1:], visit)
+	}
+
+	if c := pattern[0]; c == '*' || c != n.char {
+		t._match(n.right, prefix, pattern, visit)
+	}
 }
 
-// LongestPrefix returns the longest key and associated value that is a prefix of s from Trie tree.
-func (t *binary[V]) LongestPrefix(prefix string) (string, V, bool) {
-	// TODO:
-	var zeroV V
-	return "", zeroV, false
+// WithPrefix returns all the keys and associated values in Binary trie with the given prefix.
+func (t *binary[V]) WithPrefix(key string) []KeyValue[V] {
+	kvs := []KeyValue[V]{}
+	t._withPrefix(t.root.left, "", key, func(k string, n *binaryNode[V]) {
+		kvs = append(kvs, KeyValue[V]{k, n.val})
+	})
+
+	return kvs
+}
+
+func (t *binary[V]) _withPrefix(n *binaryNode[V], prefix, key string, visit func(string, *binaryNode[V])) {
+	if n == nil {
+		return
+	}
+
+	next := prefix + string(n.char)
+
+	if len(key) == 0 {
+		if n.term {
+			visit(next, n)
+		}
+		t._withPrefix(n.left, next, key, visit)
+		t._withPrefix(n.right, prefix, key, visit)
+	} else if key[0] == n.char {
+		if n.term && len(key) == 1 {
+			visit(next, n)
+		}
+		t._withPrefix(n.left, next, key[1:], visit)
+	} else {
+		t._withPrefix(n.right, prefix, key, visit)
+	}
+}
+
+// LongestPrefix returns the key and associated value in Binary trie
+// that is the longest prefix of the given key.
+func (t *binary[V]) LongestPrefixOf(key string) (string, V, bool) {
+	var lastKey string
+	var lastVal V
+	var lastOK bool
+
+	t._allPrefixOf(t.root.left, "", key, func(k string, n *binaryNode[V]) {
+		lastKey, lastVal, lastOK = k, n.val, true
+	})
+
+	return lastKey, lastVal, lastOK
+}
+
+func (t *binary[V]) _allPrefixOf(n *binaryNode[V], prefix, key string, visit func(string, *binaryNode[V])) {
+	if n == nil || len(key) == 0 {
+		return
+	}
+
+	if key[0] == n.char {
+		next := prefix + string(n.char)
+		if n.term {
+			visit(next, n)
+		}
+		t._allPrefixOf(n.left, next, key[1:], visit)
+	} else {
+		t._allPrefixOf(n.right, prefix, key, visit)
+	}
 }

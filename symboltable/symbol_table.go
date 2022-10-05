@@ -32,8 +32,8 @@ type (
 
 	// KeyValue represents a key-value pair.
 	KeyValue[K, V any] struct {
-		key K
-		val V
+		Key K
+		Val V
 	}
 )
 

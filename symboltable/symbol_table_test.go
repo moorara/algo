@@ -352,16 +352,16 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 		t.Run("AfterPut", func(t *testing.T) {
 			// Put
 			for _, kv := range test.keyVals {
-				ost.Put(kv.key, kv.val)
-				ost.Put(kv.key, kv.val) // Update existing key-value
+				ost.Put(kv.Key, kv.Val)
+				ost.Put(kv.Key, kv.Val) // Update existing key-value
 				assert.True(t, ost.verify())
 			}
 
 			// Get
 			for _, expected := range test.keyVals {
-				val, ok := ost.Get(expected.key)
+				val, ok := ost.Get(expected.Key)
 				assert.True(t, ok)
-				assert.Equal(t, expected.val, val)
+				assert.Equal(t, expected.Val, val)
 			}
 
 			assert.Equal(t, test.expectedSize, ost.Size())
@@ -484,9 +484,9 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			assert.Equal(t, test.expectedDotCode, ost.Graphviz())
 
 			for _, expected := range test.keyVals {
-				val, ok := ost.Delete(expected.key)
+				val, ok := ost.Delete(expected.Key)
 				assert.True(t, ok)
-				assert.Equal(t, expected.val, val)
+				assert.Equal(t, expected.Val, val)
 				assert.True(t, ost.verify())
 			}
 		})

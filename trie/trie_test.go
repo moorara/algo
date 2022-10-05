@@ -4,14 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/moorara/algo/common"
 )
 
 type trieTest[V any] struct {
 	name                       string
 	symbolTable                string
-	cmpKey                     common.CompareFunc[string]
 	keyVals                    []KeyValue[V]
 	expectedSize               int
 	expectedHeight             int
@@ -52,15 +49,18 @@ type trieTest[V any] struct {
 	expectedDotCode            string
 	matchPattern               string
 	expectedMatch              []KeyValue[V]
+	withPrefixKey              string
+	expectedWithPrefix         []KeyValue[V]
+	longestPrefixOfKey         string
+	expectedLongestPrefixOfKey string
+	expectedLongestPrefixOfVal V
+	expectedLongestPrefixOfOK  bool
 }
 
 func getTrieTests() []trieTest[int] {
-	cmpKey := common.NewCompareFunc[string]()
-
 	return []trieTest[int]{
 		{
-			name:   "ABC",
-			cmpKey: cmpKey,
+			name: "ABC",
 			keyVals: []KeyValue[int]{
 				{"B", 2},
 				{"A", 1},
@@ -101,10 +101,23 @@ func getTrieTests() []trieTest[int] {
 				{"B", 2},
 				{"C", 3},
 			},
+			matchPattern: "*",
+			expectedMatch: []KeyValue[int]{
+				{"A", 1},
+				{"B", 2},
+				{"C", 3},
+			},
+			withPrefixKey: "A",
+			expectedWithPrefix: []KeyValue[int]{
+				{"A", 1},
+			},
+			longestPrefixOfKey:         "F",
+			expectedLongestPrefixOfKey: "",
+			expectedLongestPrefixOfVal: 0,
+			expectedLongestPrefixOfOK:  false,
 		},
 		{
-			name:   "ABCDE",
-			cmpKey: cmpKey,
+			name: "ABCDE",
 			keyVals: []KeyValue[int]{
 				{"B", 2},
 				{"A", 1},
@@ -149,10 +162,25 @@ func getTrieTests() []trieTest[int] {
 				{"D", 4},
 				{"E", 5},
 			},
+			matchPattern: "*",
+			expectedMatch: []KeyValue[int]{
+				{"A", 1},
+				{"B", 2},
+				{"C", 3},
+				{"D", 4},
+				{"E", 5},
+			},
+			withPrefixKey: "C",
+			expectedWithPrefix: []KeyValue[int]{
+				{"C", 3},
+			},
+			longestPrefixOfKey:         "D",
+			expectedLongestPrefixOfKey: "D",
+			expectedLongestPrefixOfVal: 4,
+			expectedLongestPrefixOfOK:  true,
 		},
 		{
-			name:   "ADGJMPS",
-			cmpKey: cmpKey,
+			name: "ADGJMPS",
 			keyVals: []KeyValue[int]{
 				{"J", 10},
 				{"A", 1},
@@ -203,10 +231,27 @@ func getTrieTests() []trieTest[int] {
 				{"P", 16},
 				{"S", 19},
 			},
+			matchPattern: "*",
+			expectedMatch: []KeyValue[int]{
+				{"A", 1},
+				{"D", 4},
+				{"G", 7},
+				{"J", 10},
+				{"M", 13},
+				{"P", 16},
+				{"S", 19},
+			},
+			withPrefixKey: "M",
+			expectedWithPrefix: []KeyValue[int]{
+				{"M", 13},
+			},
+			longestPrefixOfKey:         "P",
+			expectedLongestPrefixOfKey: "P",
+			expectedLongestPrefixOfVal: 16,
+			expectedLongestPrefixOfOK:  true,
 		},
 		{
-			name:   "Words",
-			cmpKey: cmpKey,
+			name: "Words",
 			keyVals: []KeyValue[int]{
 				{"box", 2},
 				{"dad", 3},
@@ -256,6 +301,20 @@ func getTrieTests() []trieTest[int] {
 				{"dance", 13},
 				{"dome", 7},
 			},
+			matchPattern: "d***e",
+			expectedMatch: []KeyValue[int]{
+				{"dance", 13},
+			},
+			withPrefixKey: "ba",
+			expectedWithPrefix: []KeyValue[int]{
+				{"baby", 5},
+				{"balloon", 17},
+				{"band", 11},
+			},
+			longestPrefixOfKey:         "domestic",
+			expectedLongestPrefixOfKey: "dome",
+			expectedLongestPrefixOfVal: 7,
+			expectedLongestPrefixOfOK:  true,
 		},
 	}
 }
@@ -306,16 +365,16 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 		t.Run("AfterPut", func(t *testing.T) {
 			// Put
 			for _, kv := range test.keyVals {
-				trie.Put(kv.key, kv.val)
-				trie.Put(kv.key, kv.val) // Update existing key-value
+				trie.Put(kv.Key, kv.Val)
+				trie.Put(kv.Key, kv.Val) // Update existing key-value
 				assert.True(t, trie.verify())
 			}
 
 			// Get
 			for _, expected := range test.keyVals {
-				val, ok := trie.Get(expected.key)
+				val, ok := trie.Get(expected.Key)
 				assert.True(t, ok)
-				assert.Equal(t, expected.val, val)
+				assert.Equal(t, expected.Val, val)
 			}
 
 			assert.Equal(t, test.expectedSize, trie.Size())
@@ -437,10 +496,21 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 			// Graphviz dot language code
 			assert.Equal(t, test.expectedDotCode, trie.Graphviz())
 
+			kvs = trie.Match(test.matchPattern)
+			assert.Equal(t, test.expectedMatch, kvs)
+
+			kvs = trie.WithPrefix(test.withPrefixKey)
+			assert.Equal(t, test.expectedWithPrefix, kvs)
+
+			longestPrefixOfKey, longestPrefixVal, longestPrefixOK := trie.LongestPrefixOf(test.longestPrefixOfKey)
+			assert.Equal(t, test.expectedLongestPrefixOfKey, longestPrefixOfKey)
+			assert.Equal(t, test.expectedLongestPrefixOfVal, longestPrefixVal)
+			assert.Equal(t, test.expectedLongestPrefixOfOK, longestPrefixOK)
+
 			for _, expected := range test.keyVals {
-				val, ok := trie.Delete(expected.key)
+				val, ok := trie.Delete(expected.Key)
 				assert.True(t, ok)
-				assert.Equal(t, expected.val, val)
+				assert.Equal(t, expected.Val, val)
 				assert.True(t, trie.verify())
 			}
 		})

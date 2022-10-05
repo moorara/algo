@@ -84,8 +84,8 @@ func (t *avl[K, V]) _isRankOK() bool {
 	}
 
 	for _, kv := range t.KeyValues() {
-		k, _, _ := t.Select(t.Rank(kv.key))
-		if t.cmpKey(kv.key, k) != 0 {
+		k, _, _ := t.Select(t.Rank(kv.Key))
+		if t.cmpKey(kv.Key, k) != 0 {
 			return false
 		}
 	}

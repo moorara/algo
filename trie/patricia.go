@@ -153,8 +153,8 @@ func (t *patricia[V]) _isRankOK() bool {
 	}
 
 	for _, kv := range t.KeyValues() {
-		k, _, _ := t.Select(t.Rank(kv.key))
-		if kv.key != k {
+		k, _, _ := t.Select(t.Rank(kv.Key))
+		if kv.Key != k {
 			return false
 		}
 	}
@@ -719,20 +719,27 @@ func (t *patricia[V]) Graphviz() string {
 	return graph.DotCode()
 }
 
-// Match returns all the keys and associated values in Patricia tree that match s where * matches any character.
+// Match returns all the keys and associated values in Patricia tree
+// that match the given pattern in which * matches any character.
 func (t *patricia[V]) Match(pattern string) []KeyValue[V] {
 	// TODO:
 	return nil
 }
 
-// WithPrefix returns all the keys and associated values in Patricia tree having s as a prefix.
-func (t *patricia[V]) WithPrefix(prefix string) []KeyValue[V] {
+func (t *patricia[V]) _match(n *patriciaNode[V], pattern string) []KeyValue[V] {
 	// TODO:
 	return nil
 }
 
-// LongestPrefix returns the longest key and associated value that is a prefix of s from Patricia tree.
-func (t *patricia[V]) LongestPrefix(prefix string) (string, V, bool) {
+// WithPrefix returns all the keys and associated values in Patricia tree with the given prefix.
+func (t *patricia[V]) WithPrefix(key string) []KeyValue[V] {
+	// TODO:
+	return nil
+}
+
+// LongestPrefix returns the key and associated value in Patricia tree
+// that is the longest prefix of the given key.
+func (t *patricia[V]) LongestPrefixOf(key string) (string, V, bool) {
 	// TODO:
 	var zeroV V
 	return "", zeroV, false
