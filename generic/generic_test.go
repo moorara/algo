@@ -363,3 +363,117 @@ func TestNewCompareFunc(t *testing.T) {
 		assert.Equal(t, 1, cmp(20, 10))
 	})
 }
+
+func TestNewInvertedCompareFunc(t *testing.T) {
+	t.Run("string", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[string]()
+
+		assert.Equal(t, 1, cmp("aa", "ab"))
+		assert.Equal(t, 0, cmp("aa", "aa"))
+		assert.Equal(t, -1, cmp("ab", "aa"))
+	})
+
+	t.Run("float32", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[float32]()
+
+		assert.Equal(t, 1, cmp(1.1, 1.2))
+		assert.Equal(t, 0, cmp(1.1, 1.1))
+		assert.Equal(t, -1, cmp(2.1, 1.1))
+	})
+
+	t.Run("float64", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[float64]()
+
+		assert.Equal(t, 1, cmp(1.1, 1.2))
+		assert.Equal(t, 0, cmp(1.1, 1.1))
+		assert.Equal(t, -1, cmp(2.1, 1.1))
+	})
+
+	t.Run("int", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[int]()
+
+		assert.Equal(t, 1, cmp(10, 20))
+		assert.Equal(t, 0, cmp(10, 10))
+		assert.Equal(t, -1, cmp(20, 10))
+	})
+
+	t.Run("int8", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[int8]()
+
+		assert.Equal(t, 1, cmp(10, 20))
+		assert.Equal(t, 0, cmp(10, 10))
+		assert.Equal(t, -1, cmp(20, 10))
+	})
+
+	t.Run("int16", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[int16]()
+
+		assert.Equal(t, 1, cmp(10, 20))
+		assert.Equal(t, 0, cmp(10, 10))
+		assert.Equal(t, -1, cmp(20, 10))
+	})
+
+	t.Run("int32", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[int32]()
+
+		assert.Equal(t, 1, cmp(10, 20))
+		assert.Equal(t, 0, cmp(10, 10))
+		assert.Equal(t, -1, cmp(20, 10))
+	})
+
+	t.Run("int64", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[int64]()
+
+		assert.Equal(t, 1, cmp(10, 20))
+		assert.Equal(t, 0, cmp(10, 10))
+		assert.Equal(t, -1, cmp(20, 10))
+	})
+
+	t.Run("uint", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[uint]()
+
+		assert.Equal(t, 1, cmp(10, 20))
+		assert.Equal(t, 0, cmp(10, 10))
+		assert.Equal(t, -1, cmp(20, 10))
+	})
+
+	t.Run("uint8", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[uint8]()
+
+		assert.Equal(t, 1, cmp(10, 20))
+		assert.Equal(t, 0, cmp(10, 10))
+		assert.Equal(t, -1, cmp(20, 10))
+	})
+
+	t.Run("uint16", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[uint16]()
+
+		assert.Equal(t, 1, cmp(10, 20))
+		assert.Equal(t, 0, cmp(10, 10))
+		assert.Equal(t, -1, cmp(20, 10))
+	})
+
+	t.Run("uint32", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[uint32]()
+
+		assert.Equal(t, 1, cmp(10, 20))
+		assert.Equal(t, 0, cmp(10, 10))
+		assert.Equal(t, -1, cmp(20, 10))
+	})
+
+	t.Run("uint64", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[uint64]()
+
+		assert.Equal(t, 1, cmp(10, 20))
+		assert.Equal(t, 0, cmp(10, 10))
+		assert.Equal(t, -1, cmp(20, 10))
+	})
+
+	t.Run("uintptr", func(t *testing.T) {
+		cmp := NewInvertedCompareFunc[uintptr]()
+
+		assert.Equal(t, 1, cmp(10, 20))
+		assert.Equal(t, 0, cmp(10, 10))
+		assert.Equal(t, -1, cmp(20, 10))
+	})
+}

@@ -12,10 +12,11 @@ type Heap[K, V any] interface {
 	Peek() (K, V, bool)
 	ContainsKey(K) bool
 	ContainsValue(V) bool
+	Graphviz() string
 }
 
-// IndexHeap represents an indexed heap (priority queue) abstract data type.
-type IndexHeap[K, V any] interface {
+// IndexedHeap represents an indexed heap (priority queue) abstract data type.
+type IndexedHeap[K, V any] interface {
 	Size() int
 	IsEmpty() bool
 	Insert(int, K, V)
@@ -27,4 +28,5 @@ type IndexHeap[K, V any] interface {
 	ContainsIndex(int) bool
 	ContainsKey(K) bool
 	ContainsValue(V) bool
+	Graphviz() string
 }

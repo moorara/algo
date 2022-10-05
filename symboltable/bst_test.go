@@ -15,7 +15,7 @@ func getBSTTests() []orderedSymbolTableTest[string, int] {
 	tests[0].expectedRLVTraverse = []KeyValue[string, int]{{"C", 3}, {"A", 1}, {"B", 2}}
 	tests[0].expectedAscendingTraverse = []KeyValue[string, int]{{"A", 1}, {"B", 2}, {"C", 3}}
 	tests[0].expectedDescendingTraverse = []KeyValue[string, int]{{"C", 3}, {"B", 2}, {"A", 1}}
-	tests[0].expectedDotCode = `strict digraph "BST" {
+	tests[0].expectedGraphviz = `strict digraph "BST" {
   concentrate=false;
   node [shape=oval];
 
@@ -37,7 +37,7 @@ func getBSTTests() []orderedSymbolTableTest[string, int] {
 	tests[1].expectedRLVTraverse = []KeyValue[string, int]{{"E", 5}, {"D", 4}, {"C", 3}, {"A", 1}, {"B", 2}}
 	tests[1].expectedAscendingTraverse = []KeyValue[string, int]{{"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5}}
 	tests[1].expectedDescendingTraverse = []KeyValue[string, int]{{"E", 5}, {"D", 4}, {"C", 3}, {"B", 2}, {"A", 1}}
-	tests[1].expectedDotCode = `strict digraph "BST" {
+	tests[1].expectedGraphviz = `strict digraph "BST" {
   concentrate=false;
   node [shape=oval];
 
@@ -63,7 +63,7 @@ func getBSTTests() []orderedSymbolTableTest[string, int] {
 	tests[2].expectedRLVTraverse = []KeyValue[string, int]{{"S", 19}, {"M", 13}, {"P", 16}, {"G", 7}, {"A", 1}, {"D", 4}, {"J", 10}}
 	tests[2].expectedAscendingTraverse = []KeyValue[string, int]{{"A", 1}, {"D", 4}, {"G", 7}, {"J", 10}, {"M", 13}, {"P", 16}, {"S", 19}}
 	tests[2].expectedDescendingTraverse = []KeyValue[string, int]{{"S", 19}, {"P", 16}, {"M", 13}, {"J", 10}, {"G", 7}, {"D", 4}, {"A", 1}}
-	tests[2].expectedDotCode = `strict digraph "BST" {
+	tests[2].expectedGraphviz = `strict digraph "BST" {
   concentrate=false;
   node [shape=oval];
 
@@ -93,7 +93,7 @@ func getBSTTests() []orderedSymbolTableTest[string, int] {
 	tests[3].expectedRLVTraverse = []KeyValue[string, int]{{"dome", 7}, {"dance", 13}, {"dad", 3}, {"baby", 5}, {"balloon", 17}, {"band", 11}, {"box", 2}}
 	tests[3].expectedAscendingTraverse = []KeyValue[string, int]{{"baby", 5}, {"balloon", 17}, {"band", 11}, {"box", 2}, {"dad", 3}, {"dance", 13}, {"dome", 7}}
 	tests[3].expectedDescendingTraverse = []KeyValue[string, int]{{"dome", 7}, {"dance", 13}, {"dad", 3}, {"box", 2}, {"band", 11}, {"balloon", 17}, {"baby", 5}}
-	tests[3].expectedDotCode = `strict digraph "BST" {
+	tests[3].expectedGraphviz = `strict digraph "BST" {
   concentrate=false;
   node [shape=oval];
 

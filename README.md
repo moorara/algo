@@ -31,10 +31,12 @@ A collection of common data structures and algorithms for Go applications.
       - Queue
       - Stack
     - Heaps
-      - Min Heap
-      - Max Heap
-      - Indexed Min Heap
-      - Indexed Max Heap
+      - Binary Heap
+      - Binomial Heap
+      - Fibonacci Heap
+      - Indexed Binary Heap
+      - Indexed Binomial Heap
+      - Indexed Fibonacci Heap
     - Symbol Tables
       - Unordered
       - Ordered
