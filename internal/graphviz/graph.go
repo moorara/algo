@@ -7,35 +7,37 @@ import (
 
 // Graph represents a graph.
 type Graph struct {
-	Strict    bool
-	Digraph   bool
-	Name      string
-	RankDir   RankDir
-	NodeColor Color
-	NodeStyle Style
-	NodeShape Shape
-	Nodes     []Node
-	Edges     []Edge
-	Subgraphs []Subgraph
+	Strict      bool
+	Digraph     bool
+	Concentrate bool
+	Name        string
+	RankDir     RankDir
+	NodeColor   Color
+	NodeStyle   Style
+	NodeShape   Shape
+	Nodes       []Node
+	Edges       []Edge
+	Subgraphs   []Subgraph
 }
 
 // NewGraph creates a new graph.
-func NewGraph(strict, digraph bool, name string, rankDir RankDir, nodeColor Color, nodeStyle Style, nodeShape Shape) Graph {
+func NewGraph(strict, digraph, concentrate bool, name string, rankDir RankDir, nodeColor Color, nodeStyle Style, nodeShape Shape) Graph {
 	if name != "" {
 		name = fmt.Sprintf("%q", name)
 	}
 
 	return Graph{
-		Strict:    strict,
-		Digraph:   digraph,
-		Name:      name,
-		RankDir:   rankDir,
-		NodeColor: nodeColor,
-		NodeStyle: nodeStyle,
-		NodeShape: nodeShape,
-		Nodes:     make([]Node, 0),
-		Edges:     make([]Edge, 0),
-		Subgraphs: make([]Subgraph, 0),
+		Strict:      strict,
+		Digraph:     digraph,
+		Concentrate: concentrate,
+		Name:        name,
+		RankDir:     rankDir,
+		NodeColor:   nodeColor,
+		NodeStyle:   nodeStyle,
+		NodeShape:   nodeShape,
+		Nodes:       make([]Node, 0),
+		Edges:       make([]Edge, 0),
+		Subgraphs:   make([]Subgraph, 0),
 	}
 }
 
@@ -77,6 +79,7 @@ func (g *Graph) DotCode() string {
 	buf.WriteString("{\n")
 
 	first = addAttr(buf, first, 2, "rankdir", string(g.RankDir))
+	first = addAttr(buf, first, 2, "concentrate", fmt.Sprintf("%t", g.Concentrate))
 
 	first = true
 	addIndent(buf, 2)

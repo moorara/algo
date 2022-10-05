@@ -1,16 +1,17 @@
 // Package graph implements graph data structures and algorithms.
 //
 // There are four different type of graphs implementd:
-//   Undirected Graph
-//   Directed Graph
-//   Weighted Undirected Graph
-//   Weighted Directed Graph
+//
+//	Undirected Graph
+//	Directed Graph
+//	Weighted Undirected Graph
+//	Weighted Directed Graph
 package graph
 
 import (
 	"math"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/heap"
 	"github.com/moorara/algo/list"
 )
@@ -283,9 +284,10 @@ func (t *Topological) Rank(v int) (int, bool) {
 
 // MinimumSpanningTree is used for calculating the minimum spanning trees (forest) of a weighted undirected graph.
 // Given an edge-weighted undirected graph G with positive edge weights, an MST of G is a sub-graph T that is:
-//   Tree: connected and acyclic
-//   Spanning: includes all of the vertices
-//   Minimum: sum of the edge wights are minimum
+//
+//	Tree: connected and acyclic
+//	Spanning: includes all of the vertices
+//	Minimum: sum of the edge wights are minimum
 type MinimumSpanningTree struct {
 	visited []bool                       // visited[v] = true if v on tree, false otherwise
 	edgeTo  []UndirectedEdge             // edgeTo[v] = shortest edge from tree vertex to non-tree vertex
@@ -298,7 +300,7 @@ func newMinimumSpanningTree(g *WeightedUndirected) *MinimumSpanningTree {
 		visited: make([]bool, g.V()),
 		edgeTo:  make([]UndirectedEdge, g.V()),
 		distTo:  make([]float64, g.V()),
-		pq:      heap.NewIndexMinHeap[float64, any](g.V(), common.NewCompareFunc[float64](), nil),
+		pq:      heap.NewIndexMinHeap[float64, any](g.V(), generic.NewCompareFunc[float64](), nil),
 	}
 
 	for v := 0; v < g.V(); v++ {
@@ -379,7 +381,7 @@ func newShortestPathTree(g *WeightedDirected, s int) *ShortestPathTree {
 	spt := &ShortestPathTree{
 		edgeTo: make([]DirectedEdge, g.V()),
 		distTo: make([]float64, g.V()),
-		pq:     heap.NewIndexMinHeap[float64, any](g.V(), common.NewCompareFunc[float64](), nil),
+		pq:     heap.NewIndexMinHeap[float64, any](g.V(), generic.NewCompareFunc[float64](), nil),
 	}
 
 	for v := 0; v < g.V(); v++ {

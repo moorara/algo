@@ -1,8 +1,8 @@
 package sort
 
-import "github.com/moorara/algo/common"
+import "github.com/moorara/algo/generic"
 
-func sink[T any](a []T, k, n int, cmp common.CompareFunc[T]) {
+func sink[T any](a []T, k, n int, cmp generic.CompareFunc[T]) {
 	for 2*k <= n {
 		j := 2 * k
 		if j < n && cmp(a[j], a[j+1]) < 0 {
@@ -16,7 +16,7 @@ func sink[T any](a []T, k, n int, cmp common.CompareFunc[T]) {
 	}
 }
 
-func heap[T any](a []T, cmp common.CompareFunc[T]) {
+func heap[T any](a []T, cmp generic.CompareFunc[T]) {
 	n := len(a) - 1
 
 	// build max-heap bottom-up
@@ -33,7 +33,7 @@ func heap[T any](a []T, cmp common.CompareFunc[T]) {
 }
 
 // Heap implements the heap sort algorithm.
-func Heap[T any](a []T, cmp common.CompareFunc[T]) {
+func Heap[T any](a []T, cmp generic.CompareFunc[T]) {
 	// Heap elements need to start from position 1
 	var zero T
 	aux := append([]T{zero}, a...)

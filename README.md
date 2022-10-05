@@ -4,14 +4,14 @@
 [![Test Coverage][coverage-image]][coverage-url]
 [![Maintainability][maintainability-image]][maintainability-url]
 
-# algo
+# Algo
 
 A collection of common data structures and algorithms for Go applications.
 
 ## Summary
 
   - **Algorithms**
-    - Sorts
+    - Comparative Sorts
       - Selection Sort
       - Insertion Sort
       - Shell Sort
@@ -19,13 +19,13 @@ A collection of common data structures and algorithms for Go applications.
       - Quick Sort
       - 3-Way Quick Sort
       - Heap Sort
-     - Radix Sorts
-       - Least Significant Digit
-       - Most Significant Digit
-       - 3-Way Quick Sort
-     - Misc
-       - Shuffle
-       - Quick Select
+    - Non-Comparative Sorts
+      - Least Significant Digit
+      - Most Significant Digit
+      - 3-Way Quick Sort
+    - Misc
+      - Shuffle
+      - Quick Select
   - **Data Structures**
     - Lists
       - Queue
@@ -41,6 +41,9 @@ A collection of common data structures and algorithms for Go applications.
         - BST
         - AVL Tree
         - Red-Black Tree
+        - Tries
+          - Binary Trie
+          - Patricia
     - Graphs
       - Undirected Graph
       - Directed Graph

@@ -11,6 +11,7 @@ func TestGraph(t *testing.T) {
 		name            string
 		strict          bool
 		diagraph        bool
+		concentrate     bool
 		graphName       string
 		rankDir         RankDir
 		nodeColor       Color
@@ -23,7 +24,7 @@ func TestGraph(t *testing.T) {
 	}{
 		{
 			"SimpleGraph",
-			false, false, "",
+			false, false, false, "",
 			"",
 			"", "", "",
 			[]Node{
@@ -35,6 +36,7 @@ func TestGraph(t *testing.T) {
 			},
 			[]Subgraph{},
 			`graph {
+  concentrate=false;
   node [];
 
   a0 [];
@@ -45,7 +47,7 @@ func TestGraph(t *testing.T) {
 		},
 		{
 			"GraphWithLabels",
-			true, false, "G",
+			true, false, false, "G",
 			"",
 			"", "", "",
 			[]Node{
@@ -59,6 +61,7 @@ func TestGraph(t *testing.T) {
 			},
 			[]Subgraph{},
 			`strict graph "G" {
+  concentrate=false;
   node [];
 
   b0 [label="B0"];
@@ -71,7 +74,7 @@ func TestGraph(t *testing.T) {
 		},
 		{
 			"GraphWithSubgraph",
-			false, true, "",
+			false, true, false, "",
 			"",
 			ColorLimeGreen, "", "",
 			[]Node{
@@ -89,6 +92,7 @@ func TestGraph(t *testing.T) {
 				Subgraph{Name: "", Label: "Thread", Rank: RankSame},
 			},
 			`digraph {
+  concentrate=false;
   node [color=limegreen];
 
   subgraph {
@@ -109,7 +113,7 @@ func TestGraph(t *testing.T) {
 		},
 		{
 			"ComplexGraph",
-			true, true, "DG",
+			true, true, false, "DG",
 			RankDirLR,
 			ColorSteelBlue, StyleFilled, ShapeMrecord,
 			[]Node{
@@ -146,6 +150,7 @@ func TestGraph(t *testing.T) {
 			},
 			`strict digraph "DG" {
   rankdir=LR;
+  concentrate=false;
   node [color=steelblue, style=filled, shape=Mrecord];
 
   subgraph cluster0 {
@@ -185,7 +190,7 @@ func TestGraph(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			g := NewGraph(tc.strict, tc.diagraph, tc.graphName, tc.rankDir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
+			g := NewGraph(tc.strict, tc.diagraph, tc.concentrate, tc.graphName, tc.rankDir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
 			g.AddNode(tc.nodes...)
 			g.AddEdge(tc.edges...)
 			g.AddSubgraph(tc.subgraphs...)

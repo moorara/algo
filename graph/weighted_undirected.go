@@ -358,7 +358,7 @@ func (g *WeightedUndirected) MinimumSpanningTree() *MinimumSpanningTree {
 
 // Graphviz returns a visualization of the graph in Graphviz format.
 func (g *WeightedUndirected) Graphviz() string {
-	graph := graphviz.NewGraph(true, false, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
+	graph := graphviz.NewGraph(true, false, false, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
 
 	for i := 0; i < g.v; i++ {
 		name := fmt.Sprintf("%d", i)

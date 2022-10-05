@@ -8,10 +8,10 @@ const (
 	chars  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
-func randIntSlice(size, min, max int) []int {
+func randIntSlice(size int) []int {
 	vals := make([]int, size)
 	for i := 0; i < len(vals); i++ {
-		vals[i] = min + rand.Intn(max-min+1)
+		vals[i] = rand.Int()
 	}
 
 	return vals

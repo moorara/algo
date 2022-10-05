@@ -1,6 +1,20 @@
-package common
+package generic
 
 import "golang.org/x/exp/constraints"
+
+func Min[T constraints.Ordered](a, b T) T {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func Max[T constraints.Ordered](a, b T) T {
+	if a > b {
+		return a
+	}
+	return b
+}
 
 // EqualFunc is a function for checking equality of two values of the same type.
 type EqualFunc[T any] func(T, T) bool

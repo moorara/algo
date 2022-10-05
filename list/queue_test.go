@@ -1,11 +1,13 @@
 package list
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 )
 
 func TestQueue(t *testing.T) {
@@ -59,7 +61,7 @@ func TestQueue(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			equal := common.NewEqualFunc[string]()
+			equal := generic.NewEqualFunc[string]()
 			queue := NewQueue[string](tc.nodeSize, equal)
 
 			t.Run("BeforeEnqueue", func(t *testing.T) {
@@ -125,23 +127,26 @@ func TestQueue(t *testing.T) {
 }
 
 func BenchmarkQueue(b *testing.B) {
-	nodeSize := 1024
-	val := 27
+	const nodeSize = 1024
+
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	b.Run("Enqueue", func(b *testing.B) {
 		queue := NewQueue[int](nodeSize, nil)
+
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
-			queue.Enqueue(val)
+			queue.Enqueue(rand.Int())
 		}
 	})
 
 	b.Run("Dequeue", func(b *testing.B) {
 		queue := NewQueue[int](nodeSize, nil)
 		for n := 0; n < b.N; n++ {
-			queue.Enqueue(val)
+			queue.Enqueue(rand.Int())
 		}
+
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {

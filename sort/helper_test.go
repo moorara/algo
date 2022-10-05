@@ -3,10 +3,10 @@ package sort
 import (
 	"math/rand"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 )
 
-func isSorted[T any](items []T, cmp common.CompareFunc[T]) bool {
+func isSorted[T any](items []T, cmp generic.CompareFunc[T]) bool {
 	for i := 0; i < len(items)-1; i++ {
 		if cmp(items[i], items[i+1]) > 0 {
 			return false
@@ -16,11 +16,11 @@ func isSorted[T any](items []T, cmp common.CompareFunc[T]) bool {
 	return true
 }
 
-func randIntSlice(size, min, max int) []int {
-	items := make([]int, size)
-	for i := 0; i < len(items); i++ {
-		items[i] = min + rand.Intn(max-min+1)
+func randIntSlice(size int) []int {
+	a := make([]int, size)
+	for i := range a {
+		a[i] = rand.Int()
 	}
 
-	return items
+	return a
 }

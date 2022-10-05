@@ -353,7 +353,7 @@ func (g *Directed) Topological() *Topological {
 
 // Graphviz returns a visualization of the graph in Graphviz format.
 func (g *Directed) Graphviz() string {
-	graph := graphviz.NewGraph(true, true, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
+	graph := graphviz.NewGraph(true, true, false, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
 
 	for i := 0; i < g.v; i++ {
 		name := fmt.Sprintf("%d", i)

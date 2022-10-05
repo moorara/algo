@@ -1,10 +1,10 @@
 package heap
 
-import "github.com/moorara/algo/common"
+import "github.com/moorara/algo/generic"
 
 type maxHeap[K, V any] struct {
-	cmpKey common.CompareFunc[K]
-	eqVal  common.EqualFunc[V]
+	cmpKey generic.CompareFunc[K]
+	eqVal  generic.EqualFunc[V]
 
 	n    int // no. of items on heap
 	keys []K // binary heap of keys (priorities) using 1-based indexing
@@ -17,7 +17,7 @@ type maxHeap[K, V any] struct {
 // size is the initial size of heap (priority queue).
 // cmpKey is a function for comparing and ordering keys.
 // eqVal is a function for checking equality of values.
-func NewMaxHeap[K, V any](size int, cmpKey common.CompareFunc[K], eqVal common.EqualFunc[V]) Heap[K, V] {
+func NewMaxHeap[K, V any](size int, cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) Heap[K, V] {
 	return &maxHeap[K, V]{
 		cmpKey: cmpKey,
 		eqVal:  eqVal,

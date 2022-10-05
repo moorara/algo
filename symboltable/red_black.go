@@ -3,7 +3,7 @@ package symboltable
 import (
 	"fmt"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 )
 
@@ -13,18 +13,17 @@ const (
 )
 
 type rbNode[K, V any] struct {
-	key   K
-	val   V
-	left  *rbNode[K, V]
-	right *rbNode[K, V]
-	size  int
-	color bool
+	key         K
+	val         V
+	left, right *rbNode[K, V]
+	size        int
+	color       bool
 }
 
 // redBlack is a left-leaning Red-Black tree.
 type redBlack[K, V any] struct {
 	root   *rbNode[K, V]
-	cmpKey common.CompareFunc[K]
+	cmpKey generic.CompareFunc[K]
 }
 
 // NewRedBlack creates a new Red-Black tree.
@@ -32,10 +31,11 @@ type redBlack[K, V any] struct {
 // A Red-Black tree is 2-3 Tree represented as a binary search tree.
 // In a left-leaning Red-Black tree, left-leaning red links are used to construct 3-nodes.
 // A left-leaning Red-Black tree is a BST such that:
-//   Red links lean left.
-//   No node has two red links connect to it.
-//   Every path from root to null link has the same number of black links.
-func NewRedBlack[K, V any](cmpKey common.CompareFunc[K]) OrderedSymbolTable[K, V] {
+//
+//	Red links lean left.
+//	No node has two red links connect to it.
+//	Every path from root to null link has the same number of black links.
+func NewRedBlack[K, V any](cmpKey generic.CompareFunc[K]) OrderedSymbolTable[K, V] {
 	return &redBlack[K, V]{
 		root:   nil,
 		cmpKey: cmpKey,
@@ -98,8 +98,8 @@ func (t *redBlack[K, V]) _isRankOK() bool {
 	}
 
 	for _, kv := range t.KeyValues() {
-		k, _, _ := t.Select(t.Rank(kv.key))
-		if t.cmpKey(kv.key, k) != 0 {
+		k, _, _ := t.Select(t.Rank(kv.Key))
+		if t.cmpKey(kv.Key, k) != 0 {
 			return false
 		}
 	}
@@ -245,7 +245,7 @@ func (t *redBlack[K, V]) _height(n *rbNode[K, V]) int {
 		return 0
 	}
 
-	return 1 + max(t._height(n.left), t._height(n.right))
+	return 1 + generic.Max[int](t._height(n.left), t._height(n.right))
 }
 
 // IsEmpty returns true if Red-Black tree is empty.
@@ -373,12 +373,9 @@ func (t *redBlack[K, V]) _delete(n *rbNode[K, V], key K) (*rbNode[K, V], V, bool
 
 // KeyValues returns all key-value pairs in Red-Black tree.
 func (t *redBlack[K, V]) KeyValues() []KeyValue[K, V] {
-	i := 0
-	kvs := make([]KeyValue[K, V], t.Size())
-
-	t._traverse(t.root, InOrder, func(n *rbNode[K, V]) bool {
-		kvs[i] = KeyValue[K, V]{n.key, n.val}
-		i++
+	kvs := make([]KeyValue[K, V], 0, t.Size())
+	t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool {
+		kvs = append(kvs, KeyValue[K, V]{n.key, n.val})
 		return true
 	})
 
@@ -559,7 +556,7 @@ func (t *redBlack[K, V]) _deleteMax(n *rbNode[K, V]) (*rbNode[K, V], *rbNode[K, 
 	return t.balance(n), max
 }
 
-// Select return the k-th smallest key in Red-Black tree.
+// Select returns the k-th smallest key in Red-Black tree.
 func (t *redBlack[K, V]) Select(rank int) (K, V, bool) {
 	if rank < 0 || rank >= t.Size() {
 		var zeroK K
@@ -651,10 +648,6 @@ func (t *redBlack[K, V]) _range(n *rbNode[K, V], kvs *[]KeyValue[K, V], lo, hi K
 
 // Traverse is used for visiting all key-value pairs in Red-Black tree.
 func (t *redBlack[K, V]) Traverse(order TraversalOrder, visit VisitFunc[K, V]) {
-	if order != PreOrder && order != InOrder && order != PostOrder {
-		panic(fmt.Sprintf("invalid traversal order: %d", order))
-	}
-
 	t._traverse(t.root, order, func(n *rbNode[K, V]) bool {
 		return visit(n.key, n.val)
 	})
@@ -666,18 +659,18 @@ func (t *redBlack[K, V]) _traverse(n *rbNode[K, V], order TraversalOrder, visit 
 	}
 
 	switch order {
-	case PreOrder:
-		return visit(n) &&
-			t._traverse(n.left, order, visit) &&
-			t._traverse(n.right, order, visit)
-	case InOrder:
-		return t._traverse(n.left, order, visit) &&
-			visit(n) &&
-			t._traverse(n.right, order, visit)
-	case PostOrder:
-		return t._traverse(n.left, order, visit) &&
-			t._traverse(n.right, order, visit) &&
-			visit(n)
+	case VLR:
+		return visit(n) && t._traverse(n.left, order, visit) && t._traverse(n.right, order, visit)
+	case VRL:
+		return visit(n) && t._traverse(n.right, order, visit) && t._traverse(n.left, order, visit)
+	case LVR, Ascending:
+		return t._traverse(n.left, order, visit) && visit(n) && t._traverse(n.right, order, visit)
+	case RVL, Descending:
+		return t._traverse(n.right, order, visit) && visit(n) && t._traverse(n.left, order, visit)
+	case LRV:
+		return t._traverse(n.left, order, visit) && t._traverse(n.right, order, visit) && visit(n)
+	case RLV:
+		return t._traverse(n.right, order, visit) && t._traverse(n.left, order, visit) && visit(n)
 	default:
 		return false
 	}
@@ -688,20 +681,19 @@ func (t *redBlack[K, V]) Graphviz() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*rbNode[K, V]]int{}
-	t._traverse(t.root, PreOrder, func(n *rbNode[K, V]) bool {
+	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
 		id++
 		nodeID[n] = id
 		return true
 	})
 
-	var name, label, left, right string
-	var nodeColor, fontColor, edgeColor graphviz.Color
+	graph := graphviz.NewGraph(true, true, false, "Red-Black", "", "", graphviz.StyleFilled, graphviz.ShapeOval)
 
-	graph := graphviz.NewGraph(true, true, "Red-Black", "", "", graphviz.StyleFilled, graphviz.ShapeOval)
+	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+		var nodeColor, fontColor, edgeColor graphviz.Color
 
-	t._traverse(t.root, PreOrder, func(n *rbNode[K, V]) bool {
-		name = fmt.Sprintf("%d", nodeID[n])
-		label = fmt.Sprintf("%v,%v", n.key, n.val)
+		name := fmt.Sprintf("%d", nodeID[n])
+		label := fmt.Sprintf("%v,%v", n.key, n.val)
 
 		if t.isRed(n) {
 			nodeColor = graphviz.ColorRed
@@ -714,7 +706,7 @@ func (t *redBlack[K, V]) Graphviz() string {
 		graph.AddNode(graphviz.NewNode(name, "", label, nodeColor, "", "", fontColor, ""))
 
 		if n.left != nil {
-			left = fmt.Sprintf("%d", nodeID[n.left])
+			left := fmt.Sprintf("%d", nodeID[n.left])
 			if t.isRed(n.left) {
 				edgeColor = graphviz.ColorRed
 			} else {
@@ -724,7 +716,7 @@ func (t *redBlack[K, V]) Graphviz() string {
 		}
 
 		if n.right != nil {
-			right = fmt.Sprintf("%d", nodeID[n.right])
+			right := fmt.Sprintf("%d", nodeID[n.right])
 			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 

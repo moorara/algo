@@ -9,9 +9,11 @@
 //
 // Elements in one set are considered connected to each other.
 // "p is connected to q" is an equivalence relation:
-//   Reflexive: p is connected to p.
-//   Symmetric: If p is connected to q, then q is connected to p.
-//   Transitive: If p is connected to q and q is connected to r, then p is connected to r.
+//
+//	Reflexive: p is connected to p.
+//	Symmetric: If p is connected to q, then q is connected to p.
+//	Transitive: If p is connected to q and q is connected to r, then p is connected to r.
+//
 // An equivalence relation partitions the objects into equivalence classes.
 package unionfind
 

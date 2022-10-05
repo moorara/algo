@@ -7,9 +7,8 @@ import (
 )
 
 const (
-	slen = 128
-	size = 1000000
-
+	slen  = 128
+	size  = 100000
 	chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
@@ -25,78 +24,93 @@ func randString(l int) string {
 }
 
 func BenchmarkString(b *testing.B) {
-	rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	// generate a sequence of random strings
-	a := make([]string, size)
-	for i := range a {
-		a[i] = randString(slen)
+	vals := make([]string, size)
+	for i := range vals {
+		vals[i] = randString(slen)
 	}
-
-	shuffle[string](a)
 
 	b.Run("LSDString", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
+			a := make([]string, len(vals))
+			copy(a, vals)
+			shuffle[string](a)
 			LSDString(a, slen)
 		}
 	})
 
 	b.Run("MSDString", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
+			a := make([]string, len(vals))
+			copy(a, vals)
+			shuffle[string](a)
 			MSDString(a)
 		}
 	})
 
 	b.Run("Quick3WayString", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
+			a := make([]string, len(vals))
+			copy(a, vals)
+			shuffle[string](a)
 			Quick3WayString(a)
 		}
 	})
 }
 
 func BenchmarkInt(b *testing.B) {
-	rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	// generate a sequence of random integers (signed).
-	a := make([]int, size)
-	for i := range a {
-		a[i] = rand.Int()
+	nums := make([]int, size)
+	for i := range nums {
+		nums[i] = rand.Int()
 	}
-
-	shuffle[int](a)
 
 	b.Run("LSDInt", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
+			a := make([]int, len(nums))
+			copy(a, nums)
+			shuffle[int](a)
 			LSDInt(a)
 		}
 	})
 
 	b.Run("MSDInt", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
+			a := make([]int, len(nums))
+			copy(a, nums)
+			shuffle[int](a)
 			MSDInt(a)
 		}
 	})
 }
 
 func BenchmarkUint(b *testing.B) {
-	rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	// generate a sequence of random integers (unsigned).
-	a := make([]uint, size)
-	for i := range a {
-		a[i] = (uint(rand.Uint32()) << 32) + uint(rand.Uint32())
+	nums := make([]uint, size)
+	for i := range nums {
+		nums[i] = (uint(rand.Uint32()) << 32) + uint(rand.Uint32())
 	}
-
-	shuffle[uint](a)
 
 	b.Run("LSDUint", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
+			a := make([]uint, len(nums))
+			copy(a, nums)
+			shuffle[uint](a)
 			LSDUint(a)
 		}
 	})
 
 	b.Run("MSDUint", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
+			a := make([]uint, len(nums))
+			copy(a, nums)
+			shuffle[uint](a)
 			MSDUint(a)
 		}
 	})

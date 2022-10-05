@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 )
 
 func TestSet(t *testing.T) {
@@ -37,7 +37,7 @@ func TestSet(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			equal := common.NewEqualFunc[string]()
+			equal := generic.NewEqualFunc[string]()
 			set := New[string](equal)
 
 			// Th set is initially empty

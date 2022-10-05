@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 )
 
 func TestMinHeap(t *testing.T) {
@@ -130,8 +130,8 @@ func TestMinHeap(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cmpKey := common.NewCompareFunc[int]()
-			eqVal := common.NewEqualFunc[string]()
+			cmpKey := generic.NewCompareFunc[int]()
+			eqVal := generic.NewEqualFunc[string]()
 			heap := NewMinHeap[int, string](tc.size, cmpKey, eqVal)
 
 			t.Run("BeforeInsert", func(t *testing.T) {
@@ -204,30 +204,29 @@ func TestMinHeap(t *testing.T) {
 }
 
 func BenchmarkMinHeap(b *testing.B) {
-	heapSize := 1024
-	minInt := 0
-	maxInt := 1000000
+	const heapSize = 1024
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	b.Run("Insert", func(b *testing.B) {
-		cmpKey := common.NewCompareFunc[int]()
+		cmpKey := generic.NewCompareFunc[int]()
 		heap := NewMinHeap[int, string](heapSize, cmpKey, nil)
 
-		keys := randIntSlice(b.N, minInt, maxInt)
+		keys := randIntSlice(b.N)
 		vals := randStringSlice(b.N)
 
 		b.ResetTimer()
+
 		for n := 0; n < b.N; n++ {
 			heap.Insert(keys[n], vals[n])
 		}
 	})
 
 	b.Run("Delete", func(b *testing.B) {
-		cmpKey := common.NewCompareFunc[int]()
+		cmpKey := generic.NewCompareFunc[int]()
 		heap := NewMinHeap[int, string](heapSize, cmpKey, nil)
 
-		keys := randIntSlice(b.N, minInt, maxInt)
+		keys := randIntSlice(b.N)
 		vals := randStringSlice(b.N)
 
 		for n := 0; n < b.N; n++ {
@@ -235,6 +234,7 @@ func BenchmarkMinHeap(b *testing.B) {
 		}
 
 		b.ResetTimer()
+
 		for n := 0; n < b.N; n++ {
 			heap.Delete()
 		}

@@ -3,7 +3,7 @@ package sort
 import (
 	"testing"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 )
 
 func TestShell_int(t *testing.T) {
@@ -17,7 +17,7 @@ func TestShell_int(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := common.NewCompareFunc[int]()
+		cmp := generic.NewCompareFunc[int]()
 		Shell[int](tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {
@@ -37,7 +37,7 @@ func TestShell_string(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := common.NewCompareFunc[string]()
+		cmp := generic.NewCompareFunc[string]()
 		Shell[string](tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {
