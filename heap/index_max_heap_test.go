@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 )
 
 func TestIndexMaxHeap(t *testing.T) {
@@ -182,8 +182,8 @@ func TestIndexMaxHeap(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cmpKey := common.NewCompareFunc[int]()
-			eqVal := common.NewEqualFunc[string]()
+			cmpKey := generic.NewCompareFunc[int]()
+			eqVal := generic.NewEqualFunc[string]()
 			heap := NewIndexMaxHeap[int, string](tc.cap, cmpKey, eqVal)
 
 			t.Run("BeforeInsert", func(t *testing.T) {
@@ -308,7 +308,7 @@ func BenchmarkIndexMaxHeap(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	b.Run("Insert", func(b *testing.B) {
-		cmpKey := common.NewCompareFunc[int]()
+		cmpKey := generic.NewCompareFunc[int]()
 		heap := NewIndexMaxHeap[int, string](b.N, cmpKey, nil)
 
 		keys := randIntSlice(b.N)
@@ -322,7 +322,7 @@ func BenchmarkIndexMaxHeap(b *testing.B) {
 	})
 
 	b.Run("Delete", func(b *testing.B) {
-		cmpKey := common.NewCompareFunc[int]()
+		cmpKey := generic.NewCompareFunc[int]()
 		heap := NewIndexMaxHeap[int, string](b.N, cmpKey, nil)
 
 		keys := randIntSlice(b.N)

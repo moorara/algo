@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 )
 
 const size = 100000
@@ -15,7 +15,7 @@ func BenchmarkSort(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	nums := randIntSlice(size)
-	cmp := common.NewCompareFunc[int]()
+	cmp := generic.NewCompareFunc[int]()
 
 	b.Run("sort.Sort", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {

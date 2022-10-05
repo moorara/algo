@@ -3,7 +3,7 @@ package sort
 import (
 	"testing"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 )
 
 func TestMerge_int(t *testing.T) {
@@ -17,7 +17,7 @@ func TestMerge_int(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := common.NewCompareFunc[int]()
+		cmp := generic.NewCompareFunc[int]()
 		Merge[int](tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {
@@ -37,7 +37,7 @@ func TestMerge_string(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := common.NewCompareFunc[string]()
+		cmp := generic.NewCompareFunc[string]()
 		Merge[string](tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {
@@ -57,7 +57,7 @@ func TestMergeRec_int(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := common.NewCompareFunc[int]()
+		cmp := generic.NewCompareFunc[int]()
 		MergeRec[int](tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {
@@ -77,7 +77,7 @@ func TestMergeRec_string(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := common.NewCompareFunc[string]()
+		cmp := generic.NewCompareFunc[string]()
 		MergeRec[string](tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {

@@ -2,7 +2,7 @@
 // A set is a collection of objects without any particular order.
 package set
 
-import "github.com/moorara/algo/common"
+import "github.com/moorara/algo/generic"
 
 // Set represents a set abstract data type.
 type Set[T any] interface {
@@ -15,13 +15,13 @@ type Set[T any] interface {
 }
 
 type set[T any] struct {
-	equal common.EqualFunc[T]
+	equal generic.EqualFunc[T]
 
 	members []T
 }
 
 // New creates a new empty set
-func New[T any](equal common.EqualFunc[T]) Set[T] {
+func New[T any](equal generic.EqualFunc[T]) Set[T] {
 	return &set[T]{
 		equal: equal,
 

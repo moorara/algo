@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 )
 
 const (
@@ -88,7 +88,7 @@ func runDeleteBenchmark(b *testing.B, ost OrderedSymbolTable[string, int]) {
 func BenchmarkOrderedSymbolTable_Put(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	cmpKey := common.NewCompareFunc[string]()
+	cmpKey := generic.NewCompareFunc[string]()
 
 	b.Run("BST.Put", func(b *testing.B) {
 		ost := NewBST[string, int](cmpKey)
@@ -109,7 +109,7 @@ func BenchmarkOrderedSymbolTable_Put(b *testing.B) {
 func BenchmarkOrderedSymbolTable_Get(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	cmpKey := common.NewCompareFunc[string]()
+	cmpKey := generic.NewCompareFunc[string]()
 
 	b.Run("BST.Get", func(b *testing.B) {
 		ost := NewBST[string, int](cmpKey)
@@ -130,7 +130,7 @@ func BenchmarkOrderedSymbolTable_Get(b *testing.B) {
 func BenchmarkOrderedSymbolTable_Delete(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	cmpKey := common.NewCompareFunc[string]()
+	cmpKey := generic.NewCompareFunc[string]()
 
 	b.Run("BST.Delete", func(b *testing.B) {
 		ost := NewBST[string, int](cmpKey)

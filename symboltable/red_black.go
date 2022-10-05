@@ -3,7 +3,7 @@ package symboltable
 import (
 	"fmt"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 )
 
@@ -23,7 +23,7 @@ type rbNode[K, V any] struct {
 // redBlack is a left-leaning Red-Black tree.
 type redBlack[K, V any] struct {
 	root   *rbNode[K, V]
-	cmpKey common.CompareFunc[K]
+	cmpKey generic.CompareFunc[K]
 }
 
 // NewRedBlack creates a new Red-Black tree.
@@ -35,7 +35,7 @@ type redBlack[K, V any] struct {
 //	Red links lean left.
 //	No node has two red links connect to it.
 //	Every path from root to null link has the same number of black links.
-func NewRedBlack[K, V any](cmpKey common.CompareFunc[K]) OrderedSymbolTable[K, V] {
+func NewRedBlack[K, V any](cmpKey generic.CompareFunc[K]) OrderedSymbolTable[K, V] {
 	return &redBlack[K, V]{
 		root:   nil,
 		cmpKey: cmpKey,
@@ -245,7 +245,7 @@ func (t *redBlack[K, V]) _height(n *rbNode[K, V]) int {
 		return 0
 	}
 
-	return 1 + common.Max[int](t._height(n.left), t._height(n.right))
+	return 1 + generic.Max[int](t._height(n.left), t._height(n.right))
 }
 
 // IsEmpty returns true if Red-Black tree is empty.

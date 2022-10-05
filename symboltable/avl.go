@@ -3,7 +3,7 @@ package symboltable
 import (
 	"fmt"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 )
 
@@ -16,14 +16,14 @@ type avlNode[K, V any] struct {
 
 type avl[K, V any] struct {
 	root   *avlNode[K, V]
-	cmpKey common.CompareFunc[K]
+	cmpKey generic.CompareFunc[K]
 }
 
 // NewAVL creates a new AVL tree.
 //
 // AVL tree is a self-balancing binary search tree.
 // In an AVL tree, the heights of the left and right subtrees of any node differ by at most 1.
-func NewAVL[K, V any](cmpKey common.CompareFunc[K]) OrderedSymbolTable[K, V] {
+func NewAVL[K, V any](cmpKey generic.CompareFunc[K]) OrderedSymbolTable[K, V] {
 	return &avl[K, V]{
 		root:   nil,
 		cmpKey: cmpKey,
@@ -120,8 +120,8 @@ func (t *avl[K, V]) rotateLeft(n *avlNode[K, V]) *avlNode[K, V] {
 
 	r.size = n.size
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + common.Max[int](t._height(n.left), t._height(n.right))
-	r.height = 1 + common.Max[int](t._height(r.left), t._height(r.right))
+	n.height = 1 + generic.Max[int](t._height(n.left), t._height(n.right))
+	r.height = 1 + generic.Max[int](t._height(r.left), t._height(r.right))
 
 	return r
 }
@@ -133,8 +133,8 @@ func (t *avl[K, V]) rotateRight(n *avlNode[K, V]) *avlNode[K, V] {
 
 	l.size = n.size
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + common.Max[int](t._height(n.left), t._height(n.right))
-	l.height = 1 + common.Max[int](t._height(l.left), t._height(l.right))
+	n.height = 1 + generic.Max[int](t._height(n.left), t._height(n.right))
+	l.height = 1 + generic.Max[int](t._height(l.left), t._height(l.right))
 
 	return l
 }
@@ -197,7 +197,7 @@ func (t *avl[K, V]) _put(n *avlNode[K, V], key K, val V) *avlNode[K, V] {
 	}
 
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + common.Max[int](t._height(n.left), t._height(n.right))
+	n.height = 1 + generic.Max[int](t._height(n.left), t._height(n.right))
 
 	return t.balance(n)
 }
@@ -261,7 +261,7 @@ func (t *avl[K, V]) _delete(n *avlNode[K, V], key K) (*avlNode[K, V], V, bool) {
 	}
 
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + common.Max[int](t._height(n.left), t._height(n.right))
+	n.height = 1 + generic.Max[int](t._height(n.left), t._height(n.right))
 	return t.balance(n), val, ok
 }
 
@@ -397,7 +397,7 @@ func (t *avl[K, V]) _deleteMin(n *avlNode[K, V]) (*avlNode[K, V], *avlNode[K, V]
 	var min *avlNode[K, V]
 	n.left, min = t._deleteMin(n.left)
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + common.Max[int](t._height(n.left), t._height(n.right))
+	n.height = 1 + generic.Max[int](t._height(n.left), t._height(n.right))
 	return t.balance(n), min
 }
 

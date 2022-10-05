@@ -5,14 +5,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 )
 
 type (
 	symbolTableTest[K, V any] struct {
 		name            string
 		symbolTable     string
-		cmpKey          common.CompareFunc[K]
+		cmpKey          generic.CompareFunc[K]
 		keyVals         []KeyValue[K, V]
 		expectedSize    int
 		expectedHeight  int
@@ -23,7 +23,7 @@ type (
 	orderedSymbolTableTest[K, V any] struct {
 		name                       string
 		symbolTable                string
-		cmpKey                     common.CompareFunc[K]
+		cmpKey                     generic.CompareFunc[K]
 		keyVals                    []KeyValue[K, V]
 		expectedSize               int
 		expectedHeight             int
@@ -66,7 +66,7 @@ type (
 )
 
 func getSymbolTableTests() []symbolTableTest[string, int] {
-	cmpKey := common.NewCompareFunc[string]()
+	cmpKey := generic.NewCompareFunc[string]()
 
 	return []symbolTableTest[string, int]{
 		{
@@ -82,7 +82,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 }
 
 func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
-	cmpKey := common.NewCompareFunc[string]()
+	cmpKey := generic.NewCompareFunc[string]()
 
 	return []orderedSymbolTableTest[string, int]{
 		{

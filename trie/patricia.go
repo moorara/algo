@@ -3,7 +3,7 @@ package trie
 import (
 	"fmt"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 )
 
@@ -248,7 +248,7 @@ func (t *patricia[V]) _height(prev, curr *patriciaNode[V]) int {
 		return 0
 	}
 
-	return 1 + common.Max[int](t._height(curr, curr.left), t._height(curr, curr.right))
+	return 1 + generic.Max[int](t._height(curr, curr.left), t._height(curr, curr.right))
 }
 
 // IsEmpty returns true if Patricia tree is empty.

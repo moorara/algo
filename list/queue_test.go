@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 )
 
 func TestQueue(t *testing.T) {
@@ -61,7 +61,7 @@ func TestQueue(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			equal := common.NewEqualFunc[string]()
+			equal := generic.NewEqualFunc[string]()
 			queue := NewQueue[string](tc.nodeSize, equal)
 
 			t.Run("BeforeEnqueue", func(t *testing.T) {

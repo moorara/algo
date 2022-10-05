@@ -1,8 +1,8 @@
 package sort
 
-import "github.com/moorara/algo/common"
+import "github.com/moorara/algo/generic"
 
-func partition[T any](a []T, lo, hi int, cmp common.CompareFunc[T]) int {
+func partition[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) int {
 	v := a[lo]
 	var i, j int = lo, hi + 1
 
@@ -22,7 +22,7 @@ func partition[T any](a []T, lo, hi int, cmp common.CompareFunc[T]) int {
 }
 
 // Select finds the kth smallest item of an array in O(n) time on average.
-func Select[T any](a []T, k int, cmp common.CompareFunc[T]) T {
+func Select[T any](a []T, k int, cmp generic.CompareFunc[T]) T {
 	Shuffle[T](a)
 	var lo, hi int = 0, len(a) - 1
 	for lo < hi {
@@ -40,7 +40,7 @@ func Select[T any](a []T, k int, cmp common.CompareFunc[T]) T {
 	return a[k]
 }
 
-func quick[T any](a []T, lo, hi int, cmp common.CompareFunc[T]) {
+func quick[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) {
 	if lo >= hi {
 		return
 	}
@@ -51,12 +51,12 @@ func quick[T any](a []T, lo, hi int, cmp common.CompareFunc[T]) {
 }
 
 // Quick implements the quick sort algorithm.
-func Quick[T any](a []T, cmp common.CompareFunc[T]) {
+func Quick[T any](a []T, cmp generic.CompareFunc[T]) {
 	Shuffle[T](a)
 	quick[T](a, 0, len(a)-1, cmp)
 }
 
-func quick3Way[T any](a []T, lo, hi int, cmp common.CompareFunc[T]) {
+func quick3Way[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) {
 	if lo >= hi {
 		return
 	}
@@ -84,6 +84,6 @@ func quick3Way[T any](a []T, lo, hi int, cmp common.CompareFunc[T]) {
 }
 
 // Quick3Way implements the 3-way version of quick sort algorithm.
-func Quick3Way[T any](a []T, cmp common.CompareFunc[T]) {
+func Quick3Way[T any](a []T, cmp generic.CompareFunc[T]) {
 	quick3Way[T](a, 0, len(a)-1, cmp)
 }

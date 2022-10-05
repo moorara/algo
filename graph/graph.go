@@ -10,7 +10,7 @@ package graph
 import (
 	"math"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/heap"
 	"github.com/moorara/algo/list"
 )
@@ -298,7 +298,7 @@ func newMinimumSpanningTree(g *WeightedUndirected) *MinimumSpanningTree {
 		visited: make([]bool, g.V()),
 		edgeTo:  make([]UndirectedEdge, g.V()),
 		distTo:  make([]float64, g.V()),
-		pq:      heap.NewIndexMinHeap[float64, any](g.V(), common.NewCompareFunc[float64](), nil),
+		pq:      heap.NewIndexMinHeap[float64, any](g.V(), generic.NewCompareFunc[float64](), nil),
 	}
 
 	for v := 0; v < g.V(); v++ {
@@ -379,7 +379,7 @@ func newShortestPathTree(g *WeightedDirected, s int) *ShortestPathTree {
 	spt := &ShortestPathTree{
 		edgeTo: make([]DirectedEdge, g.V()),
 		distTo: make([]float64, g.V()),
-		pq:     heap.NewIndexMinHeap[float64, any](g.V(), common.NewCompareFunc[float64](), nil),
+		pq:     heap.NewIndexMinHeap[float64, any](g.V(), generic.NewCompareFunc[float64](), nil),
 	}
 
 	for v := 0; v < g.V(); v++ {

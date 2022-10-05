@@ -3,7 +3,7 @@ package symboltable
 import (
 	"fmt"
 
-	"github.com/moorara/algo/common"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 )
 
@@ -16,7 +16,7 @@ type bstNode[K, V any] struct {
 
 type bst[K, V any] struct {
 	root   *bstNode[K, V]
-	cmpKey common.CompareFunc[K]
+	cmpKey generic.CompareFunc[K]
 }
 
 // NewBST creates a new binary search tree.
@@ -26,7 +26,7 @@ type bst[K, V any] struct {
 //
 //	Larger than all keys in its left sub-tree.
 //	Smaller than all keys in its right sub-tree.
-func NewBST[K, V any](cmpKey common.CompareFunc[K]) OrderedSymbolTable[K, V] {
+func NewBST[K, V any](cmpKey generic.CompareFunc[K]) OrderedSymbolTable[K, V] {
 	return &bst[K, V]{
 		root:   nil,
 		cmpKey: cmpKey,
@@ -105,7 +105,7 @@ func (t *bst[K, V]) _height(n *bstNode[K, V]) int {
 		return 0
 	}
 
-	return 1 + common.Max[int](t._height(n.left), t._height(n.right))
+	return 1 + generic.Max[int](t._height(n.left), t._height(n.right))
 }
 
 // IsEmpty returns true if BST is empty.

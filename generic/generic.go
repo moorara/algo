@@ -1,4 +1,4 @@
-package common
+package generic
 
 import "golang.org/x/exp/constraints"
 

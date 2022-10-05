@@ -1,10 +1,10 @@
 package heap
 
-import "github.com/moorara/algo/common"
+import "github.com/moorara/algo/generic"
 
 type indexMaxHeap[K, V any] struct {
-	cmpKey common.CompareFunc[K]
-	eqVal  common.EqualFunc[V]
+	cmpKey generic.CompareFunc[K]
+	eqVal  generic.EqualFunc[V]
 
 	cap  int   // maximum number of items on heap
 	n    int   // current number of items on heap
@@ -22,7 +22,7 @@ type indexMaxHeap[K, V any] struct {
 // cap is the maximum number of items on heap (priority queue).
 // cmpKey is a function for comparing and ordering keys.
 // eqVal is a function for checking equality of values.
-func NewIndexMaxHeap[K, V any](cap int, cmpKey common.CompareFunc[K], eqVal common.EqualFunc[V]) IndexHeap[K, V] {
+func NewIndexMaxHeap[K, V any](cap int, cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) IndexHeap[K, V] {
 	pos := make([]int, cap)
 	for i := range pos {
 		pos[i] = -1
