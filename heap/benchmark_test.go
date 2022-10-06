@@ -113,26 +113,6 @@ func BenchmarkHeap_Insert(b *testing.B) {
 		heap := NewBinary(size, cmpMax, eqVal)
 		runHeapInsert(b, heap)
 	})
-
-	b.Run("BinomialMinHeap.Insert", func(b *testing.B) {
-		heap := NewBinary(size, cmpMin, eqVal) // TODO:
-		runHeapInsert(b, heap)
-	})
-
-	b.Run("BinomialMaxHeap.Insert", func(b *testing.B) {
-		heap := NewBinary(size, cmpMax, eqVal) // TODO:
-		runHeapInsert(b, heap)
-	})
-
-	b.Run("FibonacciMinHeap.Insert", func(b *testing.B) {
-		heap := NewBinary(size, cmpMin, eqVal) // TODO:
-		runHeapInsert(b, heap)
-	})
-
-	b.Run("FibonacciMaxHeap.Insert", func(b *testing.B) {
-		heap := NewBinary(size, cmpMax, eqVal) // TODO:
-		runHeapInsert(b, heap)
-	})
 }
 
 func BenchmarkHeap_Delete(b *testing.B) {
@@ -150,26 +130,6 @@ func BenchmarkHeap_Delete(b *testing.B) {
 
 	b.Run("BinaryMaxHeap.Delete", func(b *testing.B) {
 		heap := NewBinary(size, cmpMax, eqVal)
-		runHeapDelete(b, heap)
-	})
-
-	b.Run("BinomialMinHeap.Delete", func(b *testing.B) {
-		heap := NewBinary(size, cmpMin, eqVal) // TODO:
-		runHeapDelete(b, heap)
-	})
-
-	b.Run("BinomialMaxHeap.Delete", func(b *testing.B) {
-		heap := NewBinary(size, cmpMax, eqVal) // TODO:
-		runHeapDelete(b, heap)
-	})
-
-	b.Run("FibonacciMinHeap.Delete", func(b *testing.B) {
-		heap := NewBinary(size, cmpMin, eqVal) // TODO:
-		runHeapDelete(b, heap)
-	})
-
-	b.Run("FibonacciMaxHeap.Delete", func(b *testing.B) {
-		heap := NewBinary(size, cmpMax, eqVal) // TODO:
 		runHeapDelete(b, heap)
 	})
 }
@@ -190,26 +150,6 @@ func BenchmarkIndexedHeap_Insert(b *testing.B) {
 		heap := NewIndexedBinary[int, string](b.N, cmpMax, eqVal)
 		runIndexedHeapInsert(b, heap)
 	})
-
-	b.Run("BinomialMinIndexedHeap.Insert", func(b *testing.B) {
-		heap := NewIndexedBinary[int, string](b.N, cmpMin, eqVal)
-		runIndexedHeapInsert(b, heap)
-	})
-
-	b.Run("BinomialMaxIndexedHeap.Insert", func(b *testing.B) {
-		heap := NewIndexedBinary[int, string](b.N, cmpMax, eqVal)
-		runIndexedHeapInsert(b, heap)
-	})
-
-	b.Run("FibonacciMinIndexedHeap.Insert", func(b *testing.B) {
-		heap := NewIndexedBinary[int, string](b.N, cmpMin, eqVal)
-		runIndexedHeapInsert(b, heap)
-	})
-
-	b.Run("FibonacciMaxIndexedHeap.Insert", func(b *testing.B) {
-		heap := NewIndexedBinary[int, string](b.N, cmpMax, eqVal)
-		runIndexedHeapInsert(b, heap)
-	})
 }
 
 func BenchmarkIndexedHeap_Delete(b *testing.B) {
@@ -225,26 +165,6 @@ func BenchmarkIndexedHeap_Delete(b *testing.B) {
 	})
 
 	b.Run("BinaryMaxIndexedHeap.Delete", func(b *testing.B) {
-		heap := NewIndexedBinary[int, string](b.N, cmpMax, eqVal)
-		runIndexedHeapDelete(b, heap)
-	})
-
-	b.Run("BinomialMinIndexedHeap.Delete", func(b *testing.B) {
-		heap := NewIndexedBinary[int, string](b.N, cmpMin, eqVal)
-		runIndexedHeapDelete(b, heap)
-	})
-
-	b.Run("BinomialMaxIndexedHeap.Delete", func(b *testing.B) {
-		heap := NewIndexedBinary[int, string](b.N, cmpMax, eqVal)
-		runIndexedHeapDelete(b, heap)
-	})
-
-	b.Run("FibonacciMinIndexedHeap.Delete", func(b *testing.B) {
-		heap := NewIndexedBinary[int, string](b.N, cmpMin, eqVal)
-		runIndexedHeapDelete(b, heap)
-	})
-
-	b.Run("FibonacciMaxIndexedHeap.Delete", func(b *testing.B) {
 		heap := NewIndexedBinary[int, string](b.N, cmpMax, eqVal)
 		runIndexedHeapDelete(b, heap)
 	})
