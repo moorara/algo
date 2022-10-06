@@ -61,7 +61,7 @@ type (
 		expectedRLVTraverse        []KeyValue[K, V]
 		expectedAscendingTraverse  []KeyValue[K, V]
 		expectedDescendingTraverse []KeyValue[K, V]
-		expectedDotCode            string
+		expectedGraphviz           string
 	}
 )
 
@@ -481,7 +481,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)
 
 			// Graphviz dot language code
-			assert.Equal(t, test.expectedDotCode, ost.Graphviz())
+			assert.Equal(t, test.expectedGraphviz, ost.Graphviz())
 
 			for _, expected := range test.keyVals {
 				val, ok := ost.Delete(expected.Key)

@@ -289,10 +289,10 @@ func (t *Topological) Rank(v int) (int, bool) {
 //	Spanning: includes all of the vertices
 //	Minimum: sum of the edge wights are minimum
 type MinimumSpanningTree struct {
-	visited []bool                       // visited[v] = true if v on tree, false otherwise
-	edgeTo  []UndirectedEdge             // edgeTo[v] = shortest edge from tree vertex to non-tree vertex
-	distTo  []float64                    // distTo[v] = weight of shortest such edge (edgeTo[v].weight())
-	pq      heap.IndexHeap[float64, any] // indexed priority queue of vertices connected by an edge to tree
+	visited []bool                         // visited[v] = true if v on tree, false otherwise
+	edgeTo  []UndirectedEdge               // edgeTo[v] = shortest edge from tree vertex to non-tree vertex
+	distTo  []float64                      // distTo[v] = weight of shortest such edge (edgeTo[v].weight())
+	pq      heap.IndexedHeap[float64, any] // indexed priority queue of vertices connected by an edge to tree
 }
 
 func newMinimumSpanningTree(g *WeightedUndirected) *MinimumSpanningTree {
@@ -300,7 +300,7 @@ func newMinimumSpanningTree(g *WeightedUndirected) *MinimumSpanningTree {
 		visited: make([]bool, g.V()),
 		edgeTo:  make([]UndirectedEdge, g.V()),
 		distTo:  make([]float64, g.V()),
-		pq:      heap.NewIndexMinHeap[float64, any](g.V(), generic.NewCompareFunc[float64](), nil),
+		pq:      heap.NewIndexedBinary[float64, any](g.V(), generic.NewCompareFunc[float64](), nil),
 	}
 
 	for v := 0; v < g.V(); v++ {
@@ -372,16 +372,16 @@ func (mst *MinimumSpanningTree) Weight() float64 {
 // ShortestPathTree is used for calculating the shortest path tree of a weighted directed graph.
 // A shortest path from vertex s to vertex t in a weighted directed graph is a directed path from s to t such that no other path has a lower weight.
 type ShortestPathTree struct {
-	edgeTo []DirectedEdge               // edgeTo[v] = last edge on shortest path s->v
-	distTo []float64                    // distTo[v] = distance of shortest path s->v
-	pq     heap.IndexHeap[float64, any] // indexed priority queue of vertices
+	edgeTo []DirectedEdge                 // edgeTo[v] = last edge on shortest path s->v
+	distTo []float64                      // distTo[v] = distance of shortest path s->v
+	pq     heap.IndexedHeap[float64, any] // indexed priority queue of vertices
 }
 
 func newShortestPathTree(g *WeightedDirected, s int) *ShortestPathTree {
 	spt := &ShortestPathTree{
 		edgeTo: make([]DirectedEdge, g.V()),
 		distTo: make([]float64, g.V()),
-		pq:     heap.NewIndexMinHeap[float64, any](g.V(), generic.NewCompareFunc[float64](), nil),
+		pq:     heap.NewIndexedBinary[float64, any](g.V(), generic.NewCompareFunc[float64](), nil),
 	}
 
 	for v := 0; v < g.V(); v++ {

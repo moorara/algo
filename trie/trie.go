@@ -34,7 +34,7 @@ type (
 	}
 )
 
-// OrderedSymbolTable represents a trie (prefix tree) abstract data type.
+// Trie represents a trie (prefix tree) abstract data type.
 type Trie[V any] interface {
 	verify() bool
 	Size() int
