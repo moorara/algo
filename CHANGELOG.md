@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.2](https://github.com/moorara/algo/tree/v0.3.2) (2022-10-06)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.3.1...v0.3.2)
+
+**Merged Changes:**
+
+  - Refactoring heap package [#92](https://github.com/moorara/algo/pull/92) ([moorara](https://github.com/moorara))
+
+
 ## [v0.3.1](https://github.com/moorara/algo/tree/v0.3.1) (2022-10-04)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.3.0...v0.3.1)
