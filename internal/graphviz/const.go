@@ -70,6 +70,7 @@ const (
 	StyleDiagonals Style = "diagonals"
 	StyleStriped   Style = "striped"
 	StyleWedged    Style = "wedged"
+	StyleInvis     Style = "invis"
 )
 
 type Shape string

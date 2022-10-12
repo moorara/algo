@@ -4,7 +4,7 @@
 [![Test Coverage][coverage-image]][coverage-url]
 [![Maintainability][maintainability-image]][maintainability-url]
 
-# Algo
+# algo
 
 A collection of common data structures and algorithms for Go applications.
 
@@ -51,6 +51,9 @@ A collection of common data structures and algorithms for Go applications.
       - Directed Graph
       - Weighted Undirected Graph
       - Weighted Directed Graph
+    - Finite Automata
+      - DFA
+      - NFA
 
 ## Development
 
