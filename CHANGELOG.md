@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.3.3](https://github.com/moorara/algo/tree/v0.3.3) (2022-10-12)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.3.2...v0.3.3)
+
+**Merged Changes:**
+
+  - Add automata [#95](https://github.com/moorara/algo/pull/95) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 316c755 [#93](https://github.com/moorara/algo/pull/93) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+
+
 ## [v0.3.2](https://github.com/moorara/algo/tree/v0.3.2) (2022-10-06)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.3.1...v0.3.2)
