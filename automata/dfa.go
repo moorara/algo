@@ -107,6 +107,41 @@ func (d *DFA) Accept(s String) bool {
 	return d.final.Contains(curr)
 }
 
+// UpdateFinal updates the final states of the current DFA.
+// This is usually required after joining another DFA.
+func (d *DFA) UpdateFinal(final States) {
+	d.final = final
+}
+
+// Join merges another DFA with the current one and returns the set of new merged states.
+func (d *DFA) Join(dfa *DFA) States {
+	// Find the maximum state number
+	base := State(0)
+	for _, s := range d.trans.States() {
+		if s > base {
+			base = s
+		}
+	}
+
+	// Use the maximum state number in the current DFA as the offset for the new states
+	base += 1
+
+	for _, kv := range dfa.trans.tab.KeyValues() {
+		s := base + kv.Key
+		for _, kv := range kv.Val.KeyValues() {
+			a, next := kv.Key, base+kv.Val
+			d.trans.Add(s, a, next)
+		}
+	}
+
+	states := States{}
+	for _, s := range dfa.trans.States() {
+		states = append(states, base+s)
+	}
+
+	return states
+}
+
 // Graphviz returns the transition graph of the DFA in DOT Language format.
 func (d *DFA) Graphviz() string {
 	graph := graphviz.NewGraph(true, true, false, "DFA", graphviz.RankDirLR, "", "", "")

@@ -100,6 +100,46 @@ func NewNFA(trans *NTrans, start State, final States) *NFA {
 	}
 }
 
+// εClosure returns the set of NFA states reachable from some NFA state s in set T on ε-transitions alone.
+// εClosure(T) = Union(εClosure(s)) for all s ∈ T.
+func (n *NFA) εClosure(T States) States {
+	closure := T
+
+	stack := list.NewStack[State](1024, nil)
+	for _, s := range T {
+		stack.Push(s)
+	}
+
+	for !stack.IsEmpty() {
+		t, _ := stack.Pop()
+		for _, u := range n.trans.Next(t, E) {
+			if !closure.Contains(u) {
+				closure = append(closure, u)
+				stack.Push(u)
+			}
+		}
+	}
+
+	return closure
+}
+
+// move returns the set of NFA states to which there is a transition on input symbol a from some state s in T.
+func (n *NFA) move(T States, a Symbol) States {
+	states := States{}
+	for _, s := range T {
+		U := n.trans.Next(s, a)
+		states = append(states, U...)
+	}
+
+	return states
+}
+
+// UpdateFinal updates the final states of the current NFA.
+// This is usually required after joining another NFA.
+func (n *NFA) UpdateFinal(final States) {
+	n.final = final
+}
+
 // Accept determines whether or not an input string is recognized (accepted) by the NFA.
 func (n *NFA) Accept(s String) bool {
 	var S States
@@ -114,6 +154,41 @@ func (n *NFA) Accept(s String) bool {
 	}
 
 	return false
+}
+
+// Join merges another NFA with the current one and returns the set of new merged states.
+func (n *NFA) Join(nfa *NFA) States {
+	// Find the maximum state number
+	base := State(0)
+	for _, s := range n.trans.States() {
+		if s > base {
+			base = s
+		}
+	}
+
+	// Use the maximum state number in the current NFA as the offset for the new states
+	base += 1
+
+	for _, kv := range nfa.trans.tab.KeyValues() {
+		s := base + kv.Key
+		for _, kv := range kv.Val.KeyValues() {
+			a := kv.Key
+
+			next := make(States, len(kv.Val))
+			for i, n := range kv.Val {
+				next[i] = base + n
+			}
+
+			n.trans.Add(s, a, next)
+		}
+	}
+
+	states := States{}
+	for _, s := range nfa.trans.States() {
+		states = append(states, base+s)
+	}
+
+	return states
 }
 
 // ToDFA constructs a new DFA accepting the same language as the NFA.
@@ -205,38 +280,4 @@ func (n *NFA) Graphviz() string {
 	}
 
 	return graph.DotCode()
-}
-
-// εClosure returns the set of NFA states reachable from some NFA state s in set T on ε-transitions alone.
-// εClosure(T) = Union(εClosure(s)) for all s ∈ T.
-func (n *NFA) εClosure(T States) States {
-	closure := T
-
-	stack := list.NewStack[State](1024, nil)
-	for _, s := range T {
-		stack.Push(s)
-	}
-
-	for !stack.IsEmpty() {
-		t, _ := stack.Pop()
-		for _, u := range n.trans.Next(t, E) {
-			if !closure.Contains(u) {
-				closure = append(closure, u)
-				stack.Push(u)
-			}
-		}
-	}
-
-	return closure
-}
-
-// move returns the set of NFA states to which there is a transition on input symbol a from some state s in T.
-func (n *NFA) move(T States, a Symbol) States {
-	states := States{}
-	for _, s := range T {
-		U := n.trans.Next(s, a)
-		states = append(states, U...)
-	}
-
-	return states
 }

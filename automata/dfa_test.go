@@ -29,6 +29,27 @@ func getTestDFAs() []*DFA {
 	t2.Add(4, 'a', 1)
 	t2.Add(4, 'b', 2)
 
+	t3 := NewDTrans()
+	t3.Add(0, 'a', 1)
+	t3.Add(0, 'b', 0)
+	t3.Add(1, 'a', 1)
+	t3.Add(1, 'b', 2)
+	t3.Add(2, 'a', 1)
+	t3.Add(2, 'b', 3)
+	t3.Add(3, 'a', 1)
+	t3.Add(3, 'b', 0)
+	t3.Add(3, 'a', 4)
+	t3.Add(4, 'a', 5)
+	t3.Add(4, 'b', 6)
+	t3.Add(5, 'a', 5)
+	t3.Add(5, 'b', 7)
+	t3.Add(6, 'a', 5)
+	t3.Add(6, 'b', 6)
+	t3.Add(7, 'a', 5)
+	t3.Add(7, 'b', 8)
+	t3.Add(8, 'a', 5)
+	t3.Add(8, 'b', 6)
+
 	return []*DFA{
 		{
 			trans: t1,
@@ -39,6 +60,11 @@ func getTestDFAs() []*DFA {
 			trans: t2,
 			start: State(0),
 			final: States{4},
+		},
+		{
+			trans: t3,
+			start: State(0),
+			final: States{8},
 		},
 	}
 }
@@ -176,24 +202,46 @@ func TestNewDFA(t *testing.T) {
 	assert.NotNil(t, dfa)
 }
 
+func TestDFA_UpdateFinal(t *testing.T) {
+	dfa := getTestDFAs()[0]
+
+	tests := []struct {
+		name  string
+		d     *DFA
+		final States
+	}{
+		{
+			name:  "OK",
+			d:     dfa,
+			final: States{2},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.d.UpdateFinal(tc.final)
+		})
+	}
+}
+
 func TestDFA_Accept(t *testing.T) {
 	dfa := getTestDFAs()[0]
 
 	tests := []struct {
 		name           string
-		dfa            *DFA
+		d              *DFA
 		s              String
 		expectedResult bool
 	}{
 		{
 			name:           "Accepted",
-			dfa:            dfa,
+			d:              dfa,
 			s:              ToString("aabbababb"),
 			expectedResult: true,
 		},
 		{
 			name:           "NotAccepted",
-			dfa:            dfa,
+			d:              dfa,
 			s:              ToString("aabab"),
 			expectedResult: false,
 		},
@@ -201,8 +249,54 @@ func TestDFA_Accept(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b := tc.dfa.Accept(tc.s)
+			b := tc.d.Accept(tc.s)
 			assert.Equal(t, tc.expectedResult, b)
+		})
+	}
+}
+
+func TestDFA_Join(t *testing.T) {
+	dfas := getTestDFAs()
+
+	type edge struct {
+		s    State
+		a    Symbol
+		next State
+	}
+
+	tests := []struct {
+		name           string
+		d              *DFA
+		dfa            *DFA
+		extraTrans     []edge
+		newFinal       States
+		expectedStates States
+		expectedDFA    *DFA
+	}{
+		{
+			name: "OK",
+			d:    dfas[0],
+			dfa:  dfas[1],
+			extraTrans: []edge{
+				{3, 'a', 4},
+			},
+			newFinal:       States{8},
+			expectedStates: States{4, 5, 6, 7, 8},
+			expectedDFA:    dfas[2],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			states := tc.d.Join(tc.dfa)
+			for _, e := range tc.extraTrans {
+				tc.d.trans.Add(e.s, e.a, e.next)
+			}
+			tc.d.UpdateFinal(tc.newFinal)
+
+			assert.Equal(t, tc.expectedStates, states)
+			// This is a trick to avoid comparing the symbol tables with their internal structures.
+			assert.Equal(t, tc.expectedDFA.Graphviz(), tc.d.Graphviz())
 		})
 	}
 }
@@ -212,12 +306,12 @@ func TestDFA_Graphviz(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		dfa              *DFA
+		d                *DFA
 		expectedGraphviz string
 	}{
 		{
 			name: "First",
-			dfa:  dfas[0],
+			d:    dfas[0],
 			expectedGraphviz: `strict digraph "DFA" {
   rankdir=LR;
   concentrate=false;
@@ -242,7 +336,7 @@ func TestDFA_Graphviz(t *testing.T) {
 		},
 		{
 			name: "Second",
-			dfa:  dfas[1],
+			d:    dfas[1],
 			expectedGraphviz: `strict digraph "DFA" {
   rankdir=LR;
   concentrate=false;
@@ -272,7 +366,7 @@ func TestDFA_Graphviz(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedGraphviz, tc.dfa.Graphviz())
+			assert.Equal(t, tc.expectedGraphviz, tc.d.Graphviz())
 		})
 	}
 }
