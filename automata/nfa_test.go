@@ -26,6 +26,25 @@ func getTestNFAs() []*NFA {
 	t2.Add(8, 'b', States{9})
 	t2.Add(9, 'b', States{10})
 
+	t3 := NewNTrans()
+	t3.Add(0, E, States{1, 3})
+	t3.Add(1, 'a', States{2})
+	t3.Add(2, 'a', States{2})
+	t3.Add(3, 'b', States{4})
+	t3.Add(4, 'b', States{4})
+	t3.Add(2, E, States{5})
+	t3.Add(4, E, States{5})
+	t3.Add(5, E, States{6, 12})
+	t3.Add(6, E, States{7, 9})
+	t3.Add(7, 'a', States{8})
+	t3.Add(8, E, States{11})
+	t3.Add(9, 'b', States{10})
+	t3.Add(10, E, States{11})
+	t3.Add(11, E, States{6, 12})
+	t3.Add(12, 'a', States{13})
+	t3.Add(13, 'b', States{14})
+	t3.Add(14, 'b', States{15})
+
 	return []*NFA{
 		{
 			trans: t1,
@@ -36,6 +55,11 @@ func getTestNFAs() []*NFA {
 			trans: t2,
 			start: State(0),
 			final: States{10},
+		},
+		{
+			trans: t3,
+			start: State(0),
+			final: States{15},
 		},
 	}
 }
@@ -173,24 +197,46 @@ func TestNewNFA(t *testing.T) {
 	assert.NotNil(t, nfa)
 }
 
+func TestNFA_UpdateFinal(t *testing.T) {
+	nfa := getTestNFAs()[0]
+
+	tests := []struct {
+		name  string
+		n     *NFA
+		final States
+	}{
+		{
+			name:  "OK",
+			n:     nfa,
+			final: States{4},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.n.UpdateFinal(tc.final)
+		})
+	}
+}
+
 func TestNFA_Accept(t *testing.T) {
 	nfa := getTestNFAs()[0]
 
 	tests := []struct {
 		name           string
-		nfa            *NFA
+		n              *NFA
 		s              String
 		expectedResult bool
 	}{
 		{
 			name:           "Accepted",
-			nfa:            nfa,
+			n:              nfa,
 			s:              ToString("aaaa"),
 			expectedResult: true,
 		},
 		{
 			name:           "NotAccepted",
-			nfa:            nfa,
+			n:              nfa,
 			s:              ToString("abbb"),
 			expectedResult: false,
 		},
@@ -198,8 +244,55 @@ func TestNFA_Accept(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b := tc.nfa.Accept(tc.s)
+			b := tc.n.Accept(tc.s)
 			assert.Equal(t, tc.expectedResult, b)
+		})
+	}
+}
+
+func TestNFA_Join(t *testing.T) {
+	nfas := getTestNFAs()
+
+	type edge struct {
+		s    State
+		a    Symbol
+		next States
+	}
+
+	tests := []struct {
+		name           string
+		n              *NFA
+		nfa            *NFA
+		extraTrans     []edge
+		newFinal       States
+		expectedStates States
+		expectedNFA    *NFA
+	}{
+		{
+			name: "OK",
+			n:    nfas[0],
+			nfa:  nfas[1],
+			extraTrans: []edge{
+				{2, E, States{5}},
+				{4, E, States{5}},
+			},
+			newFinal:       States{15},
+			expectedStates: States{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+			expectedNFA:    nfas[2],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			states := tc.n.Join(tc.nfa)
+			for _, e := range tc.extraTrans {
+				tc.n.trans.Add(e.s, e.a, e.next)
+			}
+			tc.n.UpdateFinal(tc.newFinal)
+
+			assert.Equal(t, tc.expectedStates, states)
+			// This is a trick to avoid comparing the symbol tables with their internal structures.
+			assert.Equal(t, tc.expectedNFA.Graphviz(), tc.n.Graphviz())
 		})
 	}
 }
@@ -210,19 +303,19 @@ func TestNFA_ToDFA(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		nfa         *NFA
+		n           *NFA
 		expectedDFA *DFA
 	}{
 		{
 			name:        "OK",
-			nfa:         nfas[1],
+			n:           nfas[1],
 			expectedDFA: dfas[1],
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			dfa := tc.nfa.ToDFA()
+			dfa := tc.n.ToDFA()
 
 			// This is a trick to avoid comparing the symbol tables with their internal structures.
 			assert.Equal(t, tc.expectedDFA.Graphviz(), dfa.Graphviz())
@@ -235,12 +328,12 @@ func TestNFA_Graphviz(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		nfa              *NFA
+		n                *NFA
 		expectedGraphviz string
 	}{
 		{
 			name: "First",
-			nfa:  nfas[0],
+			n:    nfas[0],
 			expectedGraphviz: `strict digraph "NFA" {
   rankdir=LR;
   concentrate=false;
@@ -264,7 +357,7 @@ func TestNFA_Graphviz(t *testing.T) {
 		},
 		{
 			name: "Second",
-			nfa:  nfas[1],
+			n:    nfas[1],
 			expectedGraphviz: `strict digraph "NFA" {
   rankdir=LR;
   concentrate=false;
@@ -303,7 +396,7 @@ func TestNFA_Graphviz(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedGraphviz, tc.nfa.Graphviz())
+			assert.Equal(t, tc.expectedGraphviz, tc.n.Graphviz())
 		})
 	}
 }
