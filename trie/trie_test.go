@@ -4,11 +4,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moorara/algo/generic"
 )
 
 type trieTest[V any] struct {
 	name                       string
 	symbolTable                string
+	eqVal                      generic.EqualFunc[V]
 	keyVals                    []KeyValue[V]
 	expectedSize               int
 	expectedHeight             int
@@ -46,7 +49,9 @@ type trieTest[V any] struct {
 	expectedRLVTraverse        []KeyValue[V]
 	expectedAscendingTraverse  []KeyValue[V]
 	expectedDescendingTraverse []KeyValue[V]
-	expectedDotCode            string
+	equals                     Trie[V]
+	expectedEquals             bool
+	expectedGraphviz           string
 	matchPattern               string
 	expectedMatch              []KeyValue[V]
 	withPrefixKey              string
@@ -58,9 +63,12 @@ type trieTest[V any] struct {
 }
 
 func getTrieTests() []trieTest[int] {
+	eqVal := generic.NewEqualFunc[int]()
+
 	return []trieTest[int]{
 		{
-			name: "ABC",
+			name:  "ABC",
+			eqVal: eqVal,
 			keyVals: []KeyValue[int]{
 				{"B", 2},
 				{"A", 1},
@@ -117,7 +125,8 @@ func getTrieTests() []trieTest[int] {
 			expectedLongestPrefixOfOK:  false,
 		},
 		{
-			name: "ABCDE",
+			name:  "ABCDE",
+			eqVal: eqVal,
 			keyVals: []KeyValue[int]{
 				{"B", 2},
 				{"A", 1},
@@ -180,7 +189,8 @@ func getTrieTests() []trieTest[int] {
 			expectedLongestPrefixOfOK:  true,
 		},
 		{
-			name: "ADGJMPS",
+			name:  "ADGJMPS",
+			eqVal: eqVal,
 			keyVals: []KeyValue[int]{
 				{"J", 10},
 				{"A", 1},
@@ -251,7 +261,8 @@ func getTrieTests() []trieTest[int] {
 			expectedLongestPrefixOfOK:  true,
 		},
 		{
-			name: "Words",
+			name:  "Words",
+			eqVal: eqVal,
 			keyVals: []KeyValue[int]{
 				{"box", 2},
 				{"dad", 3},
@@ -493,8 +504,8 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 			})
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)
 
-			// Graphviz dot language code
-			assert.Equal(t, test.expectedDotCode, trie.Graphviz())
+			assert.Equal(t, test.expectedEquals, trie.Equals(test.equals))
+			assert.Equal(t, test.expectedGraphviz, trie.Graphviz())
 
 			kvs = trie.Match(test.matchPattern)
 			assert.Equal(t, test.expectedMatch, kvs)

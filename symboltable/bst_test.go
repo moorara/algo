@@ -1,6 +1,10 @@
 package symboltable
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/moorara/algo/generic"
+)
 
 func getBSTTests() []orderedSymbolTableTest[string, int] {
 	tests := getOrderedSymbolTableTests()
@@ -15,6 +19,8 @@ func getBSTTests() []orderedSymbolTableTest[string, int] {
 	tests[0].expectedRLVTraverse = []KeyValue[string, int]{{"C", 3}, {"A", 1}, {"B", 2}}
 	tests[0].expectedAscendingTraverse = []KeyValue[string, int]{{"A", 1}, {"B", 2}, {"C", 3}}
 	tests[0].expectedDescendingTraverse = []KeyValue[string, int]{{"C", 3}, {"B", 2}, {"A", 1}}
+	tests[0].equals = nil
+	tests[0].expectedEquals = false
 	tests[0].expectedGraphviz = `strict digraph "BST" {
   concentrate=false;
   node [shape=oval];
@@ -37,6 +43,8 @@ func getBSTTests() []orderedSymbolTableTest[string, int] {
 	tests[1].expectedRLVTraverse = []KeyValue[string, int]{{"E", 5}, {"D", 4}, {"C", 3}, {"A", 1}, {"B", 2}}
 	tests[1].expectedAscendingTraverse = []KeyValue[string, int]{{"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5}}
 	tests[1].expectedDescendingTraverse = []KeyValue[string, int]{{"E", 5}, {"D", 4}, {"C", 3}, {"B", 2}, {"A", 1}}
+	tests[1].equals = NewBST[string, int](generic.NewCompareFunc[string](), nil)
+	tests[1].expectedEquals = false
 	tests[1].expectedGraphviz = `strict digraph "BST" {
   concentrate=false;
   node [shape=oval];
@@ -63,6 +71,11 @@ func getBSTTests() []orderedSymbolTableTest[string, int] {
 	tests[2].expectedRLVTraverse = []KeyValue[string, int]{{"S", 19}, {"M", 13}, {"P", 16}, {"G", 7}, {"A", 1}, {"D", 4}, {"J", 10}}
 	tests[2].expectedAscendingTraverse = []KeyValue[string, int]{{"A", 1}, {"D", 4}, {"G", 7}, {"J", 10}, {"M", 13}, {"P", 16}, {"S", 19}}
 	tests[2].expectedDescendingTraverse = []KeyValue[string, int]{{"S", 19}, {"P", 16}, {"M", 13}, {"J", 10}, {"G", 7}, {"D", 4}, {"A", 1}}
+	tests[2].equals = NewBST[string, int](generic.NewCompareFunc[string](), nil)
+	tests[2].equals.Put("J", 10)
+	tests[2].equals.Put("D", 4)
+	tests[2].equals.Put("P", 16)
+	tests[2].expectedEquals = false
 	tests[2].expectedGraphviz = `strict digraph "BST" {
   concentrate=false;
   node [shape=oval];
@@ -93,6 +106,15 @@ func getBSTTests() []orderedSymbolTableTest[string, int] {
 	tests[3].expectedRLVTraverse = []KeyValue[string, int]{{"dome", 7}, {"dance", 13}, {"dad", 3}, {"baby", 5}, {"balloon", 17}, {"band", 11}, {"box", 2}}
 	tests[3].expectedAscendingTraverse = []KeyValue[string, int]{{"baby", 5}, {"balloon", 17}, {"band", 11}, {"box", 2}, {"dad", 3}, {"dance", 13}, {"dome", 7}}
 	tests[3].expectedDescendingTraverse = []KeyValue[string, int]{{"dome", 7}, {"dance", 13}, {"dad", 3}, {"box", 2}, {"band", 11}, {"balloon", 17}, {"baby", 5}}
+	tests[3].equals = NewBST[string, int](generic.NewCompareFunc[string](), nil)
+	tests[3].equals.Put("box", 2)
+	tests[3].equals.Put("band", 11)
+	tests[3].equals.Put("balloon", 17)
+	tests[3].equals.Put("baby", 5)
+	tests[3].equals.Put("dad", 3)
+	tests[3].equals.Put("dance", 13)
+	tests[3].equals.Put("dome", 7)
+	tests[3].expectedEquals = true
 	tests[3].expectedGraphviz = `strict digraph "BST" {
   concentrate=false;
   node [shape=oval];
@@ -120,7 +142,7 @@ func TestBST(t *testing.T) {
 	tests := getBSTTests()
 
 	for _, tc := range tests {
-		bst := NewBST[string, int](tc.cmpKey)
+		bst := NewBST[string, int](tc.cmpKey, tc.eqVal)
 		runOrderedSymbolTableTest(t, bst, tc)
 	}
 }

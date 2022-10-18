@@ -15,7 +15,9 @@ func getPatriciaTests() []trieTest[int] {
 	tests[0].expectedRLVTraverse = []KeyValue[int]{{"C", 3}, {"A", 1}, {"B", 2}}
 	tests[0].expectedAscendingTraverse = []KeyValue[int]{{"A", 1}, {"B", 2}, {"C", 3}}
 	tests[0].expectedDescendingTraverse = []KeyValue[int]{{"C", 3}, {"B", 2}, {"A", 1}}
-	tests[0].expectedDotCode = `strict digraph "Patricia" {
+	tests[0].equals = nil
+	tests[0].expectedEquals = false
+	tests[0].expectedGraphviz = `strict digraph "Patricia" {
   rankdir=TB;
   concentrate=false;
   node [shape=Mrecord];
@@ -41,7 +43,9 @@ func getPatriciaTests() []trieTest[int] {
 	tests[1].expectedRLVTraverse = []KeyValue[int]{{"E", 5}, {"C", 3}, {"A", 1}, {"D", 4}, {"B", 2}}
 	tests[1].expectedAscendingTraverse = []KeyValue[int]{{"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5}}
 	tests[1].expectedDescendingTraverse = []KeyValue[int]{{"E", 5}, {"D", 4}, {"C", 3}, {"B", 2}, {"A", 1}}
-	tests[1].expectedDotCode = `strict digraph "Patricia" {
+	tests[1].equals = NewPatricia[int](nil)
+	tests[1].expectedEquals = false
+	tests[1].expectedGraphviz = `strict digraph "Patricia" {
   rankdir=TB;
   concentrate=false;
   node [shape=Mrecord];
@@ -73,7 +77,12 @@ func getPatriciaTests() []trieTest[int] {
 	tests[2].expectedRLVTraverse = []KeyValue[int]{{"S", 19}, {"M", 13}, {"G", 7}, {"A", 1}, {"D", 4}, {"P", 16}, {"J", 10}}
 	tests[2].expectedAscendingTraverse = []KeyValue[int]{{"A", 1}, {"D", 4}, {"G", 7}, {"J", 10}, {"M", 13}, {"P", 16}, {"S", 19}}
 	tests[2].expectedDescendingTraverse = []KeyValue[int]{{"S", 19}, {"P", 16}, {"M", 13}, {"J", 10}, {"G", 7}, {"D", 4}, {"A", 1}}
-	tests[2].expectedDotCode = `strict digraph "Patricia" {
+	tests[2].equals = NewPatricia[int](nil)
+	tests[2].equals.Put("A", 1)
+	tests[2].equals.Put("D", 4)
+	tests[2].equals.Put("G", 7)
+	tests[2].expectedEquals = false
+	tests[2].expectedGraphviz = `strict digraph "Patricia" {
   rankdir=TB;
   concentrate=false;
   node [shape=Mrecord];
@@ -111,7 +120,16 @@ func getPatriciaTests() []trieTest[int] {
 	tests[3].expectedRLVTraverse = []KeyValue[int]{{"dance", 13}, {"dome", 7}, {"balloon", 17}, {"baby", 5}, {"band", 11}, {"dad", 3}, {"box", 2}}
 	tests[3].expectedAscendingTraverse = []KeyValue[int]{{"baby", 5}, {"balloon", 17}, {"band", 11}, {"box", 2}, {"dad", 3}, {"dance", 13}, {"dome", 7}}
 	tests[3].expectedDescendingTraverse = []KeyValue[int]{{"dome", 7}, {"dance", 13}, {"dad", 3}, {"box", 2}, {"band", 11}, {"balloon", 17}, {"baby", 5}}
-	tests[3].expectedDotCode = `strict digraph "Patricia" {
+	tests[3].equals = NewPatricia[int](nil)
+	tests[3].equals.Put("box", 2)
+	tests[3].equals.Put("dad", 3)
+	tests[3].equals.Put("baby", 5)
+	tests[3].equals.Put("dome", 7)
+	tests[3].equals.Put("band", 11)
+	tests[3].equals.Put("dance", 13)
+	tests[3].equals.Put("balloon", 17)
+	tests[3].expectedEquals = true
+	tests[3].expectedGraphviz = `strict digraph "Patricia" {
   rankdir=TB;
   concentrate=false;
   node [shape=Mrecord];
@@ -146,7 +164,7 @@ func TestPatricia(t *testing.T) {
 	tests := getPatriciaTests()
 
 	for _, tc := range tests {
-		pat := NewPatricia[int]()
+		pat := NewPatricia[int](tc.eqVal)
 		runTrieTest(t, pat, tc)
 	}
 }

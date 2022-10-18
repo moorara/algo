@@ -15,7 +15,9 @@ func getBinaryTests() []trieTest[int] {
 	tests[0].expectedRLVTraverse = []KeyValue[int]{{"C", 3}, {"B", 2}, {"A", 1}, {"", 0}}
 	tests[0].expectedAscendingTraverse = []KeyValue[int]{{"", 0}, {"A", 1}, {"B", 2}, {"C", 3}}
 	tests[0].expectedDescendingTraverse = []KeyValue[int]{{"C", 3}, {"B", 2}, {"A", 1}, {"", 0}}
-	tests[0].expectedDotCode = `strict digraph "Binary Trie" {
+	tests[0].equals = nil
+	tests[0].expectedEquals = false
+	tests[0].expectedGraphviz = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];
 
@@ -39,7 +41,9 @@ func getBinaryTests() []trieTest[int] {
 	tests[1].expectedRLVTraverse = []KeyValue[int]{{"E", 5}, {"D", 4}, {"C", 3}, {"B", 2}, {"A", 1}, {"", 0}}
 	tests[1].expectedAscendingTraverse = []KeyValue[int]{{"", 0}, {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5}}
 	tests[1].expectedDescendingTraverse = []KeyValue[int]{{"E", 5}, {"D", 4}, {"C", 3}, {"B", 2}, {"A", 1}, {"", 0}}
-	tests[1].expectedDotCode = `strict digraph "Binary Trie" {
+	tests[1].equals = NewBinary[int](nil)
+	tests[1].expectedEquals = false
+	tests[1].expectedGraphviz = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];
 
@@ -67,7 +71,12 @@ func getBinaryTests() []trieTest[int] {
 	tests[2].expectedRLVTraverse = []KeyValue[int]{{"S", 19}, {"P", 16}, {"M", 13}, {"J", 10}, {"G", 7}, {"D", 4}, {"A", 1}, {"", 0}}
 	tests[2].expectedAscendingTraverse = []KeyValue[int]{{"", 0}, {"A", 1}, {"D", 4}, {"G", 7}, {"J", 10}, {"M", 13}, {"P", 16}, {"S", 19}}
 	tests[2].expectedDescendingTraverse = []KeyValue[int]{{"S", 19}, {"P", 16}, {"M", 13}, {"J", 10}, {"G", 7}, {"D", 4}, {"A", 1}, {"", 0}}
-	tests[2].expectedDotCode = `strict digraph "Binary Trie" {
+	tests[2].equals = NewBinary[int](nil)
+	tests[2].equals.Put("A", 1)
+	tests[2].equals.Put("D", 4)
+	tests[2].equals.Put("G", 7)
+	tests[2].expectedEquals = false
+	tests[2].expectedGraphviz = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];
 
@@ -99,7 +108,16 @@ func getBinaryTests() []trieTest[int] {
 	tests[3].expectedRLVTraverse = []KeyValue[int]{{"e", 7}, {"m", 0}, {"o", 0}, {"e", 13}, {"c", 0}, {"n", 0}, {"d", 3}, {"a", 0}, {"d", 0}, {"x", 2}, {"o", 0}, {"d", 11}, {"n", 0}, {"n", 17}, {"o", 0}, {"o", 0}, {"l", 0}, {"l", 0}, {"y", 5}, {"b", 0}, {"a", 0}, {"b", 0}, {"", 0}}
 	tests[3].expectedAscendingTraverse = []KeyValue[int]{{"", 0}, {"b", 0}, {"a", 0}, {"b", 0}, {"y", 5}, {"l", 0}, {"l", 0}, {"o", 0}, {"o", 0}, {"n", 17}, {"n", 0}, {"d", 11}, {"o", 0}, {"x", 2}, {"d", 0}, {"a", 0}, {"d", 3}, {"n", 0}, {"c", 0}, {"e", 13}, {"o", 0}, {"m", 0}, {"e", 7}}
 	tests[3].expectedDescendingTraverse = []KeyValue[int]{{"e", 7}, {"m", 0}, {"o", 0}, {"e", 13}, {"c", 0}, {"n", 0}, {"d", 3}, {"a", 0}, {"d", 0}, {"x", 2}, {"o", 0}, {"d", 11}, {"n", 0}, {"n", 17}, {"o", 0}, {"o", 0}, {"l", 0}, {"l", 0}, {"y", 5}, {"b", 0}, {"a", 0}, {"b", 0}, {"", 0}}
-	tests[3].expectedDotCode = `strict digraph "Binary Trie" {
+	tests[3].equals = NewBinary[int](nil)
+	tests[3].equals.Put("box", 2)
+	tests[3].equals.Put("dad", 3)
+	tests[3].equals.Put("baby", 5)
+	tests[3].equals.Put("dome", 7)
+	tests[3].equals.Put("band", 11)
+	tests[3].equals.Put("dance", 13)
+	tests[3].equals.Put("balloon", 17)
+	tests[3].expectedEquals = true
+	tests[3].expectedGraphviz = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];
 
@@ -158,7 +176,7 @@ func TestBinaryTrie(t *testing.T) {
 	tests := getBinaryTests()
 
 	for _, tc := range tests {
-		bin := NewBinary[int]()
+		bin := NewBinary[int](tc.eqVal)
 		runTrieTest(t, bin, tc)
 	}
 }

@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/moorara/algo/generic"
 )
 
 const (
@@ -86,13 +88,15 @@ func runDeleteBenchmark(b *testing.B, trie Trie[int]) {
 func BenchmarkTrie_Put(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	eqVal := generic.NewEqualFunc[int]()
+
 	b.Run("BinaryTrie.Put", func(b *testing.B) {
-		trie := NewBinary[int]()
+		trie := NewBinary[int](eqVal)
 		runPutBenchmark(b, trie)
 	})
 
 	b.Run("Patricia.Put", func(b *testing.B) {
-		trie := NewPatricia[int]()
+		trie := NewPatricia[int](eqVal)
 		runPutBenchmark(b, trie)
 	})
 }
@@ -100,13 +104,15 @@ func BenchmarkTrie_Put(b *testing.B) {
 func BenchmarkTrie_Get(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	eqVal := generic.NewEqualFunc[int]()
+
 	b.Run("BinaryTrie.Get", func(b *testing.B) {
-		trie := NewBinary[int]()
+		trie := NewBinary[int](eqVal)
 		runGetBenchmark(b, trie)
 	})
 
 	b.Run("Patricia.Get", func(b *testing.B) {
-		trie := NewPatricia[int]()
+		trie := NewPatricia[int](eqVal)
 		runGetBenchmark(b, trie)
 	})
 }
@@ -114,13 +120,15 @@ func BenchmarkTrie_Get(b *testing.B) {
 func BenchmarkTrie_Delete(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	eqVal := generic.NewEqualFunc[int]()
+
 	b.Run("BinaryTrie.Delete", func(b *testing.B) {
-		trie := NewBinary[int]()
+		trie := NewBinary[int](eqVal)
 		runDeleteBenchmark(b, trie)
 	})
 
 	b.Run("Patricia.Delete", func(b *testing.B) {
-		trie := NewPatricia[int]()
+		trie := NewPatricia[int](eqVal)
 		runDeleteBenchmark(b, trie)
 	})
 }

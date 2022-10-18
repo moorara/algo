@@ -47,6 +47,7 @@ type SymbolTable[K, V any] interface {
 	Get(K) (V, bool)
 	Delete(K) (V, bool)
 	KeyValues() []KeyValue[K, V]
+	Equals(SymbolTable[K, V]) bool
 }
 
 // OrderedSymbolTable represents an ordered symbol table abstract data type.

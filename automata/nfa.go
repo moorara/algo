@@ -3,7 +3,6 @@ package automata
 import (
 	"fmt"
 
-	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/symboltable"
@@ -19,12 +18,10 @@ type NFA struct {
 // NewNFA creates a new non-deterministic finite automaton.
 // Finite automata are recognizers; they simply say yes or no for each possible input string.
 func NewNFA(start State, final States) *NFA {
-	cmpKey := generic.NewCompareFunc[State]()
-
 	return &NFA{
 		Start: start,
 		Final: final,
-		trans: symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[Symbol, States]](cmpKey),
+		trans: symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[Symbol, States]](cmpState, eqSymbolStates),
 	}
 }
 
@@ -67,8 +64,7 @@ func (n *NFA) Add(s State, a Symbol, next States) {
 	if v, ok := n.trans.Get(s); ok {
 		v.Put(a, next)
 	} else {
-		cmpKey := generic.NewCompareFunc[Symbol]()
-		v = symboltable.NewRedBlack[Symbol, States](cmpKey)
+		v = symboltable.NewRedBlack[Symbol, States](cmpSymbol, eqStates)
 		v.Put(a, next)
 		n.trans.Put(s, v)
 	}

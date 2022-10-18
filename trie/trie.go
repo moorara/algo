@@ -44,6 +44,7 @@ type Trie[V any] interface {
 	Get(string) (V, bool)
 	Delete(string) (V, bool)
 	KeyValues() []KeyValue[V]
+	Equals(Trie[V]) bool
 
 	Min() (string, V, bool)
 	Max() (string, V, bool)
