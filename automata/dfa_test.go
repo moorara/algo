@@ -7,126 +7,112 @@ import (
 )
 
 func getTestDFAs() []*DFA {
-	t1 := NewDTrans()
-	t1.Add(0, 'a', 1)
-	t1.Add(0, 'b', 0)
-	t1.Add(1, 'a', 1)
-	t1.Add(1, 'b', 2)
-	t1.Add(2, 'a', 1)
-	t1.Add(2, 'b', 3)
-	t1.Add(3, 'a', 1)
-	t1.Add(3, 'b', 0)
+	d0 := NewDFA(0, States{3})
+	d0.Add(0, 'a', 1)
+	d0.Add(0, 'b', 0)
+	d0.Add(1, 'a', 1)
+	d0.Add(1, 'b', 2)
+	d0.Add(2, 'a', 1)
+	d0.Add(2, 'b', 3)
+	d0.Add(3, 'a', 1)
+	d0.Add(3, 'b', 0)
 
-	t2 := NewDTrans()
-	t2.Add(0, 'a', 1)
-	t2.Add(0, 'b', 2)
-	t2.Add(1, 'a', 1)
-	t2.Add(1, 'b', 3)
-	t2.Add(2, 'a', 1)
-	t2.Add(2, 'b', 2)
-	t2.Add(3, 'a', 1)
-	t2.Add(3, 'b', 4)
-	t2.Add(4, 'a', 1)
-	t2.Add(4, 'b', 2)
+	d1 := NewDFA(0, States{4})
+	d1.Add(0, 'a', 1)
+	d1.Add(0, 'b', 2)
+	d1.Add(1, 'a', 1)
+	d1.Add(1, 'b', 3)
+	d1.Add(2, 'a', 1)
+	d1.Add(2, 'b', 2)
+	d1.Add(3, 'a', 1)
+	d1.Add(3, 'b', 4)
+	d1.Add(4, 'a', 1)
+	d1.Add(4, 'b', 2)
 
-	t3 := NewDTrans()
-	t3.Add(0, 'a', 1)
-	t3.Add(0, 'b', 0)
-	t3.Add(1, 'a', 1)
-	t3.Add(1, 'b', 2)
-	t3.Add(2, 'a', 1)
-	t3.Add(2, 'b', 3)
-	t3.Add(3, 'a', 1)
-	t3.Add(3, 'b', 0)
-	t3.Add(3, 'a', 4)
-	t3.Add(4, 'a', 5)
-	t3.Add(4, 'b', 6)
-	t3.Add(5, 'a', 5)
-	t3.Add(5, 'b', 7)
-	t3.Add(6, 'a', 5)
-	t3.Add(6, 'b', 6)
-	t3.Add(7, 'a', 5)
-	t3.Add(7, 'b', 8)
-	t3.Add(8, 'a', 5)
-	t3.Add(8, 'b', 6)
+	d2 := NewDFA(0, States{8})
+	d2.Add(0, 'a', 1)
+	d2.Add(0, 'b', 0)
+	d2.Add(1, 'a', 1)
+	d2.Add(1, 'b', 2)
+	d2.Add(2, 'a', 1)
+	d2.Add(2, 'b', 3)
+	d2.Add(3, 'a', 1)
+	d2.Add(3, 'b', 0)
+	d2.Add(3, 'a', 4)
+	d2.Add(4, 'a', 5)
+	d2.Add(4, 'b', 6)
+	d2.Add(5, 'a', 5)
+	d2.Add(5, 'b', 7)
+	d2.Add(6, 'a', 5)
+	d2.Add(6, 'b', 6)
+	d2.Add(7, 'a', 5)
+	d2.Add(7, 'b', 8)
+	d2.Add(8, 'a', 5)
+	d2.Add(8, 'b', 6)
 
-	return []*DFA{
-		{
-			trans: t1,
-			start: State(0),
-			final: States{3},
-		},
-		{
-			trans: t2,
-			start: State(0),
-			final: States{4},
-		},
-		{
-			trans: t3,
-			start: State(0),
-			final: States{8},
-		},
-	}
+	return []*DFA{d0, d1, d2}
 }
 
-func TestNewDTrans(t *testing.T) {
-	dtrans := NewDTrans()
-	assert.NotNil(t, dtrans)
+func TestNewDFA(t *testing.T) {
+	d := getTestDFAs()[0]
+
+	dfa := NewDFA(d.Start, d.Final)
+	assert.NotNil(t, dfa)
 }
 
-func TestDTrans_Add(t *testing.T) {
-	dtrans := NewDTrans()
+func TestDFA_Add(t *testing.T) {
+	dfa := NewDFA(0, States{1, 2})
 
 	tests := []struct {
-		name   string
-		dtrans *DTrans
-		s      State
-		a      Symbol
-		next   State
+		name string
+		d    *DFA
+		s    State
+		a    Symbol
+		next State
 	}{
 		{
-			name:   "NewState",
-			dtrans: dtrans,
-			s:      State(0),
-			a:      'a',
-			next:   State(1),
+			name: "NewState",
+			d:    dfa,
+			s:    State(0),
+			a:    'a',
+			next: State(1),
 		},
 		{
-			name:   "ExistingState",
-			dtrans: dtrans,
-			s:      State(0),
-			a:      'b',
-			next:   State(2),
+			name: "ExistingState",
+			d:    dfa,
+			s:    State(0),
+			a:    'b',
+			next: State(2),
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.dtrans.Add(tc.s, tc.a, tc.next)
+			tc.d.Add(tc.s, tc.a, tc.next)
 		})
 	}
 }
 
-func TestDTrans_Next(t *testing.T) {
+func TestDFA_Next(t *testing.T) {
 	dfas := getTestDFAs()
 
 	tests := []struct {
 		name          string
-		dtrans        *DTrans
+		d             *DFA
 		s             State
 		a             Symbol
 		expectedState State
 	}{
 		{
 			name:          "First",
-			dtrans:        dfas[0].trans,
+			d:             dfas[0],
 			s:             State(0),
 			a:             'a',
 			expectedState: State(1),
 		},
 		{
 			name:          "Second",
-			dtrans:        dfas[1].trans,
+			d:             dfas[1],
 			s:             State(0),
 			a:             'b',
 			expectedState: State(2),
@@ -135,122 +121,62 @@ func TestDTrans_Next(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			state := tc.dtrans.Next(tc.s, tc.a)
+			state := tc.d.Next(tc.s, tc.a)
 			assert.Equal(t, tc.expectedState, state)
 		})
 	}
 }
 
-func TestDTrans_States(t *testing.T) {
+func TestDFA_States(t *testing.T) {
 	dfas := getTestDFAs()
 
 	tests := []struct {
 		name           string
-		dtrans         *DTrans
+		d              *DFA
 		expectedStates States
 	}{
 		{
 			name:           "First",
-			dtrans:         dfas[0].trans,
+			d:              dfas[0],
 			expectedStates: States{0, 1, 2, 3},
 		},
 		{
 			name:           "Second",
-			dtrans:         dfas[1].trans,
+			d:              dfas[1],
 			expectedStates: States{0, 1, 2, 3, 4},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedStates, tc.dtrans.States())
+			assert.Equal(t, tc.expectedStates, tc.d.States())
 		})
 	}
 }
 
-func TestDTrans_Symbols(t *testing.T) {
+func TestDFA_Symbols(t *testing.T) {
 	dfas := getTestDFAs()
 
 	tests := []struct {
 		name            string
-		dtrans          *DTrans
+		d               *DFA
 		expectedSymbols Symbols
 	}{
 		{
 			name:            "First",
-			dtrans:          dfas[0].trans,
+			d:               dfas[0],
 			expectedSymbols: Symbols{'a', 'b'},
 		},
 		{
 			name:            "Second",
-			dtrans:          dfas[1].trans,
+			d:               dfas[1],
 			expectedSymbols: Symbols{'a', 'b'},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedSymbols, tc.dtrans.Symbols())
-		})
-	}
-}
-
-func TestNewDFA(t *testing.T) {
-	d := getTestDFAs()[0]
-
-	dfa := NewDFA(d.trans, d.start, d.final)
-	assert.NotNil(t, dfa)
-}
-
-func TestDFA_UpdateFinal(t *testing.T) {
-	dfa := getTestDFAs()[0]
-
-	tests := []struct {
-		name  string
-		d     *DFA
-		final States
-	}{
-		{
-			name:  "OK",
-			d:     dfa,
-			final: States{2},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.d.UpdateFinal(tc.final)
-		})
-	}
-}
-
-func TestDFA_Accept(t *testing.T) {
-	dfa := getTestDFAs()[0]
-
-	tests := []struct {
-		name           string
-		d              *DFA
-		s              String
-		expectedResult bool
-	}{
-		{
-			name:           "Accepted",
-			d:              dfa,
-			s:              ToString("aabbababb"),
-			expectedResult: true,
-		},
-		{
-			name:           "NotAccepted",
-			d:              dfa,
-			s:              ToString("aabab"),
-			expectedResult: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			b := tc.d.Accept(tc.s)
-			assert.Equal(t, tc.expectedResult, b)
+			assert.Equal(t, tc.expectedSymbols, tc.d.Symbols())
 		})
 	}
 }
@@ -290,13 +216,44 @@ func TestDFA_Join(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			states := tc.d.Join(tc.dfa)
 			for _, e := range tc.extraTrans {
-				tc.d.trans.Add(e.s, e.a, e.next)
+				tc.d.Add(e.s, e.a, e.next)
 			}
-			tc.d.UpdateFinal(tc.newFinal)
+			tc.d.Final = tc.newFinal
 
 			assert.Equal(t, tc.expectedStates, states)
 			// This is a trick to avoid comparing the symbol tables with their internal structures.
 			assert.Equal(t, tc.expectedDFA.Graphviz(), tc.d.Graphviz())
+		})
+	}
+}
+
+func TestDFA_Accept(t *testing.T) {
+	dfa := getTestDFAs()[0]
+
+	tests := []struct {
+		name           string
+		d              *DFA
+		s              String
+		expectedResult bool
+	}{
+		{
+			name:           "Accepted",
+			d:              dfa,
+			s:              ToString("aabbababb"),
+			expectedResult: true,
+		},
+		{
+			name:           "NotAccepted",
+			d:              dfa,
+			s:              ToString("aabab"),
+			expectedResult: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			b := tc.d.Accept(tc.s)
+			assert.Equal(t, tc.expectedResult, b)
 		})
 	}
 }
