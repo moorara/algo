@@ -1,6 +1,11 @@
 // Package automata provides data structures and algorithms for working with finite automata, a.k.a. finite state machines.
 package automata
 
+import (
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/symboltable"
+)
+
 // State represents a state in a finite automaton.
 type State int
 
@@ -66,3 +71,21 @@ func ToString(s string) String {
 
 	return res
 }
+
+var (
+	cmpState  = generic.NewCompareFunc[State]()
+	cmpSymbol = generic.NewCompareFunc[Symbol]()
+
+	eqState  = generic.NewEqualFunc[State]()
+	eqStates = func(a, b States) bool {
+		return a.Equals(b)
+	}
+
+	eqSymbolState = func(a, b symboltable.OrderedSymbolTable[Symbol, State]) bool {
+		return a.Equals(b)
+	}
+
+	eqSymbolStates = func(a, b symboltable.OrderedSymbolTable[Symbol, States]) bool {
+		return a.Equals(b)
+	}
+)

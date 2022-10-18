@@ -89,19 +89,20 @@ func BenchmarkOrderedSymbolTable_Put(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	cmpKey := generic.NewCompareFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 
 	b.Run("BST.Put", func(b *testing.B) {
-		ost := NewBST[string, int](cmpKey)
+		ost := NewBST[string, int](cmpKey, eqVal)
 		runPutBenchmark(b, ost)
 	})
 
 	b.Run("AVL.Put", func(b *testing.B) {
-		ost := NewAVL[string, int](cmpKey)
+		ost := NewAVL[string, int](cmpKey, eqVal)
 		runPutBenchmark(b, ost)
 	})
 
 	b.Run("RedBlack.Put", func(b *testing.B) {
-		ost := NewRedBlack[string, int](cmpKey)
+		ost := NewRedBlack[string, int](cmpKey, eqVal)
 		runPutBenchmark(b, ost)
 	})
 }
@@ -110,19 +111,20 @@ func BenchmarkOrderedSymbolTable_Get(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	cmpKey := generic.NewCompareFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 
 	b.Run("BST.Get", func(b *testing.B) {
-		ost := NewBST[string, int](cmpKey)
+		ost := NewBST[string, int](cmpKey, eqVal)
 		runGetBenchmark(b, ost)
 	})
 
 	b.Run("AVL.Get", func(b *testing.B) {
-		ost := NewAVL[string, int](cmpKey)
+		ost := NewAVL[string, int](cmpKey, eqVal)
 		runGetBenchmark(b, ost)
 	})
 
 	b.Run("RedBlack.Get", func(b *testing.B) {
-		ost := NewRedBlack[string, int](cmpKey)
+		ost := NewRedBlack[string, int](cmpKey, eqVal)
 		runGetBenchmark(b, ost)
 	})
 }
@@ -131,19 +133,20 @@ func BenchmarkOrderedSymbolTable_Delete(b *testing.B) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	cmpKey := generic.NewCompareFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 
 	b.Run("BST.Delete", func(b *testing.B) {
-		ost := NewBST[string, int](cmpKey)
+		ost := NewBST[string, int](cmpKey, eqVal)
 		runDeleteBenchmark(b, ost)
 	})
 
 	b.Run("AVL.Delete", func(b *testing.B) {
-		ost := NewAVL[string, int](cmpKey)
+		ost := NewAVL[string, int](cmpKey, eqVal)
 		runDeleteBenchmark(b, ost)
 	})
 
 	b.Run("RedBlack.Delete", func(b *testing.B) {
-		ost := NewRedBlack[string, int](cmpKey)
+		ost := NewRedBlack[string, int](cmpKey, eqVal)
 		runDeleteBenchmark(b, ost)
 	})
 }

@@ -15,8 +15,9 @@ type patriciaNode[V any] struct {
 }
 
 type patricia[V any] struct {
-	size int
-	root *patriciaNode[V]
+	size  int
+	root  *patriciaNode[V]
+	eqVal generic.EqualFunc[V]
 }
 
 // NewPatricia creates a new Patricia tree.
@@ -96,10 +97,13 @@ type patricia[V any] struct {
 //
 // Decent implementations of Patricia tree can often outperform balanced binary trees, and even hash tables.
 // Patricia tree performs admirably when its bit-testing loops are well tuned.
-func NewPatricia[V any]() Trie[V] {
+//
+// The second parameter (eqVal) is needed only if you want to use the Equals method.
+func NewPatricia[V any](eqVal generic.EqualFunc[V]) Trie[V] {
 	return &patricia[V]{
-		size: 0,
-		root: nil,
+		size:  0,
+		root:  nil,
+		eqVal: eqVal,
 	}
 }
 
@@ -229,12 +233,12 @@ func (t *patricia[V]) remove(n, r, rp, np *patriciaNode[V]) {
 	}
 }
 
-// Size returns the number of key-value pairs in Patricia tree.
+// Size returns the number of key-value pairs in the Patricia Trie.
 func (t *patricia[V]) Size() int {
 	return t.size
 }
 
-// Height returns the height of Patricia tree.
+// Height returns the height of the Patricia Trie.
 func (t *patricia[V]) Height() int {
 	if t.root == nil {
 		return 0
@@ -251,12 +255,12 @@ func (t *patricia[V]) _height(prev, curr *patriciaNode[V]) int {
 	return 1 + generic.Max[int](t._height(curr, curr.left), t._height(curr, curr.right))
 }
 
-// IsEmpty returns true if Patricia tree is empty.
+// IsEmpty returns true if the Patricia Trie is empty.
 func (t *patricia[V]) IsEmpty() bool {
 	return t.size == 0
 }
 
-// Put adds a new key-value pair to Patricia tree.
+// Put adds a new key-value pair to the Patricia Trie.
 func (t *patricia[V]) Put(key string, val V) {
 	t._put(newBitString(key), val)
 }
@@ -311,7 +315,7 @@ func (t *patricia[V]) _put(key *bitString, val V) {
 	t.size++
 }
 
-// Get returns the value of a given key in Patricia tree.
+// Get returns the value of a given key in the Patricia Trie.
 func (t *patricia[V]) Get(key string) (V, bool) {
 	return t._get(newBitString(key))
 }
@@ -325,7 +329,7 @@ func (t *patricia[V]) _get(key *bitString) (V, bool) {
 	return zeroV, false
 }
 
-// Delete removes a key-value pair from Patricia tree.
+// Delete removes a key-value pair from the Patricia Trie.
 func (t *patricia[V]) Delete(key string) (V, bool) {
 	return t._delete(newBitString(key))
 }
@@ -368,7 +372,7 @@ func (t *patricia[V]) _delete(key *bitString) (V, bool) {
 	return n.val, true
 }
 
-// KeyValues returns all key-value pairs in Patricia tree.
+// KeyValues returns all key-value pairs in the Patricia Trie.
 func (t *patricia[V]) KeyValues() []KeyValue[V] {
 	kvs := make([]KeyValue[V], 0, t.Size())
 	t._traverse(t.root, Ascending, func(n *patriciaNode[V]) bool {
@@ -379,7 +383,23 @@ func (t *patricia[V]) KeyValues() []KeyValue[V] {
 	return kvs
 }
 
-// Min returns the minimum key and its value in Patricia tree.
+// Equals determines whether or not two Patricia Tries have the same key-value pairs.
+func (t *patricia[V]) Equals(u Trie[V]) bool {
+	tt, ok := u.(*patricia[V])
+	if !ok {
+		return false
+	}
+
+	return t._traverse(t.root, Ascending, func(n *patriciaNode[V]) bool { // t ⊂ tt
+		val, ok := tt._get(n.key)
+		return ok && t.eqVal(n.val, val)
+	}) && tt._traverse(tt.root, Ascending, func(n *patriciaNode[V]) bool { // tt ⊂ t
+		val, ok := t._get(n.key)
+		return ok && t.eqVal(n.val, val)
+	})
+}
+
+// Min returns the minimum key and its value in the Patricia Trie.
 func (t *patricia[V]) Min() (string, V, bool) {
 	return t._min(t.root)
 }
@@ -397,7 +417,7 @@ func (t *patricia[V]) _min(n *patriciaNode[V]) (string, V, bool) {
 	return t._min(n.left)
 }
 
-// Max returns the maximum key and its value in Patricia tree.
+// Max returns the maximum key and its value in the Patricia Trie.
 func (t *patricia[V]) Max() (string, V, bool) {
 	return t._max(t.root)
 }
@@ -422,7 +442,7 @@ func (t *patricia[V]) _max(n *patriciaNode[V]) (string, V, bool) {
 	return t._max(next)
 }
 
-// Floor returns the largest key in Patricia tree less than or equal to key.
+// Floor returns the largest key in the Patricia Trie less than or equal to key.
 func (t *patricia[V]) Floor(key string) (string, V, bool) {
 	var lastKey string
 	var lastVal V
@@ -439,7 +459,7 @@ func (t *patricia[V]) Floor(key string) (string, V, bool) {
 	return lastKey, lastVal, ok
 }
 
-// Ceiling returns the smallest key in Patricia tree greater than or equal to key.
+// Ceiling returns the smallest key in the Patricia Trie greater than or equal to key.
 func (t *patricia[V]) Ceiling(key string) (string, V, bool) {
 	var lastKey string
 	var lastVal V
@@ -456,7 +476,7 @@ func (t *patricia[V]) Ceiling(key string) (string, V, bool) {
 	return lastKey, lastVal, ok
 }
 
-// DeleteMin removes the smallest key and associated value from Patricia tree.
+// DeleteMin removes the smallest key and associated value from the Patricia Trie.
 func (t *patricia[V]) DeleteMin() (string, V, bool) {
 	if t.root == nil {
 		var zeroV V
@@ -480,7 +500,7 @@ func (t *patricia[V]) DeleteMin() (string, V, bool) {
 	return n.key.String(), n.val, true
 }
 
-// DeleteMax removes the largest key and associated value from Patricia tree.
+// DeleteMax removes the largest key and associated value from the Patricia Trie.
 func (t *patricia[V]) DeleteMax() (string, V, bool) {
 	if t.root == nil {
 		var zeroV V
@@ -504,7 +524,7 @@ func (t *patricia[V]) DeleteMax() (string, V, bool) {
 	return n.key.String(), n.val, true
 }
 
-// Select returns the k-th smallest key in Patricia tree.
+// Select returns the k-th smallest key in the Patricia Trie.
 func (t *patricia[V]) Select(rank int) (string, V, bool) {
 	var lastKey string
 	var lastVal V
@@ -528,7 +548,7 @@ func (t *patricia[V]) Select(rank int) (string, V, bool) {
 	return lastKey, lastVal, ok
 }
 
-// Rank returns the number of keys in Patricia tree less than key.
+// Rank returns the number of keys in the Patricia Trie less than key.
 func (t *patricia[V]) Rank(key string) int {
 	i := 0
 
@@ -546,7 +566,7 @@ func (t *patricia[V]) Rank(key string) int {
 	return i
 }
 
-// RangeSize returns the number of keys in Patricia tree between two given keys.
+// RangeSize returns the number of keys in the Patricia Trie between two given keys.
 func (t *patricia[V]) RangeSize(lo, hi string) int {
 	i := 0
 
@@ -565,7 +585,7 @@ func (t *patricia[V]) RangeSize(lo, hi string) int {
 	return i
 }
 
-// Range returns all keys and associated values in Patricia tree between two given keys.
+// Range returns all keys and associated values in the Patricia Trie between two given keys.
 func (t *patricia[V]) Range(lo, hi string) []KeyValue[V] {
 	kvs := []KeyValue[V]{}
 
@@ -584,7 +604,7 @@ func (t *patricia[V]) Range(lo, hi string) []KeyValue[V] {
 	return kvs
 }
 
-// Traverse is used for visiting all key-value pairs in Patricia tree.
+// Traverse is used for visiting all key-value pairs in the Patricia Trie.
 func (t *patricia[V]) Traverse(order TraversalOrder, visit VisitFunc[V]) {
 	t._traverse(t.root, order, func(n *patriciaNode[V]) bool {
 		return visit(n.key.String(), n.val)
@@ -647,7 +667,7 @@ func (t *patricia[V]) _traverse(n *patriciaNode[V], order TraversalOrder, visit 
 	}
 }
 
-// Graphviz returns a visualization of Patricia tree in Graphviz format.
+// Graphviz returns a visualization of the Patricia Trie in Graphviz format.
 func (t *patricia[V]) Graphviz() string {
 	// Create a map of node --> id
 	var id int
@@ -719,7 +739,7 @@ func (t *patricia[V]) Graphviz() string {
 	return graph.DotCode()
 }
 
-// Match returns all the keys and associated values in Patricia tree
+// Match returns all the keys and associated values in the Patricia Trie
 // that match the given pattern in which * matches any character.
 func (t *patricia[V]) Match(pattern string) []KeyValue[V] {
 	kvs := []KeyValue[V]{}
@@ -749,7 +769,7 @@ func (t *patricia[V]) _match(prev, curr *patriciaNode[V], pattern *bitPattern, v
 	}
 }
 
-// WithPrefix returns all the keys and associated values in Patricia tree with the given prefix.
+// WithPrefix returns all the keys and associated values in the Patricia Trie with the given prefix.
 func (t *patricia[V]) WithPrefix(key string) []KeyValue[V] {
 	kvs := []KeyValue[V]{}
 	bitKey := newBitString(key)
@@ -766,7 +786,7 @@ func (t *patricia[V]) WithPrefix(key string) []KeyValue[V] {
 	return kvs
 }
 
-// LongestPrefix returns the key and associated value in Patricia tree
+// LongestPrefix returns the key and associated value in the Patricia Trie
 // that is the longest prefix of the given key.
 func (t *patricia[V]) LongestPrefixOf(key string) (string, V, bool) {
 	bitKey := newBitString(key)

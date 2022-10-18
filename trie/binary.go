@@ -15,8 +15,9 @@ type binaryNode[V any] struct {
 }
 
 type binary[V any] struct {
-	size int
-	root *binaryNode[V]
+	size  int
+	root  *binaryNode[V]
+	eqVal generic.EqualFunc[V]
 }
 
 // NewBinaryTrie creates a new Binary Trie tree.
@@ -47,10 +48,13 @@ type binary[V any] struct {
 //	                  e*
 //
 // Includes words baby, bad, bank, box, dad, and dance.
-func NewBinary[V any]() Trie[V] {
+//
+// The second parameter (eqVal) is needed only if you want to use the Equals method.
+func NewBinary[V any](eqVal generic.EqualFunc[V]) Trie[V] {
 	return &binary[V]{
-		size: 0,
-		root: new(binaryNode[V]),
+		size:  0,
+		root:  new(binaryNode[V]),
+		eqVal: eqVal,
 	}
 }
 
@@ -100,12 +104,12 @@ func (t *binary[V]) _isRankOK() bool {
 	return true
 }
 
-// Size returns the number of key-value pairs in Trie tree.
+// Size returns the number of key-value pairs in the Binary Trie.
 func (t *binary[V]) Size() int {
 	return t.size
 }
 
-// Height returns the height of Trie tree.
+// Height returns the height of the Binary Trie.
 func (t *binary[V]) Height() int {
 	return t._height(t.root.left)
 }
@@ -118,12 +122,12 @@ func (t *binary[V]) _height(n *binaryNode[V]) int {
 	return 1 + generic.Max[int](t._height(n.left), t._height(n.right))
 }
 
-// IsEmpty returns true if Trie tree is empty.
+// IsEmpty returns true if the Binary Trie is empty.
 func (t *binary[V]) IsEmpty() bool {
 	return t.size == 0
 }
 
-// Put adds a new key-value pair to Trie tree.
+// Put adds a new key-value pair to the Binary Trie.
 func (t *binary[V]) Put(key string, val V) {
 	// Special case of empty string
 	if key == "" {
@@ -161,7 +165,7 @@ func (t *binary[V]) _put(n *binaryNode[V], key string, val V) *binaryNode[V] {
 	return n
 }
 
-// Get returns the value of a given key in Trie tree.
+// Get returns the value of a given key in the Binary Trie.
 func (t *binary[V]) Get(key string) (V, bool) {
 	// Special case of empty string
 	if key == "" {
@@ -187,7 +191,7 @@ func (t *binary[V]) _get(n *binaryNode[V], key string) (V, bool) {
 	return t._get(n.right, key)
 }
 
-// Delete removes a key-value pair from Trie tree.
+// Delete removes a key-value pair from the Binary Trie.
 func (t *binary[V]) Delete(key string) (val V, ok bool) {
 	// Special case of empty string
 	if key == "" {
@@ -224,7 +228,7 @@ func (t *binary[V]) _delete(n *binaryNode[V], key string) (*binaryNode[V], V, bo
 	return n, val, ok
 }
 
-// KeyValues returns all key-value pairs in Trie tree.
+// KeyValues returns all key-value pairs in the Binary Trie.
 func (t *binary[V]) KeyValues() []KeyValue[V] {
 	kvs := make([]KeyValue[V], 0, t.Size())
 	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
@@ -237,7 +241,29 @@ func (t *binary[V]) KeyValues() []KeyValue[V] {
 	return kvs
 }
 
-// Min returns the minimum key and its value in Trie tree.
+// Equals determines whether or not two Binary Tries have the same key-value pairs.
+func (t *binary[V]) Equals(u Trie[V]) bool {
+	tt, ok := u.(*binary[V])
+	if !ok {
+		return false
+	}
+
+	return t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool { // t ⊂ tt
+		if n.term {
+			val, ok := tt.Get(k)
+			return ok && t.eqVal(n.val, val)
+		}
+		return true
+	}) && tt._traverse(tt.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool { // tt ⊂ t
+		if n.term {
+			val, ok := t.Get(k)
+			return ok && t.eqVal(n.val, val)
+		}
+		return true
+	})
+}
+
+// Min returns the minimum key and its value in the Binary Trie.
 func (t *binary[V]) Min() (string, V, bool) {
 	var key string
 	var val V
@@ -254,7 +280,7 @@ func (t *binary[V]) Min() (string, V, bool) {
 	return key, val, ok
 }
 
-// Max returns the maximum key and its value in Trie tree.
+// Max returns the maximum key and its value in the Binary Trie.
 func (t *binary[V]) Max() (string, V, bool) {
 	var key string
 	var val V
@@ -271,7 +297,7 @@ func (t *binary[V]) Max() (string, V, bool) {
 	return key, val, ok
 }
 
-// Floor returns the largest key in Trie tree less than or equal to key.
+// Floor returns the largest key in the Binary Trie less than or equal to key.
 func (t *binary[V]) Floor(key string) (string, V, bool) {
 	var lastKey string
 	var lastVal V
@@ -291,7 +317,7 @@ func (t *binary[V]) Floor(key string) (string, V, bool) {
 	return lastKey, lastVal, ok
 }
 
-// Ceiling returns the smallest key in Trie tree greater than or equal to key.
+// Ceiling returns the smallest key in the Binary Trie greater than or equal to key.
 func (t *binary[V]) Ceiling(key string) (string, V, bool) {
 	var lastKey string
 	var lastVal V
@@ -311,7 +337,7 @@ func (t *binary[V]) Ceiling(key string) (string, V, bool) {
 	return lastKey, lastVal, ok
 }
 
-// DeleteMin removes the smallest key and associated value from Trie tree.
+// DeleteMin removes the smallest key and associated value from the Binary Trie.
 func (t *binary[V]) DeleteMin() (string, V, bool) {
 	key, val, ok := t.Min()
 	if !ok {
@@ -325,7 +351,7 @@ func (t *binary[V]) DeleteMin() (string, V, bool) {
 	return key, val, true
 }
 
-// DeleteMax removes the largest key and associated value from Trie tree.
+// DeleteMax removes the largest key and associated value from the Binary Trie.
 func (t *binary[V]) DeleteMax() (string, V, bool) {
 	key, val, ok := t.Max()
 	if !ok {
@@ -339,7 +365,7 @@ func (t *binary[V]) DeleteMax() (string, V, bool) {
 	return key, val, true
 }
 
-// Select returns the k-th smallest key in Trie tree.
+// Select returns the k-th smallest key in the Binary Trie.
 func (t *binary[V]) Select(rank int) (string, V, bool) {
 	var lastKey string
 	var lastVal V
@@ -366,7 +392,7 @@ func (t *binary[V]) Select(rank int) (string, V, bool) {
 	return lastKey, lastVal, ok
 }
 
-// Rank returns the number of keys in Trie tree less than key.
+// Rank returns the number of keys in the Binary Trie less than key.
 func (t *binary[V]) Rank(key string) int {
 	i := 0
 	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
@@ -384,7 +410,7 @@ func (t *binary[V]) Rank(key string) int {
 	return i
 }
 
-// RangeSize returns the number of keys in Trie tree between two given keys.
+// RangeSize returns the number of keys in the Binary Trie between two given keys.
 func (t *binary[V]) RangeSize(lo, hi string) int {
 	i := 0
 	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
@@ -402,7 +428,7 @@ func (t *binary[V]) RangeSize(lo, hi string) int {
 	return i
 }
 
-// Range returns all keys and associated values in Trie tree between two given keys.
+// Range returns all keys and associated values in the Binary Trie between two given keys.
 func (t *binary[V]) Range(lo, hi string) []KeyValue[V] {
 	kvs := []KeyValue[V]{}
 	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
@@ -420,7 +446,7 @@ func (t *binary[V]) Range(lo, hi string) []KeyValue[V] {
 	return kvs
 }
 
-// Traverse is used for visiting all key-value pairs in Trie tree.
+// Traverse is used for visiting all key-value pairs in the Binary Trie.
 func (t *binary[V]) Traverse(order TraversalOrder, visit VisitFunc[V]) {
 	t._traverse(t.root, "", order, func(_ string, n *binaryNode[V]) bool {
 		// Special case of empty string
@@ -456,7 +482,7 @@ func (t *binary[V]) _traverse(n *binaryNode[V], prefix string, order TraversalOr
 	}
 }
 
-// Graphviz returns a visualization of Trie tree in Graphviz format.
+// Graphviz returns a visualization of the Binary Trie in Graphviz format.
 func (t *binary[V]) Graphviz() string {
 	// Create a map of node --> id
 	var id int

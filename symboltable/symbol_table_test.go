@@ -13,17 +13,21 @@ type (
 		name            string
 		symbolTable     string
 		cmpKey          generic.CompareFunc[K]
+		eqVal           generic.EqualFunc[V]
 		keyVals         []KeyValue[K, V]
 		expectedSize    int
 		expectedHeight  int
 		expectedIsEmpty bool
 		expectedKeyVals []KeyValue[K, V]
+		equals          SymbolTable[K, V]
+		expectedEquals  bool
 	}
 
 	orderedSymbolTableTest[K, V any] struct {
 		name                       string
 		symbolTable                string
 		cmpKey                     generic.CompareFunc[K]
+		eqVal                      generic.EqualFunc[V]
 		keyVals                    []KeyValue[K, V]
 		expectedSize               int
 		expectedHeight             int
@@ -61,18 +65,22 @@ type (
 		expectedRLVTraverse        []KeyValue[K, V]
 		expectedAscendingTraverse  []KeyValue[K, V]
 		expectedDescendingTraverse []KeyValue[K, V]
+		equals                     OrderedSymbolTable[K, V]
+		expectedEquals             bool
 		expectedGraphviz           string
 	}
 )
 
 func getSymbolTableTests() []symbolTableTest[string, int] {
 	cmpKey := generic.NewCompareFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 
 	return []symbolTableTest[string, int]{
 		{
 			name:            "",
 			symbolTable:     "",
 			cmpKey:          cmpKey,
+			eqVal:           eqVal,
 			keyVals:         []KeyValue[string, int]{},
 			expectedSize:    0,
 			expectedIsEmpty: true,
@@ -83,11 +91,13 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 
 func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 	cmpKey := generic.NewCompareFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 
 	return []orderedSymbolTableTest[string, int]{
 		{
 			name:   "ABC",
 			cmpKey: cmpKey,
+			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
 				{"B", 2},
 				{"A", 1},
@@ -132,6 +142,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 		{
 			name:   "ABCDE",
 			cmpKey: cmpKey,
+			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
 				{"B", 2},
 				{"A", 1},
@@ -180,6 +191,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 		{
 			name:   "ADGJMPS",
 			cmpKey: cmpKey,
+			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
 				{"J", 10},
 				{"A", 1},
@@ -234,6 +246,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 		{
 			name:   "Words",
 			cmpKey: cmpKey,
+			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
 				{"box", 2},
 				{"dad", 3},
@@ -480,7 +493,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			})
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)
 
-			// Graphviz dot language code
+			assert.Equal(t, test.expectedEquals, ost.Equals(test.equals))
 			assert.Equal(t, test.expectedGraphviz, ost.Graphviz())
 
 			for _, expected := range test.keyVals {

@@ -24,6 +24,7 @@ type rbNode[K, V any] struct {
 type redBlack[K, V any] struct {
 	root   *rbNode[K, V]
 	cmpKey generic.CompareFunc[K]
+	eqVal  generic.EqualFunc[V]
 }
 
 // NewRedBlack creates a new Red-Black tree.
@@ -35,10 +36,13 @@ type redBlack[K, V any] struct {
 //	Red links lean left.
 //	No node has two red links connect to it.
 //	Every path from root to null link has the same number of black links.
-func NewRedBlack[K, V any](cmpKey generic.CompareFunc[K]) OrderedSymbolTable[K, V] {
+//
+// The second parameter (eqVal) is needed only if you want to use the Equals method.
+func NewRedBlack[K, V any](cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) OrderedSymbolTable[K, V] {
 	return &redBlack[K, V]{
 		root:   nil,
 		cmpKey: cmpKey,
+		eqVal:  eqVal,
 	}
 }
 
@@ -222,7 +226,7 @@ func (t *redBlack[K, V]) moveRedRight(n *rbNode[K, V]) *rbNode[K, V] {
 	return n
 }
 
-// Size returns the number of key-value pairs in Red-Black tree.
+// Size returns the number of key-value pairs in the Red-Black tree.
 func (t *redBlack[K, V]) Size() int {
 	return t._size(t.root)
 }
@@ -235,7 +239,7 @@ func (t *redBlack[K, V]) _size(n *rbNode[K, V]) int {
 	return n.size
 }
 
-// Height returns the height of Red-Black tree.
+// Height returns the height of the Red-Black tree.
 func (t *redBlack[K, V]) Height() int {
 	return t._height(t.root)
 }
@@ -248,12 +252,12 @@ func (t *redBlack[K, V]) _height(n *rbNode[K, V]) int {
 	return 1 + generic.Max[int](t._height(n.left), t._height(n.right))
 }
 
-// IsEmpty returns true if Red-Black tree is empty.
+// IsEmpty returns true if the Red-Black tree is empty.
 func (t *redBlack[K, V]) IsEmpty() bool {
 	return t.root == nil
 }
 
-// Put adds a new key-value pair to Red-Black tree.
+// Put adds a new key-value pair to the Red-Black tree.
 func (t *redBlack[K, V]) Put(key K, val V) {
 	t.root = t._put(t.root, key, val)
 	t.root.color = black
@@ -295,7 +299,7 @@ func (t *redBlack[K, V]) _put(n *rbNode[K, V], key K, val V) *rbNode[K, V] {
 	return n
 }
 
-// Get returns the value of a given key in Red-Black tree.
+// Get returns the value of a given key in the Red-Black tree.
 func (t *redBlack[K, V]) Get(key K) (V, bool) {
 	return t._get(t.root, key)
 }
@@ -317,7 +321,7 @@ func (t *redBlack[K, V]) _get(n *rbNode[K, V], key K) (V, bool) {
 	}
 }
 
-// Delete removes a key-value pair from Red-Black tree.
+// Delete removes a key-value pair from the Red-Black tree.
 func (t *redBlack[K, V]) Delete(key K) (val V, ok bool) {
 	if t.root == nil {
 		var zeroV V
@@ -371,7 +375,7 @@ func (t *redBlack[K, V]) _delete(n *rbNode[K, V], key K) (*rbNode[K, V], V, bool
 	return t.balance(n), val, ok
 }
 
-// KeyValues returns all key-value pairs in Red-Black tree.
+// KeyValues returns all key-value pairs in the Red-Black tree.
 func (t *redBlack[K, V]) KeyValues() []KeyValue[K, V] {
 	kvs := make([]KeyValue[K, V], 0, t.Size())
 	t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool {
@@ -382,7 +386,23 @@ func (t *redBlack[K, V]) KeyValues() []KeyValue[K, V] {
 	return kvs
 }
 
-// Min returns the minimum key and its value in Red-Black tree.
+// Equals determines whether or not two Red-Black trees have the same key-value pairs.
+func (t *redBlack[K, V]) Equals(u SymbolTable[K, V]) bool {
+	tt, ok := u.(*redBlack[K, V])
+	if !ok {
+		return false
+	}
+
+	return t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool { // t ⊂ tt
+		val, ok := tt.Get(n.key)
+		return ok && t.eqVal(n.val, val)
+	}) && tt._traverse(tt.root, Ascending, func(n *rbNode[K, V]) bool { // tt ⊂ t
+		val, ok := t.Get(n.key)
+		return ok && t.eqVal(n.val, val)
+	})
+}
+
+// Min returns the minimum key and its value in the Red-Black tree.
 func (t *redBlack[K, V]) Min() (K, V, bool) {
 	if t.root == nil {
 		var zeroK K
@@ -402,7 +422,7 @@ func (t *redBlack[K, V]) _min(n *rbNode[K, V]) *rbNode[K, V] {
 	return t._min(n.left)
 }
 
-// Max returns the maximum key and its value in Red-Black tree.
+// Max returns the maximum key and its value in the Red-Black tree.
 func (t *redBlack[K, V]) Max() (K, V, bool) {
 	if t.root == nil {
 		var zeroK K
@@ -422,7 +442,7 @@ func (t *redBlack[K, V]) _max(n *rbNode[K, V]) *rbNode[K, V] {
 	return t._max(n.right)
 }
 
-// Floor returns the largest key in Red-Black tree less than or equal to key.
+// Floor returns the largest key in the Red-Black tree less than or equal to key.
 func (t *redBlack[K, V]) Floor(key K) (K, V, bool) {
 	n := t._floor(t.root, key)
 	if n == nil {
@@ -452,7 +472,7 @@ func (t *redBlack[K, V]) _floor(n *rbNode[K, V], key K) *rbNode[K, V] {
 	return n
 }
 
-// Ceiling returns the smallest key in Red-Black tree greater than or equal to key.
+// Ceiling returns the smallest key in the Red-Black tree greater than or equal to key.
 func (t *redBlack[K, V]) Ceiling(key K) (K, V, bool) {
 	n := t._ceiling(t.root, key)
 	if n == nil {
@@ -482,7 +502,7 @@ func (t *redBlack[K, V]) _ceiling(n *rbNode[K, V], key K) *rbNode[K, V] {
 	return n
 }
 
-// DeleteMin removes the smallest key and associated value from Red-Black tree.
+// DeleteMin removes the smallest key and associated value from the Red-Black tree.
 func (t *redBlack[K, V]) DeleteMin() (K, V, bool) {
 	if t.root == nil {
 		var zeroK K
@@ -517,7 +537,7 @@ func (t *redBlack[K, V]) _deleteMin(n *rbNode[K, V]) (*rbNode[K, V], *rbNode[K, 
 	return t.balance(n), min
 }
 
-// DeleteMax removes the largest key and associated value from Red-Black tree.
+// DeleteMax removes the largest key and associated value from the Red-Black tree.
 func (t *redBlack[K, V]) DeleteMax() (K, V, bool) {
 	if t.root == nil {
 		var zeroK K
@@ -556,7 +576,7 @@ func (t *redBlack[K, V]) _deleteMax(n *rbNode[K, V]) (*rbNode[K, V], *rbNode[K, 
 	return t.balance(n), max
 }
 
-// Select returns the k-th smallest key in Red-Black tree.
+// Select returns the k-th smallest key in the Red-Black tree.
 func (t *redBlack[K, V]) Select(rank int) (K, V, bool) {
 	if rank < 0 || rank >= t.Size() {
 		var zeroK K
@@ -584,7 +604,7 @@ func (t *redBlack[K, V]) _select(n *rbNode[K, V], rank int) *rbNode[K, V] {
 	}
 }
 
-// Rank returns the number of keys in Red-Black tree less than key.
+// Rank returns the number of keys in the Red-Black tree less than key.
 func (t *redBlack[K, V]) Rank(key K) int {
 	return t._rank(t.root, key)
 }
@@ -605,7 +625,7 @@ func (t *redBlack[K, V]) _rank(n *rbNode[K, V], key K) int {
 	}
 }
 
-// RangeSize returns the number of keys in Red-Black tree between two given keys.
+// RangeSize returns the number of keys in the Red-Black tree between two given keys.
 func (t *redBlack[K, V]) RangeSize(lo, hi K) int {
 	if t.cmpKey(lo, hi) > 0 {
 		return 0
@@ -616,7 +636,7 @@ func (t *redBlack[K, V]) RangeSize(lo, hi K) int {
 	}
 }
 
-// Range returns all keys and associated values in Red-Black tree between two given keys.
+// Range returns all keys and associated values in the Red-Black tree between two given keys.
 func (t *redBlack[K, V]) Range(lo, hi K) []KeyValue[K, V] {
 	kvs := make([]KeyValue[K, V], 0)
 	len := t._range(t.root, &kvs, lo, hi)
@@ -646,7 +666,7 @@ func (t *redBlack[K, V]) _range(n *rbNode[K, V], kvs *[]KeyValue[K, V], lo, hi K
 	return len
 }
 
-// Traverse is used for visiting all key-value pairs in Red-Black tree.
+// Traverse is used for visiting all key-value pairs in the Red-Black tree.
 func (t *redBlack[K, V]) Traverse(order TraversalOrder, visit VisitFunc[K, V]) {
 	t._traverse(t.root, order, func(n *rbNode[K, V]) bool {
 		return visit(n.key, n.val)
@@ -676,7 +696,7 @@ func (t *redBlack[K, V]) _traverse(n *rbNode[K, V], order TraversalOrder, visit 
 	}
 }
 
-// Graphviz returns a visualization of Red-Black tree in Graphviz format.
+// Graphviz returns a visualization of the Red-Black tree in Graphviz format.
 func (t *redBlack[K, V]) Graphviz() string {
 	// Create a map of node --> id
 	var id int
