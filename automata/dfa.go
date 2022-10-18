@@ -8,34 +8,40 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
-// DTrans is the type for a deterministic finite automaton transition function (table).
-type DTrans struct {
-	tab symboltable.OrderedSymbolTable[State, symboltable.OrderedSymbolTable[Symbol, State]]
+// DFA implements a deterministic finite automaton.
+type DFA struct {
+	Start State
+	Final States
+	trans symboltable.OrderedSymbolTable[State, symboltable.OrderedSymbolTable[Symbol, State]]
 }
 
-// NewNFATrans creates a new deterministic finite automaton transition function (table).
-func NewDTrans() *DTrans {
+// NewDFA creates a new deterministic finite automaton.
+// Finite automata are recognizers; they simply say yes or no for each possible input string.
+func NewDFA(start State, final States) *DFA {
 	cmpKey := generic.NewCompareFunc[State]()
-	return &DTrans{
-		tab: symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[Symbol, State]](cmpKey),
+
+	return &DFA{
+		Start: start,
+		Final: final,
+		trans: symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[Symbol, State]](cmpKey),
 	}
 }
 
-// Add adds a new transition for a deterministic finite automaton transition function (table).
-func (t *DTrans) Add(s State, a Symbol, next State) {
-	if v, ok := t.tab.Get(s); ok {
+// Add adds a new transition to the DFA.
+func (d *DFA) Add(s State, a Symbol, next State) {
+	if v, ok := d.trans.Get(s); ok {
 		v.Put(a, next)
 	} else {
 		cmpKey := generic.NewCompareFunc[Symbol]()
 		v = symboltable.NewRedBlack[Symbol, State](cmpKey)
 		v.Put(a, next)
-		t.tab.Put(s, v)
+		d.trans.Put(s, v)
 	}
 }
 
 // Next returns the next state from a given state and for a given symbol.
-func (t *DTrans) Next(s State, a Symbol) State {
-	if v, ok := t.tab.Get(s); ok {
+func (d *DFA) Next(s State, a Symbol) State {
+	if v, ok := d.trans.Get(s); ok {
 		if next, ok := v.Get(a); ok {
 			return next
 		}
@@ -44,17 +50,17 @@ func (t *DTrans) Next(s State, a Symbol) State {
 	return State(-1)
 }
 
-// Symbols returns the set of DFA states
-func (t *DTrans) States() States {
+// Symbols returns the set of all states of the DFA.
+func (d *DFA) States() States {
 	states := States{}
 
-	for _, kv := range t.tab.KeyValues() {
+	for _, kv := range d.trans.KeyValues() {
 		if s := kv.Key; !states.Contains(s) {
 			states = append(states, s)
 		}
 	}
 
-	for _, kv := range t.tab.KeyValues() {
+	for _, kv := range d.trans.KeyValues() {
 		for _, kv := range kv.Val.KeyValues() {
 			if s := kv.Val; !states.Contains(s) {
 				states = append(states, s)
@@ -65,11 +71,11 @@ func (t *DTrans) States() States {
 	return states
 }
 
-// Symbols returns the set of DFA input symbols.
-func (t *DTrans) Symbols() Symbols {
+// Symbols returns the set of all input symbols of the DFA
+func (d *DFA) Symbols() Symbols {
 	symbols := Symbols{}
 
-	for _, kv := range t.tab.KeyValues() {
+	for _, kv := range d.trans.KeyValues() {
 		for _, kv := range kv.Val.KeyValues() {
 			if a := kv.Key; a != E && !symbols.Contains(a) {
 				symbols = append(symbols, a)
@@ -80,44 +86,11 @@ func (t *DTrans) Symbols() Symbols {
 	return symbols
 }
 
-// DFA implements a deterministic finite automaton.
-type DFA struct {
-	trans *DTrans
-	start State
-	final States
-}
-
-// NewDFA creates a new deterministic finite automaton.
-// Finite automata are recognizers; they simply say yes or no for each possible input string.
-func NewDFA(trans *DTrans, start State, final States) *DFA {
-	return &DFA{
-		trans: trans,
-		start: start,
-		final: final,
-	}
-}
-
-// Accept determines whether or not an input string is recognized (accepted) by the DFA.
-func (d *DFA) Accept(s String) bool {
-	var curr State
-	for curr = d.start; len(s) > 0; s = s[1:] {
-		curr = d.trans.Next(curr, s[0])
-	}
-
-	return d.final.Contains(curr)
-}
-
-// UpdateFinal updates the final states of the current DFA.
-// This is usually required after joining another DFA.
-func (d *DFA) UpdateFinal(final States) {
-	d.final = final
-}
-
 // Join merges another DFA with the current one and returns the set of new merged states.
 func (d *DFA) Join(dfa *DFA) States {
 	// Find the maximum state number
 	base := State(0)
-	for _, s := range d.trans.States() {
+	for _, s := range d.States() {
 		if s > base {
 			base = s
 		}
@@ -126,38 +99,48 @@ func (d *DFA) Join(dfa *DFA) States {
 	// Use the maximum state number in the current DFA as the offset for the new states
 	base += 1
 
-	for _, kv := range dfa.trans.tab.KeyValues() {
+	for _, kv := range dfa.trans.KeyValues() {
 		s := base + kv.Key
 		for _, kv := range kv.Val.KeyValues() {
 			a, next := kv.Key, base+kv.Val
-			d.trans.Add(s, a, next)
+			d.Add(s, a, next)
 		}
 	}
 
 	states := States{}
-	for _, s := range dfa.trans.States() {
+	for _, s := range dfa.States() {
 		states = append(states, base+s)
 	}
 
 	return states
 }
 
+// Accept determines whether or not an input string is recognized (accepted) by the DFA.
+func (d *DFA) Accept(s String) bool {
+	var curr State
+	for curr = d.Start; len(s) > 0; s = s[1:] {
+		curr = d.Next(curr, s[0])
+	}
+
+	return d.Final.Contains(curr)
+}
+
 // Graphviz returns the transition graph of the DFA in DOT Language format.
 func (d *DFA) Graphviz() string {
 	graph := graphviz.NewGraph(true, true, false, "DFA", graphviz.RankDirLR, "", "", "")
 
-	for _, state := range d.trans.States() {
+	for _, state := range d.States() {
 		name := fmt.Sprintf("%d", state)
 		label := fmt.Sprintf("%d", state)
 
 		var shape graphviz.Shape
-		if d.final.Contains(state) {
+		if d.Final.Contains(state) {
 			shape = graphviz.ShapeDoubleCircle
 		} else {
 			shape = graphviz.ShapeCircle
 		}
 
-		if state == d.start {
+		if state == d.Start {
 			graph.AddNode(graphviz.NewNode("start", "", "", "", graphviz.StyleInvis, "", "", ""))
 			graph.AddEdge(graphviz.NewEdge("start", name, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
@@ -165,7 +148,7 @@ func (d *DFA) Graphviz() string {
 		graph.AddNode(graphviz.NewNode(name, "", label, "", "", shape, "", ""))
 	}
 
-	for _, kv := range d.trans.tab.KeyValues() {
+	for _, kv := range d.trans.KeyValues() {
 		from := fmt.Sprintf("%d", kv.Key)
 
 		for _, kv := range kv.Val.KeyValues() {
