@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.6](https://github.com/moorara/algo/tree/v0.3.6) (2022-10-18)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.3.5...v0.3.6)
+
+**Merged Changes:**
+
+  - Improve Automata API [#99](https://github.com/moorara/algo/pull/99) ([moorara](https://github.com/moorara))
+
+
 ## [v0.3.5](https://github.com/moorara/algo/tree/v0.3.5) (2022-10-18)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.3.4...v0.3.5)
