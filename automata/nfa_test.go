@@ -149,6 +149,33 @@ func TestNFA_States(t *testing.T) {
 	}
 }
 
+func TestNFA_LastState(t *testing.T) {
+	nfas := getTestNFAs()
+
+	tests := []struct {
+		name              string
+		n                 *NFA
+		expectedLastState State
+	}{
+		{
+			name:              "First",
+			n:                 nfas[0],
+			expectedLastState: State(4),
+		},
+		{
+			name:              "Second",
+			n:                 nfas[1],
+			expectedLastState: State(10),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedLastState, tc.n.LastState())
+		})
+	}
+}
+
 func TestNFA_Symbols(t *testing.T) {
 	nfas := getTestNFAs()
 

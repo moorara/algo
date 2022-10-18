@@ -108,6 +108,19 @@ func (n *NFA) States() States {
 	return states
 }
 
+// LastState returns the state with the maximum number.
+// This information can be used for adding new states to the NFA.
+func (n *NFA) LastState() State {
+	max := State(0)
+	for _, s := range n.States() {
+		if s > max {
+			max = s
+		}
+	}
+
+	return max
+}
+
 // Symbols returns the set of all input symbols of the NFA.
 func (n *NFA) Symbols() Symbols {
 	symbols := Symbols{}
@@ -125,16 +138,8 @@ func (n *NFA) Symbols() Symbols {
 
 // Join merges another NFA with the current one and returns the set of new merged states.
 func (n *NFA) Join(nfa *NFA) States {
-	// Find the maximum state number
-	base := State(0)
-	for _, s := range n.States() {
-		if s > base {
-			base = s
-		}
-	}
-
-	// Use the maximum state number in the current NFA as the offset for the new states
-	base += 1
+	// Use the maximum state number plus one as the offset for the new states
+	base := n.LastState() + 1
 
 	for _, kv := range nfa.trans.KeyValues() {
 		s := base + kv.Key

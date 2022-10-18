@@ -71,6 +71,19 @@ func (d *DFA) States() States {
 	return states
 }
 
+// LastState returns the state with the maximum number.
+// This information can be used for adding new states to the DFA.
+func (d *DFA) LastState() State {
+	max := State(0)
+	for _, s := range d.States() {
+		if s > max {
+			max = s
+		}
+	}
+
+	return max
+}
+
 // Symbols returns the set of all input symbols of the DFA
 func (d *DFA) Symbols() Symbols {
 	symbols := Symbols{}
@@ -88,16 +101,8 @@ func (d *DFA) Symbols() Symbols {
 
 // Join merges another DFA with the current one and returns the set of new merged states.
 func (d *DFA) Join(dfa *DFA) States {
-	// Find the maximum state number
-	base := State(0)
-	for _, s := range d.States() {
-		if s > base {
-			base = s
-		}
-	}
-
-	// Use the maximum state number in the current DFA as the offset for the new states
-	base += 1
+	// Use the maximum state number plus one as the offset for the new states
+	base := d.LastState() + 1
 
 	for _, kv := range dfa.trans.KeyValues() {
 		s := base + kv.Key
