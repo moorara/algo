@@ -3,7 +3,9 @@ package automata
 import (
 	"fmt"
 
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
 
@@ -49,6 +51,11 @@ func (d *DFA) Next(s State, a Symbol) State {
 // Symbols returns the set of all states of the DFA.
 func (d *DFA) States() States {
 	states := States{}
+
+	states = append(states, d.Start)
+	for _, s := range d.Final {
+		states = append(states, s)
+	}
 
 	for _, kv := range d.trans.KeyValues() {
 		if s := kv.Key; !states.Contains(s) {
@@ -148,7 +155,10 @@ func (d *DFA) Equals(dfa *DFA) bool {
 func (d *DFA) Graphviz() string {
 	graph := graphviz.NewGraph(true, true, false, "DFA", graphviz.RankDirLR, "", "", "")
 
-	for _, state := range d.States() {
+	states := d.States()
+	sort.Quick(states, generic.NewCompareFunc[State]())
+
+	for _, state := range states {
 		name := fmt.Sprintf("%d", state)
 		label := fmt.Sprintf("%d", state)
 
