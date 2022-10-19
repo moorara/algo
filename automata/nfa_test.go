@@ -216,34 +216,41 @@ func TestNFA_Join(t *testing.T) {
 		name           string
 		n              *NFA
 		nfa            *NFA
-		extraTrans     []edge
 		newFinal       States
+		extraTrans     []edge
 		expectedStates States
+		expectedStart  State
+		expectedFinal  States
 		expectedNFA    *NFA
 	}{
 		{
-			name: "OK",
-			n:    nfas[0],
-			nfa:  nfas[1],
+			name:     "OK",
+			n:        nfas[0],
+			nfa:      nfas[1],
+			newFinal: States{15},
 			extraTrans: []edge{
 				{2, E, States{5}},
 				{4, E, States{5}},
 			},
-			newFinal:       States{15},
 			expectedStates: States{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+			expectedStart:  State(5),
+			expectedFinal:  States{15},
 			expectedNFA:    nfas[2],
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			states := tc.n.Join(tc.nfa)
+			states, start, final := tc.n.Join(tc.nfa)
+
+			tc.n.Final = tc.newFinal
 			for _, e := range tc.extraTrans {
 				tc.n.Add(e.s, e.a, e.next)
 			}
-			tc.n.Final = tc.newFinal
 
 			assert.Equal(t, tc.expectedStates, states)
+			assert.Equal(t, tc.expectedStart, start)
+			assert.Equal(t, tc.expectedFinal, final)
 			assert.True(t, tc.n.Equals(tc.expectedNFA))
 		})
 	}

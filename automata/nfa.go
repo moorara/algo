@@ -132,8 +132,12 @@ func (n *NFA) Symbols() Symbols {
 	return symbols
 }
 
-// Join merges another NFA with the current one and returns the set of new merged states.
-func (n *NFA) Join(nfa *NFA) States {
+// Join merges another NFA with the current one.
+//
+// The first return value is the set of all states of the merged NFA after merging.
+// The second return value is the start (initial) state of the merged NFA after merging.
+// The third return value is the set of final states of the merged NFA after merging.
+func (n *NFA) Join(nfa *NFA) (States, State, States) {
 	// Use the maximum state number plus one as the offset for the new states
 	base := n.LastState() + 1
 
@@ -156,7 +160,14 @@ func (n *NFA) Join(nfa *NFA) States {
 		states = append(states, base+s)
 	}
 
-	return states
+	start := base + nfa.Start
+
+	final := States{}
+	for _, s := range nfa.Final {
+		final = append(final, base+s)
+	}
+
+	return states, start, final
 }
 
 // Accept determines whether or not an input string is recognized (accepted) by the NFA.
