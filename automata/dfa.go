@@ -28,13 +28,13 @@ func NewDFA(start State, final States) *DFA {
 
 // Add adds a new transition to the DFA.
 func (d *DFA) Add(s State, a Symbol, next State) {
-	if v, ok := d.trans.Get(s); ok {
-		v.Put(a, next)
-	} else {
-		v = symboltable.NewRedBlack[Symbol, State](cmpSymbol, eqState)
-		v.Put(a, next)
-		d.trans.Put(s, v)
+	tab, exist := d.trans.Get(s)
+	if !exist {
+		tab = symboltable.NewRedBlack[Symbol, State](cmpSymbol, eqState)
+		d.trans.Put(s, tab)
 	}
+
+	tab.Put(a, next)
 }
 
 // Next returns the next state from a given state and for a given symbol.

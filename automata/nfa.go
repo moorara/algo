@@ -63,13 +63,15 @@ func (n *NFA) move(T States, a Symbol) States {
 
 // Add adds a new transition to the NFA.
 func (n *NFA) Add(s State, a Symbol, next States) {
-	if v, ok := n.trans.Get(s); ok {
-		v.Put(a, next)
-	} else {
-		v = symboltable.NewRedBlack[Symbol, States](cmpSymbol, eqStates)
-		v.Put(a, next)
-		n.trans.Put(s, v)
+	tab, exist := n.trans.Get(s)
+	if !exist {
+		tab = symboltable.NewRedBlack[Symbol, States](cmpSymbol, eqStates)
+		n.trans.Put(s, tab)
 	}
+
+	states, _ := tab.Get(a)
+	states = append(states, next...)
+	tab.Put(a, states)
 }
 
 // Next returns the next set of states from a given state and for a given symbol.
