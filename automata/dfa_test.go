@@ -136,6 +136,11 @@ func TestDFA_States(t *testing.T) {
 		expectedStates States
 	}{
 		{
+			name:           "Empty",
+			d:              NewDFA(0, States{1}),
+			expectedStates: States{0, 1},
+		},
+		{
 			name:           "First",
 			d:              dfas[0],
 			expectedStates: States{0, 1, 2, 3},
@@ -149,7 +154,7 @@ func TestDFA_States(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedStates, tc.d.States())
+			assert.True(t, tc.d.States().Equals(tc.expectedStates))
 		})
 	}
 }
@@ -252,9 +257,9 @@ func TestDFA_Join(t *testing.T) {
 				tc.d.Add(e.s, e.a, e.next)
 			}
 
-			assert.Equal(t, tc.expectedStates, states)
+			assert.True(t, states.Equals(tc.expectedStates))
 			assert.Equal(t, tc.expectedStart, start)
-			assert.Equal(t, tc.expectedFinal, final)
+			assert.True(t, final.Equals(tc.expectedFinal))
 			assert.True(t, tc.d.Equals(tc.expectedDFA))
 		})
 	}
@@ -329,6 +334,21 @@ func TestDFA_Graphviz(t *testing.T) {
 		d                *DFA
 		expectedGraphviz string
 	}{
+		{
+			name: "Empty",
+			d:    NewDFA(0, States{1}),
+			expectedGraphviz: `strict digraph "DFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [];
+
+  start [style=invis];
+  0 [label="0", shape=circle];
+  1 [label="1", shape=doublecircle];
+
+  start -> 0 [];
+}`,
+		},
 		{
 			name: "First",
 			d:    dfas[0],
