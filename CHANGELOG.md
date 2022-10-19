@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.4.0](https://github.com/moorara/algo/tree/v0.4.0) (2022-10-18)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.3.6...v0.4.0)
+
+**Merged Changes:**
+
+  - Add Equals to DFA/NFA APIs [#101](https://github.com/moorara/algo/pull/101) ([moorara](https://github.com/moorara))
+  - Add Equals to SymbolTable and Trie APIs [#100](https://github.com/moorara/algo/pull/100) ([moorara](https://github.com/moorara))
+
+
 ## [v0.3.6](https://github.com/moorara/algo/tree/v0.3.6) (2022-10-18)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.3.5...v0.3.6)
