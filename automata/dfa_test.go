@@ -285,6 +285,36 @@ func TestDFA_Accept(t *testing.T) {
 	}
 }
 
+func TestDFA_Equals(t *testing.T) {
+	dfas := getTestDFAs()
+
+	tests := []struct {
+		name           string
+		d              *DFA
+		dfa            *DFA
+		expectedEquals bool
+	}{
+		{
+			name:           "Equal",
+			d:              dfas[0],
+			dfa:            dfas[0],
+			expectedEquals: true,
+		},
+		{
+			name:           "NotEqual",
+			d:              dfas[1],
+			dfa:            dfas[2],
+			expectedEquals: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEquals, tc.d.Equals(tc.dfa))
+		})
+	}
+}
+
 func TestDFA_Graphviz(t *testing.T) {
 	dfas := getTestDFAs()
 
