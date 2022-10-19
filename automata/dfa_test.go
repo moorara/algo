@@ -221,33 +221,40 @@ func TestDFA_Join(t *testing.T) {
 		name           string
 		d              *DFA
 		dfa            *DFA
-		extraTrans     []edge
 		newFinal       States
+		extraTrans     []edge
 		expectedStates States
+		expectedStart  State
+		expectedFinal  States
 		expectedDFA    *DFA
 	}{
 		{
-			name: "OK",
-			d:    dfas[0],
-			dfa:  dfas[1],
+			name:     "OK",
+			d:        dfas[0],
+			dfa:      dfas[1],
+			newFinal: States{8},
 			extraTrans: []edge{
 				{3, 'a', 4},
 			},
-			newFinal:       States{8},
 			expectedStates: States{4, 5, 6, 7, 8},
+			expectedStart:  State(4),
+			expectedFinal:  States{8},
 			expectedDFA:    dfas[2],
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			states := tc.d.Join(tc.dfa)
+			states, start, final := tc.d.Join(tc.dfa)
+
+			tc.d.Final = tc.newFinal
 			for _, e := range tc.extraTrans {
 				tc.d.Add(e.s, e.a, e.next)
 			}
-			tc.d.Final = tc.newFinal
 
 			assert.Equal(t, tc.expectedStates, states)
+			assert.Equal(t, tc.expectedStart, start)
+			assert.Equal(t, tc.expectedFinal, final)
 			assert.True(t, tc.d.Equals(tc.expectedDFA))
 		})
 	}

@@ -95,8 +95,12 @@ func (d *DFA) Symbols() Symbols {
 	return symbols
 }
 
-// Join merges another DFA with the current one and returns the set of new merged states.
-func (d *DFA) Join(dfa *DFA) States {
+// Join merges another DFA with the current one.
+//
+// The first return value is the set of all states of the merged DFA after merging.
+// The second return value is the start (initial) state of the merged DFA after merging.
+// The third return value is the set of final states of the merged DFA after merging.
+func (d *DFA) Join(dfa *DFA) (States, State, States) {
 	// Use the maximum state number plus one as the offset for the new states
 	base := d.LastState() + 1
 
@@ -113,7 +117,14 @@ func (d *DFA) Join(dfa *DFA) States {
 		states = append(states, base+s)
 	}
 
-	return states
+	start := base + dfa.Start
+
+	final := States{}
+	for _, s := range dfa.Final {
+		final = append(final, base+s)
+	}
+
+	return states, start, final
 }
 
 // Accept determines whether or not an input string is recognized (accepted) by the DFA.
