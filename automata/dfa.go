@@ -126,6 +126,13 @@ func (d *DFA) Accept(s String) bool {
 	return d.Final.Contains(curr)
 }
 
+// Equals determines whether or not two DFAs are the same.
+func (d *DFA) Equals(dfa *DFA) bool {
+	return d.Start == dfa.Start &&
+		d.Final.Equals(dfa.Final) &&
+		d.trans.Equals(dfa.trans)
+}
+
 // Graphviz returns the transition graph of the DFA in DOT Language format.
 func (d *DFA) Graphviz() string {
 	graph := graphviz.NewGraph(true, true, false, "DFA", graphviz.RankDirLR, "", "", "")

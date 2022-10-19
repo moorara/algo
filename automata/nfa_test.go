@@ -307,6 +307,36 @@ func TestNFA_ToDFA(t *testing.T) {
 	}
 }
 
+func TestNFA_Equals(t *testing.T) {
+	nfas := getTestNFAs()
+
+	tests := []struct {
+		name           string
+		n              *NFA
+		nfa            *NFA
+		expectedEquals bool
+	}{
+		{
+			name:           "Equal",
+			n:              nfas[0],
+			nfa:            nfas[0],
+			expectedEquals: true,
+		},
+		{
+			name:           "NotEqual",
+			n:              nfas[1],
+			nfa:            nfas[2],
+			expectedEquals: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEquals, tc.n.Equals(tc.nfa))
+		})
+	}
+}
+
 func TestNFA_Graphviz(t *testing.T) {
 	nfas := getTestNFAs()
 

@@ -217,6 +217,13 @@ func (n *NFA) ToDFA() *DFA {
 	return dfa
 }
 
+// Equals determines whether or not two NFAs are the same.
+func (n *NFA) Equals(nfa *NFA) bool {
+	return n.Start == nfa.Start &&
+		n.Final.Equals(nfa.Final) &&
+		n.trans.Equals(nfa.trans)
+}
+
 // Graphviz returns the transition graph of the NFA in DOT Language format.
 func (n *NFA) Graphviz() string {
 	graph := graphviz.NewGraph(true, true, false, "NFA", graphviz.RankDirLR, "", "", graphviz.ShapeCircle)
