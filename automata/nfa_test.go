@@ -244,8 +244,7 @@ func TestNFA_Join(t *testing.T) {
 			tc.n.Final = tc.newFinal
 
 			assert.Equal(t, tc.expectedStates, states)
-			// This is a trick to avoid comparing the symbol tables with their internal structures.
-			assert.Equal(t, tc.expectedNFA.Graphviz(), tc.n.Graphviz())
+			assert.True(t, tc.n.Equals(tc.expectedNFA))
 		})
 	}
 }
@@ -300,9 +299,7 @@ func TestNFA_ToDFA(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			dfa := tc.n.ToDFA()
-
-			// This is a trick to avoid comparing the symbol tables with their internal structures.
-			assert.Equal(t, tc.expectedDFA.Graphviz(), dfa.Graphviz())
+			assert.True(t, dfa.Equals(tc.expectedDFA))
 		})
 	}
 }

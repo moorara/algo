@@ -248,8 +248,7 @@ func TestDFA_Join(t *testing.T) {
 			tc.d.Final = tc.newFinal
 
 			assert.Equal(t, tc.expectedStates, states)
-			// This is a trick to avoid comparing the symbol tables with their internal structures.
-			assert.Equal(t, tc.expectedDFA.Graphviz(), tc.d.Graphviz())
+			assert.True(t, tc.d.Equals(tc.expectedDFA))
 		})
 	}
 }
