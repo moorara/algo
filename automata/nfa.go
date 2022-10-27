@@ -238,6 +238,8 @@ func (n *NFA) ToDFA() *DFA {
 }
 
 // Equals determines whether or not two NFAs are the same.
+//
+// TODO: Implement isomorphic equality.
 func (n *NFA) Equals(nfa *NFA) bool {
 	return n.Start == nfa.Start &&
 		n.Final.Equals(nfa.Final) &&
