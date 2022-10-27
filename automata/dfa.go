@@ -145,6 +145,8 @@ func (d *DFA) Accept(s String) bool {
 }
 
 // Equals determines whether or not two DFAs are the same.
+//
+// TODO: Implement isomorphic equality.
 func (d *DFA) Equals(dfa *DFA) bool {
 	return d.Start == dfa.Start &&
 		d.Final.Equals(dfa.Final) &&
