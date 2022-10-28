@@ -1,5 +1,24 @@
 # Changelog
 
+## [v0.4.1](https://github.com/moorara/algo/tree/v0.4.1) (2022-10-27)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.4.0...v0.4.1)
+
+**Merged Changes:**
+
+  - [automata] Add TODOs [#112](https://github.com/moorara/algo/pull/112) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 32f3d56 [#111](https://github.com/moorara/algo/pull/111) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 78e5e78 [#110](https://github.com/moorara/algo/pull/110) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 111beb4 [#109](https://github.com/moorara/algo/pull/109) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update module github.com/stretchr/testify to v1.8.1 [#108](https://github.com/moorara/algo/pull/108) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to a1e5550 [#107](https://github.com/moorara/algo/pull/107) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Fix automata.NFA bug [#106](https://github.com/moorara/algo/pull/106) ([moorara](https://github.com/moorara))
+  - Fix automata bug [#105](https://github.com/moorara/algo/pull/105) ([moorara](https://github.com/moorara))
+  - [automata] Update Join API [#104](https://github.com/moorara/algo/pull/104) ([moorara](https://github.com/moorara))
+  - [automata] refactoring tests [#103](https://github.com/moorara/algo/pull/103) ([moorara](https://github.com/moorara))
+  - Refactor automata tests [#102](https://github.com/moorara/algo/pull/102) ([moorara](https://github.com/moorara))
+
+
 ## [v0.4.0](https://github.com/moorara/algo/tree/v0.4.0) (2022-10-18)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.3.6...v0.4.0)
