@@ -144,6 +144,20 @@ func (d *DFA) Accept(s String) bool {
 	return d.Final.Contains(curr)
 }
 
+// ToNFA constructs a new NFA accepting the same language as the DFA (every DFA is an NFA).
+func (d *DFA) ToNFA() *NFA {
+	nfa := NewNFA(d.Start, d.Final)
+	for _, kv := range d.trans.KeyValues() {
+		S := kv.Key
+		for _, kv := range kv.Val.KeyValues() {
+			a, T := kv.Key, kv.Val
+			nfa.Add(S, a, States{T})
+		}
+	}
+
+	return nfa
+}
+
 // Equals determines whether or not two DFAs are the same.
 //
 // TODO: Implement isomorphic equality.

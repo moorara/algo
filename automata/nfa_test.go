@@ -45,7 +45,17 @@ func getTestNFAs() []*NFA {
 	n2.Add(13, 'b', States{14})
 	n2.Add(14, 'b', States{15})
 
-	return []*NFA{n0, n1, n2}
+	n3 := NewNFA(0, States{3})
+	n3.Add(0, 'a', States{1})
+	n3.Add(0, 'b', States{0})
+	n3.Add(1, 'a', States{1})
+	n3.Add(1, 'b', States{2})
+	n3.Add(2, 'a', States{1})
+	n3.Add(2, 'b', States{3})
+	n3.Add(3, 'a', States{1})
+	n3.Add(3, 'b', States{0})
+
+	return []*NFA{n0, n1, n2, n3}
 }
 
 func TestNewNFA(t *testing.T) {
@@ -293,8 +303,8 @@ func TestNFA_Accept(t *testing.T) {
 }
 
 func TestNFA_ToDFA(t *testing.T) {
-	dfas := getTestDFAs()
 	nfas := getTestNFAs()
+	dfas := getTestDFAs()
 
 	tests := []struct {
 		name        string

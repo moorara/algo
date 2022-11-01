@@ -127,8 +127,7 @@ func TestQueue(t *testing.T) {
 				}
 
 				for _, tc := range tc.containsTests {
-					res := queue.Contains(tc.val)
-					assert.Equal(t, tc.expectedResult, res)
+					assert.Equal(t, tc.expected, queue.Contains(tc.val))
 				}
 
 				for _, val := range tc.expectedDequeueValues {

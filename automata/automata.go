@@ -15,7 +15,7 @@ type States []State
 // Contains determines whether or not a set of states contains a given state.
 func (s States) Contains(t State) bool {
 	for _, state := range s {
-		if t == state {
+		if state == t {
 			return true
 		}
 	}

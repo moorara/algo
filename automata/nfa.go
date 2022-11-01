@@ -207,12 +207,14 @@ func (n *NFA) ToDFA() *DFA {
 		return s.Equals(t)
 	})
 
+	// Initially, ε-closure(s0) is the only state in Dstates
 	Dstates.Enqueue(n.εClosure(States{n.Start}))
 
 	for T, i := Dstates.Dequeue(); i >= 0; T, i = Dstates.Dequeue() {
-		for _, a := range symbols {
+		for _, a := range symbols { // for each input symbol c
 			U := n.εClosure(n.move(T, a))
 
+			// If U is not in Dstates, add U to Dstates
 			j := Dstates.Contains(U)
 			if j == -1 {
 				j = Dstates.Enqueue(U)
@@ -225,11 +227,11 @@ func (n *NFA) ToDFA() *DFA {
 	dfa.Start = State(0)
 	dfa.Final = States{}
 
-	for i, s := range Dstates.Values() {
+	for i, S := range Dstates.Values() {
 		for _, f := range n.Final {
-			if s.Contains(f) {
+			if S.Contains(f) {
 				dfa.Final = append(dfa.Final, State(i))
-				break
+				break // The accepting states of D are all those sets of N's states that include at least one accepting state of N
 			}
 		}
 	}
