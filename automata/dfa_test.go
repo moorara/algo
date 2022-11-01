@@ -50,7 +50,17 @@ func getTestDFAs() []*DFA {
 	d2.Add(8, 'a', 5)
 	d2.Add(8, 'b', 6)
 
-	return []*DFA{d0, d1, d2}
+	d3 := NewDFA(0, States{3})
+	d3.Add(0, 'a', 1)
+	d3.Add(0, 'b', 0)
+	d3.Add(1, 'a', 1)
+	d3.Add(1, 'b', 2)
+	d3.Add(2, 'a', 1)
+	d3.Add(2, 'b', 3)
+	d3.Add(3, 'a', 1)
+	d3.Add(3, 'b', 0)
+
+	return []*DFA{d0, d1, d2, d3}
 }
 
 func TestNewDFA(t *testing.T) {
@@ -292,6 +302,30 @@ func TestDFA_Accept(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			b := tc.d.Accept(tc.s)
 			assert.Equal(t, tc.expectedResult, b)
+		})
+	}
+}
+
+func TestDFA_ToNFA(t *testing.T) {
+	dfas := getTestDFAs()
+	nfas := getTestNFAs()
+
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedNFA *NFA
+	}{
+		{
+			name:        "OK",
+			d:           dfas[3],
+			expectedNFA: nfas[3],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			nfa := tc.d.ToNFA()
+			assert.True(t, nfa.Equals(tc.expectedNFA))
 		})
 	}
 }

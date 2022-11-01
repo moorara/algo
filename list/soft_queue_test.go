@@ -132,7 +132,7 @@ func TestSoftQueue(t *testing.T) {
 
 				for _, tc := range tc.containsTests {
 					i := squeue.Contains(tc.val)
-					assert.Equal(t, tc.expectedResult, i >= 0)
+					assert.Equal(t, tc.expected, i >= 0)
 				}
 
 				for _, val := range tc.expectedDequeues {

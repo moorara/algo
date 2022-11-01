@@ -7,8 +7,8 @@ import (
 )
 
 type containsTest[T any] struct {
-	val            T
-	expectedResult bool
+	val      T
+	expected bool
 }
 
 func TestNewArrayNode(t *testing.T) {

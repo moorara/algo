@@ -127,8 +127,7 @@ func TestStack(t *testing.T) {
 				}
 
 				for _, tc := range tc.containsTests {
-					res := stack.Contains(tc.val)
-					assert.Equal(t, tc.expectedResult, res)
+					assert.Equal(t, tc.expected, stack.Contains(tc.val))
 				}
 
 				for _, val := range tc.expectedPopValues {
