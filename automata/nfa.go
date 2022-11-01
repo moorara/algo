@@ -197,25 +197,25 @@ func (n *NFA) Accept(s String) bool {
 
 // ToDFA constructs a new DFA accepting the same language as the NFA.
 // It implements the subset construction algorithm.
+//
+// For more details, see Compilers: Principles, Techniques, and Tools (2nd Edition).
 func (n *NFA) ToDFA() *DFA {
 	symbols := n.Symbols()
 
 	dfa := NewDFA(0, nil)
-	Dstates := newMarkList[States](func(s, t States) bool {
+	Dstates := list.NewSoftQueue[States](func(s, t States) bool {
 		return s.Equals(t)
 	})
 
-	Dstates.AddUnmarked(n.εClosure(States{n.Start}))
+	Dstates.Enqueue(n.εClosure(States{n.Start}))
 
-	for T, i := Dstates.GetUnmarked(); i >= 0; T, i = Dstates.GetUnmarked() {
-		Dstates.MarkByIndex(i)
-
+	for T, i := Dstates.Dequeue(); i >= 0; T, i = Dstates.Dequeue() {
 		for _, a := range symbols {
 			U := n.εClosure(n.move(T, a))
 
 			j := Dstates.Contains(U)
 			if j == -1 {
-				j = Dstates.AddUnmarked(U)
+				j = Dstates.Enqueue(U)
 			}
 
 			dfa.Add(State(i), a, State(j))

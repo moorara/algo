@@ -15,47 +15,72 @@ func TestQueue(t *testing.T) {
 		name                  string
 		nodeSize              int
 		enqueueValues         []string
+		dequeuesCount         int
 		expectedSize          int
 		expectedIsEmpty       bool
 		expectedPeek          string
-		expectedContains      []string
+		containsTests         []containsTest[string]
 		expectedDequeueValues []string
 	}{
 		{
-			"Empty",
-			2,
-			[]string{},
-			0, true,
-			"",
-			[]string{},
-			[]string{},
+			name:                  "Empty",
+			nodeSize:              2,
+			enqueueValues:         []string{},
+			dequeuesCount:         0,
+			expectedSize:          0,
+			expectedIsEmpty:       true,
+			expectedPeek:          "",
+			containsTests:         []containsTest[string]{},
+			expectedDequeueValues: []string{},
 		},
 		{
-			"OneNode",
-			2,
-			[]string{"a", "b"},
-			2, false,
-			"a",
-			[]string{"a", "b"},
-			[]string{"a", "b"},
+			name:            "OneNode",
+			nodeSize:        2,
+			enqueueValues:   []string{"a", "b"},
+			dequeuesCount:   0,
+			expectedSize:    2,
+			expectedIsEmpty: false,
+			expectedPeek:    "a",
+			containsTests: []containsTest[string]{
+				{"a", true},
+				{"b", true},
+				{"c", false},
+			},
+			expectedDequeueValues: []string{"a", "b"},
 		},
 		{
-			"TwoNodes",
-			2,
-			[]string{"a", "b", "c"},
-			3, false,
-			"a",
-			[]string{"a", "b", "c"},
-			[]string{"a", "b", "c"},
+			name:            "TwoNodes",
+			nodeSize:        2,
+			enqueueValues:   []string{"a", "b", "c"},
+			dequeuesCount:   1,
+			expectedSize:    2,
+			expectedIsEmpty: false,
+			expectedPeek:    "b",
+			containsTests: []containsTest[string]{
+				{"a", false},
+				{"b", true},
+				{"c", true},
+			},
+			expectedDequeueValues: []string{"b", "c"},
 		},
 		{
-			"MoreNodes",
-			2,
-			[]string{"a", "b", "c", "d", "e", "f", "g"},
-			7, false,
-			"a",
-			[]string{"a", "b", "c", "d", "e", "f", "g"},
-			[]string{"a", "b", "c", "d", "e", "f", "g"},
+			name:            "MoreNodes",
+			nodeSize:        2,
+			enqueueValues:   []string{"a", "b", "c", "d", "e", "f", "g"},
+			dequeuesCount:   2,
+			expectedSize:    5,
+			expectedIsEmpty: false,
+			expectedPeek:    "c",
+			containsTests: []containsTest[string]{
+				{"a", false},
+				{"b", false},
+				{"c", true},
+				{"d", true},
+				{"e", true},
+				{"f", true},
+				{"g", true},
+			},
+			expectedDequeueValues: []string{"c", "d", "e", "f", "g"},
 		},
 	}
 
@@ -84,6 +109,10 @@ func TestQueue(t *testing.T) {
 					queue.Enqueue(val)
 				}
 
+				for i := 0; i < tc.dequeuesCount; i++ {
+					queue.Dequeue()
+				}
+
 				assert.Equal(t, tc.expectedSize, queue.Size())
 				assert.Equal(t, tc.expectedIsEmpty, queue.IsEmpty())
 
@@ -97,8 +126,9 @@ func TestQueue(t *testing.T) {
 					assert.Equal(t, tc.expectedPeek, val)
 				}
 
-				for _, val := range tc.expectedContains {
-					assert.True(t, queue.Contains(val))
+				for _, tc := range tc.containsTests {
+					res := queue.Contains(tc.val)
+					assert.Equal(t, tc.expectedResult, res)
 				}
 
 				for _, val := range tc.expectedDequeueValues {
