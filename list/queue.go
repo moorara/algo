@@ -37,35 +37,33 @@ func NewQueue[T any](nodeSize int, equal generic.EqualFunc[T]) Queue[T] {
 	}
 }
 
-// Size returns the number of values in queue.
+// Size returns the number of values in the queue.
 func (q *arrayQueue[T]) Size() int {
 	return q.listSize
 }
 
-// IsEmpty returns true if queue is empty.
+// IsEmpty returns true if the queue is empty.
 func (q *arrayQueue[T]) IsEmpty() bool {
 	return q.listSize == 0
 }
 
-// Enqueue adds a new value to queue.
+// Enqueue adds a new value to the queue.
 func (q *arrayQueue[T]) Enqueue(val T) {
 	q.listSize++
 	q.rearIndex++
 
 	if q.frontNode == nil {
-		q.frontIndex = 0
-		q.frontNode = newArrayNode[T](q.nodeSize, nil)
+		q.frontNode, q.frontIndex = newArrayNode[T](q.nodeSize, nil), 0
 		q.rearNode = q.frontNode
 	} else if q.rearIndex == q.nodeSize {
 		q.rearNode.next = newArrayNode[T](q.nodeSize, nil)
-		q.rearNode = q.rearNode.next
-		q.rearIndex = 0
+		q.rearNode, q.rearIndex = q.rearNode.next, 0
 	}
 
 	q.rearNode.block[q.rearIndex] = val
 }
 
-// Dequeue removes a value from queue.
+// Dequeue removes a value from the queue.
 func (q *arrayQueue[T]) Dequeue() (T, bool) {
 	if q.IsEmpty() {
 		var zero T
@@ -77,14 +75,13 @@ func (q *arrayQueue[T]) Dequeue() (T, bool) {
 	q.listSize--
 
 	if q.frontIndex == q.nodeSize {
-		q.frontNode = q.frontNode.next
-		q.frontIndex = 0
+		q.frontNode, q.frontIndex = q.frontNode.next, 0
 	}
 
 	return val, true
 }
 
-// Peek returns the next value in queue without removing it from queue.
+// Peek returns the next value in queue without removing it from the queue.
 func (q *arrayQueue[T]) Peek() (T, bool) {
 	if q.IsEmpty() {
 		var zero T
@@ -94,19 +91,16 @@ func (q *arrayQueue[T]) Peek() (T, bool) {
 	return q.frontNode.block[q.frontIndex], true
 }
 
-// Contains returns true if a given value is already in queue.
+// Contains returns true if a given value is already in the queue.
 func (q *arrayQueue[T]) Contains(val T) bool {
-	n := q.frontNode
-	i := q.frontIndex
+	n, i := q.frontNode, q.frontIndex
 
 	for n != nil && (n != q.rearNode || i <= q.rearIndex) {
 		if q.equal(n.block[i], val) {
 			return true
 		}
 
-		i++
-
-		if i == q.nodeSize {
+		if i++; i == q.nodeSize {
 			n = n.next
 			i = 0
 		}

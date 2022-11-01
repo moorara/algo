@@ -33,17 +33,17 @@ func NewStack[T any](nodeSize int, equal generic.EqualFunc[T]) Stack[T] {
 	}
 }
 
-// Size returns the number of values on stack.
+// Size returns the number of values on the stack.
 func (s *arrayStack[T]) Size() int {
 	return s.listSize
 }
 
-// IsEmpty returns true if stack is empty.
+// IsEmpty returns true if the stack is empty.
 func (s *arrayStack[T]) IsEmpty() bool {
 	return s.listSize == 0
 }
 
-// Enqueue adds a new value to stack.
+// Enqueue adds a new value to the stack.
 func (s *arrayStack[T]) Push(val T) {
 	s.listSize++
 	s.topIndex++
@@ -58,7 +58,7 @@ func (s *arrayStack[T]) Push(val T) {
 	s.topNode.block[s.topIndex] = val
 }
 
-// Dequeue removes a value from stack.
+// Dequeue removes a value from the stack.
 func (s *arrayStack[T]) Pop() (T, bool) {
 	if s.IsEmpty() {
 		var zero T
@@ -79,7 +79,7 @@ func (s *arrayStack[T]) Pop() (T, bool) {
 	return val, true
 }
 
-// Peek returns the next value on stack without removing it from stack.
+// Peek returns the next value on stack without removing it from the stack.
 func (s *arrayStack[T]) Peek() (T, bool) {
 	if s.IsEmpty() {
 		var zero T
@@ -89,7 +89,7 @@ func (s *arrayStack[T]) Peek() (T, bool) {
 	return s.topNode.block[s.topIndex], true
 }
 
-// Contains returns true if a given value is already on stack.
+// Contains returns true if a given value is already on the stack.
 func (s *arrayStack[T]) Contains(val T) bool {
 	n := s.topNode
 	i := s.topIndex
@@ -99,9 +99,7 @@ func (s *arrayStack[T]) Contains(val T) bool {
 			return true
 		}
 
-		i--
-
-		if i < 0 {
+		if i--; i < 0 {
 			n = n.next
 			i = s.nodeSize - 1
 		}

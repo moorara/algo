@@ -6,6 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type containsTest[T any] struct {
+	val            T
+	expectedResult bool
+}
+
 func TestNewArrayNode(t *testing.T) {
 	tests := []struct {
 		size int

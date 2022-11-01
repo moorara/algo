@@ -15,47 +15,72 @@ func TestStack(t *testing.T) {
 		name              string
 		nodeSize          int
 		pushValues        []string
+		popsCount         int
 		expectedSize      int
 		expectedIsEmpty   bool
 		expectedPeek      string
-		expectedContains  []string
+		containsTests     []containsTest[string]
 		expectedPopValues []string
 	}{
 		{
-			"Empty",
-			2,
-			[]string{},
-			0, true,
-			"",
-			[]string{},
-			[]string{},
+			name:              "Empty",
+			nodeSize:          2,
+			pushValues:        []string{},
+			popsCount:         0,
+			expectedSize:      0,
+			expectedIsEmpty:   true,
+			expectedPeek:      "",
+			containsTests:     []containsTest[string]{},
+			expectedPopValues: []string{},
 		},
 		{
-			"OneNode",
-			2,
-			[]string{"a", "b"},
-			2, false,
-			"b",
-			[]string{"a", "b"},
-			[]string{"b", "a"},
+			name:            "OneNode",
+			nodeSize:        2,
+			pushValues:      []string{"a", "b"},
+			popsCount:       0,
+			expectedSize:    2,
+			expectedIsEmpty: false,
+			expectedPeek:    "b",
+			containsTests: []containsTest[string]{
+				{"a", true},
+				{"b", true},
+				{"c", false},
+			},
+			expectedPopValues: []string{"b", "a"},
 		},
 		{
-			"TwoNodes",
-			2,
-			[]string{"a", "b", "c"},
-			3, false,
-			"c",
-			[]string{"a", "b", "c"},
-			[]string{"c", "b", "a"},
+			name:            "TwoNodes",
+			nodeSize:        2,
+			pushValues:      []string{"a", "b", "c"},
+			popsCount:       1,
+			expectedSize:    2,
+			expectedIsEmpty: false,
+			expectedPeek:    "b",
+			containsTests: []containsTest[string]{
+				{"a", true},
+				{"b", true},
+				{"c", false},
+			},
+			expectedPopValues: []string{"b", "a"},
 		},
 		{
-			"MoreNodes",
-			2,
-			[]string{"a", "b", "c", "d", "e", "f", "g"},
-			7, false,
-			"g",
-			[]string{"a", "b", "c", "d", "e", "f", "g"},
-			[]string{"g", "f", "e", "d", "c", "b", "a"},
+			name:            "MoreNodes",
+			nodeSize:        2,
+			pushValues:      []string{"a", "b", "c", "d", "e", "f", "g"},
+			popsCount:       2,
+			expectedSize:    5,
+			expectedIsEmpty: false,
+			expectedPeek:    "e",
+			containsTests: []containsTest[string]{
+				{"a", true},
+				{"b", true},
+				{"c", true},
+				{"d", true},
+				{"e", true},
+				{"f", false},
+				{"g", false},
+			},
+			expectedPopValues: []string{"e", "d", "c", "b", "a"},
 		},
 	}
 
@@ -84,6 +109,10 @@ func TestStack(t *testing.T) {
 					stack.Push(val)
 				}
 
+				for i := 0; i < tc.popsCount; i++ {
+					stack.Pop()
+				}
+
 				assert.Equal(t, tc.expectedSize, stack.Size())
 				assert.Equal(t, tc.expectedIsEmpty, stack.IsEmpty())
 
@@ -97,8 +126,9 @@ func TestStack(t *testing.T) {
 					assert.Equal(t, tc.expectedPeek, val)
 				}
 
-				for _, val := range tc.expectedContains {
-					assert.True(t, stack.Contains(val))
+				for _, tc := range tc.containsTests {
+					res := stack.Contains(tc.val)
+					assert.Equal(t, tc.expectedResult, res)
 				}
 
 				for _, val := range tc.expectedPopValues {
