@@ -8,23 +8,24 @@ import "github.com/moorara/algo/generic"
 type Set[T any] interface {
 	Add(...T)
 	Remove(...T)
+	IsEmpty() bool
 	Contains(T) bool
 	Members() []T
-	IsEmpty() bool
 	Cardinality() int
+	Union(...Set[T]) Set[T]
+	Intersection(...Set[T]) Set[T]
+	Difference(...Set[T]) Set[T]
 }
 
 type set[T any] struct {
-	equal generic.EqualFunc[T]
-
+	equal   generic.EqualFunc[T]
 	members []T
 }
 
 // New creates a new empty set
 func New[T any](equal generic.EqualFunc[T]) Set[T] {
 	return &set[T]{
-		equal: equal,
-
+		equal:   equal,
 		members: make([]T, 0),
 	}
 }
@@ -45,6 +46,11 @@ func (s *set[T]) Remove(vals ...T) {
 	}
 }
 
+// IsEmpty determines whether or not the set is an empty set.
+func (s *set[T]) IsEmpty() bool {
+	return len(s.members) == 0
+}
+
 func (s *set[T]) Contains(v T) bool {
 	return s.contains(v) != -1
 }
@@ -60,15 +66,66 @@ func (s *set[T]) contains(v T) int {
 }
 
 func (s *set[T]) Members() []T {
-	return s.members
-}
+	members := make([]T, len(s.members))
+	copy(members, s.members)
 
-// IsEmpty determines whether or not the set is an empty set.
-func (s *set[T]) IsEmpty() bool {
-	return len(s.members) == 0
+	return members
 }
 
 // Cardinality returns the number of members of the set.
 func (s *set[T]) Cardinality() int {
 	return len(s.members)
+}
+
+func (s *set[T]) Union(sets ...Set[T]) Set[T] {
+	t := &set[T]{
+		equal:   s.equal,
+		members: make([]T, len(s.members)),
+	}
+
+	copy(t.members, s.members)
+
+	for _, set := range sets {
+		t.Add(set.Members()...)
+	}
+
+	return t
+}
+
+func (s *set[T]) Intersection(sets ...Set[T]) Set[T] {
+	t := &set[T]{
+		equal:   s.equal,
+		members: make([]T, 0),
+	}
+
+	for _, m := range s.Members() {
+		isInAll := true
+		for _, set := range sets {
+			if !set.Contains(m) {
+				isInAll = false
+				break
+			}
+		}
+
+		if isInAll {
+			t.members = append(t.members, m)
+		}
+	}
+
+	return t
+}
+
+func (s *set[T]) Difference(sets ...Set[T]) Set[T] {
+	t := &set[T]{
+		equal:   s.equal,
+		members: make([]T, len(s.members)),
+	}
+
+	copy(t.members, s.members)
+
+	for _, set := range sets {
+		t.Remove(set.Members()...)
+	}
+
+	return t
 }
