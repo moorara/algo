@@ -54,7 +54,7 @@ A collection of common data structures and algorithms for Go applications.
     - Finite Automata
       - DFA
       - NFA
-    - Sets (union, intersection, difference, power set, partitions, etc.)
+    - Sets (union, intersection, difference, powerset, partitions, etc.)
 
 ## Development
 
