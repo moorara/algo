@@ -330,6 +330,29 @@ func TestDFA_ToNFA(t *testing.T) {
 	}
 }
 
+func TestDFA_Minimize(t *testing.T) {
+	dfas := getTestDFAs()
+
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedDFA *DFA
+	}{
+		{
+			name:        "OK",
+			d:           dfas[1],
+			expectedDFA: dfas[3],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.d.Minimize()
+			assert.True(t, dfa.Equals(tc.expectedDFA))
+		})
+	}
+}
+
 func TestDFA_Equals(t *testing.T) {
 	dfas := getTestDFAs()
 
