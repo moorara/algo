@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.4.2](https://github.com/moorara/algo/tree/v0.4.2) (2022-11-03)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.4.1...v0.4.2)
+
+**Merged Changes:**
+
+  - Add DFA minimization API [#119](https://github.com/moorara/algo/pull/119) ([moorara](https://github.com/moorara))
+  - Enrich Set API [#118](https://github.com/moorara/algo/pull/118) ([moorara](https://github.com/moorara))
+  - Update Set API [#117](https://github.com/moorara/algo/pull/117) ([moorara](https://github.com/moorara))
+  - [automata] Refactoring &amp; New API [#116](https://github.com/moorara/algo/pull/116) ([moorara](https://github.com/moorara))
+  - Add SoftQueue to list package [#115](https://github.com/moorara/algo/pull/115) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 83b7d23 [#113](https://github.com/moorara/algo/pull/113) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+
+
 ## [v0.4.1](https://github.com/moorara/algo/tree/v0.4.1) (2022-10-27)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.4.0...v0.4.1)
