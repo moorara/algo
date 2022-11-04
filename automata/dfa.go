@@ -5,15 +5,18 @@ import (
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
+
+type dfaTrans symboltable.OrderedSymbolTable[State, symboltable.OrderedSymbolTable[Symbol, State]]
 
 // DFA implements a deterministic finite automaton.
 type DFA struct {
 	Start State
 	Final States
-	trans symboltable.OrderedSymbolTable[State, symboltable.OrderedSymbolTable[Symbol, State]]
+	trans dfaTrans
 }
 
 // NewDFA creates a new deterministic finite automaton.
@@ -156,6 +159,154 @@ func (d *DFA) ToNFA() *NFA {
 	}
 
 	return nfa
+}
+
+// Minimize creates a unique DFA with the minimum number of states.
+//
+// The minimization algorithm sometimes produces a DFA with one dead state.
+// This state is not accepting and transfers to itself on each input symbol.
+//
+// For more details, see Compilers: Principles, Techniques, and Tools (2nd Edition).
+func (d *DFA) Minimize() *DFA {
+	eqFunc := func(a, b State) bool { return a == b }
+	setEqFunc := func(a, b set.Set[State]) bool { return a.Equals(b) }
+
+	// 1. Start with an initial partition P with two groups,
+	//    F and S - F, the accepting and non-accepting states.
+
+	S := set.New[State](eqFunc)
+	S.Add(d.States()...)
+
+	F := set.New[State](eqFunc)
+	F.Add(d.Final...)
+
+	NF := S.Difference(F)
+
+	P := set.New[set.Set[State]](setEqFunc)
+	P.Add(NF, F)
+
+	// 2. Initially, let Pnew = P.
+	//    For (each group G of P) {
+	//      Partition G into subgroups such that two states s and t are in the same subgroup
+	//      if and only if for all input symbols a, states s and t have transitions on a to states in the same group of P
+	//      (at worst, a state will be in a subgroup by itself).
+	//
+	//      Replace G in Pnew by the set of all subgroups formed.
+	//    }
+	//
+	// 3. If Pnew = P, let Pfinal = P and continue with step (4).
+	//    Otherwise, repeat step (2) with Pnew in place of P.
+
+	for {
+		Pnew := set.New[set.Set[State]](setEqFunc)
+
+		for _, G := range P.Members() { // For every group in the current partition
+			gtrans := d.createGroupTrans(P, G)
+			populateSubgroups(Pnew, gtrans)
+		}
+
+		if Pnew.Equals(P) {
+			break
+		}
+
+		P = Pnew
+	}
+
+	// 4. Choose one state in each group of Pfinal as the representative for that group.
+	//    The representatives will be the states of the minimum-state DFA D′.
+	//    The other components of D′ are constructed as follows:
+	//
+	//    (a) The start state of D′ is the representative of the group containing the start state of D.
+	//    (b) The accepting states of D′ are the representatives of those groups that contain an accepting state of D
+	//        (each group contains either only accepting states, or only non-accepting states).
+	//    (c) Let s be the representative of some group G of Pfinal, and let the transition of D from s on input a be to state t.
+	//        Let r be the representative of t's group H. Then in D′, there is a transition from s to r on input a.
+
+	start, _ := groupRep(P, d.Start)
+
+	final := States{}
+	for _, f := range d.Final {
+		g, _ := groupRep(P, f)
+		final = append(final, g)
+	}
+
+	dfa := NewDFA(start, final)
+
+	for s, G := range P.Members() {
+		g := G.Members()[0] // G is non-empty
+		if tab, ok := d.trans.Get(g); ok {
+			for _, kv := range tab.KeyValues() {
+				a, next := kv.Key, kv.Val
+				rep, _ := groupRep(P, next)
+				dfa.Add(State(s), a, rep)
+			}
+		}
+	}
+
+	return dfa
+}
+
+// createGroupTrans create a map of states to symbols to the current partition's group representatives (instead of next states).
+func (d *DFA) createGroupTrans(P set.Set[set.Set[State]], G set.Set[State]) dfaTrans {
+	gtrans := symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[Symbol, State]](cmpState, eqSymbolState)
+
+	for _, s := range G.Members() { // For every state in the current group
+		strans := symboltable.NewRedBlack[Symbol, State](cmpSymbol, eqState)
+
+		// Create a map of symbols to the current partition's group representatives (instead of next states)
+		if stab, ok := d.trans.Get(s); ok {
+			for _, kv := range stab.KeyValues() {
+				a, next := kv.Key, kv.Val
+				if rep, ok := groupRep(P, next); ok {
+					strans.Put(a, rep)
+				}
+			}
+		}
+
+		gtrans.Put(s, strans)
+	}
+
+	return gtrans
+}
+
+// populateSubgroups creates new subgroups based on the transition map of a group and add them to the new partition.
+func populateSubgroups(Pnew set.Set[set.Set[State]], gtrans dfaTrans) {
+	eqFunc := func(a, b State) bool { return a == b }
+
+	kvs := gtrans.KeyValues()
+	for i := 0; i < len(kvs); i++ {
+		s, sreps := kvs[i].Key, kvs[i].Val
+
+		if _, ok := groupRep(Pnew, s); !ok { // If s is not already added to the new partition
+			// Create a new group in the new partition
+			H := set.New[State](eqFunc)
+			H.Add(s)
+
+			// Add all other state with same symbol->rep map to the new group
+			for j := 1; j < len(kvs); j++ {
+				t, treps := kvs[j].Key, kvs[j].Val
+
+				if sreps.Equals(treps) {
+					H.Add(t)
+				}
+			}
+
+			Pnew.Add(H)
+		}
+	}
+}
+
+// groupRep returns the group representaive for a state.
+func groupRep(P set.Set[set.Set[State]], s State) (State, bool) {
+	for i, G := range P.Members() {
+		for _, state := range G.Members() {
+			if state == s {
+				return State(i), true
+			}
+		}
+	}
+
+	return -1, false
 }
 
 // Equals determines whether or not two DFAs are the same.

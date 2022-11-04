@@ -19,7 +19,7 @@ type Set[T any] interface {
 	Equals(Set[T]) bool
 	Members() []T
 	Clone() Set[T]
-	EmptyClone() Set[T]
+	CloneEmpty() Set[T]
 	Union(...Set[T]) Set[T]
 	Intersection(...Set[T]) Set[T]
 	Difference(...Set[T]) Set[T]
@@ -111,7 +111,7 @@ func (s *set[T]) Clone() Set[T] {
 	return t
 }
 
-func (s *set[T]) EmptyClone() Set[T] {
+func (s *set[T]) CloneEmpty() Set[T] {
 	t := &set[T]{
 		equal:   s.equal,
 		members: make([]T, 0),
@@ -186,13 +186,13 @@ func Powerset[T any](s Set[T]) Set[Set[T]] {
 	// Recurssion end condition
 	if s.Cardinality() == 0 {
 		// Single empty set
-		es := s.EmptyClone()
+		es := s.CloneEmpty()
 		PS.Add(es)
 		return PS
 	}
 
 	mems := s.Members()
-	head, tail := s.EmptyClone(), s.EmptyClone()
+	head, tail := s.CloneEmpty(), s.CloneEmpty()
 	head.Add(mems[0])
 	tail.Add(mems[1:]...)
 
@@ -228,7 +228,7 @@ func Partitions[T any](s Set[T]) Set[Set[Set[T]]] {
 	}
 
 	mems := s.Members()
-	head, tail := s.EmptyClone(), s.EmptyClone()
+	head, tail := s.CloneEmpty(), s.CloneEmpty()
 	head.Add(mems[0])
 	tail.Add(mems[1:]...)
 

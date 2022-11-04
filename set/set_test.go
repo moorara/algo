@@ -333,7 +333,7 @@ func TestSet_Clone(t *testing.T) {
 	}
 }
 
-func TestSet_EmptyClone(t *testing.T) {
+func TestSet_CloneEmpty(t *testing.T) {
 	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
@@ -361,7 +361,7 @@ func TestSet_EmptyClone(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			set := tc.s.EmptyClone()
+			set := tc.s.CloneEmpty()
 			assert.True(t, set.Equals(tc.expected))
 		})
 	}

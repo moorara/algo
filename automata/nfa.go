@@ -10,11 +10,13 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
+type nfaTrans symboltable.OrderedSymbolTable[State, symboltable.OrderedSymbolTable[Symbol, States]]
+
 // NFA implements a non-deterministic finite automaton.
 type NFA struct {
 	Start State
 	Final States
-	trans symboltable.OrderedSymbolTable[State, symboltable.OrderedSymbolTable[Symbol, States]]
+	trans nfaTrans
 }
 
 // NewNFA creates a new non-deterministic finite automaton.
