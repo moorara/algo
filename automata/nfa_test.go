@@ -367,7 +367,7 @@ func TestNFA_Graphviz(t *testing.T) {
 		{
 			name: "Empty",
 			n:    NewNFA(0, States{1, 2}),
-			expectedGraphviz: `strict digraph "NFA" {
+			expectedGraphviz: `digraph "NFA" {
   rankdir=LR;
   concentrate=false;
   node [shape=circle];
@@ -383,7 +383,7 @@ func TestNFA_Graphviz(t *testing.T) {
 		{
 			name: "First",
 			n:    nfas[0],
-			expectedGraphviz: `strict digraph "NFA" {
+			expectedGraphviz: `digraph "NFA" {
   rankdir=LR;
   concentrate=false;
   node [shape=circle];
@@ -407,7 +407,7 @@ func TestNFA_Graphviz(t *testing.T) {
 		{
 			name: "Second",
 			n:    nfas[1],
-			expectedGraphviz: `strict digraph "NFA" {
+			expectedGraphviz: `digraph "NFA" {
   rankdir=LR;
   concentrate=false;
   node [shape=circle];

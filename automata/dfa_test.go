@@ -394,7 +394,7 @@ func TestDFA_Graphviz(t *testing.T) {
 		{
 			name: "Empty",
 			d:    NewDFA(0, States{1}),
-			expectedGraphviz: `strict digraph "DFA" {
+			expectedGraphviz: `digraph "DFA" {
   rankdir=LR;
   concentrate=false;
   node [];
@@ -409,7 +409,7 @@ func TestDFA_Graphviz(t *testing.T) {
 		{
 			name: "First",
 			d:    dfas[0],
-			expectedGraphviz: `strict digraph "DFA" {
+			expectedGraphviz: `digraph "DFA" {
   rankdir=LR;
   concentrate=false;
   node [];
@@ -434,7 +434,7 @@ func TestDFA_Graphviz(t *testing.T) {
 		{
 			name: "Second",
 			d:    dfas[1],
-			expectedGraphviz: `strict digraph "DFA" {
+			expectedGraphviz: `digraph "DFA" {
   rankdir=LR;
   concentrate=false;
   node [];
