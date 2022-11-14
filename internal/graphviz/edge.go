@@ -1,6 +1,9 @@
 package graphviz
 
-import "bytes"
+import (
+	"bytes"
+	"fmt"
+)
 
 // Edge represents an edge.
 type Edge struct {
@@ -37,7 +40,7 @@ func (e *Edge) DotCode() string {
 
 	buf.WriteString(e.From + " " + string(e.EdgeType) + " " + e.To + " [")
 	first = addListAttr(buf, first, "dirType", string(e.EdgeDir))
-	first = addListAttr(buf, first, "label", `"`+e.Label+`"`)
+	first = addListAttr(buf, first, "label", fmt.Sprintf("%q", e.Label))
 	first = addListAttr(buf, first, "color", string(e.Color))
 	first = addListAttr(buf, first, "style", string(e.Style))
 	first = addListAttr(buf, first, "arrowhead", string(e.ArrowHead))

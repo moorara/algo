@@ -1,6 +1,9 @@
 package graphviz
 
-import "bytes"
+import (
+	"bytes"
+	"fmt"
+)
 
 // Node represents a graph node.
 type Node struct {
@@ -35,7 +38,7 @@ func (n *Node) DotCode() string {
 
 	buf.WriteString(n.Name + " [")
 	first = addListAttr(buf, first, "group", n.Group)
-	first = addListAttr(buf, first, "label", `"`+n.Label+`"`)
+	first = addListAttr(buf, first, "label", fmt.Sprintf("%q", n.Label))
 	first = addListAttr(buf, first, "color", string(n.Color))
 	first = addListAttr(buf, first, "style", string(n.Style))
 	first = addListAttr(buf, first, "shape", string(n.Shape))

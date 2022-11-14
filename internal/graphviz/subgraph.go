@@ -1,6 +1,9 @@
 package graphviz
 
-import "bytes"
+import (
+	"bytes"
+	"fmt"
+)
 
 // Subgraph represents a subgraph.
 type Subgraph struct {
@@ -64,7 +67,7 @@ func (s *Subgraph) DotCode(indent int) string {
 	}
 	buf.WriteString("{\n")
 
-	first = addAttr(buf, first, indent+2, "label", `"`+s.Label+`"`)
+	first = addAttr(buf, first, indent+2, "label", fmt.Sprintf("%q", s.Label))
 	first = addAttr(buf, first, indent+2, "color", string(s.Color))
 	first = addAttr(buf, first, indent+2, "style", string(s.Style))
 	first = addAttr(buf, first, indent+2, "rank", string(s.Rank))
