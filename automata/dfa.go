@@ -320,7 +320,7 @@ func (d *DFA) Equals(dfa *DFA) bool {
 
 // Graphviz returns the transition graph of the DFA in DOT Language format.
 func (d *DFA) Graphviz() string {
-	graph := graphviz.NewGraph(true, true, false, "DFA", graphviz.RankDirLR, "", "", "")
+	graph := graphviz.NewGraph(false, true, false, "DFA", graphviz.RankDirLR, "", "", "")
 
 	states := d.States()
 	sort.Quick(states, generic.NewCompareFunc[State]())

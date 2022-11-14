@@ -252,7 +252,7 @@ func (n *NFA) Equals(nfa *NFA) bool {
 
 // Graphviz returns the transition graph of the NFA in DOT Language format.
 func (n *NFA) Graphviz() string {
-	graph := graphviz.NewGraph(true, true, false, "NFA", graphviz.RankDirLR, "", "", graphviz.ShapeCircle)
+	graph := graphviz.NewGraph(false, true, false, "NFA", graphviz.RankDirLR, "", "", graphviz.ShapeCircle)
 
 	states := n.States()
 	sort.Quick(states, generic.NewCompareFunc[State]())

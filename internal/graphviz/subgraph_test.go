@@ -24,114 +24,98 @@ func TestSubgraph(t *testing.T) {
 		expectedDotCode string
 	}{
 		{
-			"EmptySubgraph",
-			"parent",
-			"", "", "",
-			"", "",
-			"", "", "",
-			[]Node{
+			name:         "EmptySubgraph",
+			subgraphName: "parent",
+			label:        "",
+			color:        "",
+			style:        "",
+			rank:         "",
+			rankDir:      "",
+			nodeColor:    "",
+			nodeStyle:    "",
+			nodeShape:    "",
+			nodes: []Node{
 				Node{Name: "a0"},
 				Node{Name: "a1"},
 			},
-			[]Edge{
+			edges: []Edge{
 				Edge{From: "a0", To: "a1", EdgeType: EdgeTypeUndirected},
 			},
-			[]Subgraph{},
-			`subgraph parent {
-  node [];
-
-  a0 [];
-  a1 [];
-
-  a0 -- a1 [];
-}`,
+			subgraphs:       []Subgraph{},
+			expectedDotCode: subgraph01,
 		},
 		{
-			"SubgraphWithNodes",
-			"child",
-			"Child", "", "",
-			"", "",
-			"", "", "",
-			[]Node{
+			name:         "SubgraphWithNodes",
+			subgraphName: "child",
+			label:        "Child",
+			color:        "",
+			style:        "",
+			rank:         "",
+			rankDir:      "",
+			nodeColor:    "",
+			nodeStyle:    "",
+			nodeShape:    "",
+			nodes: []Node{
 				Node{Name: "b0", Label: "B0"},
 				Node{Name: "b1", Label: "B3"},
 				Node{Name: "b2", Label: "B2"},
 			},
-			[]Edge{
+			edges: []Edge{
 				Edge{From: "b0", To: "b1", EdgeType: EdgeTypeDirected, Color: ColorRed},
 				Edge{From: "b0", To: "b2", EdgeType: EdgeTypeDirected, Color: ColorBlack},
 			},
-			[]Subgraph{},
-			`subgraph child {
-  label="Child";
-  node [];
-
-  b0 [label="B0"];
-  b1 [label="B3"];
-  b2 [label="B2"];
-
-  b0 -> b1 [color=red];
-  b0 -> b2 [color=black];
-}`,
+			subgraphs:       []Subgraph{},
+			expectedDotCode: subgraph02,
 		},
 		{
-			"SubgraphWithNodesAndEdges",
-			"cluster0",
-			"Left", ColorPink, "",
-			"", RankDirLR,
-			ColorRoyalBlue, "", "",
-			[]Node{
+			name:         "SubgraphWithNodesAndEdges",
+			subgraphName: "cluster0",
+			label:        "Left",
+			color:        ColorPink,
+			style:        "",
+			rank:         "",
+			rankDir:      RankDirLR,
+			nodeColor:    ColorRoyalBlue,
+			nodeStyle:    "",
+			nodeShape:    "",
+			nodes: []Node{
 				Node{Name: "c0", Label: "C0", Shape: ShapeBox},
 				Node{Name: "c1", Label: "C1", Shape: ShapeBox},
 				Node{Name: "c2", Label: "C2", Shape: ShapeBox},
 				Node{Name: "c3", Label: "C3", Shape: ShapeBox},
 			},
-			[]Edge{
+			edges: []Edge{
 				Edge{From: "c0", To: "c1", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeDot, ArrowTail: ArrowTypeDot},
 				Edge{From: "c0", To: "c2", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeDot, ArrowTail: ArrowTypeDot},
 				Edge{From: "c1", To: "c3", EdgeType: EdgeTypeUndirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeDot, ArrowTail: ArrowTypeDot},
 			},
-			[]Subgraph{
+			subgraphs: []Subgraph{
 				Subgraph{Name: "thread", Label: "Thread"},
 			},
-			`subgraph cluster0 {
-  label="Left";
-  color=pink;
-  rankdir=LR;
-  node [color=royalblue];
-
-  subgraph thread {
-    label="Thread";
-    node [];
-  }
-
-  c0 [label="C0", shape=box];
-  c1 [label="C1", shape=box];
-  c2 [label="C2", shape=box];
-  c3 [label="C3", shape=box];
-
-  c0 -- c1 [dirType=both, arrowhead=dot, arrowtail=dot];
-  c0 -- c2 [dirType=both, arrowhead=dot, arrowtail=dot];
-  c1 -- c3 [dirType=both, arrowhead=dot, arrowtail=dot];
-}`,
+			expectedDotCode: subgraph03,
 		},
 		{
-			"SubgraphWithSubgraph",
-			"cluster1",
-			"Right", ColorGreen, StyleDotted,
-			RankSame, "",
-			ColorSeaGreen, StyleFilled, ShapeRecord,
-			[]Node{
+			name:         "SubgraphWithSubgraph",
+			subgraphName: "cluster1",
+			label:        "Right",
+			color:        ColorGreen,
+			style:        StyleDotted,
+			rank:         RankSame,
+			rankDir:      "",
+			nodeColor:    ColorSeaGreen,
+			nodeStyle:    StyleFilled,
+			nodeShape:    ShapeRecord,
+			nodes: []Node{
 				Node{Name: "d0", Label: "D0", Color: ColorTan, Shape: ShapeOval},
 				Node{Name: "d1", Label: "D1", Color: ColorTan, Shape: ShapeOval},
 			},
-			[]Edge{
+			edges: []Edge{
 				Edge{From: "d0", To: "e0", EdgeType: EdgeTypeDirected, Label: "d0e0", Color: ColorGray, Style: StyleDashed},
 				Edge{From: "d0", To: "f0", EdgeType: EdgeTypeDirected, Label: "d0f0", Color: ColorGray, Style: StyleDashed},
 				Edge{From: "e1", To: "d1", EdgeType: EdgeTypeDirected, Label: "e1d1", Color: ColorGray, Style: StyleDashed},
 				Edge{From: "f1", To: "d1", EdgeType: EdgeTypeDirected, Label: "f1d1", Color: ColorGray, Style: StyleDashed},
 			},
-			[]Subgraph{
+			subgraphs: []Subgraph{
 				Subgraph{
 					Name: "process0", Label: "Process 0", Color: ColorGray, Style: StyleFilled,
 					Nodes: []Node{
@@ -153,7 +137,65 @@ func TestSubgraph(t *testing.T) {
 					},
 				},
 			},
-			`subgraph cluster1 {
+			expectedDotCode: subgraph04,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			sg := NewSubgraph(tc.subgraphName, tc.label, tc.color, tc.style, tc.rank, tc.rankDir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
+			sg.AddNode(tc.nodes...)
+			sg.AddEdge(tc.edges...)
+			sg.AddSubgraph(tc.subgraphs...)
+
+			assert.Equal(t, tc.expectedDotCode, sg.DotCode(0))
+		})
+	}
+}
+
+var subgraph01 = `subgraph parent {
+  node [];
+
+  a0 [];
+  a1 [];
+
+  a0 -- a1 [];
+}`
+
+var subgraph02 = `subgraph child {
+  label="Child";
+  node [];
+
+  b0 [label="B0"];
+  b1 [label="B3"];
+  b2 [label="B2"];
+
+  b0 -> b1 [color=red];
+  b0 -> b2 [color=black];
+}`
+
+var subgraph03 = `subgraph cluster0 {
+  label="Left";
+  color=pink;
+  rankdir=LR;
+  node [color=royalblue];
+
+  subgraph thread {
+    label="Thread";
+    node [];
+  }
+
+  c0 [label="C0", shape=box];
+  c1 [label="C1", shape=box];
+  c2 [label="C2", shape=box];
+  c3 [label="C3", shape=box];
+
+  c0 -- c1 [dirType=both, arrowhead=dot, arrowtail=dot];
+  c0 -- c2 [dirType=both, arrowhead=dot, arrowtail=dot];
+  c1 -- c3 [dirType=both, arrowhead=dot, arrowtail=dot];
+}`
+
+var subgraph04 = `subgraph cluster1 {
   label="Right";
   color=green;
   style=dotted;
@@ -191,18 +233,4 @@ func TestSubgraph(t *testing.T) {
   d0 -> f0 [label="d0f0", color=gray, style=dashed];
   e1 -> d1 [label="e1d1", color=gray, style=dashed];
   f1 -> d1 [label="f1d1", color=gray, style=dashed];
-}`,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			sg := NewSubgraph(tc.subgraphName, tc.label, tc.color, tc.style, tc.rank, tc.rankDir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
-			sg.AddNode(tc.nodes...)
-			sg.AddEdge(tc.edges...)
-			sg.AddSubgraph(tc.subgraphs...)
-
-			assert.Equal(t, tc.expectedDotCode, sg.DotCode(0))
-		})
-	}
-}
+}`

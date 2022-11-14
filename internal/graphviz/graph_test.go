@@ -23,110 +23,94 @@ func TestGraph(t *testing.T) {
 		expectedDotCode string
 	}{
 		{
-			"SimpleGraph",
-			false, false, false, "",
-			"",
-			"", "", "",
-			[]Node{
+			name:        "SimpleGraph",
+			strict:      false,
+			diagraph:    false,
+			concentrate: false,
+			graphName:   "",
+			rankDir:     "",
+			nodeColor:   "",
+			nodeStyle:   "",
+			nodeShape:   "",
+			nodes: []Node{
 				Node{Name: "a0"},
 				Node{Name: "a1"},
 			},
-			[]Edge{
+			edges: []Edge{
 				Edge{From: "a0", To: "a1", EdgeType: EdgeTypeUndirected},
 			},
-			[]Subgraph{},
-			`graph {
-  concentrate=false;
-  node [];
-
-  a0 [];
-  a1 [];
-
-  a0 -- a1 [];
-}`,
+			subgraphs:       []Subgraph{},
+			expectedDotCode: graph01,
 		},
 		{
-			"GraphWithLabels",
-			true, false, false, "G",
-			"",
-			"", "", "",
-			[]Node{
+			name:        "GraphWithLabels",
+			strict:      true,
+			diagraph:    false,
+			concentrate: false,
+			graphName:   "G",
+			rankDir:     "",
+			nodeColor:   "",
+			nodeStyle:   "",
+			nodeShape:   "",
+			nodes: []Node{
 				Node{Name: "b0", Label: "B0"},
 				Node{Name: "b1", Label: "B3"},
 				Node{Name: "b2", Label: "B2"},
 			},
-			[]Edge{
+			edges: []Edge{
 				Edge{From: "b0", To: "b1", EdgeType: EdgeTypeUndirected, Color: ColorRed},
 				Edge{From: "b0", To: "b2", EdgeType: EdgeTypeUndirected, Color: ColorBlack},
 			},
-			[]Subgraph{},
-			`strict graph "G" {
-  concentrate=false;
-  node [];
-
-  b0 [label="B0"];
-  b1 [label="B3"];
-  b2 [label="B2"];
-
-  b0 -- b1 [color=red];
-  b0 -- b2 [color=black];
-}`,
+			subgraphs:       []Subgraph{},
+			expectedDotCode: graph02,
 		},
 		{
-			"GraphWithSubgraph",
-			false, true, false, "",
-			"",
-			ColorLimeGreen, "", "",
-			[]Node{
+			name:        "GraphWithSubgraph",
+			strict:      false,
+			diagraph:    true,
+			concentrate: false,
+			graphName:   "",
+			rankDir:     "",
+			nodeColor:   ColorLimeGreen,
+			nodeStyle:   "",
+			nodeShape:   "",
+			nodes: []Node{
 				Node{Name: "c0", Label: "C0", Shape: ShapePlain},
 				Node{Name: "c1", Label: "C1", Shape: ShapePlain},
 				Node{Name: "c2", Label: "C2", Shape: ShapePlain},
 				Node{Name: "c3", Label: "C3", Shape: ShapePlain},
 			},
-			[]Edge{
+			edges: []Edge{
 				Edge{From: "c0", To: "c1", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
 				Edge{From: "c0", To: "c2", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
 				Edge{From: "c2", To: "c3", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
 			},
-			[]Subgraph{
+			subgraphs: []Subgraph{
 				Subgraph{Name: "", Label: "Thread", Rank: RankSame},
 			},
-			`digraph {
-  concentrate=false;
-  node [color=limegreen];
-
-  subgraph {
-    label="Thread";
-    rank=same;
-    node [];
-  }
-
-  c0 [label="C0", shape=plain];
-  c1 [label="C1", shape=plain];
-  c2 [label="C2", shape=plain];
-  c3 [label="C3", shape=plain];
-
-  c0 -> c1 [dirType=both, arrowhead=open, arrowtail=dot];
-  c0 -> c2 [dirType=both, arrowhead=open, arrowtail=dot];
-  c2 -> c3 [dirType=both, arrowhead=open, arrowtail=dot];
-}`,
+			expectedDotCode: graph03,
 		},
 		{
-			"ComplexGraph",
-			true, true, false, "DG",
-			RankDirLR,
-			ColorSteelBlue, StyleFilled, ShapeMrecord,
-			[]Node{
+			name:        "ComplexGraph",
+			strict:      true,
+			diagraph:    true,
+			concentrate: false,
+			graphName:   "DG",
+			rankDir:     RankDirLR,
+			nodeColor:   ColorSteelBlue,
+			nodeStyle:   StyleFilled,
+			nodeShape:   ShapeMrecord,
+			nodes: []Node{
 				Node{Name: "start", Label: "Start", Color: ColorBlue, Shape: ShapeBox},
 				Node{Name: "end", Label: "End", Color: ColorBlue, Shape: ShapeBox},
 			},
-			[]Edge{
+			edges: []Edge{
 				Edge{From: "start", To: "e0", EdgeType: EdgeTypeDirected, Label: "Start", Color: ColorRed, Style: StyleSolid},
 				Edge{From: "start", To: "f0", EdgeType: EdgeTypeDirected, Label: "Start", Color: ColorRed, Style: StyleSolid},
 				Edge{From: "e1", To: "end", EdgeType: EdgeTypeDirected, Label: "End", Color: ColorRed, Style: StyleSolid},
 				Edge{From: "f1", To: "end", EdgeType: EdgeTypeDirected, Label: "End", Color: ColorRed, Style: StyleSolid},
 			},
-			[]Subgraph{
+			subgraphs: []Subgraph{
 				Subgraph{
 					Name: "cluster0", Label: "Process 0", Color: ColorGray, Style: StyleFilled,
 					Nodes: []Node{
@@ -148,7 +132,65 @@ func TestGraph(t *testing.T) {
 					},
 				},
 			},
-			`strict digraph "DG" {
+			expectedDotCode: graph04,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewGraph(tc.strict, tc.diagraph, tc.concentrate, tc.graphName, tc.rankDir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
+			g.AddNode(tc.nodes...)
+			g.AddEdge(tc.edges...)
+			g.AddSubgraph(tc.subgraphs...)
+
+			assert.Equal(t, tc.expectedDotCode, g.DotCode())
+		})
+	}
+}
+
+var graph01 = `graph {
+  concentrate=false;
+  node [];
+
+  a0 [];
+  a1 [];
+
+  a0 -- a1 [];
+}`
+
+var graph02 = `strict graph "G" {
+  concentrate=false;
+  node [];
+
+  b0 [label="B0"];
+  b1 [label="B3"];
+  b2 [label="B2"];
+
+  b0 -- b1 [color=red];
+  b0 -- b2 [color=black];
+}`
+
+var graph03 = `digraph {
+  concentrate=false;
+  node [color=limegreen];
+
+  subgraph {
+    label="Thread";
+    rank=same;
+    node [];
+  }
+
+  c0 [label="C0", shape=plain];
+  c1 [label="C1", shape=plain];
+  c2 [label="C2", shape=plain];
+  c3 [label="C3", shape=plain];
+
+  c0 -> c1 [dirType=both, arrowhead=open, arrowtail=dot];
+  c0 -> c2 [dirType=both, arrowhead=open, arrowtail=dot];
+  c2 -> c3 [dirType=both, arrowhead=open, arrowtail=dot];
+}`
+
+var graph04 = `strict digraph "DG" {
   rankdir=LR;
   concentrate=false;
   node [color=steelblue, style=filled, shape=Mrecord];
@@ -184,18 +226,4 @@ func TestGraph(t *testing.T) {
   start -> f0 [label="Start", color=red, style=solid];
   e1 -> end [label="End", color=red, style=solid];
   f1 -> end [label="End", color=red, style=solid];
-}`,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			g := NewGraph(tc.strict, tc.diagraph, tc.concentrate, tc.graphName, tc.rankDir, tc.nodeColor, tc.nodeStyle, tc.nodeShape)
-			g.AddNode(tc.nodes...)
-			g.AddEdge(tc.edges...)
-			g.AddSubgraph(tc.subgraphs...)
-
-			assert.Equal(t, tc.expectedDotCode, g.DotCode())
-		})
-	}
-}
+}`
