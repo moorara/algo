@@ -2,6 +2,7 @@ package automata
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
@@ -10,13 +11,11 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
-type nfaTrans symboltable.OrderedSymbolTable[State, symboltable.OrderedSymbolTable[Symbol, States]]
-
 // NFA implements a non-deterministic finite automaton.
 type NFA struct {
 	Start State
 	Final States
-	trans nfaTrans
+	trans doubleKeyMap[State, Symbol, States]
 }
 
 // NewNFA creates a new non-deterministic finite automaton.
@@ -276,22 +275,46 @@ func (n *NFA) Graphviz() string {
 		graph.AddNode(graphviz.NewNode(name, "", label, "", "", shape, "", ""))
 	}
 
+	// Group all the transitions with the same states and combine their symbols into one label
+
+	var edges doubleKeyMap[State, State, []string]
+	edges = symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[State, []string]](cmpState, nil)
+
 	for _, kv := range n.trans.KeyValues() {
-		from := fmt.Sprintf("%d", kv.Key)
+		from := kv.Key
+		tab, exist := edges.Get(from)
+		if !exist {
+			tab = symboltable.NewRedBlack[State, []string](cmpState, nil)
+			edges.Put(from, tab)
+		}
 
 		for _, kv := range kv.Val.KeyValues() {
-			var label string
-			if symbol := kv.Key; symbol == E {
-				label = "ε"
+			var symbol string
+			if kv.Key == E {
+				symbol = "ε"
 			} else {
-				label = string(symbol)
+				symbol = string(kv.Key)
 			}
 
-			for _, s := range kv.Val {
-				to := fmt.Sprintf("%d", s)
-
-				graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", label, "", "", "", ""))
+			for _, to := range kv.Val {
+				vals, _ := tab.Get(to)
+				vals = append(vals, symbol)
+				tab.Put(to, vals)
 			}
+		}
+	}
+
+	for _, kv := range edges.KeyValues() {
+		from := kv.Key
+		for _, kv := range kv.Val.KeyValues() {
+			from := fmt.Sprintf("%d", from)
+			to := fmt.Sprintf("%d", kv.Key)
+			symbols := kv.Val
+
+			sort.Quick(symbols, generic.NewCompareFunc[string]())
+			label := strings.Join(symbols, ",")
+
+			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", label, "", "", "", ""))
 		}
 	}
 

@@ -72,6 +72,9 @@ func ToString(s string) String {
 	return res
 }
 
+// doubleKeyMap is a map (symbol table) data structure with two keys.
+type doubleKeyMap[K1, K2, V any] symboltable.OrderedSymbolTable[K1, symboltable.OrderedSymbolTable[K2, V]]
+
 var (
 	cmpState  = generic.NewCompareFunc[State]()
 	cmpSymbol = generic.NewCompareFunc[Symbol]()
