@@ -60,7 +60,13 @@ func getTestDFAs() []*DFA {
 	d3.Add(3, 'a', 1)
 	d3.Add(3, 'b', 0)
 
-	return []*DFA{d0, d1, d2, d3}
+	d4 := NewDFA(0, States{1})
+	d4.Add(0, 'a', 1)
+	d4.Add(0, 'b', 1)
+	d4.Add(1, 'a', 1)
+	d4.Add(1, 'b', 1)
+
+	return []*DFA{d0, d1, d2, d3, d4}
 }
 
 func TestNewDFA(t *testing.T) {
@@ -392,9 +398,35 @@ func TestDFA_Graphviz(t *testing.T) {
 		expectedGraphviz string
 	}{
 		{
-			name: "Empty",
-			d:    NewDFA(0, States{1}),
-			expectedGraphviz: `digraph "DFA" {
+			name:             "Empty",
+			d:                NewDFA(0, States{1}),
+			expectedGraphviz: dfaEmpty,
+		},
+		{
+			name:             "First",
+			d:                dfas[0],
+			expectedGraphviz: dfa01,
+		},
+		{
+			name:             "Second",
+			d:                dfas[1],
+			expectedGraphviz: dfa02,
+		},
+		{
+			name:             "Third",
+			d:                dfas[4],
+			expectedGraphviz: dfa03,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedGraphviz, tc.d.Graphviz())
+		})
+	}
+}
+
+var dfaEmpty = `digraph "DFA" {
   rankdir=LR;
   concentrate=false;
   node [];
@@ -404,12 +436,9 @@ func TestDFA_Graphviz(t *testing.T) {
   1 [label="1", shape=doublecircle];
 
   start -> 0 [];
-}`,
-		},
-		{
-			name: "First",
-			d:    dfas[0],
-			expectedGraphviz: `digraph "DFA" {
+}`
+
+var dfa01 = `digraph "DFA" {
   rankdir=LR;
   concentrate=false;
   node [];
@@ -421,20 +450,17 @@ func TestDFA_Graphviz(t *testing.T) {
   3 [label="3", shape=doublecircle];
 
   start -> 0 [];
-  0 -> 1 [label="a"];
   0 -> 0 [label="b"];
+  0 -> 1 [label="a"];
   1 -> 1 [label="a"];
   1 -> 2 [label="b"];
   2 -> 1 [label="a"];
   2 -> 3 [label="b"];
-  3 -> 1 [label="a"];
   3 -> 0 [label="b"];
-}`,
-		},
-		{
-			name: "Second",
-			d:    dfas[1],
-			expectedGraphviz: `digraph "DFA" {
+  3 -> 1 [label="a"];
+}`
+
+var dfa02 = `digraph "DFA" {
   rankdir=LR;
   concentrate=false;
   node [];
@@ -457,13 +483,18 @@ func TestDFA_Graphviz(t *testing.T) {
   3 -> 4 [label="b"];
   4 -> 1 [label="a"];
   4 -> 2 [label="b"];
-}`,
-		},
-	}
+}`
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedGraphviz, tc.d.Graphviz())
-		})
-	}
-}
+var dfa03 = `digraph "DFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [];
+
+  start [style=invis];
+  0 [label="0", shape=circle];
+  1 [label="1", shape=doublecircle];
+
+  start -> 0 [];
+  0 -> 1 [label="a,b"];
+  1 -> 1 [label="a,b"];
+}`

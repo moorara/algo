@@ -55,7 +55,13 @@ func getTestNFAs() []*NFA {
 	n3.Add(3, 'a', States{1})
 	n3.Add(3, 'b', States{0})
 
-	return []*NFA{n0, n1, n2, n3}
+	n4 := NewNFA(0, States{})
+	n4.Add(0, 'a', States{1, 2})
+	n4.Add(0, 'b', States{1, 2})
+	n4.Add(1, 'a', States{3})
+	n4.Add(2, 'b', States{3})
+
+	return []*NFA{n0, n1, n2, n3, n4}
 }
 
 func TestNewNFA(t *testing.T) {
@@ -365,9 +371,35 @@ func TestNFA_Graphviz(t *testing.T) {
 		expectedGraphviz string
 	}{
 		{
-			name: "Empty",
-			n:    NewNFA(0, States{1, 2}),
-			expectedGraphviz: `digraph "NFA" {
+			name:             "Empty",
+			n:                NewNFA(0, States{1, 2}),
+			expectedGraphviz: nfaEmpty,
+		},
+		{
+			name:             "First",
+			n:                nfas[0],
+			expectedGraphviz: nfa01,
+		},
+		{
+			name:             "Second",
+			n:                nfas[1],
+			expectedGraphviz: nfa02,
+		},
+		{
+			name:             "Third",
+			n:                nfas[4],
+			expectedGraphviz: nfa03,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedGraphviz, tc.n.Graphviz())
+		})
+	}
+}
+
+var nfaEmpty = `digraph "NFA" {
   rankdir=LR;
   concentrate=false;
   node [shape=circle];
@@ -378,12 +410,9 @@ func TestNFA_Graphviz(t *testing.T) {
   2 [label="2", shape=doublecircle];
 
   start -> 0 [];
-}`,
-		},
-		{
-			name: "First",
-			n:    nfas[0],
-			expectedGraphviz: `digraph "NFA" {
+}`
+
+var nfa01 = `digraph "NFA" {
   rankdir=LR;
   concentrate=false;
   node [shape=circle];
@@ -402,12 +431,9 @@ func TestNFA_Graphviz(t *testing.T) {
   2 -> 2 [label="a"];
   3 -> 4 [label="b"];
   4 -> 4 [label="b"];
-}`,
-		},
-		{
-			name: "Second",
-			n:    nfas[1],
-			expectedGraphviz: `digraph "NFA" {
+}`
+
+var nfa02 = `digraph "NFA" {
   rankdir=LR;
   concentrate=false;
   node [shape=circle];
@@ -439,13 +465,22 @@ func TestNFA_Graphviz(t *testing.T) {
   7 -> 8 [label="a"];
   8 -> 9 [label="b"];
   9 -> 10 [label="b"];
-}`,
-		},
-	}
+}`
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedGraphviz, tc.n.Graphviz())
-		})
-	}
-}
+var nfa03 = `digraph "NFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0", shape=circle];
+  1 [label="1", shape=circle];
+  2 [label="2", shape=circle];
+  3 [label="3", shape=circle];
+
+  start -> 0 [];
+  0 -> 1 [label="a,b"];
+  0 -> 2 [label="a,b"];
+  1 -> 3 [label="a"];
+  2 -> 3 [label="b"];
+}`

@@ -2,6 +2,7 @@ package automata
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
@@ -10,13 +11,11 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
-type dfaTrans symboltable.OrderedSymbolTable[State, symboltable.OrderedSymbolTable[Symbol, State]]
-
 // DFA implements a deterministic finite automaton.
 type DFA struct {
 	Start State
 	Final States
-	trans dfaTrans
+	trans doubleKeyMap[State, Symbol, State]
 }
 
 // NewDFA creates a new deterministic finite automaton.
@@ -247,7 +246,7 @@ func (d *DFA) Minimize() *DFA {
 }
 
 // createGroupTrans create a map of states to symbols to the current partition's group representatives (instead of next states).
-func (d *DFA) createGroupTrans(P set.Set[set.Set[State]], G set.Set[State]) dfaTrans {
+func (d *DFA) createGroupTrans(P set.Set[set.Set[State]], G set.Set[State]) doubleKeyMap[State, Symbol, State] {
 	gtrans := symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[Symbol, State]](cmpState, eqSymbolState)
 
 	for _, s := range G.Members() { // For every state in the current group
@@ -270,7 +269,7 @@ func (d *DFA) createGroupTrans(P set.Set[set.Set[State]], G set.Set[State]) dfaT
 }
 
 // populateSubgroups creates new subgroups based on the transition map of a group and add them to the new partition.
-func populateSubgroups(Pnew set.Set[set.Set[State]], gtrans dfaTrans) {
+func populateSubgroups(Pnew set.Set[set.Set[State]], gtrans doubleKeyMap[State, Symbol, State]) {
 	eqFunc := func(a, b State) bool { return a == b }
 
 	kvs := gtrans.KeyValues()
@@ -344,12 +343,36 @@ func (d *DFA) Graphviz() string {
 		graph.AddNode(graphviz.NewNode(name, "", label, "", "", shape, "", ""))
 	}
 
+	// Group all the transitions with the same states and combine their symbols into one label
+
+	var edges doubleKeyMap[State, State, []string]
+	edges = symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[State, []string]](cmpState, nil)
+
 	for _, kv := range d.trans.KeyValues() {
-		from := fmt.Sprintf("%d", kv.Key)
+		from := kv.Key
+		tab, exist := edges.Get(from)
+		if !exist {
+			tab = symboltable.NewRedBlack[State, []string](cmpState, nil)
+			edges.Put(from, tab)
+		}
 
 		for _, kv := range kv.Val.KeyValues() {
-			label := string(kv.Key)
-			to := fmt.Sprintf("%d", kv.Val)
+			symbol, to := string(kv.Key), kv.Val
+			vals, _ := tab.Get(to)
+			vals = append(vals, symbol)
+			tab.Put(to, vals)
+		}
+	}
+
+	for _, kv := range edges.KeyValues() {
+		from := kv.Key
+		for _, kv := range kv.Val.KeyValues() {
+			from := fmt.Sprintf("%d", from)
+			to := fmt.Sprintf("%d", kv.Key)
+			symbols := kv.Val
+
+			sort.Quick(symbols, generic.NewCompareFunc[string]())
+			label := strings.Join(symbols, ",")
 
 			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", label, "", "", "", ""))
 		}
