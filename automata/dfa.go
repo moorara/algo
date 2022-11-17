@@ -76,19 +76,6 @@ func (d *DFA) States() States {
 	return states
 }
 
-// LastState returns the state with the maximum number.
-// This information can be used for adding new states to the DFA.
-func (d *DFA) LastState() State {
-	max := State(0)
-	for _, s := range d.States() {
-		if s > max {
-			max = s
-		}
-	}
-
-	return max
-}
-
 // Symbols returns the set of all input symbols of the DFA
 func (d *DFA) Symbols() Symbols {
 	symbols := Symbols{}
@@ -102,38 +89,6 @@ func (d *DFA) Symbols() Symbols {
 	}
 
 	return symbols
-}
-
-// Join merges another DFA with the current one.
-//
-// The first return value is the set of all states of the merged DFA after merging.
-// The second return value is the start (initial) state of the merged DFA after merging.
-// The third return value is the set of final states of the merged DFA after merging.
-func (d *DFA) Join(dfa *DFA) (States, State, States) {
-	// Use the maximum state number plus one as the offset for the new states
-	base := d.LastState() + 1
-
-	for _, kv := range dfa.trans.KeyValues() {
-		s := base + kv.Key
-		for _, kv := range kv.Val.KeyValues() {
-			a, next := kv.Key, base+kv.Val
-			d.Add(s, a, next)
-		}
-	}
-
-	states := States{}
-	for _, s := range dfa.States() {
-		states = append(states, base+s)
-	}
-
-	start := base + dfa.Start
-
-	final := States{}
-	for _, s := range dfa.Final {
-		final = append(final, base+s)
-	}
-
-	return states, start, final
 }
 
 // Accept determines whether or not an input string is recognized (accepted) by the DFA.
@@ -150,10 +105,10 @@ func (d *DFA) Accept(s String) bool {
 func (d *DFA) ToNFA() *NFA {
 	nfa := NewNFA(d.Start, d.Final)
 	for _, kv := range d.trans.KeyValues() {
-		S := kv.Key
+		s := kv.Key
 		for _, kv := range kv.Val.KeyValues() {
-			a, T := kv.Key, kv.Val
-			nfa.Add(S, a, States{T})
+			a, next := kv.Key, kv.Val
+			nfa.Add(s, a, States{next})
 		}
 	}
 

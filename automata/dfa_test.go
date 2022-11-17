@@ -7,6 +7,7 @@ import (
 )
 
 func getTestDFAs() []*DFA {
+	// (a|b)*abb
 	d0 := NewDFA(0, States{3})
 	d0.Add(0, 'a', 1)
 	d0.Add(0, 'b', 0)
@@ -17,6 +18,7 @@ func getTestDFAs() []*DFA {
 	d0.Add(3, 'a', 1)
 	d0.Add(3, 'b', 0)
 
+	// (a|b)*abb
 	d1 := NewDFA(0, States{4})
 	d1.Add(0, 'a', 1)
 	d1.Add(0, 'b', 2)
@@ -29,44 +31,22 @@ func getTestDFAs() []*DFA {
 	d1.Add(4, 'a', 1)
 	d1.Add(4, 'b', 2)
 
-	d2 := NewDFA(0, States{8})
+	// ab+|ba+
+	d2 := NewDFA(0, States{2, 4})
 	d2.Add(0, 'a', 1)
-	d2.Add(0, 'b', 0)
-	d2.Add(1, 'a', 1)
 	d2.Add(1, 'b', 2)
-	d2.Add(2, 'a', 1)
-	d2.Add(2, 'b', 3)
-	d2.Add(3, 'a', 1)
-	d2.Add(3, 'b', 0)
+	d2.Add(2, 'b', 2)
+	d2.Add(0, 'b', 3)
 	d2.Add(3, 'a', 4)
-	d2.Add(4, 'a', 5)
-	d2.Add(4, 'b', 6)
-	d2.Add(5, 'a', 5)
-	d2.Add(5, 'b', 7)
-	d2.Add(6, 'a', 5)
-	d2.Add(6, 'b', 6)
-	d2.Add(7, 'a', 5)
-	d2.Add(7, 'b', 8)
-	d2.Add(8, 'a', 5)
-	d2.Add(8, 'b', 6)
+	d2.Add(4, 'a', 4)
 
-	d3 := NewDFA(0, States{3})
+	// (ab)+
+	d3 := NewDFA(0, States{2})
 	d3.Add(0, 'a', 1)
-	d3.Add(0, 'b', 0)
-	d3.Add(1, 'a', 1)
 	d3.Add(1, 'b', 2)
 	d3.Add(2, 'a', 1)
-	d3.Add(2, 'b', 3)
-	d3.Add(3, 'a', 1)
-	d3.Add(3, 'b', 0)
 
-	d4 := NewDFA(0, States{1})
-	d4.Add(0, 'a', 1)
-	d4.Add(0, 'b', 1)
-	d4.Add(1, 'a', 1)
-	d4.Add(1, 'b', 1)
-
-	return []*DFA{d0, d1, d2, d3, d4}
+	return []*DFA{d0, d1, d2, d3}
 }
 
 func TestNewDFA(t *testing.T) {
@@ -175,33 +155,6 @@ func TestDFA_States(t *testing.T) {
 	}
 }
 
-func TestDFA_LastState(t *testing.T) {
-	dfas := getTestDFAs()
-
-	tests := []struct {
-		name              string
-		d                 *DFA
-		expectedLastState State
-	}{
-		{
-			name:              "First",
-			d:                 dfas[0],
-			expectedLastState: State(3),
-		},
-		{
-			name:              "Second",
-			d:                 dfas[1],
-			expectedLastState: State(4),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedLastState, tc.d.LastState())
-		})
-	}
-}
-
 func TestDFA_Symbols(t *testing.T) {
 	dfas := getTestDFAs()
 
@@ -225,58 +178,6 @@ func TestDFA_Symbols(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedSymbols, tc.d.Symbols())
-		})
-	}
-}
-
-func TestDFA_Join(t *testing.T) {
-	dfas := getTestDFAs()
-
-	type edge struct {
-		s    State
-		a    Symbol
-		next State
-	}
-
-	tests := []struct {
-		name           string
-		d              *DFA
-		dfa            *DFA
-		newFinal       States
-		extraTrans     []edge
-		expectedStates States
-		expectedStart  State
-		expectedFinal  States
-		expectedDFA    *DFA
-	}{
-		{
-			name:     "OK",
-			d:        dfas[0],
-			dfa:      dfas[1],
-			newFinal: States{8},
-			extraTrans: []edge{
-				{3, 'a', 4},
-			},
-			expectedStates: States{4, 5, 6, 7, 8},
-			expectedStart:  State(4),
-			expectedFinal:  States{8},
-			expectedDFA:    dfas[2],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			states, start, final := tc.d.Join(tc.dfa)
-
-			tc.d.Final = tc.newFinal
-			for _, e := range tc.extraTrans {
-				tc.d.Add(e.s, e.a, e.next)
-			}
-
-			assert.True(t, states.Equals(tc.expectedStates))
-			assert.Equal(t, tc.expectedStart, start)
-			assert.True(t, final.Equals(tc.expectedFinal))
-			assert.True(t, tc.d.Equals(tc.expectedDFA))
 		})
 	}
 }
@@ -323,8 +224,8 @@ func TestDFA_ToNFA(t *testing.T) {
 	}{
 		{
 			name:        "OK",
-			d:           dfas[3],
-			expectedNFA: nfas[3],
+			d:           dfas[2],
+			expectedNFA: nfas[2],
 		},
 	}
 
@@ -347,7 +248,7 @@ func TestDFA_Minimize(t *testing.T) {
 		{
 			name:        "OK",
 			d:           dfas[1],
-			expectedDFA: dfas[3],
+			expectedDFA: dfas[0],
 		},
 	}
 
@@ -376,8 +277,8 @@ func TestDFA_Equals(t *testing.T) {
 		},
 		{
 			name:           "NotEqual",
-			d:              dfas[1],
-			dfa:            dfas[2],
+			d:              dfas[0],
+			dfa:            dfas[1],
 			expectedEquals: false,
 		},
 	}
@@ -414,7 +315,7 @@ func TestDFA_Graphviz(t *testing.T) {
 		},
 		{
 			name:             "Third",
-			d:                dfas[4],
+			d:                dfas[3],
 			expectedGraphviz: dfa03,
 		},
 	}
@@ -492,9 +393,11 @@ var dfa03 = `digraph "DFA" {
 
   start [style=invis];
   0 [label="0", shape=circle];
-  1 [label="1", shape=doublecircle];
+  1 [label="1", shape=circle];
+  2 [label="2", shape=doublecircle];
 
   start -> 0 [];
-  0 -> 1 [label="a,b"];
-  1 -> 1 [label="a,b"];
+  0 -> 1 [label="a"];
+  1 -> 2 [label="b"];
+  2 -> 1 [label="a"];
 }`
