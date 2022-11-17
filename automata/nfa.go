@@ -114,19 +114,6 @@ func (n *NFA) States() States {
 	return states
 }
 
-// LastState returns the state with the maximum number.
-// This information can be used for adding new states to the NFA.
-func (n *NFA) LastState() State {
-	max := State(0)
-	for _, s := range n.States() {
-		if s > max {
-			max = s
-		}
-	}
-
-	return max
-}
-
 // Symbols returns the set of all input symbols of the NFA.
 func (n *NFA) Symbols() Symbols {
 	symbols := Symbols{}
@@ -140,44 +127,6 @@ func (n *NFA) Symbols() Symbols {
 	}
 
 	return symbols
-}
-
-// Join merges another NFA with the current one.
-//
-// The first return value is the set of all states of the merged NFA after merging.
-// The second return value is the start (initial) state of the merged NFA after merging.
-// The third return value is the set of final states of the merged NFA after merging.
-func (n *NFA) Join(nfa *NFA) (States, State, States) {
-	// Use the maximum state number plus one as the offset for the new states
-	base := n.LastState() + 1
-
-	for _, kv := range nfa.trans.KeyValues() {
-		s := base + kv.Key
-		for _, kv := range kv.Val.KeyValues() {
-			a := kv.Key
-
-			next := make(States, len(kv.Val))
-			for i, n := range kv.Val {
-				next[i] = base + n
-			}
-
-			n.Add(s, a, next)
-		}
-	}
-
-	states := States{}
-	for _, s := range nfa.States() {
-		states = append(states, base+s)
-	}
-
-	start := base + nfa.Start
-
-	final := States{}
-	for _, s := range nfa.Final {
-		final = append(final, base+s)
-	}
-
-	return states, start, final
 }
 
 // Accept determines whether or not an input string is recognized (accepted) by the NFA.
@@ -194,6 +143,107 @@ func (n *NFA) Accept(s String) bool {
 	}
 
 	return false
+}
+
+// Union constructs a new NFA that accepts the union of languages accepted by each individual NFA.
+func (n *NFA) Union(ns ...*NFA) *NFA {
+	start := State(0)
+	union := NewNFA(start, States{})
+	factory := newStateFactory()
+
+	nfas := append([]*NFA{n}, ns...)
+	for id, nfa := range nfas {
+		for _, kv := range nfa.trans.KeyValues() {
+			s := kv.Key
+
+			// If s is the start state of the current NFA,
+			// we need to map it to the start state of the union NFA.
+			var sp State
+			if s == nfa.Start {
+				sp = start
+			} else {
+				sp = factory.StateFor(id, s)
+			}
+
+			for _, kv := range kv.Val.KeyValues() {
+				a, next := kv.Key, kv.Val
+
+				// If any of the next state is the start state of the current NFA,
+				// we need to map it to the start state of the union NFA.
+				var nextp States
+				for _, s := range next {
+					if s == nfa.Start {
+						nextp = append(nextp, start)
+					} else {
+						nextp = append(nextp, factory.StateFor(id, s))
+					}
+				}
+
+				// Add new transition
+				union.Add(sp, a, nextp)
+			}
+		}
+
+		// Update the final states of the union NFA
+		for _, f := range nfa.Final {
+			union.Final = append(union.Final, factory.StateFor(id, f))
+		}
+	}
+
+	return union
+}
+
+// Concat constructs a new NFA that accepts the concatenation of languages accepted by each individual NFA.
+func (n *NFA) Concat(ns ...*NFA) *NFA {
+	final := States{0}
+	concat := NewNFA(0, final)
+	factory := newStateFactory()
+
+	nfas := append([]*NFA{n}, ns...)
+	for id, nfa := range nfas {
+		for _, kv := range nfa.trans.KeyValues() {
+			s := kv.Key
+
+			// If s is the start state of the current NFA,
+			// we need to map it to the previous NFA final states.
+			var sp States
+			if s == nfa.Start {
+				sp = final
+			} else {
+				sp = States{factory.StateFor(id, s)}
+			}
+
+			for _, kv := range kv.Val.KeyValues() {
+				a, next := kv.Key, kv.Val
+
+				// If any of the next state is the start state of the current NFA,
+				// we need to map it to the previous NFA final states.
+				var nextp States
+				for _, s := range next {
+					if s == nfa.Start {
+						nextp = append(nextp, final...)
+					} else {
+						nextp = append(nextp, factory.StateFor(id, s))
+					}
+				}
+
+				// Add new transitions
+				for _, s := range sp {
+					concat.Add(s, a, nextp)
+				}
+			}
+		}
+
+		// Update the current final states
+		final = States{}
+		for _, f := range nfa.Final {
+			final = append(final, factory.StateFor(id, f))
+		}
+	}
+
+	concat.Final = final
+
+	return concat
 }
 
 // ToDFA constructs a new DFA accepting the same language as the NFA.
