@@ -113,6 +113,13 @@ func TestDFA_Next(t *testing.T) {
 			a:             'b',
 			expectedState: State(2),
 		},
+		{
+			name:          "Invalid",
+			d:             dfas[0],
+			s:             State(0),
+			a:             'c',
+			expectedState: State(-1),
+		},
 	}
 
 	for _, tc := range tests {
