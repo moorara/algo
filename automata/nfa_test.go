@@ -43,32 +43,44 @@ func getTestNFAs() []*NFA {
 	n3.Add(1, 'b', States{2})
 	n3.Add(2, 'a', States{1})
 
-	// ab+|ba+|(ab)+
-	n4 := NewNFA(0, States{3, 4, 6})
+	// (ab+|ba+)*
+	n4 := NewNFA(0, States{2, 4})
+	n4.Add(0, E, States{2, 4})
 	n4.Add(0, 'a', States{1})
-	n4.Add(0, 'b', States{2})
-	n4.Add(0, 'a', States{5})
-	n4.Add(1, 'b', States{3})
-	n4.Add(2, 'a', States{4})
-	n4.Add(3, 'b', States{3})
+	n4.Add(1, 'b', States{2})
+	n4.Add(2, 'b', States{2})
+	n4.Add(2, E, States{0})
+	n4.Add(0, 'b', States{3})
+	n4.Add(3, 'a', States{4})
 	n4.Add(4, 'a', States{4})
-	n4.Add(5, 'b', States{6})
-	n4.Add(6, 'a', States{5})
+	n4.Add(4, E, States{0})
 
-	// (ab+|ba+)(ab)+
-	n5 := NewNFA(0, States{6})
+	// ab+|ba+|(ab)+
+	n5 := NewNFA(0, States{3, 4, 6})
 	n5.Add(0, 'a', States{1})
 	n5.Add(0, 'b', States{2})
+	n5.Add(0, 'a', States{5})
 	n5.Add(1, 'b', States{3})
 	n5.Add(2, 'a', States{4})
-	n5.Add(3, 'a', States{5})
 	n5.Add(3, 'b', States{3})
 	n5.Add(4, 'a', States{4})
-	n5.Add(4, 'a', States{5})
 	n5.Add(5, 'b', States{6})
 	n5.Add(6, 'a', States{5})
 
-	return []*NFA{n0, n1, n2, n3, n4, n5}
+	// (ab+|ba+)(ab)+
+	n6 := NewNFA(0, States{6})
+	n6.Add(0, 'a', States{1})
+	n6.Add(0, 'b', States{2})
+	n6.Add(1, 'b', States{3})
+	n6.Add(2, 'a', States{4})
+	n6.Add(3, 'a', States{5})
+	n6.Add(3, 'b', States{3})
+	n6.Add(4, 'a', States{4})
+	n6.Add(4, 'a', States{5})
+	n6.Add(5, 'b', States{6})
+	n6.Add(6, 'a', States{5})
+
+	return []*NFA{n0, n1, n2, n3, n4, n5, n6}
 }
 
 func TestNewNFA(t *testing.T) {
@@ -235,6 +247,29 @@ func TestNFA_Accept(t *testing.T) {
 	}
 }
 
+func TestNFA_Star(t *testing.T) {
+	nfas := getTestNFAs()
+
+	tests := []struct {
+		name        string
+		n           *NFA
+		expectedNFA *NFA
+	}{
+		{
+			name:        "OK",
+			n:           nfas[2],
+			expectedNFA: nfas[4],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			nfa := tc.n.Star()
+			assert.True(t, nfa.Equals(tc.expectedNFA))
+		})
+	}
+}
+
 func TestNFA_Union(t *testing.T) {
 	nfas := getTestNFAs()
 
@@ -248,7 +283,7 @@ func TestNFA_Union(t *testing.T) {
 			name:        "OK",
 			n:           nfas[2],
 			ns:          nfas[3:4],
-			expectedNFA: nfas[4],
+			expectedNFA: nfas[5],
 		},
 	}
 
@@ -273,7 +308,7 @@ func TestNFA_Concat(t *testing.T) {
 			name:        "OK",
 			n:           nfas[2],
 			ns:          nfas[3:4],
-			expectedNFA: nfas[5],
+			expectedNFA: nfas[6],
 		},
 	}
 

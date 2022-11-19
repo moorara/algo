@@ -145,6 +145,25 @@ func (n *NFA) Accept(s String) bool {
 	return false
 }
 
+// Star constructs a new NFA that accepts the Kleene closure of the language accepted by the NFA.
+func (n *NFA) Star() *NFA {
+	star := NewNFA(n.Start, n.Final)
+	for _, kv := range n.trans.KeyValues() {
+		s := kv.Key
+		for _, kv := range kv.Val.KeyValues() {
+			a, next := kv.Key, kv.Val
+			star.Add(s, a, next)
+		}
+	}
+
+	star.Add(star.Start, E, star.Final)
+	for _, f := range star.Final {
+		star.Add(f, E, States{star.Start})
+	}
+
+	return star
+}
+
 // Union constructs a new NFA that accepts the union of languages accepted by each individual NFA.
 func (n *NFA) Union(ns ...*NFA) *NFA {
 	start := State(0)
