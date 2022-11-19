@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.4.3](https://github.com/moorara/algo/tree/v0.4.3) (2022-11-18)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.4.2...v0.4.3)
+
+**Merged Changes:**
+
+  - [automata]: remove join and add Union and Concat APIs [#127](https://github.com/moorara/algo/pull/127) ([moorara](https://github.com/moorara))
+  - [automata]: improve Graphviz code generation [#126](https://github.com/moorara/algo/pull/126) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 8509921 [#124](https://github.com/moorara/algo/pull/124) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Refactor graphviz package [#125](https://github.com/moorara/algo/pull/125) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 0cf76af [#123](https://github.com/moorara/algo/pull/123) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Fix graphviz bug: escape double quotes [#122](https://github.com/moorara/algo/pull/122) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 129d8d6 [#121](https://github.com/moorara/algo/pull/121) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 3ae49d0 [#120](https://github.com/moorara/algo/pull/120) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to f965990 [#114](https://github.com/moorara/algo/pull/114) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+
+
 ## [v0.4.2](https://github.com/moorara/algo/tree/v0.4.2) (2022-11-03)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.4.1...v0.4.2)
