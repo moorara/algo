@@ -147,18 +147,33 @@ func (n *NFA) Accept(s String) bool {
 
 // Star constructs a new NFA that accepts the Kleene closure of the language accepted by the NFA.
 func (n *NFA) Star() *NFA {
-	star := NewNFA(n.Start, n.Final)
+	base := State(2)
+	start, final := State(0), State(1)
+	star := NewNFA(start, States{final})
+
 	for _, kv := range n.trans.KeyValues() {
-		s := kv.Key
+		s := base + kv.Key
 		for _, kv := range kv.Val.KeyValues() {
-			a, next := kv.Key, kv.Val
+			a := kv.Key
+
+			next := make(States, len(kv.Val))
+			for i, t := range kv.Val {
+				next[i] = base + t
+			}
+
 			star.Add(s, a, next)
 		}
 	}
 
-	star.Add(star.Start, E, star.Final)
-	for _, f := range star.Final {
-		star.Add(f, E, States{star.Start})
+	ss := base + n.Start
+
+	star.Add(start, E, States{ss})
+	star.Add(start, E, States{final})
+
+	for _, f := range n.Final {
+		ff := base + f
+		star.Add(ff, E, States{ss})
+		star.Add(ff, E, States{final})
 	}
 
 	return star
