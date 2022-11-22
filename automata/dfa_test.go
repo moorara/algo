@@ -46,7 +46,27 @@ func getTestDFAs() []*DFA {
 	d3.Add(1, 'b', 2)
 	d3.Add(2, 'a', 1)
 
-	return []*DFA{d0, d1, d2, d3}
+	// ab(a|b)*
+	d4 := NewDFA(0, States{2})
+	d4.Add(0, 'a', 1)
+	d4.Add(0, 'b', 3)
+	d4.Add(1, 'a', 4)
+	d4.Add(1, 'b', 2)
+	d4.Add(2, 'a', 2)
+	d4.Add(2, 'b', 2)
+	d4.Add(3, 'a', 3)
+	d4.Add(3, 'b', 3)
+	d4.Add(4, 'a', 4)
+	d4.Add(4, 'b', 4)
+
+	// ab(a|b)*
+	d5 := NewDFA(0, States{2})
+	d5.Add(0, 'a', 1)
+	d5.Add(1, 'b', 2)
+	d5.Add(2, 'a', 2)
+	d5.Add(2, 'b', 2)
+
+	return []*DFA{d0, d1, d2, d3, d4, d5}
 }
 
 func TestNewDFA(t *testing.T) {
@@ -262,6 +282,29 @@ func TestDFA_Minimize(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			dfa := tc.d.Minimize()
+			assert.True(t, dfa.Equals(tc.expectedDFA))
+		})
+	}
+}
+
+func TestDFA_WithoutDeadStates(t *testing.T) {
+	dfas := getTestDFAs()
+
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedDFA *DFA
+	}{
+		{
+			name:        "OK",
+			d:           dfas[4],
+			expectedDFA: dfas[5],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.d.WithoutDeadStates()
 			assert.True(t, dfa.Equals(tc.expectedDFA))
 		})
 	}
