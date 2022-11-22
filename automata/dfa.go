@@ -120,13 +120,20 @@ func (d *DFA) ToNFA() *NFA {
 // The minimization algorithm sometimes produces a DFA with one dead state.
 // This state is not accepting and transfers to itself on each input symbol.
 //
+// We often want to know when there is no longer any possibility of acceptance.
+// If so, we may want to eliminate the dead state and use an automaton that is missing some transitions.
+// This automaton has one fewer state than the minimum-state DFA.
+// Strictly speaking, such an automaton is not a DFA, because of the missing transitions to the dead state.
+//
 // For more details, see Compilers: Principles, Techniques, and Tools (2nd Edition).
 func (d *DFA) Minimize() *DFA {
 	eqFunc := func(a, b State) bool { return a == b }
 	setEqFunc := func(a, b set.Set[State]) bool { return a.Equals(b) }
 
-	// 1. Start with an initial partition P with two groups,
-	//    F and S - F, the accepting and non-accepting states.
+	/*
+	 * 1. Start with an initial partition P with two groups,
+	 *    F and S - F, the accepting and non-accepting states.
+	 */
 
 	S := set.New[State](eqFunc)
 	S.Add(d.States()...)
@@ -139,17 +146,19 @@ func (d *DFA) Minimize() *DFA {
 	P := set.New[set.Set[State]](setEqFunc)
 	P.Add(NF, F)
 
-	// 2. Initially, let Pnew = P.
-	//    For (each group G of P) {
-	//      Partition G into subgroups such that two states s and t are in the same subgroup
-	//      if and only if for all input symbols a, states s and t have transitions on a to states in the same group of P
-	//      (at worst, a state will be in a subgroup by itself).
-	//
-	//      Replace G in Pnew by the set of all subgroups formed.
-	//    }
-	//
-	// 3. If Pnew = P, let Pfinal = P and continue with step (4).
-	//    Otherwise, repeat step (2) with Pnew in place of P.
+	/*
+	 * 2. Initially, let Pnew = P.
+	 *    For (each group G of P) {
+	 *      Partition G into subgroups such that two states s and t are in the same subgroup
+	 *      if and only if for all input symbols a, states s and t have transitions on a to states in the same group of P
+	 *      (at worst, a state will be in a subgroup by itself).
+	 *
+	 *      Replace G in Pnew by the set of all subgroups formed.
+	 *    }
+	 *
+	 * 3. If Pnew = P, let Pfinal = P and continue with step (4).
+	 *    Otherwise, repeat step (2) with Pnew in place of P.
+	 */
 
 	for {
 		Pnew := set.New[set.Set[State]](setEqFunc)
@@ -166,15 +175,17 @@ func (d *DFA) Minimize() *DFA {
 		P = Pnew
 	}
 
-	// 4. Choose one state in each group of Pfinal as the representative for that group.
-	//    The representatives will be the states of the minimum-state DFA D′.
-	//    The other components of D′ are constructed as follows:
-	//
-	//    (a) The start state of D′ is the representative of the group containing the start state of D.
-	//    (b) The accepting states of D′ are the representatives of those groups that contain an accepting state of D
-	//        (each group contains either only accepting states, or only non-accepting states).
-	//    (c) Let s be the representative of some group G of Pfinal, and let the transition of D from s on input a be to state t.
-	//        Let r be the representative of t's group H. Then in D′, there is a transition from s to r on input a.
+	/*
+	 * 4. Choose one state in each group of Pfinal as the representative for that group.
+	 *    The representatives will be the states of the minimum-state DFA D′.
+	 *    The other components of D′ are constructed as follows:
+	 *
+	 *    (a) The start state of D′ is the representative of the group containing the start state of D.
+	 *    (b) The accepting states of D′ are the representatives of those groups that contain an accepting state of D
+	 *        (each group contains either only accepting states, or only non-accepting states).
+	 *    (c) Let s be the representative of some group G of Pfinal, and let the transition of D from s on input a be to state t.
+	 *        Let r be the representative of t's group H. Then in D′, there is a transition from s to r on input a.
+	 */
 
 	start, _ := groupRep(P, d.Start)
 
@@ -261,6 +272,70 @@ func groupRep(P set.Set[set.Set[State]], s State) (State, bool) {
 	}
 
 	return -1, false
+}
+
+// WithoutDeadStates eliminates the dead states and all transitions to them.
+// The subset construction and minimization algorithms sometimes produce a DFA with a single dead state.
+//
+// Strictly speaking, a DFA must have a transition from every state on every input symbol in its input alphabet.
+// When we construct a DFA to be used in a lexical analyzer, we need to treat the dead state differently.
+// We must know when there is no longer any possibility of recognizing a longer lexeme.
+// Thus, we should always omit transitions to the dead state and eliminate the dead state itself.
+func (d *DFA) WithoutDeadStates() *DFA {
+
+	// 1. Construct a directed graph from the DFA with all the transitions reversed.
+	adj := map[State]States{}
+	for _, kv := range d.trans.KeyValues() {
+		s := kv.Key
+		for _, kv := range kv.Val.KeyValues() {
+			t := kv.Val
+			adj[t] = append(adj[t], s)
+		}
+	}
+
+	// 2. Add a new state with edges to all other veritcies representing the final states of the DFA.
+	u := State(-1)
+	for _, f := range d.Final {
+		adj[u] = append(adj[u], f)
+	}
+
+	// 3. Finally, we find all states reachable from this new state using a depth-first search (DFS).
+	//    All other states not connected to this new state will be identified as dead states.
+	visited := map[State]bool{}
+	for s := range adj {
+		visited[s] = false
+	}
+
+	dfs(adj, visited, u)
+
+	deads := States{}
+	for s, visited := range visited {
+		if !visited {
+			deads = append(deads, s)
+		}
+	}
+
+	dfa := NewDFA(d.Start, d.Final)
+	for _, kv := range d.trans.KeyValues() {
+		s := kv.Key
+		for _, kv := range kv.Val.KeyValues() {
+			a, next := kv.Key, kv.Val
+			if !deads.Contains(s) && !deads.Contains(next) {
+				dfa.Add(s, a, next)
+			}
+		}
+	}
+
+	return dfa
+}
+
+func dfs(adj map[State]States, visited map[State]bool, s State) {
+	visited[s] = true
+	for _, t := range adj[s] {
+		if !visited[t] {
+			dfs(adj, visited, t)
+		}
+	}
 }
 
 // Equals determines whether or not two DFAs are the same.
