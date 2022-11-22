@@ -6,9 +6,9 @@ type stateFactory struct {
 	states map[int]map[State]State
 }
 
-func newStateFactory() *stateFactory {
+func newStateFactory(last State) *stateFactory {
 	return &stateFactory{
-		last:   0,
+		last:   last,
 		states: map[int]map[State]State{},
 	}
 }
