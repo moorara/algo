@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.4.4](https://github.com/moorara/algo/tree/v0.4.4) (2022-11-21)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.4.3...v0.4.4)
+
+**Merged Changes:**
+
+  - [automata] Add API for removing dead states from DFAs [#131](https://github.com/moorara/algo/pull/131) ([moorara](https://github.com/moorara))
+  - Fix Union API [#130](https://github.com/moorara/algo/pull/130) ([moorara](https://github.com/moorara))
+  - [automata]: Fix Star API [#129](https://github.com/moorara/algo/pull/129) ([moorara](https://github.com/moorara))
+  - [automata]: Add Kleene closure to NFA API [#128](https://github.com/moorara/algo/pull/128) ([moorara](https://github.com/moorara))
+
+
 ## [v0.4.3](https://github.com/moorara/algo/tree/v0.4.3) (2022-11-18)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.4.2...v0.4.3)
