@@ -23,7 +23,7 @@ func (e *FlowEdge) To() int {
 	return e.to
 }
 
-// Other returns the other vertext of this edge.
+// Other returns the other vertex of this edge.
 func (e *FlowEdge) Other(v int) int {
 	switch v {
 	case e.from:

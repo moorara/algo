@@ -147,31 +147,31 @@ func (n *NFA) Accept(s String) bool {
 
 // Star constructs a new NFA that accepts the Kleene closure of the language accepted by the NFA.
 func (n *NFA) Star() *NFA {
-	base := State(2)
 	start, final := State(0), State(1)
 	star := NewNFA(start, States{final})
+	factory := newStateFactory(final)
 
 	for _, kv := range n.trans.KeyValues() {
-		s := base + kv.Key
+		s := factory.StateFor(0, kv.Key)
 		for _, kv := range kv.Val.KeyValues() {
 			a := kv.Key
 
 			next := make(States, len(kv.Val))
 			for i, t := range kv.Val {
-				next[i] = base + t
+				next[i] = factory.StateFor(0, t)
 			}
 
 			star.Add(s, a, next)
 		}
 	}
 
-	ss := base + n.Start
+	ss := factory.StateFor(0, n.Start)
 
 	star.Add(start, E, States{ss})
 	star.Add(start, E, States{final})
 
 	for _, f := range n.Final {
-		ff := base + f
+		ff := factory.StateFor(0, f)
 		star.Add(ff, E, States{ss})
 		star.Add(ff, E, States{final})
 	}
@@ -181,46 +181,32 @@ func (n *NFA) Star() *NFA {
 
 // Union constructs a new NFA that accepts the union of languages accepted by each individual NFA.
 func (n *NFA) Union(ns ...*NFA) *NFA {
-	start := State(0)
-	union := NewNFA(start, States{})
-	factory := newStateFactory()
+	start, final := State(0), State(1)
+	union := NewNFA(start, States{final})
+	factory := newStateFactory(final)
 
 	nfas := append([]*NFA{n}, ns...)
 	for id, nfa := range nfas {
 		for _, kv := range nfa.trans.KeyValues() {
-			s := kv.Key
-
-			// If s is the start state of the current NFA,
-			// we need to map it to the start state of the union NFA.
-			var sp State
-			if s == nfa.Start {
-				sp = start
-			} else {
-				sp = factory.StateFor(id, s)
-			}
-
+			s := factory.StateFor(id, kv.Key)
 			for _, kv := range kv.Val.KeyValues() {
-				a, next := kv.Key, kv.Val
+				a := kv.Key
 
-				// If any of the next state is the start state of the current NFA,
-				// we need to map it to the start state of the union NFA.
-				var nextp States
-				for _, s := range next {
-					if s == nfa.Start {
-						nextp = append(nextp, start)
-					} else {
-						nextp = append(nextp, factory.StateFor(id, s))
-					}
+				next := make(States, len(kv.Val))
+				for i, t := range kv.Val {
+					next[i] = factory.StateFor(id, t)
 				}
 
-				// Add new transition
-				union.Add(sp, a, nextp)
+				union.Add(s, a, next)
 			}
 		}
 
-		// Update the final states of the union NFA
+		ss := factory.StateFor(id, nfa.Start)
+		union.Add(start, E, States{ss})
+
 		for _, f := range nfa.Final {
-			union.Final = append(union.Final, factory.StateFor(id, f))
+			ff := factory.StateFor(id, f)
+			union.Add(ff, E, States{final})
 		}
 	}
 
@@ -231,7 +217,7 @@ func (n *NFA) Union(ns ...*NFA) *NFA {
 func (n *NFA) Concat(ns ...*NFA) *NFA {
 	final := States{0}
 	concat := NewNFA(0, final)
-	factory := newStateFactory()
+	factory := newStateFactory(0)
 
 	nfas := append([]*NFA{n}, ns...)
 	for id, nfa := range nfas {
