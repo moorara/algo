@@ -18,7 +18,7 @@ func (e UndirectedEdge) Either() int {
 	return e.v
 }
 
-// Other returns the other vertext of this edge.
+// Other returns the other vertex of this edge.
 func (e UndirectedEdge) Other(v int) int {
 	switch v {
 	case e.v:
@@ -75,7 +75,7 @@ func (g *WeightedUndirected) isVertexValid(v int) bool {
 	return v >= 0 && v < g.v
 }
 
-// Degree returns the degree of a vertext.
+// Degree returns the degree of a vertex.
 func (g *WeightedUndirected) Degree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1

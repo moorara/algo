@@ -47,7 +47,7 @@ func (g *Undirected) isVertexValid(v int) bool {
 	return v >= 0 && v < g.v
 }
 
-// Degree returns the degree of a vertext.
+// Degree returns the degree of a vertex.
 func (g *Undirected) Degree(v int) int {
 	if !g.isVertexValid(v) {
 		return -1
