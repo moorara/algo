@@ -14,10 +14,12 @@ const (
 	chars  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
+var r *rand.Rand
+
 func randIntSlice(size int) []int {
 	vals := make([]int, size)
 	for i := 0; i < len(vals); i++ {
-		vals[i] = rand.Int()
+		vals[i] = r.Int()
 	}
 
 	return vals
@@ -25,11 +27,11 @@ func randIntSlice(size int) []int {
 
 func randStringKey(minLen, maxLen int) string {
 	n := len(chars)
-	l := minLen + rand.Intn(maxLen-minLen+1)
+	l := minLen + r.Intn(maxLen-minLen+1)
 	b := make([]byte, l)
 
 	for i := range b {
-		b[i] = chars[rand.Intn(n)]
+		b[i] = chars[r.Intn(n)]
 	}
 
 	return string(b)
@@ -86,7 +88,8 @@ func runDeleteBenchmark(b *testing.B, trie Trie[int]) {
 }
 
 func BenchmarkTrie_Put(b *testing.B) {
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r = rand.New(rand.NewSource(seed))
 
 	eqVal := generic.NewEqualFunc[int]()
 
@@ -102,7 +105,8 @@ func BenchmarkTrie_Put(b *testing.B) {
 }
 
 func BenchmarkTrie_Get(b *testing.B) {
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r = rand.New(rand.NewSource(seed))
 
 	eqVal := generic.NewEqualFunc[int]()
 
@@ -118,7 +122,8 @@ func BenchmarkTrie_Get(b *testing.B) {
 }
 
 func BenchmarkTrie_Delete(b *testing.B) {
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r = rand.New(rand.NewSource(seed))
 
 	eqVal := generic.NewEqualFunc[int]()
 

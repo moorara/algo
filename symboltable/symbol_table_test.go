@@ -9,7 +9,7 @@ import (
 )
 
 type (
-	symbolTableTest[K, V any] struct {
+	/* symbolTableTest[K, V any] struct {
 		name            string
 		symbolTable     string
 		cmpKey          generic.CompareFunc[K]
@@ -21,7 +21,7 @@ type (
 		expectedKeyVals []KeyValue[K, V]
 		equals          SymbolTable[K, V]
 		expectedEquals  bool
-	}
+	} */
 
 	orderedSymbolTableTest[K, V any] struct {
 		name                       string
@@ -71,7 +71,7 @@ type (
 	}
 )
 
-func getSymbolTableTests() []symbolTableTest[string, int] {
+/* func getSymbolTableTests() []symbolTableTest[string, int] {
 	cmpKey := generic.NewCompareFunc[string]()
 	eqVal := generic.NewEqualFunc[int]()
 
@@ -87,7 +87,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			expectedKeyVals: []KeyValue[string, int]{},
 		},
 	}
-}
+} */
 
 func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 	cmpKey := generic.NewCompareFunc[string]()
@@ -300,7 +300,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 	}
 }
 
-func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTableTest[string, int]) {
+/* func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTableTest[string, int]) {
 	t.Run(test.name, func(t *testing.T) {
 		// Tree initially should be empty
 		assert.True(t, st.IsEmpty())
@@ -317,7 +317,7 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 		assert.Zero(t, st.Size())
 		assert.True(t, st.IsEmpty())
 	})
-}
+} */
 
 func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int], test orderedSymbolTableTest[string, int]) {
 	t.Run(test.name, func(t *testing.T) {

@@ -12,19 +12,22 @@ const (
 	chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
+var r *rand.Rand
+
 func randString(l int) string {
 	n := len(chars)
 	b := make([]byte, l)
 
 	for i := range b {
-		b[i] = chars[rand.Intn(n)]
+		b[i] = chars[r.Intn(n)]
 	}
 
 	return string(b)
 }
 
 func BenchmarkString(b *testing.B) {
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r = rand.New(rand.NewSource(seed))
 
 	// generate a sequence of random strings
 	vals := make([]string, size)
@@ -61,12 +64,13 @@ func BenchmarkString(b *testing.B) {
 }
 
 func BenchmarkInt(b *testing.B) {
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r = rand.New(rand.NewSource(seed))
 
 	// generate a sequence of random integers (signed).
 	nums := make([]int, size)
 	for i := range nums {
-		nums[i] = rand.Int()
+		nums[i] = r.Int()
 	}
 
 	b.Run("LSDInt", func(b *testing.B) {
@@ -89,12 +93,13 @@ func BenchmarkInt(b *testing.B) {
 }
 
 func BenchmarkUint(b *testing.B) {
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r = rand.New(rand.NewSource(seed))
 
 	// generate a sequence of random integers (unsigned).
 	nums := make([]uint, size)
 	for i := range nums {
-		nums[i] = (uint(rand.Uint32()) << 32) + uint(rand.Uint32())
+		nums[i] = (uint(r.Uint32()) << 32) + uint(r.Uint32())
 	}
 
 	b.Run("LSDUint", func(b *testing.B) {

@@ -44,7 +44,7 @@ func (e *Edge) DotCode() string {
 	first = addListAttr(buf, first, "color", string(e.Color))
 	first = addListAttr(buf, first, "style", string(e.Style))
 	first = addListAttr(buf, first, "arrowhead", string(e.ArrowHead))
-	first = addListAttr(buf, first, "arrowtail", string(e.ArrowTail))
+	_ = addListAttr(buf, first, "arrowtail", string(e.ArrowTail))
 	buf.WriteString("];")
 
 	return buf.String()

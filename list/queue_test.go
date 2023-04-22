@@ -158,7 +158,8 @@ func TestQueue(t *testing.T) {
 func BenchmarkQueue(b *testing.B) {
 	const nodeSize = 1024
 
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r := rand.New(rand.NewSource(seed))
 
 	b.Run("Enqueue", func(b *testing.B) {
 		queue := NewQueue[int](nodeSize, nil)
@@ -166,14 +167,14 @@ func BenchmarkQueue(b *testing.B) {
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
-			queue.Enqueue(rand.Int())
+			queue.Enqueue(r.Int())
 		}
 	})
 
 	b.Run("Dequeue", func(b *testing.B) {
 		queue := NewQueue[int](nodeSize, nil)
 		for n := 0; n < b.N; n++ {
-			queue.Enqueue(rand.Int())
+			queue.Enqueue(r.Int())
 		}
 
 		b.ResetTimer()

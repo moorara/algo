@@ -14,10 +14,12 @@ const (
 	chars  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
+var r *rand.Rand
+
 func randIntSlice(size int) []int {
 	vals := make([]int, size)
 	for i := 0; i < len(vals); i++ {
-		vals[i] = rand.Int()
+		vals[i] = r.Int()
 	}
 
 	return vals
@@ -25,11 +27,11 @@ func randIntSlice(size int) []int {
 
 func randStringKey(minLen, maxLen int) string {
 	n := len(chars)
-	l := minLen + rand.Intn(maxLen-minLen+1)
+	l := minLen + r.Intn(maxLen-minLen+1)
 	b := make([]byte, l)
 
 	for i := range b {
-		b[i] = chars[rand.Intn(n)]
+		b[i] = chars[r.Intn(n)]
 	}
 
 	return string(b)
@@ -97,7 +99,8 @@ func runIndexedHeapDelete(b *testing.B, heap IndexedHeap[int, string]) {
 }
 
 func BenchmarkHeap_Insert(b *testing.B) {
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r = rand.New(rand.NewSource(seed))
 
 	const size = 1024
 	eqVal := generic.NewEqualFunc[string]()
@@ -116,7 +119,8 @@ func BenchmarkHeap_Insert(b *testing.B) {
 }
 
 func BenchmarkHeap_Delete(b *testing.B) {
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r = rand.New(rand.NewSource(seed))
 
 	const size = 1024
 	eqVal := generic.NewEqualFunc[string]()
@@ -135,7 +139,8 @@ func BenchmarkHeap_Delete(b *testing.B) {
 }
 
 func BenchmarkIndexedHeap_Insert(b *testing.B) {
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r = rand.New(rand.NewSource(seed))
 
 	eqVal := generic.NewEqualFunc[string]()
 	cmpMin := generic.NewCompareFunc[int]()
@@ -153,7 +158,8 @@ func BenchmarkIndexedHeap_Insert(b *testing.B) {
 }
 
 func BenchmarkIndexedHeap_Delete(b *testing.B) {
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r = rand.New(rand.NewSource(seed))
 
 	eqVal := generic.NewEqualFunc[string]()
 	cmpMin := generic.NewCompareFunc[int]()
