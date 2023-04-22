@@ -1,8 +1,7 @@
 [![Go Doc][godoc-image]][godoc-url]
 [![Build Status][workflow-image]][workflow-url]
 [![Go Report Card][goreport-image]][goreport-url]
-[![Test Coverage][coverage-image]][coverage-url]
-[![Maintainability][maintainability-image]][maintainability-url]
+[![Test Coverage][codecov-image]][codecov-url]
 
 # algo
 
@@ -67,7 +66,5 @@ A collection of common data structures and algorithms for Go applications.
 [workflow-image]: https://github.com/moorara/algo/workflows/Main/badge.svg
 [goreport-url]: https://goreportcard.com/report/github.com/moorara/algo
 [goreport-image]: https://goreportcard.com/badge/github.com/moorara/algo
-[coverage-url]: https://codeclimate.com/github/moorara/algo/test_coverage
-[coverage-image]: https://api.codeclimate.com/v1/badges/48efddf545789eee4132/test_coverage
-[maintainability-url]: https://codeclimate.com/github/moorara/algo/maintainability
-[maintainability-image]: https://api.codeclimate.com/v1/badges/48efddf545789eee4132/maintainability
+[codecov-url]: https://codecov.io/gh/moorara/algo
+[codecov-image]: https://codecov.io/gh/moorara/algo/branch/main/graph/badge.svg
