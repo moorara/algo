@@ -37,12 +37,14 @@ func NewBST[K, V any](cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V])
 	}
 }
 
+// nolint: unused
 func (t *bst[K, V]) verify() bool {
 	return t._isBST(t.root, nil, nil) &&
 		t._isSizeOK(t.root) &&
 		t._isRankOK()
 }
 
+// nolint: unused
 func (t *bst[K, V]) _isBST(n *bstNode[K, V], min, max *K) bool {
 	if n == nil {
 		return true
@@ -56,6 +58,7 @@ func (t *bst[K, V]) _isBST(n *bstNode[K, V], min, max *K) bool {
 	return t._isBST(n.left, min, &n.key) && t._isBST(n.right, &n.key, max)
 }
 
+// nolint: unused
 func (t *bst[K, V]) _isSizeOK(n *bstNode[K, V]) bool {
 	if n == nil {
 		return true
@@ -68,6 +71,7 @@ func (t *bst[K, V]) _isSizeOK(n *bstNode[K, V]) bool {
 	return t._isSizeOK(n.left) && t._isSizeOK(n.right)
 }
 
+// nolint: unused
 func (t *bst[K, V]) _isRankOK() bool {
 	for i := 0; i < t.Size(); i++ {
 		k, _, _ := t.Select(i)

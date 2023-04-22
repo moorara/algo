@@ -55,9 +55,7 @@ func (d *DFA) States() States {
 	states := States{}
 
 	states = append(states, d.Start)
-	for _, s := range d.Final {
-		states = append(states, s)
-	}
+	states = append(states, d.Final...)
 
 	for _, kv := range d.trans.KeyValues() {
 		if s := kv.Key; !states.Contains(s) {
@@ -295,9 +293,7 @@ func (d *DFA) WithoutDeadStates() *DFA {
 
 	// 2. Add a new state with edges to all other veritcies representing the final states of the DFA.
 	u := State(-1)
-	for _, f := range d.Final {
-		adj[u] = append(adj[u], f)
-	}
+	adj[u] = append(adj[u], d.Final...)
 
 	// 3. Finally, we find all states reachable from this new state using a depth-first search (DFS).
 	//    All other states not connected to this new state will be identified as dead states.
@@ -375,8 +371,7 @@ func (d *DFA) Graphviz() string {
 
 	// Group all the transitions with the same states and combine their symbols into one label
 
-	var edges doubleKeyMap[State, State, []string]
-	edges = symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[State, []string]](cmpState, nil)
+	edges := symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[State, []string]](cmpState, nil)
 
 	for _, kv := range d.trans.KeyValues() {
 		from := kv.Key

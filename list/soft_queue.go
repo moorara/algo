@@ -96,9 +96,7 @@ func (q *softQueue[T]) Contains(val T) int {
 // Values returns the list of all values in the queue including the deleted ones.
 func (q *softQueue[T]) Values() []T {
 	vals := make([]T, len(q.list))
-	for i, v := range q.list {
-		vals[i] = v
-	}
+	copy(vals, q.list)
 
 	return vals
 }

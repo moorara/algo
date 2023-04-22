@@ -1,6 +1,11 @@
 package sort
 
-import "github.com/moorara/algo/generic"
+import (
+	"math/rand"
+	"time"
+
+	"github.com/moorara/algo/generic"
+)
 
 func partition[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) int {
 	v := a[lo]
@@ -23,7 +28,10 @@ func partition[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) int {
 
 // Select finds the kth smallest item of an array in O(n) time on average.
 func Select[T any](a []T, k int, cmp generic.CompareFunc[T]) T {
-	Shuffle[T](a)
+	seed := time.Now().UTC().UnixNano()
+	r := rand.New(rand.NewSource(seed))
+	Shuffle[T](a, r)
+
 	var lo, hi int = 0, len(a) - 1
 	for lo < hi {
 		j := partition[T](a, lo, hi, cmp)
@@ -52,7 +60,10 @@ func quick[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) {
 
 // Quick implements the quick sort algorithm.
 func Quick[T any](a []T, cmp generic.CompareFunc[T]) {
-	Shuffle[T](a)
+	seed := time.Now().UTC().UnixNano()
+	r := rand.New(rand.NewSource(seed))
+	Shuffle[T](a, r)
+
 	quick[T](a, 0, len(a)-1, cmp)
 }
 

@@ -91,9 +91,7 @@ func (n *NFA) States() States {
 	states := States{}
 
 	states = append(states, n.Start)
-	for _, s := range n.Final {
-		states = append(states, s)
-	}
+	states = append(states, n.Final...)
 
 	for _, kv := range n.trans.KeyValues() {
 		if s := kv.Key; !states.Contains(s) {
@@ -347,8 +345,7 @@ func (n *NFA) Graphviz() string {
 
 	// Group all the transitions with the same states and combine their symbols into one label
 
-	var edges doubleKeyMap[State, State, []string]
-	edges = symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[State, []string]](cmpState, nil)
+	edges := symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[State, []string]](cmpState, nil)
 
 	for _, kv := range n.trans.KeyValues() {
 		from := kv.Key

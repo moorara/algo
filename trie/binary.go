@@ -58,6 +58,7 @@ func NewBinary[V any](eqVal generic.EqualFunc[V]) Trie[V] {
 	}
 }
 
+// nolint: unused
 func (t *binary[V]) verify() bool {
 	return t.root != nil && t.root.right == nil &&
 		t._isTrie(t.root.left) &&
@@ -65,6 +66,7 @@ func (t *binary[V]) verify() bool {
 		t._isRankOK()
 }
 
+// nolint: unused
 func (t *binary[V]) _isTrie(n *binaryNode[V]) bool {
 	if n == nil {
 		return true
@@ -74,6 +76,7 @@ func (t *binary[V]) _isTrie(n *binaryNode[V]) bool {
 		(n.right == nil || n.right.char > n.char)
 }
 
+// nolint: unused
 func (t *binary[V]) _isSizeOK() bool {
 	size := 0
 	t._traverse(t.root.left, "", VLR, func(_ string, n *binaryNode[V]) bool {
@@ -86,6 +89,7 @@ func (t *binary[V]) _isSizeOK() bool {
 	return t.size == size
 }
 
+// nolint: unused
 func (t *binary[V]) _isRankOK() bool {
 	for i := 0; i < t.Size(); i++ {
 		k, _, _ := t.Select(i)

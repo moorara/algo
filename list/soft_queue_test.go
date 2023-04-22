@@ -100,6 +100,7 @@ func TestSoftQueue(t *testing.T) {
 
 				val, i := squeue.Dequeue()
 				assert.Empty(t, val)
+				assert.Equal(t, -1, i)
 
 				val, i = squeue.Peek()
 				assert.Empty(t, val)
@@ -164,9 +165,8 @@ func TestSoftQueue(t *testing.T) {
 }
 
 func BenchmarkSoftQueue(b *testing.B) {
-	const nodeSize = 1024
-
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r := rand.New(rand.NewSource(seed))
 
 	b.Run("Enqueue", func(b *testing.B) {
 		squeue := NewSoftQueue[int](nil)
@@ -174,14 +174,14 @@ func BenchmarkSoftQueue(b *testing.B) {
 		b.ResetTimer()
 
 		for n := 0; n < b.N; n++ {
-			squeue.Enqueue(rand.Int())
+			squeue.Enqueue(r.Int())
 		}
 	})
 
 	b.Run("Dequeue", func(b *testing.B) {
 		squeue := NewSoftQueue[int](nil)
 		for n := 0; n < b.N; n++ {
-			squeue.Enqueue(rand.Int())
+			squeue.Enqueue(r.Int())
 		}
 
 		b.ResetTimer()

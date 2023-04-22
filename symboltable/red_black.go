@@ -46,6 +46,7 @@ func NewRedBlack[K, V any](cmpKey generic.CompareFunc[K], eqVal generic.EqualFun
 	}
 }
 
+// nolint: unused
 func (t *redBlack[K, V]) verify() bool {
 	return t._isBST(t.root, nil, nil) &&
 		t._isRedBlack(t.root) &&
@@ -54,6 +55,7 @@ func (t *redBlack[K, V]) verify() bool {
 		t._isBalanced()
 }
 
+// nolint: unused
 func (t *redBlack[K, V]) _isBST(n *rbNode[K, V], min, max *K) bool {
 	if n == nil {
 		return true
@@ -68,6 +70,7 @@ func (t *redBlack[K, V]) _isBST(n *rbNode[K, V], min, max *K) bool {
 }
 
 // A Red-Black tree should have no red right links, and at most one left red links in a row on any path.
+// nolint: unused
 func (t *redBlack[K, V]) _isRedBlack(n *rbNode[K, V]) bool {
 	if n == nil {
 		return true
@@ -81,6 +84,7 @@ func (t *redBlack[K, V]) _isRedBlack(n *rbNode[K, V]) bool {
 	return true
 }
 
+// nolint: unused
 func (t *redBlack[K, V]) _isSizeOK(n *rbNode[K, V]) bool {
 	if n == nil {
 		return true
@@ -93,6 +97,7 @@ func (t *redBlack[K, V]) _isSizeOK(n *rbNode[K, V]) bool {
 	return t._isSizeOK(n.left) && t._isSizeOK(n.right)
 }
 
+// nolint: unused
 func (t *redBlack[K, V]) _isRankOK() bool {
 	for i := 0; i < t.Size(); i++ {
 		k, _, _ := t.Select(i)
@@ -112,6 +117,7 @@ func (t *redBlack[K, V]) _isRankOK() bool {
 }
 
 // All paths from root to leaf should have same number of black edges.
+// nolint: unused
 func (t *redBlack[K, V]) _isBalanced() bool {
 	count := 0
 	var n *rbNode[K, V]
@@ -124,6 +130,7 @@ func (t *redBlack[K, V]) _isBalanced() bool {
 	return t._isBalancedAt(t.root, count)
 }
 
+// nolint: unused
 func (t *redBlack[K, V]) _isBalancedAt(n *rbNode[K, V], count int) bool {
 	if n == nil {
 		return count == 0
@@ -141,7 +148,7 @@ func (t *redBlack[K, V]) isRed(n *rbNode[K, V]) bool {
 		return black
 	}
 
-	return n.color == red
+	return n.color
 }
 
 // Assuming n is not nil.

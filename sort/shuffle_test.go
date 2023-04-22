@@ -13,10 +13,11 @@ func TestShuffle_int(t *testing.T) {
 		{[]int{10, 20, 30, 40, 50, 60, 70, 80, 90}},
 	}
 
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r := rand.New(rand.NewSource(seed))
 
 	for _, tc := range tests {
-		Shuffle[int](tc.items)
+		Shuffle[int](tc.items, r)
 	}
 }
 
@@ -27,9 +28,10 @@ func TestShuffle_string(t *testing.T) {
 		{[]string{"Alice", "Bob", "Dan", "Edgar", "Helen", "Karen", "Milad", "Peter", "Sam", "Wesley"}},
 	}
 
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r := rand.New(rand.NewSource(seed))
 
 	for _, tc := range tests {
-		Shuffle[string](tc.items)
+		Shuffle[string](tc.items, r)
 	}
 }

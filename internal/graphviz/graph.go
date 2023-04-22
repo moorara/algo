@@ -79,14 +79,14 @@ func (g *Graph) DotCode() string {
 	buf.WriteString("{\n")
 
 	first = addAttr(buf, first, 2, "rankdir", string(g.RankDir))
-	first = addAttr(buf, first, 2, "concentrate", fmt.Sprintf("%t", g.Concentrate))
+	_ = addAttr(buf, first, 2, "concentrate", fmt.Sprintf("%t", g.Concentrate))
 
 	first = true
 	addIndent(buf, 2)
 	buf.WriteString("node [")
 	first = addListAttr(buf, first, "color", string(g.NodeColor))
 	first = addListAttr(buf, first, "style", string(g.NodeStyle))
-	first = addListAttr(buf, first, "shape", string(g.NodeShape))
+	_ = addListAttr(buf, first, "shape", string(g.NodeShape))
 	buf.WriteString("];\n")
 	first = false
 

@@ -8,11 +8,15 @@ import (
 var (
 	empty = &bitString{}
 
+	// FIXME: seems like a linter bug!
+	// nolint: unused
 	zero = &bitString{
 		bits: []byte{0x00},
 		len:  1,
 	}
 
+	// FIXME: seems like a linter bug!
+	// nolint: unused
 	one = &bitString{
 		bits: []byte{0x80},
 		len:  1,

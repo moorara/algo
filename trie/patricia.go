@@ -107,6 +107,7 @@ func NewPatricia[V any](eqVal generic.EqualFunc[V]) Trie[V] {
 	}
 }
 
+// nolint: unused
 func (t *patricia[V]) verify() bool {
 	if t.root == nil {
 		return true
@@ -118,6 +119,7 @@ func (t *patricia[V]) verify() bool {
 		t._isRankOK()
 }
 
+// nolint: unused
 func (t *patricia[V]) _isPatricia(prev, curr *patriciaNode[V], prefix *bitString) bool {
 	// Ensure the current node key has the given prefix
 	if !curr.key.HasPrefix(prefix) {
@@ -135,6 +137,7 @@ func (t *patricia[V]) _isPatricia(prev, curr *patriciaNode[V], prefix *bitString
 		t._isPatricia(curr, curr.right, prefix.Concat(one))
 }
 
+// nolint: unused
 func (t *patricia[V]) _isSizeOK() bool {
 	size := 0
 
@@ -148,6 +151,7 @@ func (t *patricia[V]) _isSizeOK() bool {
 	return t.size == size
 }
 
+// nolint: unused
 func (t *patricia[V]) _isRankOK() bool {
 	for i := 0; i < t.Size(); i++ {
 		k, _, _ := t.Select(i)

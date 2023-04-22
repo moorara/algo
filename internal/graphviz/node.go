@@ -43,7 +43,7 @@ func (n *Node) DotCode() string {
 	first = addListAttr(buf, first, "style", string(n.Style))
 	first = addListAttr(buf, first, "shape", string(n.Shape))
 	first = addListAttr(buf, first, "fontcolor", string(n.FontColor))
-	first = addListAttr(buf, first, "fontname", `"`+n.FontName+`"`)
+	_ = addListAttr(buf, first, "fontname", `"`+n.FontName+`"`)
 	buf.WriteString("];")
 
 	return buf.String()

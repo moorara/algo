@@ -71,20 +71,20 @@ func (s *Subgraph) DotCode(indent int) string {
 	first = addAttr(buf, first, indent+2, "color", string(s.Color))
 	first = addAttr(buf, first, indent+2, "style", string(s.Style))
 	first = addAttr(buf, first, indent+2, "rank", string(s.Rank))
-	first = addAttr(buf, first, indent+2, "rankdir", string(s.RankDir))
+	_ = addAttr(buf, first, indent+2, "rankdir", string(s.RankDir))
 
 	first = true
 	addIndent(buf, indent+2)
 	buf.WriteString("node [")
 	first = addListAttr(buf, first, "color", string(s.NodeColor))
 	first = addListAttr(buf, first, "style", string(s.NodeStyle))
-	first = addListAttr(buf, first, "shape", string(s.NodeShape))
+	_ = addListAttr(buf, first, "shape", string(s.NodeShape))
 	buf.WriteString("];\n")
 	first = false
 
 	first = addSubgraphs(buf, first, indent+2, s.Subgraphs)
 	first = addNodes(buf, first, indent+2, s.Nodes)
-	first = addEdges(buf, first, indent+2, s.Edges)
+	_ = addEdges(buf, first, indent+2, s.Edges)
 
 	addIndent(buf, indent)
 	buf.WriteString("}")

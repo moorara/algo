@@ -12,7 +12,8 @@ import (
 const size = 100000
 
 func BenchmarkSort(b *testing.B) {
-	rand.Seed(time.Now().UTC().UnixNano())
+	seed := time.Now().UTC().UnixNano()
+	r := rand.New(rand.NewSource(seed))
 
 	nums := randIntSlice(size)
 	cmp := generic.NewCompareFunc[int]()
@@ -21,8 +22,8 @@ func BenchmarkSort(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			a := make([]int, len(nums))
 			copy(a, nums)
-			Shuffle[int](a)
-			sort.Sort(sort.IntSlice(a))
+			Shuffle[int](a, r)
+			sort.Sort(sort.IntSlice(a)) // nolint directives: SA1032
 		}
 	})
 
@@ -30,7 +31,7 @@ func BenchmarkSort(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			a := make([]int, len(nums))
 			copy(a, nums)
-			Shuffle[int](a)
+			Shuffle[int](a, r)
 			Heap[int](a, cmp)
 		}
 	})
@@ -39,7 +40,7 @@ func BenchmarkSort(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			a := make([]int, len(nums))
 			copy(a, nums)
-			Shuffle[int](a)
+			Shuffle[int](a, r)
 			Insertion[int](a, cmp)
 		}
 	})
@@ -48,7 +49,7 @@ func BenchmarkSort(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			a := make([]int, len(nums))
 			copy(a, nums)
-			Shuffle[int](a)
+			Shuffle[int](a, r)
 			Merge[int](a, cmp)
 		}
 	})
@@ -57,7 +58,7 @@ func BenchmarkSort(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			a := make([]int, len(nums))
 			copy(a, nums)
-			Shuffle[int](a)
+			Shuffle[int](a, r)
 			MergeRec[int](a, cmp)
 		}
 	})
@@ -66,7 +67,7 @@ func BenchmarkSort(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			a := make([]int, len(nums))
 			copy(a, nums)
-			Shuffle[int](a)
+			Shuffle[int](a, r)
 			Quick[int](a, cmp)
 		}
 	})
@@ -75,7 +76,7 @@ func BenchmarkSort(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			a := make([]int, len(nums))
 			copy(a, nums)
-			Shuffle[int](a)
+			Shuffle[int](a, r)
 			Quick3Way[int](a, cmp)
 		}
 	})
@@ -84,7 +85,7 @@ func BenchmarkSort(b *testing.B) {
 		for n := 0; n < b.N; n++ {
 			a := make([]int, len(nums))
 			copy(a, nums)
-			Shuffle[int](a)
+			Shuffle[int](a, r)
 			Shell[int](a, cmp)
 		}
 	})
