@@ -1,5 +1,40 @@
 # Changelog
 
+## [v0.5.0](https://github.com/moorara/algo/tree/v0.5.0) (2023-07-02)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.4.4...v0.5.0)
+
+**Merged Changes:**
+
+  - Update Set API [#159](https://github.com/moorara/algo/pull/159) ([moorara](https://github.com/moorara))
+  - fix(deps): update module github.com/stretchr/testify to v1.8.4 [#158](https://github.com/moorara/algo/pull/158) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 2e198f4 [#157](https://github.com/moorara/algo/pull/157) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 03e9162 [#156](https://github.com/moorara/algo/pull/156) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update module github.com/stretchr/testify to v1.8.3 [#155](https://github.com/moorara/algo/pull/155) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to f3d0a9c [#154](https://github.com/moorara/algo/pull/154) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to dd950f8 [#153](https://github.com/moorara/algo/pull/153) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 47ecfdc [#150](https://github.com/moorara/algo/pull/150) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Fix GitHub workflow [#152](https://github.com/moorara/algo/pull/152) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 8bd7c9d [#149](https://github.com/moorara/algo/pull/149) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to b3c2aaf [#148](https://github.com/moorara/algo/pull/148) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 1de6713 [#147](https://github.com/moorara/algo/pull/147) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to f9f960f [#146](https://github.com/moorara/algo/pull/146) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 75897c7 [#145](https://github.com/moorara/algo/pull/145) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 4b8118a [#144](https://github.com/moorara/algo/pull/144) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 8879d01 [#143](https://github.com/moorara/algo/pull/143) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to eab7a2c [#142](https://github.com/moorara/algo/pull/142) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 738e83a [#141](https://github.com/moorara/algo/pull/141) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 1b44709 [#140](https://github.com/moorara/algo/pull/140) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 3c43f8b [#139](https://github.com/moorara/algo/pull/139) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 0915cd7 [#138](https://github.com/moorara/algo/pull/138) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to fae10dd [#137](https://github.com/moorara/algo/pull/137) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 732eee0 [#136](https://github.com/moorara/algo/pull/136) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 44028be [#135](https://github.com/moorara/algo/pull/135) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 47842c8 [#134](https://github.com/moorara/algo/pull/134) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 6dcec33 [#133](https://github.com/moorara/algo/pull/133) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 6ab00d0 [#132](https://github.com/moorara/algo/pull/132) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+
+
 ## [v0.4.4](https://github.com/moorara/algo/tree/v0.4.4) (2022-11-21)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.4.3...v0.4.4)
