@@ -15,7 +15,7 @@ type Set[T any] interface {
 	Remove(...T)
 	Cardinality() int
 	IsEmpty() bool
-	Contains(T) bool
+	Contains(...T) bool
 	Equals(Set[T]) bool
 	Members() []T
 	Clone() Set[T]
@@ -39,6 +39,16 @@ func New[T any](equal generic.EqualFunc[T]) Set[T] {
 	}
 }
 
+func (s *set[T]) find(v T) int {
+	for i, member := range s.members {
+		if s.equal(member, v) {
+			return i
+		}
+	}
+
+	return -1
+}
+
 func (s *set[T]) Add(vals ...T) {
 	for _, v := range vals {
 		if !s.Contains(v) {
@@ -49,7 +59,7 @@ func (s *set[T]) Add(vals ...T) {
 
 func (s *set[T]) Remove(vals ...T) {
 	for _, v := range vals {
-		if i := s.contains(v); i != -1 {
+		if i := s.find(v); i != -1 {
 			s.members = append(s.members[:i], s.members[i+1:]...)
 		}
 	}
@@ -63,18 +73,13 @@ func (s *set[T]) IsEmpty() bool {
 	return len(s.members) == 0
 }
 
-func (s *set[T]) Contains(v T) bool {
-	return s.contains(v) != -1
-}
-
-func (s *set[T]) contains(v T) int {
-	for i, member := range s.members {
-		if s.equal(member, v) {
-			return i
+func (s *set[T]) Contains(vals ...T) bool {
+	for _, v := range vals {
+		if s.find(v) == -1 {
+			return false
 		}
 	}
-
-	return -1
+	return true
 }
 
 func (s *set[T]) Equals(t Set[T]) bool {

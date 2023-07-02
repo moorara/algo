@@ -161,7 +161,7 @@ func TestSet_Contains(t *testing.T) {
 	tests := []struct {
 		name     string
 		s        *set[string]
-		val      string
+		vals     []string
 		expected bool
 	}{
 		{
@@ -170,7 +170,7 @@ func TestSet_Contains(t *testing.T) {
 				equal:   eqFunc,
 				members: []string{},
 			},
-			val:      "c",
+			vals:     []string{"c"},
 			expected: false,
 		},
 		{
@@ -179,7 +179,7 @@ func TestSet_Contains(t *testing.T) {
 				equal:   eqFunc,
 				members: []string{"a", "b"},
 			},
-			val:      "c",
+			vals:     []string{"c"},
 			expected: false,
 		},
 		{
@@ -188,14 +188,14 @@ func TestSet_Contains(t *testing.T) {
 				equal:   eqFunc,
 				members: []string{"a", "b", "c", "d"},
 			},
-			val:      "c",
+			vals:     []string{"b", "c"},
 			expected: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b := tc.s.Contains(tc.val)
+			b := tc.s.Contains(tc.vals...)
 			assert.Equal(t, tc.expected, b)
 		})
 	}
