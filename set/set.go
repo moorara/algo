@@ -9,6 +9,9 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
+// Predicate is a function for testing a member of a set.
+type Predicate[T any] func(T) bool
+
 // Set represents a set abstract data type.
 type Set[T any] interface {
 	Add(...T)
@@ -17,6 +20,8 @@ type Set[T any] interface {
 	IsEmpty() bool
 	Contains(...T) bool
 	Equals(Set[T]) bool
+	Any(Predicate[T]) bool
+	All(Predicate[T]) bool
 	Members() []T
 	Clone() Set[T]
 	CloneEmpty() Set[T]
@@ -96,6 +101,26 @@ func (s *set[T]) Equals(t Set[T]) bool {
 	}
 
 	return true
+}
+
+func (s *set[T]) Any(p Predicate[T]) bool {
+	for _, m := range s.members {
+		if p(m) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *set[T]) All(p Predicate[T]) bool {
+	for _, m := range s.members {
+		if !p(m) {
+			return false
+		}
+	}
+
+	return len(s.members) > 0
 }
 
 func (s *set[T]) Members() []T {
