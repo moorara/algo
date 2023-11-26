@@ -1,6 +1,7 @@
 package set
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -263,6 +264,104 @@ func TestSet_Equals(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			b := tc.s.Equals(tc.t)
+			assert.Equal(t, tc.expected, b)
+		})
+	}
+}
+
+func TestSet_Any(t *testing.T) {
+	eqFunc := generic.NewEqualFunc[string]()
+	predicate := func(s string) bool {
+		return strings.ToUpper(s) == s
+	}
+
+	tests := []struct {
+		name     string
+		s        *set[string]
+		p        Predicate[string]
+		expected bool
+	}{
+		{
+			name: "Empty",
+			s: &set[string]{
+				equal:   eqFunc,
+				members: []string{},
+			},
+			p:        predicate,
+			expected: false,
+		},
+		{
+			name: "NonEmpty_No",
+			s: &set[string]{
+				equal:   eqFunc,
+				members: []string{"a", "b", "c", "d"},
+			},
+			p:        predicate,
+			expected: false,
+		},
+		{
+			name: "NonEmpty_Yes",
+			s: &set[string]{
+				equal:   eqFunc,
+				members: []string{"a", "B", "c", "d"},
+			},
+			p:        predicate,
+			expected: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			b := tc.s.Any(tc.p)
+			assert.Equal(t, tc.expected, b)
+		})
+	}
+}
+
+func TestSet_All(t *testing.T) {
+	eqFunc := generic.NewEqualFunc[string]()
+	predicate := func(s string) bool {
+		return strings.ToUpper(s) == s
+	}
+
+	tests := []struct {
+		name     string
+		s        *set[string]
+		p        Predicate[string]
+		expected bool
+	}{
+		{
+			name: "Empty",
+			s: &set[string]{
+				equal:   eqFunc,
+				members: []string{},
+			},
+			p:        predicate,
+			expected: false,
+		},
+		{
+			name: "NonEmpty_No",
+			s: &set[string]{
+				equal:   eqFunc,
+				members: []string{"A", "B", "c", "D"},
+			},
+			p:        predicate,
+			expected: false,
+		},
+		{
+			name: "NonEmpty_Yes",
+			s: &set[string]{
+				equal:   eqFunc,
+				members: []string{"A", "B", "C", "D"},
+			},
+			p:        predicate,
+			expected: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			b := tc.s.All(tc.p)
 			assert.Equal(t, tc.expected, b)
 		})
 	}
