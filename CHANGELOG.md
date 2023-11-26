@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.5.1](https://github.com/moorara/algo/tree/v0.5.1) (2023-11-25)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.5.0...v0.5.1)
+
+**Merged Changes:**
+
+  - Add more to Set API [#161](https://github.com/moorara/algo/pull/161) ([moorara](https://github.com/moorara))
+  - Update Go modules [#167](https://github.com/moorara/algo/pull/167) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 613f0c0 [#164](https://github.com/moorara/algo/pull/164) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 06a737e [#163](https://github.com/moorara/algo/pull/163) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to fffb143 [#162](https://github.com/moorara/algo/pull/162) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+
+
 ## [v0.5.0](https://github.com/moorara/algo/tree/v0.5.0) (2023-07-02)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.4.4...v0.5.0)
