@@ -25,6 +25,7 @@ type Set[T any] interface {
 	Members() []T
 	Clone() Set[T]
 	CloneEmpty() Set[T]
+	Select(Predicate[T]) Set[T]
 	Union(...Set[T]) Set[T]
 	Intersection(...Set[T]) Set[T]
 	Difference(...Set[T]) Set[T]
@@ -148,6 +149,20 @@ func (s *set[T]) CloneEmpty() Set[T] {
 	}
 
 	return t
+}
+
+func (s *set[T]) Select(p Predicate[T]) Set[T] {
+	members := make([]T, 0)
+	for _, m := range s.members {
+		if p(m) {
+			members = append(members, m)
+		}
+	}
+
+	return &set[T]{
+		equal:   s.equal,
+		members: members,
+	}
 }
 
 func (s *set[T]) Union(sets ...Set[T]) Set[T] {
