@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.6.0](https://github.com/moorara/algo/tree/v0.6.0) (2024-01-17)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.5.1...v0.6.0)
+
+**Merged Changes:**
+
+  - Add Select and Map to set API [#174](https://github.com/moorara/algo/pull/174) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to db7319d [#173](https://github.com/moorara/algo/pull/173) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 0dcbfd6 [#172](https://github.com/moorara/algo/pull/172) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to be819d1 [#171](https://github.com/moorara/algo/pull/171) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - chore(deps): update actions/upload-artifact action to v4 [#170](https://github.com/moorara/algo/pull/170) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to aacd6d4 [#169](https://github.com/moorara/algo/pull/169) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to f3f8817 [#168](https://github.com/moorara/algo/pull/168) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 6522937 [#165](https://github.com/moorara/algo/pull/165) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+
+
 ## [v0.5.1](https://github.com/moorara/algo/tree/v0.5.1) (2023-11-25)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.5.0...v0.5.1)
