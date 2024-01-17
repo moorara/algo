@@ -466,6 +466,64 @@ func TestSet_CloneEmpty(t *testing.T) {
 	}
 }
 
+func TestSet_Select(t *testing.T) {
+	eqFunc := generic.NewEqualFunc[string]()
+	predicate := func(s string) bool {
+		return strings.ToUpper(s) == s
+	}
+
+	tests := []struct {
+		name     string
+		s        *set[string]
+		p        Predicate[string]
+		expected Set[string]
+	}{
+		{
+			name: "Empty",
+			s: &set[string]{
+				equal:   eqFunc,
+				members: []string{},
+			},
+			p: predicate,
+			expected: &set[string]{
+				equal:   eqFunc,
+				members: []string{},
+			},
+		},
+		{
+			name: "SelectNone",
+			s: &set[string]{
+				equal:   eqFunc,
+				members: []string{"a", "b", "c", "d"},
+			},
+			p: predicate,
+			expected: &set[string]{
+				equal:   eqFunc,
+				members: []string{},
+			},
+		},
+		{
+			name: "SelectSome",
+			s: &set[string]{
+				equal:   eqFunc,
+				members: []string{"A", "c", "C", "d"},
+			},
+			p: predicate,
+			expected: &set[string]{
+				equal:   eqFunc,
+				members: []string{"A", "C"},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			set := tc.s.Select(tc.p)
+			assert.True(t, set.Equals(tc.expected))
+		})
+	}
+}
+
 func TestSet_Union(t *testing.T) {
 	eqFunc := generic.NewEqualFunc[string]()
 
