@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.1](https://github.com/moorara/algo/tree/v0.6.1) (2024-01-17)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.6.0...v0.6.1)
+
+**Merged Changes:**
+
+  - [set] Addming missing comments [#175](https://github.com/moorara/algo/pull/175) ([moorara](https://github.com/moorara))
+
+
 ## [v0.6.0](https://github.com/moorara/algo/tree/v0.6.0) (2024-01-17)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.5.1...v0.6.0)
