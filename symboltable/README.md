@@ -1,4 +1,3 @@
-# st
 
 This package provides implementations for **symbol table** data structures.
 

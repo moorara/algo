@@ -1,4 +1,3 @@
-# heap
 
 | Heap | Description |
 |------|-------------|
