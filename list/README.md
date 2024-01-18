@@ -1,4 +1,3 @@
-# list
 
 | Data Structure | Description               |
 |----------------|---------------------------|
