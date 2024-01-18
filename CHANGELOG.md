@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.2](https://github.com/moorara/algo/tree/v0.6.2) (2024-01-17)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.6.1...v0.6.2)
+
+**Merged Changes:**
+
+  - Update package documentation [#176](https://github.com/moorara/algo/pull/176) ([moorara](https://github.com/moorara))
+
+
 ## [v0.6.1](https://github.com/moorara/algo/tree/v0.6.1) (2024-01-17)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.6.0...v0.6.1)
