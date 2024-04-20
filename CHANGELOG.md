@@ -1,5 +1,23 @@
 # Changelog
 
+## [v0.6.3](https://github.com/moorara/algo/tree/v0.6.3) (2024-04-20)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.6.2...v0.6.3)
+
+**Merged Changes:**
+
+  - Housekeeping updates [#186](https://github.com/moorara/algo/pull/186) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to fe59bbe [#185](https://github.com/moorara/algo/pull/185) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 93d18d7 [#184](https://github.com/moorara/algo/pull/184) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to a85f2c6 [#183](https://github.com/moorara/algo/pull/183) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to c7f7c64 [#182](https://github.com/moorara/algo/pull/182) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update module github.com/stretchr/testify to v1.9.0 [#181](https://github.com/moorara/algo/pull/181) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 814bf88 [#180](https://github.com/moorara/algo/pull/180) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to ec58324 [#179](https://github.com/moorara/algo/pull/179) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 2c58cdc [#178](https://github.com/moorara/algo/pull/178) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 1b97071 [#177](https://github.com/moorara/algo/pull/177) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+
+
 ## [v0.6.2](https://github.com/moorara/algo/tree/v0.6.2) (2024-01-17)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.6.1...v0.6.2)
