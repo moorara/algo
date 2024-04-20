@@ -300,7 +300,7 @@ func (g *Directed) Orders(strategy TraversalStrategy) *Orders {
 	return o
 }
 
-// StronglyConnectedComponents determines all the connected components in the graph.
+// StronglyConnectedComponents determines all the strongly-connected components in the graph.
 func (g *Directed) StronglyConnectedComponents() *StronglyConnectedComponents {
 	scc := &StronglyConnectedComponents{
 		count: 0,
