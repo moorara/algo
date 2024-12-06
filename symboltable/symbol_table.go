@@ -30,6 +30,9 @@ type (
 	// The VisitFunc type is a function for visiting a key-value pair.
 	VisitFunc[K, V any] func(K, V) bool
 
+	// Predicate is a function for testing a key-value pair.
+	Predicate[K, V any] func(K, V) bool
+
 	// KeyValue represents a key-value pair.
 	KeyValue[K, V any] struct {
 		Key K
@@ -48,6 +51,8 @@ type SymbolTable[K, V any] interface {
 	Delete(K) (V, bool)
 	KeyValues() []KeyValue[K, V]
 	Equals(SymbolTable[K, V]) bool
+	Any(Predicate[K, V]) bool
+	All(Predicate[K, V]) bool
 }
 
 // OrderedSymbolTable represents an ordered symbol table abstract data type.

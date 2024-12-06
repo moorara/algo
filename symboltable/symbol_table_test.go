@@ -1,6 +1,7 @@
 package symboltable
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,7 +10,8 @@ import (
 )
 
 type (
-	/* symbolTableTest[K, V any] struct {
+	// nolint: unused
+	symbolTableTest[K, V any] struct {
 		name            string
 		symbolTable     string
 		cmpKey          generic.CompareFunc[K]
@@ -21,7 +23,11 @@ type (
 		expectedKeyVals []KeyValue[K, V]
 		equals          SymbolTable[K, V]
 		expectedEquals  bool
-	} */
+		anyPredicate    Predicate[K, V]
+		expectedAny     bool
+		allPredicate    Predicate[K, V]
+		expectedAll     bool
+	}
 
 	orderedSymbolTableTest[K, V any] struct {
 		name                       string
@@ -32,6 +38,13 @@ type (
 		expectedSize               int
 		expectedHeight             int
 		expectedIsEmpty            bool
+		expectedKeyVals            []KeyValue[K, V]
+		equals                     OrderedSymbolTable[K, V]
+		expectedEquals             bool
+		anyPredicate               Predicate[K, V]
+		expectedAny                bool
+		allPredicate               Predicate[K, V]
+		expectedAll                bool
 		expectedMinKey             K
 		expectedMinVal             V
 		expectedMinOK              bool
@@ -56,7 +69,6 @@ type (
 		rangeKeyHi                 string
 		expectedRangeSize          int
 		expectedRange              []KeyValue[K, V]
-		expectedKeyVals            []KeyValue[K, V]
 		expectedVLRTraverse        []KeyValue[K, V]
 		expectedVRLTraverse        []KeyValue[K, V]
 		expectedLVRTraverse        []KeyValue[K, V]
@@ -65,19 +77,18 @@ type (
 		expectedRLVTraverse        []KeyValue[K, V]
 		expectedAscendingTraverse  []KeyValue[K, V]
 		expectedDescendingTraverse []KeyValue[K, V]
-		equals                     OrderedSymbolTable[K, V]
-		expectedEquals             bool
 		expectedGraphviz           string
 	}
 )
 
-/* func getSymbolTableTests() []symbolTableTest[string, int] {
+// nolint: unused
+func getSymbolTableTests() []symbolTableTest[string, int] {
 	cmpKey := generic.NewCompareFunc[string]()
 	eqVal := generic.NewEqualFunc[int]()
 
 	return []symbolTableTest[string, int]{
 		{
-			name:            "",
+			name:            "TBD",
 			symbolTable:     "",
 			cmpKey:          cmpKey,
 			eqVal:           eqVal,
@@ -85,9 +96,13 @@ type (
 			expectedSize:    0,
 			expectedIsEmpty: true,
 			expectedKeyVals: []KeyValue[string, int]{},
+			anyPredicate:    func(k string, v int) bool { return false },
+			expectedAny:     false,
+			allPredicate:    func(k string, v int) bool { return false },
+			expectedAll:     false,
 		},
 	}
-} */
+}
 
 func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 	cmpKey := generic.NewCompareFunc[string]()
@@ -103,8 +118,17 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"A", 1},
 				{"C", 3},
 			},
-			expectedSize:       3,
-			expectedIsEmpty:    false,
+			expectedSize:    3,
+			expectedIsEmpty: false,
+			expectedKeyVals: []KeyValue[string, int]{
+				{"A", 1},
+				{"B", 2},
+				{"C", 3},
+			},
+			anyPredicate:       func(k string, v int) bool { return v < 0 },
+			expectedAny:        false,
+			allPredicate:       func(k string, v int) bool { return v%2 == 0 },
+			expectedAll:        false,
 			expectedMinKey:     "A",
 			expectedMinVal:     1,
 			expectedMinOK:      true,
@@ -133,11 +157,6 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"B", 2},
 				{"C", 3},
 			},
-			expectedKeyVals: []KeyValue[string, int]{
-				{"A", 1},
-				{"B", 2},
-				{"C", 3},
-			},
 		},
 		{
 			name:   "ABCDE",
@@ -150,8 +169,19 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"E", 5},
 				{"D", 4},
 			},
-			expectedSize:       5,
-			expectedIsEmpty:    false,
+			expectedSize:    5,
+			expectedIsEmpty: false,
+			expectedKeyVals: []KeyValue[string, int]{
+				{"A", 1},
+				{"B", 2},
+				{"C", 3},
+				{"D", 4},
+				{"E", 5},
+			},
+			anyPredicate:       func(k string, v int) bool { return v == 0 },
+			expectedAny:        false,
+			allPredicate:       func(k string, v int) bool { return v > 0 },
+			expectedAll:        true,
 			expectedMinKey:     "A",
 			expectedMinVal:     1,
 			expectedMinOK:      true,
@@ -180,13 +210,6 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"C", 3},
 				{"D", 4},
 			},
-			expectedKeyVals: []KeyValue[string, int]{
-				{"A", 1},
-				{"B", 2},
-				{"C", 3},
-				{"D", 4},
-				{"E", 5},
-			},
 		},
 		{
 			name:   "ADGJMPS",
@@ -201,8 +224,21 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"M", 13},
 				{"G", 7},
 			},
-			expectedSize:       7,
-			expectedIsEmpty:    false,
+			expectedSize:    7,
+			expectedIsEmpty: false,
+			expectedKeyVals: []KeyValue[string, int]{
+				{"A", 1},
+				{"D", 4},
+				{"G", 7},
+				{"J", 10},
+				{"M", 13},
+				{"P", 16},
+				{"S", 19},
+			},
+			anyPredicate:       func(k string, v int) bool { return v%5 == 0 },
+			expectedAny:        true,
+			allPredicate:       func(k string, v int) bool { return v < 10 },
+			expectedAll:        false,
 			expectedMinKey:     "A",
 			expectedMinVal:     1,
 			expectedMinOK:      true,
@@ -233,15 +269,6 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"M", 13},
 				{"P", 16},
 			},
-			expectedKeyVals: []KeyValue[string, int]{
-				{"A", 1},
-				{"D", 4},
-				{"G", 7},
-				{"J", 10},
-				{"M", 13},
-				{"P", 16},
-				{"S", 19},
-			},
 		},
 		{
 			name:   "Words",
@@ -256,8 +283,21 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"dance", 13},
 				{"balloon", 17},
 			},
-			expectedSize:       7,
-			expectedIsEmpty:    false,
+			expectedSize:    7,
+			expectedIsEmpty: false,
+			expectedKeyVals: []KeyValue[string, int]{
+				{"baby", 5},
+				{"balloon", 17},
+				{"band", 11},
+				{"box", 2},
+				{"dad", 3},
+				{"dance", 13},
+				{"dome", 7},
+			},
+			anyPredicate:       func(k string, v int) bool { return strings.HasSuffix(k, "x") },
+			expectedAny:        true,
+			allPredicate:       func(k string, v int) bool { return k == strings.ToLower(k) },
+			expectedAll:        true,
 			expectedMinKey:     "baby",
 			expectedMinVal:     5,
 			expectedMinOK:      true,
@@ -287,37 +327,69 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{"band", 11},
 				{"box", 2},
 			},
-			expectedKeyVals: []KeyValue[string, int]{
-				{"baby", 5},
-				{"balloon", 17},
-				{"band", 11},
-				{"box", 2},
-				{"dad", 3},
-				{"dance", 13},
-				{"dome", 7},
-			},
 		},
 	}
 }
 
-/* func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTableTest[string, int]) {
+// nolint: unused
+func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTableTest[string, int]) {
 	t.Run(test.name, func(t *testing.T) {
-		// Tree initially should be empty
-		assert.True(t, st.IsEmpty())
-		assert.Zero(t, st.Size())
+		var kvs []KeyValue[string, int]
 
-		// TODO: verify
-		assert.NotEmpty(t, test.symbolTable)
-		assert.NotEmpty(t, test.cmpKey)
-		assert.NotEmpty(t, test.keyVals)
-		assert.NotEmpty(t, test.expectedSize)
-		assert.NotEmpty(t, test.expectedIsEmpty)
+		t.Run("BeforePut", func(t *testing.T) {
+			assert.True(t, st.verify())
+			assert.Zero(t, st.Size())
+			assert.Zero(t, st.Height())
+			assert.True(t, st.IsEmpty())
+		})
 
-		// Tree should be empty at the end
-		assert.Zero(t, st.Size())
-		assert.True(t, st.IsEmpty())
+		t.Run("AfterPut", func(t *testing.T) {
+			// Put
+			for _, kv := range test.keyVals {
+				st.Put(kv.Key, kv.Val)
+				st.Put(kv.Key, kv.Val) // Update existing key-value
+				assert.True(t, st.verify())
+			}
+
+			// Get
+			for _, expected := range test.keyVals {
+				val, ok := st.Get(expected.Key)
+				assert.True(t, ok)
+				assert.Equal(t, expected.Val, val)
+			}
+
+			assert.Equal(t, test.expectedSize, st.Size())
+			assert.Equal(t, test.expectedHeight, st.Height())
+			assert.Equal(t, test.expectedIsEmpty, st.IsEmpty())
+
+			kvs = st.KeyValues()
+			assert.Equal(t, test.expectedKeyVals, kvs)
+
+			equals := st.Equals(test.equals)
+			assert.Equal(t, test.expectedEquals, equals)
+
+			any := st.Any(test.anyPredicate)
+			assert.Equal(t, test.expectedAny, any)
+
+			all := st.All(test.allPredicate)
+			assert.Equal(t, test.expectedAll, all)
+
+			for _, expected := range test.keyVals {
+				val, ok := st.Delete(expected.Key)
+				assert.True(t, ok)
+				assert.Equal(t, expected.Val, val)
+				assert.True(t, st.verify())
+			}
+		})
+
+		t.Run("AfterDelete", func(t *testing.T) {
+			assert.True(t, st.verify())
+			assert.Zero(t, st.Size())
+			assert.Zero(t, st.Height())
+			assert.True(t, st.IsEmpty())
+		})
 	})
-} */
+}
 
 func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int], test orderedSymbolTableTest[string, int]) {
 	t.Run(test.name, func(t *testing.T) {
@@ -381,6 +453,18 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			assert.Equal(t, test.expectedHeight, ost.Height())
 			assert.Equal(t, test.expectedIsEmpty, ost.IsEmpty())
 
+			kvs = ost.KeyValues()
+			assert.Equal(t, test.expectedKeyVals, kvs)
+
+			equals := ost.Equals(test.equals)
+			assert.Equal(t, test.expectedEquals, equals)
+
+			any := ost.Any(test.anyPredicate)
+			assert.Equal(t, test.expectedAny, any)
+
+			all := ost.All(test.allPredicate)
+			assert.Equal(t, test.expectedAll, all)
+
 			minKey, minVal, minOK = ost.Min()
 			assert.Equal(t, test.expectedMinKey, minKey)
 			assert.Equal(t, test.expectedMinVal, minVal)
@@ -425,9 +509,6 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 
 			kvs = ost.Range(test.rangeKeyLo, test.rangeKeyHi)
 			assert.Equal(t, test.expectedRange, kvs)
-
-			kvs = ost.KeyValues()
-			assert.Equal(t, test.expectedKeyVals, kvs)
 
 			// VLR Traversal
 			kvs = []KeyValue[string, int]{}
@@ -493,8 +574,8 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			})
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)
 
-			assert.Equal(t, test.expectedEquals, ost.Equals(test.equals))
-			assert.Equal(t, test.expectedGraphviz, ost.Graphviz())
+			graphviz := ost.Graphviz()
+			assert.Equal(t, test.expectedGraphviz, graphviz)
 
 			for _, expected := range test.keyVals {
 				val, ok := ost.Delete(expected.Key)
