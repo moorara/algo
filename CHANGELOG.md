@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.7.0](https://github.com/moorara/algo/tree/v0.7.0) (2024-12-06)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.6.3...v0.7.0)
+
+**Merged Changes:**
+
+  - Add Any and All to Symbol Table API [#190](https://github.com/moorara/algo/pull/190) ([moorara](https://github.com/moorara))
+  - fix(deps): update module github.com/stretchr/testify to v1.10.0 [#189](https://github.com/moorara/algo/pull/189) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+
+
 ## [v0.6.3](https://github.com/moorara/algo/tree/v0.6.3) (2024-04-20)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.6.2...v0.6.3)
