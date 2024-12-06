@@ -409,6 +409,20 @@ func (t *redBlack[K, V]) Equals(u SymbolTable[K, V]) bool {
 	})
 }
 
+// Any returns true if any of the key-value pairs in the Red-Black tree satisfy the given predicate.
+func (t *redBlack[K, V]) Any(p Predicate[K, V]) bool {
+	return !t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+		return !p(n.key, n.val)
+	})
+}
+
+// All returns true if all key-value pairs in the Red-Black tree satisfy a given predicate.
+func (t *redBlack[K, V]) All(p Predicate[K, V]) bool {
+	return t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+		return p(n.key, n.val)
+	})
+}
+
 // Min returns the minimum key and its value in the Red-Black tree.
 func (t *redBlack[K, V]) Min() (K, V, bool) {
 	if t.root == nil {
