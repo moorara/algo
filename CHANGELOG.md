@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.8.0](https://github.com/moorara/algo/tree/v0.8.0) (2024-12-08)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.7.0...v0.8.0)
+
+**Merged Changes:**
+
+  - Improve the interface APIs and misc refactoring [#191](https://github.com/moorara/algo/pull/191) ([moorara](https://github.com/moorara))
+
+
 ## [v0.7.0](https://github.com/moorara/algo/tree/v0.7.0) (2024-12-06)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.6.3...v0.7.0)
