@@ -3,14 +3,14 @@ package heap
 import (
 	"fmt"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 )
 
 // binary implements an indexed Binary heap.
 type indexedBinary[K, V any] struct {
-	cmpKey generic.CompareFunc[K]
-	eqVal  generic.EqualFunc[V]
+	cmpKey CompareFunc[K]
+	eqVal  EqualFunc[V]
 
 	cap  int   // maximum number of items on heap
 	n    int   // current number of items on heap
@@ -28,7 +28,7 @@ type indexedBinary[K, V any] struct {
 // cap is the maximum number of items on the heap (priority queue).
 // cmpKey is a function for comparing two keys.
 // eqVal is a function for checking the equality of two values.
-func NewIndexedBinary[K, V any](cap int, cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) IndexedHeap[K, V] {
+func NewIndexedBinary[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) IndexedHeap[K, V] {
 	pos := make([]int, cap)
 	for i := range pos {
 		pos[i] = -1

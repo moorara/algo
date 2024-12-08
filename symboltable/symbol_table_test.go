@@ -6,45 +6,40 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 )
 
 type (
 	// nolint: unused
 	symbolTableTest[K, V any] struct {
+		name              string
+		symbolTable       string
+		cmpKey            CompareFunc[K]
+		eqVal             EqualFunc[V]
+		keyVals           []KeyValue[K, V]
+		expectedSize      int
+		expectedHeight    int
+		expectedIsEmpty   bool
+		expectedString    string
+		equals            SymbolTable[K, V]
+		expectedEquals    bool
+		expectedAll       []KeyValue[K, V]
+		anyMatchPredicate Predicate2[K, V]
+		expectedAnyMatch  bool
+		allMatchPredicate Predicate2[K, V]
+		expectedAllMatch  bool
+	}
+
+	orderedSymbolTableTest[K, V any] struct {
 		name            string
 		symbolTable     string
-		cmpKey          generic.CompareFunc[K]
-		eqVal           generic.EqualFunc[V]
+		cmpKey          CompareFunc[K]
+		eqVal           EqualFunc[V]
 		keyVals         []KeyValue[K, V]
 		expectedSize    int
 		expectedHeight  int
 		expectedIsEmpty bool
-		expectedKeyVals []KeyValue[K, V]
-		equals          SymbolTable[K, V]
-		expectedEquals  bool
-		anyPredicate    Predicate[K, V]
-		expectedAny     bool
-		allPredicate    Predicate[K, V]
-		expectedAll     bool
-	}
 
-	orderedSymbolTableTest[K, V any] struct {
-		name                       string
-		symbolTable                string
-		cmpKey                     generic.CompareFunc[K]
-		eqVal                      generic.EqualFunc[V]
-		keyVals                    []KeyValue[K, V]
-		expectedSize               int
-		expectedHeight             int
-		expectedIsEmpty            bool
-		expectedKeyVals            []KeyValue[K, V]
-		equals                     OrderedSymbolTable[K, V]
-		expectedEquals             bool
-		anyPredicate               Predicate[K, V]
-		expectedAny                bool
-		allPredicate               Predicate[K, V]
-		expectedAll                bool
 		expectedMinKey             K
 		expectedMinVal             V
 		expectedMinOK              bool
@@ -67,8 +62,16 @@ type (
 		expectedRank               int
 		rangeKeyLo                 string
 		rangeKeyHi                 string
-		expectedRangeSize          int
 		expectedRange              []KeyValue[K, V]
+		expectedRangeSize          int
+		expectedString             string
+		equals                     SymbolTable[K, V]
+		expectedEquals             bool
+		expectedAll                []KeyValue[K, V]
+		anyMatchPredicate          Predicate2[K, V]
+		expectedAnyMatch           bool
+		allMatchPredicate          Predicate2[K, V]
+		expectedAllMatch           bool
 		expectedVLRTraverse        []KeyValue[K, V]
 		expectedVRLTraverse        []KeyValue[K, V]
 		expectedLVRTraverse        []KeyValue[K, V]
@@ -83,30 +86,31 @@ type (
 
 // nolint: unused
 func getSymbolTableTests() []symbolTableTest[string, int] {
-	cmpKey := generic.NewCompareFunc[string]()
-	eqVal := generic.NewEqualFunc[int]()
+	cmpKey := NewCompareFunc[string]()
+	eqVal := NewEqualFunc[int]()
 
 	return []symbolTableTest[string, int]{
 		{
-			name:            "TBD",
-			symbolTable:     "",
-			cmpKey:          cmpKey,
-			eqVal:           eqVal,
-			keyVals:         []KeyValue[string, int]{},
-			expectedSize:    0,
-			expectedIsEmpty: true,
-			expectedKeyVals: []KeyValue[string, int]{},
-			anyPredicate:    func(k string, v int) bool { return false },
-			expectedAny:     false,
-			allPredicate:    func(k string, v int) bool { return false },
-			expectedAll:     false,
+			name:              "TBD",
+			symbolTable:       "",
+			cmpKey:            cmpKey,
+			eqVal:             eqVal,
+			keyVals:           []KeyValue[string, int]{},
+			expectedSize:      0,
+			expectedIsEmpty:   true,
+			expectedString:    "{}",
+			expectedAll:       []KeyValue[string, int]{},
+			anyMatchPredicate: func(k string, v int) bool { return false },
+			expectedAnyMatch:  false,
+			allMatchPredicate: func(k string, v int) bool { return false },
+			expectedAllMatch:  false,
 		},
 	}
 }
 
 func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
-	cmpKey := generic.NewCompareFunc[string]()
-	eqVal := generic.NewEqualFunc[int]()
+	cmpKey := NewCompareFunc[string]()
+	eqVal := NewEqualFunc[int]()
 
 	return []orderedSymbolTableTest[string, int]{
 		{
@@ -114,21 +118,12 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
-				{"B", 2},
-				{"A", 1},
-				{"C", 3},
+				{Key: "B", Val: 2},
+				{Key: "A", Val: 1},
+				{Key: "C", Val: 3},
 			},
-			expectedSize:    3,
-			expectedIsEmpty: false,
-			expectedKeyVals: []KeyValue[string, int]{
-				{"A", 1},
-				{"B", 2},
-				{"C", 3},
-			},
-			anyPredicate:       func(k string, v int) bool { return v < 0 },
-			expectedAny:        false,
-			allPredicate:       func(k string, v int) bool { return v%2 == 0 },
-			expectedAll:        false,
+			expectedSize:       3,
+			expectedIsEmpty:    false,
 			expectedMinKey:     "A",
 			expectedMinVal:     1,
 			expectedMinOK:      true,
@@ -151,37 +146,36 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedRank:       2,
 			rangeKeyLo:         "A",
 			rangeKeyHi:         "C",
-			expectedRangeSize:  3,
 			expectedRange: []KeyValue[string, int]{
-				{"A", 1},
-				{"B", 2},
-				{"C", 3},
+				{Key: "A", Val: 1},
+				{Key: "B", Val: 2},
+				{Key: "C", Val: 3},
 			},
+			expectedRangeSize: 3,
+			expectedString:    "{<A:1> <B:2> <C:3>}",
+			expectedAll: []KeyValue[string, int]{
+				{Key: "A", Val: 1},
+				{Key: "B", Val: 2},
+				{Key: "C", Val: 3},
+			},
+			anyMatchPredicate: func(k string, v int) bool { return v < 0 },
+			expectedAnyMatch:  false,
+			allMatchPredicate: func(k string, v int) bool { return v%2 == 0 },
+			expectedAllMatch:  false,
 		},
 		{
 			name:   "ABCDE",
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
-				{"B", 2},
-				{"A", 1},
-				{"C", 3},
-				{"E", 5},
-				{"D", 4},
+				{Key: "B", Val: 2},
+				{Key: "A", Val: 1},
+				{Key: "C", Val: 3},
+				{Key: "E", Val: 5},
+				{Key: "D", Val: 4},
 			},
-			expectedSize:    5,
-			expectedIsEmpty: false,
-			expectedKeyVals: []KeyValue[string, int]{
-				{"A", 1},
-				{"B", 2},
-				{"C", 3},
-				{"D", 4},
-				{"E", 5},
-			},
-			anyPredicate:       func(k string, v int) bool { return v == 0 },
-			expectedAny:        false,
-			allPredicate:       func(k string, v int) bool { return v > 0 },
-			expectedAll:        true,
+			expectedSize:       5,
+			expectedIsEmpty:    false,
 			expectedMinKey:     "A",
 			expectedMinVal:     1,
 			expectedMinOK:      true,
@@ -204,41 +198,40 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedRank:       4,
 			rangeKeyLo:         "B",
 			rangeKeyHi:         "D",
-			expectedRangeSize:  3,
 			expectedRange: []KeyValue[string, int]{
-				{"B", 2},
-				{"C", 3},
-				{"D", 4},
+				{Key: "B", Val: 2},
+				{Key: "C", Val: 3},
+				{Key: "D", Val: 4},
 			},
+			expectedRangeSize: 3,
+			expectedString:    "{<A:1> <B:2> <C:3> <D:4> <E:5>}",
+			expectedAll: []KeyValue[string, int]{
+				{Key: "A", Val: 1},
+				{Key: "B", Val: 2},
+				{Key: "C", Val: 3},
+				{Key: "D", Val: 4},
+				{Key: "E", Val: 5},
+			},
+			anyMatchPredicate: func(k string, v int) bool { return v == 0 },
+			expectedAnyMatch:  false,
+			allMatchPredicate: func(k string, v int) bool { return v > 0 },
+			expectedAllMatch:  true,
 		},
 		{
 			name:   "ADGJMPS",
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
-				{"J", 10},
-				{"A", 1},
-				{"D", 4},
-				{"S", 19},
-				{"P", 16},
-				{"M", 13},
-				{"G", 7},
+				{Key: "J", Val: 10},
+				{Key: "A", Val: 1},
+				{Key: "D", Val: 4},
+				{Key: "S", Val: 19},
+				{Key: "P", Val: 16},
+				{Key: "M", Val: 13},
+				{Key: "G", Val: 7},
 			},
-			expectedSize:    7,
-			expectedIsEmpty: false,
-			expectedKeyVals: []KeyValue[string, int]{
-				{"A", 1},
-				{"D", 4},
-				{"G", 7},
-				{"J", 10},
-				{"M", 13},
-				{"P", 16},
-				{"S", 19},
-			},
-			anyPredicate:       func(k string, v int) bool { return v%5 == 0 },
-			expectedAny:        true,
-			allPredicate:       func(k string, v int) bool { return v < 10 },
-			expectedAll:        false,
+			expectedSize:       7,
+			expectedIsEmpty:    false,
 			expectedMinKey:     "A",
 			expectedMinVal:     1,
 			expectedMinOK:      true,
@@ -261,43 +254,44 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedRank:       6,
 			rangeKeyLo:         "B",
 			rangeKeyHi:         "R",
-			expectedRangeSize:  5,
 			expectedRange: []KeyValue[string, int]{
-				{"D", 4},
-				{"G", 7},
-				{"J", 10},
-				{"M", 13},
-				{"P", 16},
+				{Key: "D", Val: 4},
+				{Key: "G", Val: 7},
+				{Key: "J", Val: 10},
+				{Key: "M", Val: 13},
+				{Key: "P", Val: 16},
 			},
+			expectedRangeSize: 5,
+			expectedString:    "{<A:1> <D:4> <G:7> <J:10> <M:13> <P:16> <S:19>}",
+			expectedAll: []KeyValue[string, int]{
+				{Key: "A", Val: 1},
+				{Key: "D", Val: 4},
+				{Key: "G", Val: 7},
+				{Key: "J", Val: 10},
+				{Key: "M", Val: 13},
+				{Key: "P", Val: 16},
+				{Key: "S", Val: 19},
+			},
+			anyMatchPredicate: func(k string, v int) bool { return v%5 == 0 },
+			expectedAnyMatch:  true,
+			allMatchPredicate: func(k string, v int) bool { return v < 10 },
+			expectedAllMatch:  false,
 		},
 		{
 			name:   "Words",
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
-				{"box", 2},
-				{"dad", 3},
-				{"baby", 5},
-				{"dome", 7},
-				{"band", 11},
-				{"dance", 13},
-				{"balloon", 17},
+				{Key: "box", Val: 2},
+				{Key: "dad", Val: 3},
+				{Key: "baby", Val: 5},
+				{Key: "dome", Val: 7},
+				{Key: "band", Val: 11},
+				{Key: "dance", Val: 13},
+				{Key: "balloon", Val: 17},
 			},
-			expectedSize:    7,
-			expectedIsEmpty: false,
-			expectedKeyVals: []KeyValue[string, int]{
-				{"baby", 5},
-				{"balloon", 17},
-				{"band", 11},
-				{"box", 2},
-				{"dad", 3},
-				{"dance", 13},
-				{"dome", 7},
-			},
-			anyPredicate:       func(k string, v int) bool { return strings.HasSuffix(k, "x") },
-			expectedAny:        true,
-			allPredicate:       func(k string, v int) bool { return k == strings.ToLower(k) },
-			expectedAll:        true,
+			expectedSize:       7,
+			expectedIsEmpty:    false,
 			expectedMinKey:     "baby",
 			expectedMinVal:     5,
 			expectedMinOK:      true,
@@ -320,13 +314,27 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedRank:       5,
 			rangeKeyLo:         "a",
 			rangeKeyHi:         "c",
-			expectedRangeSize:  4,
 			expectedRange: []KeyValue[string, int]{
-				{"baby", 5},
-				{"balloon", 17},
-				{"band", 11},
-				{"box", 2},
+				{Key: "baby", Val: 5},
+				{Key: "balloon", Val: 17},
+				{Key: "band", Val: 11},
+				{Key: "box", Val: 2},
 			},
+			expectedRangeSize: 4,
+			expectedString:    "{<baby:5> <balloon:17> <band:11> <box:2> <dad:3> <dance:13> <dome:7>}",
+			expectedAll: []KeyValue[string, int]{
+				{Key: "baby", Val: 5},
+				{Key: "balloon", Val: 17},
+				{Key: "band", Val: 11},
+				{Key: "box", Val: 2},
+				{Key: "dad", Val: 3},
+				{Key: "dance", Val: 13},
+				{Key: "dome", Val: 7},
+			},
+			anyMatchPredicate: func(k string, v int) bool { return strings.HasSuffix(k, "x") },
+			expectedAnyMatch:  true,
+			allMatchPredicate: func(k string, v int) bool { return k == strings.ToLower(k) },
+			expectedAllMatch:  true,
 		},
 	}
 }
@@ -339,7 +347,6 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 		t.Run("BeforePut", func(t *testing.T) {
 			assert.True(t, st.verify())
 			assert.Zero(t, st.Size())
-			assert.Zero(t, st.Height())
 			assert.True(t, st.IsEmpty())
 		})
 
@@ -359,20 +366,21 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 			}
 
 			assert.Equal(t, test.expectedSize, st.Size())
-			assert.Equal(t, test.expectedHeight, st.Height())
 			assert.Equal(t, test.expectedIsEmpty, st.IsEmpty())
 
-			kvs = st.KeyValues()
-			assert.Equal(t, test.expectedKeyVals, kvs)
+			assert.Equal(t, test.expectedString, st.String())
 
 			equals := st.Equals(test.equals)
 			assert.Equal(t, test.expectedEquals, equals)
 
-			any := st.Any(test.anyPredicate)
-			assert.Equal(t, test.expectedAny, any)
+			kvs = Collect(st.All())
+			assert.Equal(t, test.expectedAll, kvs)
 
-			all := st.All(test.allPredicate)
-			assert.Equal(t, test.expectedAll, all)
+			any := st.AnyMatch(test.anyMatchPredicate)
+			assert.Equal(t, test.expectedAnyMatch, any)
+
+			all := st.AllMatch(test.allMatchPredicate)
+			assert.Equal(t, test.expectedAllMatch, all)
 
 			for _, expected := range test.keyVals {
 				val, ok := st.Delete(expected.Key)
@@ -385,7 +393,6 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 		t.Run("AfterDelete", func(t *testing.T) {
 			assert.True(t, st.verify())
 			assert.Zero(t, st.Size())
-			assert.Zero(t, st.Height())
 			assert.True(t, st.IsEmpty())
 		})
 	})
@@ -453,18 +460,6 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			assert.Equal(t, test.expectedHeight, ost.Height())
 			assert.Equal(t, test.expectedIsEmpty, ost.IsEmpty())
 
-			kvs = ost.KeyValues()
-			assert.Equal(t, test.expectedKeyVals, kvs)
-
-			equals := ost.Equals(test.equals)
-			assert.Equal(t, test.expectedEquals, equals)
-
-			any := ost.Any(test.anyPredicate)
-			assert.Equal(t, test.expectedAny, any)
-
-			all := ost.All(test.allPredicate)
-			assert.Equal(t, test.expectedAll, all)
-
 			minKey, minVal, minOK = ost.Min()
 			assert.Equal(t, test.expectedMinKey, minKey)
 			assert.Equal(t, test.expectedMinVal, minVal)
@@ -504,16 +499,33 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			assert.Equal(t, test.expectedSelectVal, selectVal)
 			assert.Equal(t, test.expectedSelectOK, selectOK)
 
-			assert.Equal(t, test.expectedRank, ost.Rank(test.rankKey))
-			assert.Equal(t, test.expectedRangeSize, ost.RangeSize(test.rangeKeyLo, test.rangeKeyHi))
+			rank := ost.Rank(test.rankKey)
+			assert.Equal(t, test.expectedRank, rank)
 
 			kvs = ost.Range(test.rangeKeyLo, test.rangeKeyHi)
 			assert.Equal(t, test.expectedRange, kvs)
 
+			rangeSize := ost.RangeSize(test.rangeKeyLo, test.rangeKeyHi)
+			assert.Equal(t, test.expectedRangeSize, rangeSize)
+
+			assert.Equal(t, test.expectedString, ost.String())
+
+			equals := ost.Equals(test.equals)
+			assert.Equal(t, test.expectedEquals, equals)
+
+			kvs = Collect(ost.All())
+			assert.Equal(t, test.expectedAll, kvs)
+
+			anyMatch := ost.AnyMatch(test.anyMatchPredicate)
+			assert.Equal(t, test.expectedAnyMatch, anyMatch)
+
+			allMatch := ost.AllMatch(test.allMatchPredicate)
+			assert.Equal(t, test.expectedAllMatch, allMatch)
+
 			// VLR Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(VLR, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedVLRTraverse, kvs)
@@ -521,7 +533,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// VRL Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(VRL, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedVRLTraverse, kvs)
@@ -529,7 +541,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// LVR Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(LVR, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedLVRTraverse, kvs)
@@ -537,7 +549,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// RVL Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(RVL, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedRVLTraverse, kvs)
@@ -545,7 +557,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// LRV Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(LRV, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedLRVTraverse, kvs)
@@ -553,7 +565,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// RLV Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(RLV, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedRLVTraverse, kvs)
@@ -561,7 +573,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// Ascending Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(Ascending, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedAscendingTraverse, kvs)
@@ -569,7 +581,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// Descending Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(Descending, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)

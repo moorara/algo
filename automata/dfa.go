@@ -2,9 +2,10 @@ package automata
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
@@ -57,15 +58,15 @@ func (d *DFA) States() States {
 	states = append(states, d.Start)
 	states = append(states, d.Final...)
 
-	for _, kv := range d.trans.KeyValues() {
-		if s := kv.Key; !states.Contains(s) {
+	for key := range d.trans.All() {
+		if s := key; !states.Contains(s) {
 			states = append(states, s)
 		}
 	}
 
-	for _, kv := range d.trans.KeyValues() {
-		for _, kv := range kv.Val.KeyValues() {
-			if s := kv.Val; !states.Contains(s) {
+	for _, val := range d.trans.All() {
+		for _, val := range val.All() {
+			if s := val; !states.Contains(s) {
 				states = append(states, s)
 			}
 		}
@@ -78,9 +79,9 @@ func (d *DFA) States() States {
 func (d *DFA) Symbols() Symbols {
 	symbols := Symbols{}
 
-	for _, kv := range d.trans.KeyValues() {
-		for _, kv := range kv.Val.KeyValues() {
-			if a := kv.Key; a != E && !symbols.Contains(a) {
+	for _, val := range d.trans.All() {
+		for key := range val.All() {
+			if a := key; a != E && !symbols.Contains(a) {
 				symbols = append(symbols, a)
 			}
 		}
@@ -102,10 +103,10 @@ func (d *DFA) Accept(s String) bool {
 // ToNFA constructs a new NFA accepting the same language as the DFA (every DFA is an NFA).
 func (d *DFA) ToNFA() *NFA {
 	nfa := NewNFA(d.Start, d.Final)
-	for _, kv := range d.trans.KeyValues() {
-		s := kv.Key
-		for _, kv := range kv.Val.KeyValues() {
-			a, next := kv.Key, kv.Val
+	for key, val := range d.trans.All() {
+		s := key
+		for key, val := range val.All() {
+			a, next := key, val
 			nfa.Add(s, a, States{next})
 		}
 	}
@@ -161,7 +162,7 @@ func (d *DFA) Minimize() *DFA {
 	for {
 		Pnew := set.New[set.Set[State]](setEqFunc)
 
-		for _, G := range P.Members() { // For every group in the current partition
+		for G := range P.All() { // For every group in the current partition
 			gtrans := d.createGroupTrans(P, G)
 			populateSubgroups(Pnew, gtrans)
 		}
@@ -195,11 +196,15 @@ func (d *DFA) Minimize() *DFA {
 
 	dfa := NewDFA(start, final)
 
-	for s, G := range P.Members() {
-		g := G.Members()[0] // G is non-empty
+	Pmembers := slices.Collect(P.All())
+
+	for s, G := range Pmembers {
+		Gmembers := slices.Collect(G.All())
+		g := Gmembers[0] // G is non-empty
+
 		if tab, ok := d.trans.Get(g); ok {
-			for _, kv := range tab.KeyValues() {
-				a, next := kv.Key, kv.Val
+			for key, val := range tab.All() {
+				a, next := key, val
 				rep, _ := groupRep(P, next)
 				dfa.Add(State(s), a, rep)
 			}
@@ -213,13 +218,13 @@ func (d *DFA) Minimize() *DFA {
 func (d *DFA) createGroupTrans(P set.Set[set.Set[State]], G set.Set[State]) doubleKeyMap[State, Symbol, State] {
 	gtrans := symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[Symbol, State]](cmpState, eqSymbolState)
 
-	for _, s := range G.Members() { // For every state in the current group
+	for s := range G.All() { // For every state in the current group
 		strans := symboltable.NewRedBlack[Symbol, State](cmpSymbol, eqState)
 
 		// Create a map of symbols to the current partition's group representatives (instead of next states)
 		if stab, ok := d.trans.Get(s); ok {
-			for _, kv := range stab.KeyValues() {
-				a, next := kv.Key, kv.Val
+			for key, val := range stab.All() {
+				a, next := key, val
 				if rep, ok := groupRep(P, next); ok {
 					strans.Put(a, rep)
 				}
@@ -236,7 +241,7 @@ func (d *DFA) createGroupTrans(P set.Set[set.Set[State]], G set.Set[State]) doub
 func populateSubgroups(Pnew set.Set[set.Set[State]], gtrans doubleKeyMap[State, Symbol, State]) {
 	eqFunc := func(a, b State) bool { return a == b }
 
-	kvs := gtrans.KeyValues()
+	kvs := Collect(gtrans.All())
 	for i := 0; i < len(kvs); i++ {
 		s, sreps := kvs[i].Key, kvs[i].Val
 
@@ -261,8 +266,10 @@ func populateSubgroups(Pnew set.Set[set.Set[State]], gtrans doubleKeyMap[State, 
 
 // groupRep returns the group representaive for a state.
 func groupRep(P set.Set[set.Set[State]], s State) (State, bool) {
-	for i, G := range P.Members() {
-		for _, state := range G.Members() {
+	Pmembers := slices.Collect(P.All())
+	for i, G := range Pmembers {
+		Gmembers := slices.Collect(G.All())
+		for _, state := range Gmembers {
 			if state == s {
 				return State(i), true
 			}
@@ -283,10 +290,10 @@ func (d *DFA) WithoutDeadStates() *DFA {
 
 	// 1. Construct a directed graph from the DFA with all the transitions reversed.
 	adj := map[State]States{}
-	for _, kv := range d.trans.KeyValues() {
-		s := kv.Key
-		for _, kv := range kv.Val.KeyValues() {
-			t := kv.Val
+	for key, val := range d.trans.All() {
+		s := key
+		for _, val := range val.All() {
+			t := val
 			adj[t] = append(adj[t], s)
 		}
 	}
@@ -312,10 +319,10 @@ func (d *DFA) WithoutDeadStates() *DFA {
 	}
 
 	dfa := NewDFA(d.Start, d.Final)
-	for _, kv := range d.trans.KeyValues() {
-		s := kv.Key
-		for _, kv := range kv.Val.KeyValues() {
-			a, next := kv.Key, kv.Val
+	for key, val := range d.trans.All() {
+		s := key
+		for key, val := range val.All() {
+			a, next := key, val
 			if !deads.Contains(s) && !deads.Contains(next) {
 				dfa.Add(s, a, next)
 			}
@@ -348,7 +355,7 @@ func (d *DFA) Graphviz() string {
 	graph := graphviz.NewGraph(false, true, false, "DFA", graphviz.RankDirLR, "", "", "")
 
 	states := d.States()
-	sort.Quick(states, generic.NewCompareFunc[State]())
+	sort.Quick(states, NewCompareFunc[State]())
 
 	for _, state := range states {
 		name := fmt.Sprintf("%d", state)
@@ -373,30 +380,30 @@ func (d *DFA) Graphviz() string {
 
 	edges := symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[State, []string]](cmpState, nil)
 
-	for _, kv := range d.trans.KeyValues() {
-		from := kv.Key
+	for key, val := range d.trans.All() {
+		from := key
 		tab, exist := edges.Get(from)
 		if !exist {
 			tab = symboltable.NewRedBlack[State, []string](cmpState, nil)
 			edges.Put(from, tab)
 		}
 
-		for _, kv := range kv.Val.KeyValues() {
-			symbol, to := string(kv.Key), kv.Val
+		for key, val := range val.All() {
+			symbol, to := string(key), val
 			vals, _ := tab.Get(to)
 			vals = append(vals, symbol)
 			tab.Put(to, vals)
 		}
 	}
 
-	for _, kv := range edges.KeyValues() {
-		from := kv.Key
-		for _, kv := range kv.Val.KeyValues() {
+	for key, val := range edges.All() {
+		from := key
+		for key, val := range val.All() {
 			from := fmt.Sprintf("%d", from)
-			to := fmt.Sprintf("%d", kv.Key)
-			symbols := kv.Val
+			to := fmt.Sprintf("%d", key)
+			symbols := val
 
-			sort.Quick(symbols, generic.NewCompareFunc[string]())
+			sort.Quick(symbols, NewCompareFunc[string]())
 			label := strings.Join(symbols, ",")
 
 			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", label, "", "", "", ""))

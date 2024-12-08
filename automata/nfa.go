@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/sort"
@@ -93,15 +93,15 @@ func (n *NFA) States() States {
 	states = append(states, n.Start)
 	states = append(states, n.Final...)
 
-	for _, kv := range n.trans.KeyValues() {
-		if s := kv.Key; !states.Contains(s) {
+	for key := range n.trans.All() {
+		if s := key; !states.Contains(s) {
 			states = append(states, s)
 		}
 	}
 
-	for _, kv := range n.trans.KeyValues() {
-		for _, kv := range kv.Val.KeyValues() {
-			for _, s := range kv.Val {
+	for _, val := range n.trans.All() {
+		for _, val := range val.All() {
+			for _, s := range val {
 				if !states.Contains(s) {
 					states = append(states, s)
 				}
@@ -116,9 +116,9 @@ func (n *NFA) States() States {
 func (n *NFA) Symbols() Symbols {
 	symbols := Symbols{}
 
-	for _, kv := range n.trans.KeyValues() {
-		for _, kv := range kv.Val.KeyValues() {
-			if a := kv.Key; a != E && !symbols.Contains(a) {
+	for _, val := range n.trans.All() {
+		for key := range val.All() {
+			if a := key; a != E && !symbols.Contains(a) {
 				symbols = append(symbols, a)
 			}
 		}
@@ -149,13 +149,13 @@ func (n *NFA) Star() *NFA {
 	star := NewNFA(start, States{final})
 	factory := newStateFactory(final)
 
-	for _, kv := range n.trans.KeyValues() {
-		s := factory.StateFor(0, kv.Key)
-		for _, kv := range kv.Val.KeyValues() {
-			a := kv.Key
+	for key, val := range n.trans.All() {
+		s := factory.StateFor(0, key)
+		for key, val := range val.All() {
+			a := key
 
-			next := make(States, len(kv.Val))
-			for i, t := range kv.Val {
+			next := make(States, len(val))
+			for i, t := range val {
 				next[i] = factory.StateFor(0, t)
 			}
 
@@ -185,13 +185,13 @@ func (n *NFA) Union(ns ...*NFA) *NFA {
 
 	nfas := append([]*NFA{n}, ns...)
 	for id, nfa := range nfas {
-		for _, kv := range nfa.trans.KeyValues() {
-			s := factory.StateFor(id, kv.Key)
-			for _, kv := range kv.Val.KeyValues() {
-				a := kv.Key
+		for key, val := range nfa.trans.All() {
+			s := factory.StateFor(id, key)
+			for key, val := range val.All() {
+				a := key
 
-				next := make(States, len(kv.Val))
-				for i, t := range kv.Val {
+				next := make(States, len(val))
+				for i, t := range val {
 					next[i] = factory.StateFor(id, t)
 				}
 
@@ -219,8 +219,8 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 
 	nfas := append([]*NFA{n}, ns...)
 	for id, nfa := range nfas {
-		for _, kv := range nfa.trans.KeyValues() {
-			s := kv.Key
+		for key, val := range nfa.trans.All() {
+			s := key
 
 			// If s is the start state of the current NFA,
 			// we need to map it to the previous NFA final states.
@@ -231,8 +231,8 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 				sp = States{factory.StateFor(id, s)}
 			}
 
-			for _, kv := range kv.Val.KeyValues() {
-				a, next := kv.Key, kv.Val
+			for key, val := range val.All() {
+				a, next := key, val
 
 				// If any of the next state is the start state of the current NFA,
 				// we need to map it to the previous NFA final states.
@@ -322,7 +322,7 @@ func (n *NFA) Graphviz() string {
 	graph := graphviz.NewGraph(false, true, false, "NFA", graphviz.RankDirLR, "", "", graphviz.ShapeCircle)
 
 	states := n.States()
-	sort.Quick(states, generic.NewCompareFunc[State]())
+	sort.Quick(states, NewCompareFunc[State]())
 
 	for _, state := range states {
 		name := fmt.Sprintf("%d", state)
@@ -347,23 +347,23 @@ func (n *NFA) Graphviz() string {
 
 	edges := symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[State, []string]](cmpState, nil)
 
-	for _, kv := range n.trans.KeyValues() {
-		from := kv.Key
+	for key, val := range n.trans.All() {
+		from := key
 		tab, exist := edges.Get(from)
 		if !exist {
 			tab = symboltable.NewRedBlack[State, []string](cmpState, nil)
 			edges.Put(from, tab)
 		}
 
-		for _, kv := range kv.Val.KeyValues() {
+		for key, val := range val.All() {
 			var symbol string
-			if kv.Key == E {
+			if key == E {
 				symbol = "ε"
 			} else {
-				symbol = string(kv.Key)
+				symbol = string(key)
 			}
 
-			for _, to := range kv.Val {
+			for _, to := range val {
 				vals, _ := tab.Get(to)
 				vals = append(vals, symbol)
 				tab.Put(to, vals)
@@ -371,14 +371,14 @@ func (n *NFA) Graphviz() string {
 		}
 	}
 
-	for _, kv := range edges.KeyValues() {
-		from := kv.Key
-		for _, kv := range kv.Val.KeyValues() {
+	for key, val := range edges.All() {
+		from := key
+		for key, val := range val.All() {
 			from := fmt.Sprintf("%d", from)
-			to := fmt.Sprintf("%d", kv.Key)
-			symbols := kv.Val
+			to := fmt.Sprintf("%d", key)
+			symbols := val
 
-			sort.Quick(symbols, generic.NewCompareFunc[string]())
+			sort.Quick(symbols, NewCompareFunc[string]())
 			label := strings.Join(symbols, ",")
 
 			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", label, "", "", "", ""))

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 )
 
 const (
@@ -91,7 +91,7 @@ func BenchmarkTrie_Put(b *testing.B) {
 	seed := time.Now().UTC().UnixNano()
 	r = rand.New(rand.NewSource(seed))
 
-	eqVal := generic.NewEqualFunc[int]()
+	eqVal := NewEqualFunc[int]()
 
 	b.Run("BinaryTrie.Put", func(b *testing.B) {
 		trie := NewBinary[int](eqVal)
@@ -108,7 +108,7 @@ func BenchmarkTrie_Get(b *testing.B) {
 	seed := time.Now().UTC().UnixNano()
 	r = rand.New(rand.NewSource(seed))
 
-	eqVal := generic.NewEqualFunc[int]()
+	eqVal := NewEqualFunc[int]()
 
 	b.Run("BinaryTrie.Get", func(b *testing.B) {
 		trie := NewBinary[int](eqVal)
@@ -125,7 +125,7 @@ func BenchmarkTrie_Delete(b *testing.B) {
 	seed := time.Now().UTC().UnixNano()
 	r = rand.New(rand.NewSource(seed))
 
-	eqVal := generic.NewEqualFunc[int]()
+	eqVal := NewEqualFunc[int]()
 
 	b.Run("BinaryTrie.Delete", func(b *testing.B) {
 		trie := NewBinary[int](eqVal)

@@ -3,16 +3,11 @@ package heap
 import (
 	"testing"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 	"github.com/stretchr/testify/assert"
 )
 
 type (
-	KeyValue[K, V any] struct {
-		key K
-		val V
-	}
-
 	IndexedKeyValue[K, V any] struct {
 		idx int
 		key K
@@ -23,8 +18,8 @@ type (
 		name             string
 		heap             string
 		size             int
-		cmpKey           generic.CompareFunc[K]
-		eqVal            generic.EqualFunc[V]
+		cmpKey           CompareFunc[K]
+		eqVal            EqualFunc[V]
 		insertKVs        []KeyValue[K, V]
 		expectedSize     int
 		expectedIsEmpty  bool
@@ -38,8 +33,8 @@ type (
 		name                string
 		heap                string
 		cap                 int
-		cmpKey              generic.CompareFunc[K]
-		eqVal               generic.EqualFunc[V]
+		cmpKey              CompareFunc[K]
+		eqVal               EqualFunc[V]
 		insertKVs           []IndexedKeyValue[K, V]
 		changeKeyKVs        []IndexedKeyValue[K, V]
 		expectedSize        int
@@ -54,9 +49,9 @@ type (
 )
 
 func getHeapTests() []heapTest[int, string] {
-	eqVal := generic.NewEqualFunc[string]()
-	cmpMin := generic.NewCompareFunc[int]()
-	cmpMax := generic.NewInvertedCompareFunc[int]()
+	eqVal := NewEqualFunc[string]()
+	cmpMin := NewCompareFunc[int]()
+	cmpMax := NewReverseCompareFunc[int]()
 
 	return []heapTest[int, string]{
 		{
@@ -67,7 +62,7 @@ func getHeapTests() []heapTest[int, string] {
 			insertKVs:        []KeyValue[int, string]{},
 			expectedSize:     0,
 			expectedIsEmpty:  true,
-			expectedPeek:     KeyValue[int, string]{0, ""},
+			expectedPeek:     KeyValue[int, string]{Key: 0, Val: ""},
 			expectedContains: []KeyValue[int, string]{},
 			expectedDelete:   []KeyValue[int, string]{},
 		},
@@ -79,7 +74,7 @@ func getHeapTests() []heapTest[int, string] {
 			insertKVs:        []KeyValue[int, string]{},
 			expectedSize:     0,
 			expectedIsEmpty:  true,
-			expectedPeek:     KeyValue[int, string]{0, ""},
+			expectedPeek:     KeyValue[int, string]{Key: 0, Val: ""},
 			expectedContains: []KeyValue[int, string]{},
 			expectedDelete:   []KeyValue[int, string]{},
 		},
@@ -89,22 +84,22 @@ func getHeapTests() []heapTest[int, string] {
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
 			insertKVs: []KeyValue[int, string]{
-				{30, "thirty"},
-				{10, "ten"},
-				{20, "twenty"},
+				{Key: 30, Val: "thirty"},
+				{Key: 10, Val: "ten"},
+				{Key: 20, Val: "twenty"},
 			},
 			expectedSize:    3,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{10, "ten"},
+			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "ten"},
 			expectedContains: []KeyValue[int, string]{
-				{10, "ten"},
-				{20, "twenty"},
-				{30, "thirty"},
+				{Key: 10, Val: "ten"},
+				{Key: 20, Val: "twenty"},
+				{Key: 30, Val: "thirty"},
 			},
 			expectedDelete: []KeyValue[int, string]{
-				{10, "ten"},
-				{20, "twenty"},
-				{30, "thirty"},
+				{Key: 10, Val: "ten"},
+				{Key: 20, Val: "twenty"},
+				{Key: 30, Val: "thirty"},
 			},
 		},
 		{
@@ -113,22 +108,22 @@ func getHeapTests() []heapTest[int, string] {
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
 			insertKVs: []KeyValue[int, string]{
-				{10, "ten"},
-				{30, "thirty"},
-				{20, "twenty"},
+				{Key: 10, Val: "ten"},
+				{Key: 30, Val: "thirty"},
+				{Key: 20, Val: "twenty"},
 			},
 			expectedSize:    3,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{30, "thirty"},
+			expectedPeek:    KeyValue[int, string]{Key: 30, Val: "thirty"},
 			expectedContains: []KeyValue[int, string]{
-				{30, "thirty"},
-				{20, "twenty"},
-				{10, "ten"},
+				{Key: 30, Val: "thirty"},
+				{Key: 20, Val: "twenty"},
+				{Key: 10, Val: "ten"},
 			},
 			expectedDelete: []KeyValue[int, string]{
-				{30, "thirty"},
-				{20, "twenty"},
-				{10, "ten"},
+				{Key: 30, Val: "thirty"},
+				{Key: 20, Val: "twenty"},
+				{Key: 10, Val: "ten"},
 			},
 		},
 		{
@@ -137,28 +132,28 @@ func getHeapTests() []heapTest[int, string] {
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
 			insertKVs: []KeyValue[int, string]{
-				{50, "fifty"},
-				{30, "thirty"},
-				{40, "forty"},
-				{10, "ten"},
-				{20, "twenty"},
+				{Key: 50, Val: "fifty"},
+				{Key: 30, Val: "thirty"},
+				{Key: 40, Val: "forty"},
+				{Key: 10, Val: "ten"},
+				{Key: 20, Val: "twenty"},
 			},
 			expectedSize:    5,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{10, "ten"},
+			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "ten"},
 			expectedContains: []KeyValue[int, string]{
-				{10, "ten"},
-				{20, "twenty"},
-				{30, "thirty"},
-				{40, "forty"},
-				{50, "fifty"},
+				{Key: 10, Val: "ten"},
+				{Key: 20, Val: "twenty"},
+				{Key: 30, Val: "thirty"},
+				{Key: 40, Val: "forty"},
+				{Key: 50, Val: "fifty"},
 			},
 			expectedDelete: []KeyValue[int, string]{
-				{10, "ten"},
-				{20, "twenty"},
-				{30, "thirty"},
-				{40, "forty"},
-				{50, "fifty"},
+				{Key: 10, Val: "ten"},
+				{Key: 20, Val: "twenty"},
+				{Key: 30, Val: "thirty"},
+				{Key: 40, Val: "forty"},
+				{Key: 50, Val: "fifty"},
 			},
 		},
 		{
@@ -167,28 +162,28 @@ func getHeapTests() []heapTest[int, string] {
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
 			insertKVs: []KeyValue[int, string]{
-				{10, "ten"},
-				{30, "thirty"},
-				{20, "twenty"},
-				{50, "fifty"},
-				{40, "forty"},
+				{Key: 10, Val: "ten"},
+				{Key: 30, Val: "thirty"},
+				{Key: 20, Val: "twenty"},
+				{Key: 50, Val: "fifty"},
+				{Key: 40, Val: "forty"},
 			},
 			expectedSize:    5,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{50, "fifty"},
+			expectedPeek:    KeyValue[int, string]{Key: 50, Val: "fifty"},
 			expectedContains: []KeyValue[int, string]{
-				{50, "fifty"},
-				{40, "forty"},
-				{30, "thirty"},
-				{20, "twenty"},
-				{10, "ten"},
+				{Key: 50, Val: "fifty"},
+				{Key: 40, Val: "forty"},
+				{Key: 30, Val: "thirty"},
+				{Key: 20, Val: "twenty"},
+				{Key: 10, Val: "ten"},
 			},
 			expectedDelete: []KeyValue[int, string]{
-				{50, "fifty"},
-				{40, "forty"},
-				{30, "thirty"},
-				{20, "twenty"},
-				{10, "ten"},
+				{Key: 50, Val: "fifty"},
+				{Key: 40, Val: "forty"},
+				{Key: 30, Val: "thirty"},
+				{Key: 20, Val: "twenty"},
+				{Key: 10, Val: "ten"},
 			},
 		},
 		{
@@ -197,40 +192,40 @@ func getHeapTests() []heapTest[int, string] {
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
 			insertKVs: []KeyValue[int, string]{
-				{90, "ninety"},
-				{80, "eighty"},
-				{70, "seventy"},
-				{40, "forty"},
-				{50, "fifty"},
-				{60, "sixty"},
-				{30, "thirty"},
-				{10, "ten"},
-				{20, "twenty"},
+				{Key: 90, Val: "ninety"},
+				{Key: 80, Val: "eighty"},
+				{Key: 70, Val: "seventy"},
+				{Key: 40, Val: "forty"},
+				{Key: 50, Val: "fifty"},
+				{Key: 60, Val: "sixty"},
+				{Key: 30, Val: "thirty"},
+				{Key: 10, Val: "ten"},
+				{Key: 20, Val: "twenty"},
 			},
 			expectedSize:    9,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{10, "ten"},
+			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "ten"},
 			expectedContains: []KeyValue[int, string]{
-				{10, "ten"},
-				{20, "twenty"},
-				{30, "thirty"},
-				{40, "forty"},
-				{50, "fifty"},
-				{60, "sixty"},
-				{70, "seventy"},
-				{80, "eighty"},
-				{90, "ninety"},
+				{Key: 10, Val: "ten"},
+				{Key: 20, Val: "twenty"},
+				{Key: 30, Val: "thirty"},
+				{Key: 40, Val: "forty"},
+				{Key: 50, Val: "fifty"},
+				{Key: 60, Val: "sixty"},
+				{Key: 70, Val: "seventy"},
+				{Key: 80, Val: "eighty"},
+				{Key: 90, Val: "ninety"},
 			},
 			expectedDelete: []KeyValue[int, string]{
-				{10, "ten"},
-				{20, "twenty"},
-				{30, "thirty"},
-				{40, "forty"},
-				{50, "fifty"},
-				{60, "sixty"},
-				{70, "seventy"},
-				{80, "eighty"},
-				{90, "ninety"},
+				{Key: 10, Val: "ten"},
+				{Key: 20, Val: "twenty"},
+				{Key: 30, Val: "thirty"},
+				{Key: 40, Val: "forty"},
+				{Key: 50, Val: "fifty"},
+				{Key: 60, Val: "sixty"},
+				{Key: 70, Val: "seventy"},
+				{Key: 80, Val: "eighty"},
+				{Key: 90, Val: "ninety"},
 			},
 		},
 		{
@@ -239,49 +234,49 @@ func getHeapTests() []heapTest[int, string] {
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
 			insertKVs: []KeyValue[int, string]{
-				{10, "ten"},
-				{30, "thirty"},
-				{20, "twenty"},
-				{50, "fifty"},
-				{40, "forty"},
-				{60, "sixty"},
-				{70, "seventy"},
-				{90, "ninety"},
-				{80, "eighty"},
+				{Key: 10, Val: "ten"},
+				{Key: 30, Val: "thirty"},
+				{Key: 20, Val: "twenty"},
+				{Key: 50, Val: "fifty"},
+				{Key: 40, Val: "forty"},
+				{Key: 60, Val: "sixty"},
+				{Key: 70, Val: "seventy"},
+				{Key: 90, Val: "ninety"},
+				{Key: 80, Val: "eighty"},
 			},
 			expectedSize:    9,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{90, "ninety"},
+			expectedPeek:    KeyValue[int, string]{Key: 90, Val: "ninety"},
 			expectedContains: []KeyValue[int, string]{
-				{90, "ninety"},
-				{80, "eighty"},
-				{70, "seventy"},
-				{60, "sixty"},
-				{50, "fifty"},
-				{40, "forty"},
-				{30, "thirty"},
-				{20, "twenty"},
-				{10, "ten"},
+				{Key: 90, Val: "ninety"},
+				{Key: 80, Val: "eighty"},
+				{Key: 70, Val: "seventy"},
+				{Key: 60, Val: "sixty"},
+				{Key: 50, Val: "fifty"},
+				{Key: 40, Val: "forty"},
+				{Key: 30, Val: "thirty"},
+				{Key: 20, Val: "twenty"},
+				{Key: 10, Val: "ten"},
 			},
 			expectedDelete: []KeyValue[int, string]{
-				{90, "ninety"},
-				{80, "eighty"},
-				{70, "seventy"},
-				{60, "sixty"},
-				{50, "fifty"},
-				{40, "forty"},
-				{30, "thirty"},
-				{20, "twenty"},
-				{10, "ten"},
+				{Key: 90, Val: "ninety"},
+				{Key: 80, Val: "eighty"},
+				{Key: 70, Val: "seventy"},
+				{Key: 60, Val: "sixty"},
+				{Key: 50, Val: "fifty"},
+				{Key: 40, Val: "forty"},
+				{Key: 30, Val: "thirty"},
+				{Key: 20, Val: "twenty"},
+				{Key: 10, Val: "ten"},
 			},
 		},
 	}
 }
 
 func getIndexedHeapTests() []indexedHeapTest[int, string] {
-	eqVal := generic.NewEqualFunc[string]()
-	cmpMin := generic.NewCompareFunc[int]()
-	cmpMax := generic.NewInvertedCompareFunc[int]()
+	eqVal := NewEqualFunc[string]()
+	cmpMin := NewCompareFunc[int]()
+	cmpMax := NewReverseCompareFunc[int]()
 
 	return []indexedHeapTest[int, string]{
 		{
@@ -620,7 +615,7 @@ func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string
 
 		t.Run("AfterInsert", func(t *testing.T) {
 			for _, kv := range test.insertKVs {
-				heap.Insert(kv.key, kv.val)
+				heap.Insert(kv.Key, kv.Val)
 			}
 
 			assert.Equal(t, test.expectedSize, heap.Size())
@@ -632,14 +627,14 @@ func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string
 				assert.Empty(t, peekVal)
 				assert.False(t, peekOK)
 			} else {
-				assert.Equal(t, test.expectedPeek.key, peekKey)
-				assert.Equal(t, test.expectedPeek.val, peekVal)
+				assert.Equal(t, test.expectedPeek.Key, peekKey)
+				assert.Equal(t, test.expectedPeek.Val, peekVal)
 				assert.True(t, peekOK)
 			}
 
 			for _, kv := range test.expectedContains {
-				assert.True(t, heap.ContainsKey(kv.key))
-				assert.True(t, heap.ContainsValue(kv.val))
+				assert.True(t, heap.ContainsKey(kv.Key))
+				assert.True(t, heap.ContainsValue(kv.Val))
 			}
 
 			// Graphviz dot language code
@@ -647,8 +642,8 @@ func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string
 
 			for _, kv := range test.expectedDelete {
 				deleteKey, deleteVal, deleteOK := heap.Delete()
-				assert.Equal(t, kv.key, deleteKey)
-				assert.Equal(t, kv.val, deleteVal)
+				assert.Equal(t, kv.Key, deleteKey)
+				assert.Equal(t, kv.Val, deleteVal)
 				assert.True(t, deleteOK)
 			}
 		})

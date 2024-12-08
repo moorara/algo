@@ -2,8 +2,10 @@ package symboltable
 
 import (
 	"fmt"
+	"iter"
+	"strings"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 )
 
@@ -16,8 +18,8 @@ type bstNode[K, V any] struct {
 
 type bst[K, V any] struct {
 	root   *bstNode[K, V]
-	cmpKey generic.CompareFunc[K]
-	eqVal  generic.EqualFunc[V]
+	cmpKey CompareFunc[K]
+	eqVal  EqualFunc[V]
 }
 
 // NewBST creates a new binary search tree.
@@ -29,7 +31,7 @@ type bst[K, V any] struct {
 //	Smaller than all keys in its right sub-tree.
 //
 // The second parameter (eqVal) is needed only if you want to use the Equals method.
-func NewBST[K, V any](cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) OrderedSymbolTable[K, V] {
+func NewBST[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) OrderedSymbolTable[K, V] {
 	return &bst[K, V]{
 		root:   nil,
 		cmpKey: cmpKey,
@@ -80,9 +82,9 @@ func (t *bst[K, V]) _isRankOK() bool {
 		}
 	}
 
-	for _, kv := range t.KeyValues() {
-		k, _, _ := t.Select(t.Rank(kv.Key))
-		if t.cmpKey(kv.Key, k) != 0 {
+	for key := range t.All() {
+		k, _, _ := t.Select(t.Rank(key))
+		if t.cmpKey(key, k) != 0 {
 			return false
 		}
 	}
@@ -113,7 +115,7 @@ func (t *bst[K, V]) _height(n *bstNode[K, V]) int {
 		return 0
 	}
 
-	return 1 + generic.Max[int](t._height(n.left), t._height(n.right))
+	return 1 + Max[int](t._height(n.left), t._height(n.right))
 }
 
 // IsEmpty returns true if the BST is empty.
@@ -210,47 +212,6 @@ func (t *bst[K, V]) _delete(n *bstNode[K, V], key K) (*bstNode[K, V], V, bool) {
 
 	n.size = 1 + t._size(n.left) + t._size(n.right)
 	return n, val, ok
-}
-
-// KeyValues returns all key-value pairs in the BST.
-func (t *bst[K, V]) KeyValues() []KeyValue[K, V] {
-	kvs := make([]KeyValue[K, V], 0, t.Size())
-	t._traverse(t.root, Ascending, func(n *bstNode[K, V]) bool {
-		kvs = append(kvs, KeyValue[K, V]{n.key, n.val})
-		return true
-	})
-
-	return kvs
-}
-
-// Equals determines whether or not two BSTs have the same key-value pairs.
-func (t *bst[K, V]) Equals(u SymbolTable[K, V]) bool {
-	tt, ok := u.(*bst[K, V])
-	if !ok {
-		return false
-	}
-
-	return t._traverse(t.root, Ascending, func(n *bstNode[K, V]) bool { // t ⊂ tt
-		val, ok := tt.Get(n.key)
-		return ok && t.eqVal(n.val, val)
-	}) && tt._traverse(tt.root, Ascending, func(n *bstNode[K, V]) bool { // tt ⊂ t
-		val, ok := t.Get(n.key)
-		return ok && t.eqVal(n.val, val)
-	})
-}
-
-// Any returns true if any of the key-value pairs in the BST satisfy the given predicate.
-func (t *bst[K, V]) Any(p Predicate[K, V]) bool {
-	return !t._traverse(t.root, VLR, func(n *bstNode[K, V]) bool {
-		return !p(n.key, n.val)
-	})
-}
-
-// All returns true if all key-value pairs in the BST satisfy a given predicate.
-func (t *bst[K, V]) All(p Predicate[K, V]) bool {
-	return t._traverse(t.root, VLR, func(n *bstNode[K, V]) bool {
-		return p(n.key, n.val)
-	})
 }
 
 // Min returns the minimum key and its value in the BST.
@@ -450,17 +411,6 @@ func (t *bst[K, V]) _rank(n *bstNode[K, V], key K) int {
 	}
 }
 
-// RangeSize returns the number of keys in the BST between two given keys.
-func (t *bst[K, V]) RangeSize(lo, hi K) int {
-	if t.cmpKey(lo, hi) > 0 {
-		return 0
-	} else if _, found := t.Get(hi); found {
-		return 1 + t.Rank(hi) - t.Rank(lo)
-	} else {
-		return t.Rank(hi) - t.Rank(lo)
-	}
-}
-
 // Range returns all keys and associated values in the BST between two given keys.
 func (t *bst[K, V]) Range(lo, hi K) []KeyValue[K, V] {
 	kvs := make([]KeyValue[K, V], 0)
@@ -481,7 +431,7 @@ func (t *bst[K, V]) _range(n *bstNode[K, V], kvs *[]KeyValue[K, V], lo, hi K) in
 		len += t._range(n.left, kvs, lo, hi)
 	}
 	if cmpLo <= 0 && cmpHi >= 0 {
-		*kvs = append(*kvs, KeyValue[K, V]{n.key, n.val})
+		*kvs = append(*kvs, KeyValue[K, V]{Key: n.key, Val: n.val})
 		len++
 	}
 	if cmpHi > 0 {
@@ -491,14 +441,82 @@ func (t *bst[K, V]) _range(n *bstNode[K, V], kvs *[]KeyValue[K, V], lo, hi K) in
 	return len
 }
 
-// Traverse is used for visiting all key-value pairs in the BST.
-func (t *bst[K, V]) Traverse(order TraversalOrder, visit VisitFunc[K, V]) {
+// RangeSize returns the number of keys in the BST between two given keys.
+func (t *bst[K, V]) RangeSize(lo, hi K) int {
+	if t.cmpKey(lo, hi) > 0 {
+		return 0
+	} else if _, found := t.Get(hi); found {
+		return 1 + t.Rank(hi) - t.Rank(lo)
+	} else {
+		return t.Rank(hi) - t.Rank(lo)
+	}
+}
+
+// String returns a string representation of the BST.
+func (t *bst[K, V]) String() string {
+	i := 0
+	pairs := make([]string, t.Size())
+
+	t._traverse(t.root, Ascending, func(n *bstNode[K, V]) bool {
+		pairs[i] = fmt.Sprintf("<%v:%v>", n.key, n.val)
+		i++
+		return true
+	})
+
+	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
+}
+
+// Equals determines whether or not two BSTs have the same key-value pairs.
+func (t *bst[K, V]) Equals(u SymbolTable[K, V]) bool {
+	tt, ok := u.(*bst[K, V])
+	if !ok {
+		return false
+	}
+
+	return t._traverse(t.root, Ascending, func(n *bstNode[K, V]) bool { // t ⊂ tt
+		val, ok := tt.Get(n.key)
+		return ok && t.eqVal(n.val, val)
+	}) && tt._traverse(tt.root, Ascending, func(n *bstNode[K, V]) bool { // tt ⊂ t
+		val, ok := t.Get(n.key)
+		return ok && t.eqVal(n.val, val)
+	})
+}
+
+// All returns an iterator sequence containing all the key-value pairs in the BST.
+func (t *bst[K, V]) All() iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		t._traverse(t.root, Ascending, func(n *bstNode[K, V]) bool {
+			return yield(n.key, n.val)
+		})
+	}
+}
+
+// AnyMatch returns true if at least one key-value pair in the BST satisfies the provided predicate.
+func (t *bst[K, V]) AnyMatch(p Predicate2[K, V]) bool {
+	return !t._traverse(t.root, VLR, func(n *bstNode[K, V]) bool {
+		return !p(n.key, n.val)
+	})
+}
+
+// AllMatch returns true if all key-value pairs in the BST satisfy the provided predicate.
+// If the BST is empty, it returns true.
+func (t *bst[K, V]) AllMatch(p Predicate2[K, V]) bool {
+	return t._traverse(t.root, VLR, func(n *bstNode[K, V]) bool {
+		return p(n.key, n.val)
+	})
+}
+
+// Traverse performs a traversal of the BST using the specified traversal order
+// and yields the key-value pair of each node to the provided VisitFunc2 function.
+//
+// If the function returns false, the traversal is halted.
+func (t *bst[K, V]) Traverse(order TraverseOrder, visit VisitFunc2[K, V]) {
 	t._traverse(t.root, order, func(n *bstNode[K, V]) bool {
 		return visit(n.key, n.val)
 	})
 }
 
-func (t *bst[K, V]) _traverse(n *bstNode[K, V], order TraversalOrder, visit func(*bstNode[K, V]) bool) bool {
+func (t *bst[K, V]) _traverse(n *bstNode[K, V], order TraverseOrder, visit func(*bstNode[K, V]) bool) bool {
 	if n == nil {
 		return true
 	}
@@ -521,7 +539,8 @@ func (t *bst[K, V]) _traverse(n *bstNode[K, V], order TraversalOrder, visit func
 	}
 }
 
-// Graphviz returns a visualization of the BST in Graphviz format.
+// Graphviz generates and returns a string representation of the BST in DOT format.
+// This format is commonly used for visualizing graphs with Graphviz tools.
 func (t *bst[K, V]) Graphviz() string {
 	// Create a map of node --> id
 	var id int
