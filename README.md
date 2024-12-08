@@ -63,7 +63,7 @@ A collection of common data structures and algorithms for Go applications.
 [godoc-url]: https://pkg.go.dev/github.com/moorara/algo
 [godoc-image]: https://pkg.go.dev/badge/github.com/moorara/algo
 [workflow-url]: https://github.com/moorara/algo/actions
-[workflow-image]: https://github.com/moorara/algo/workflows/Main/badge.svg
+[workflow-image]: https://github.com/moorara/algo/workflows/Go/badge.svg
 [goreport-url]: https://goreportcard.com/report/github.com/moorara/algo
 [goreport-image]: https://goreportcard.com/badge/github.com/moorara/algo
 [codecov-url]: https://codecov.io/gh/moorara/algo
