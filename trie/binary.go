@@ -2,8 +2,10 @@ package trie
 
 import (
 	"fmt"
+	"iter"
+	"strings"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 )
 
@@ -17,7 +19,7 @@ type binaryNode[V any] struct {
 type binary[V any] struct {
 	size  int
 	root  *binaryNode[V]
-	eqVal generic.EqualFunc[V]
+	eqVal EqualFunc[V]
 }
 
 // NewBinaryTrie creates a new Binary Trie tree.
@@ -50,7 +52,7 @@ type binary[V any] struct {
 // Includes words baby, bad, bank, box, dad, and dance.
 //
 // The second parameter (eqVal) is needed only if you want to use the Equals method.
-func NewBinary[V any](eqVal generic.EqualFunc[V]) Trie[V] {
+func NewBinary[V any](eqVal EqualFunc[V]) Trie[V] {
 	return &binary[V]{
 		size:  0,
 		root:  new(binaryNode[V]),
@@ -98,9 +100,9 @@ func (t *binary[V]) _isRankOK() bool {
 		}
 	}
 
-	for _, kv := range t.KeyValues() {
-		k, _, _ := t.Select(t.Rank(kv.Key))
-		if kv.Key != k {
+	for key := range t.All() {
+		k, _, _ := t.Select(t.Rank(key))
+		if key != k {
 			return false
 		}
 	}
@@ -123,7 +125,7 @@ func (t *binary[V]) _height(n *binaryNode[V]) int {
 		return 0
 	}
 
-	return 1 + generic.Max[int](t._height(n.left), t._height(n.right))
+	return 1 + Max[int](t._height(n.left), t._height(n.right))
 }
 
 // IsEmpty returns true if the Binary Trie is empty.
@@ -230,41 +232,6 @@ func (t *binary[V]) _delete(n *binaryNode[V], key string) (*binaryNode[V], V, bo
 	}
 
 	return n, val, ok
-}
-
-// KeyValues returns all key-value pairs in the Binary Trie.
-func (t *binary[V]) KeyValues() []KeyValue[V] {
-	kvs := make([]KeyValue[V], 0, t.Size())
-	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
-		if n.term {
-			kvs = append(kvs, KeyValue[V]{k, n.val})
-		}
-		return true
-	})
-
-	return kvs
-}
-
-// Equals determines whether or not two Binary Tries have the same key-value pairs.
-func (t *binary[V]) Equals(u Trie[V]) bool {
-	tt, ok := u.(*binary[V])
-	if !ok {
-		return false
-	}
-
-	return t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool { // t ⊂ tt
-		if n.term {
-			val, ok := tt.Get(k)
-			return ok && t.eqVal(n.val, val)
-		}
-		return true
-	}) && tt._traverse(tt.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool { // tt ⊂ t
-		if n.term {
-			val, ok := t.Get(k)
-			return ok && t.eqVal(n.val, val)
-		}
-		return true
-	})
 }
 
 // Min returns the minimum key and its value in the Binary Trie.
@@ -414,6 +381,24 @@ func (t *binary[V]) Rank(key string) int {
 	return i
 }
 
+// Range returns all keys and associated values in the Binary Trie between two given keys.
+func (t *binary[V]) Range(lo, hi string) []KeyValue[string, V] {
+	kvs := []KeyValue[string, V]{}
+	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
+		if n.term {
+			if lo <= k && k <= hi {
+				kvs = append(kvs, KeyValue[string, V]{k, n.val})
+			} else if k > hi {
+				return false
+			}
+		}
+
+		return true
+	})
+
+	return kvs
+}
+
 // RangeSize returns the number of keys in the Binary Trie between two given keys.
 func (t *binary[V]) RangeSize(lo, hi string) int {
 	i := 0
@@ -432,114 +417,12 @@ func (t *binary[V]) RangeSize(lo, hi string) int {
 	return i
 }
 
-// Range returns all keys and associated values in the Binary Trie between two given keys.
-func (t *binary[V]) Range(lo, hi string) []KeyValue[V] {
-	kvs := []KeyValue[V]{}
-	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
-		if n.term {
-			if lo <= k && k <= hi {
-				kvs = append(kvs, KeyValue[V]{k, n.val})
-			} else if k > hi {
-				return false
-			}
-		}
-
-		return true
-	})
-
-	return kvs
-}
-
-// Traverse is used for visiting all key-value pairs in the Binary Trie.
-func (t *binary[V]) Traverse(order TraversalOrder, visit VisitFunc[V]) {
-	t._traverse(t.root, "", order, func(_ string, n *binaryNode[V]) bool {
-		// Special case of empty string
-		if n == t.root {
-			return visit("", n.val)
-		}
-		return visit(string(n.char), n.val)
-	})
-}
-
-func (t *binary[V]) _traverse(n *binaryNode[V], prefix string, order TraversalOrder, visit func(string, *binaryNode[V]) bool) bool {
-	if n == nil {
-		return true
-	}
-
-	next := prefix + string(n.char)
-
-	switch order {
-	case VLR, Ascending:
-		return visit(next, n) && t._traverse(n.left, next, order, visit) && t._traverse(n.right, prefix, order, visit)
-	case VRL:
-		return visit(next, n) && t._traverse(n.right, prefix, order, visit) && t._traverse(n.left, next, order, visit)
-	case LVR:
-		return t._traverse(n.left, next, order, visit) && visit(next, n) && t._traverse(n.right, prefix, order, visit)
-	case RVL:
-		return t._traverse(n.right, prefix, order, visit) && visit(next, n) && t._traverse(n.left, next, order, visit)
-	case LRV:
-		return t._traverse(n.left, next, order, visit) && t._traverse(n.right, prefix, order, visit) && visit(next, n)
-	case RLV, Descending:
-		return t._traverse(n.right, prefix, order, visit) && t._traverse(n.left, next, order, visit) && visit(next, n)
-	default:
-		return false
-	}
-}
-
-// Graphviz returns a visualization of the Binary Trie in Graphviz format.
-func (t *binary[V]) Graphviz() string {
-	// Create a map of node --> id
-	var id int
-	nodeID := map[*binaryNode[V]]int{}
-	t._traverse(t.root, "", VLR, func(_ string, n *binaryNode[V]) bool {
-		id++
-		nodeID[n] = id
-		return true
-	})
-
-	graph := graphviz.NewGraph(true, true, false, "Binary Trie", "", "", "", graphviz.ShapeCircle)
-
-	t._traverse(t.root, "", VLR, func(_ string, n *binaryNode[V]) bool {
-		name := fmt.Sprintf("%d", nodeID[n])
-
-		var label string
-		var style graphviz.Style
-		var color, fontColor graphviz.Color
-
-		switch {
-		case n == t.root:
-			label = "•"
-		case !n.term:
-			label = string(n.char)
-		default:
-			label = fmt.Sprintf("%s,%v", string(n.char), n.val)
-			style, color, fontColor = graphviz.StyleFilled, graphviz.ColorBlack, graphviz.ColorWhite
-		}
-
-		graph.AddNode(graphviz.NewNode(name, "", label, color, style, "", fontColor, ""))
-
-		if n.left != nil {
-			left := fmt.Sprintf("%d", nodeID[n.left])
-			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", graphviz.ColorBlue, "", "", ""))
-		}
-
-		if n.right != nil {
-			right := fmt.Sprintf("%d", nodeID[n.right])
-			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", graphviz.ColorRed, "", "", ""))
-		}
-
-		return true
-	})
-
-	return graph.DotCode()
-}
-
 // Match returns all the keys and associated values in Binary trie
 // that match the given pattern in which * matches any character.
-func (t *binary[V]) Match(pattern string) []KeyValue[V] {
-	kvs := []KeyValue[V]{}
+func (t *binary[V]) Match(pattern string) []KeyValue[string, V] {
+	kvs := []KeyValue[string, V]{}
 	t._match(t.root.left, "", pattern, func(k string, n *binaryNode[V]) {
-		kvs = append(kvs, KeyValue[V]{k, n.val})
+		kvs = append(kvs, KeyValue[string, V]{k, n.val})
 	})
 
 	return kvs
@@ -564,10 +447,10 @@ func (t *binary[V]) _match(n *binaryNode[V], prefix, pattern string, visit func(
 }
 
 // WithPrefix returns all the keys and associated values in Binary trie with the given prefix.
-func (t *binary[V]) WithPrefix(key string) []KeyValue[V] {
-	kvs := []KeyValue[V]{}
+func (t *binary[V]) WithPrefix(key string) []KeyValue[string, V] {
+	kvs := []KeyValue[string, V]{}
 	t._withPrefix(t.root.left, "", key, func(k string, n *binaryNode[V]) {
-		kvs = append(kvs, KeyValue[V]{k, n.val})
+		kvs = append(kvs, KeyValue[string, V]{k, n.val})
 	})
 
 	return kvs
@@ -624,4 +507,156 @@ func (t *binary[V]) _allPrefixOf(n *binaryNode[V], prefix, key string, visit fun
 	} else {
 		t._allPrefixOf(n.right, prefix, key, visit)
 	}
+}
+
+// String returns a string representation of the Binary trie.
+func (t *binary[V]) String() string {
+	i := 0
+	pairs := make([]string, t.Size())
+
+	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
+		if n.term {
+			pairs[i] = fmt.Sprintf("<%v:%v>", k, n.val)
+			i++
+		}
+		return true
+	})
+
+	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
+}
+
+// Equals determines whether or not two Binary Tries have the same key-value pairs.
+func (t *binary[V]) Equals(u Trie[V]) bool {
+	tt, ok := u.(*binary[V])
+	if !ok {
+		return false
+	}
+
+	return t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool { // t ⊂ tt
+		if n.term {
+			val, ok := tt.Get(k)
+			return ok && t.eqVal(n.val, val)
+		}
+		return true
+	}) && tt._traverse(tt.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool { // tt ⊂ t
+		if n.term {
+			val, ok := t.Get(k)
+			return ok && t.eqVal(n.val, val)
+		}
+		return true
+	})
+}
+
+// All returns an iterator sequence containing all the key-value pairs in the Binary Trie.
+func (t *binary[V]) All() iter.Seq2[string, V] {
+	return func(yield func(string, V) bool) {
+		t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
+			return !n.term || yield(k, n.val)
+		})
+	}
+}
+
+// AnyMatch returns true if at least one key-value pair in the Binary Trie satisfies the provided predicate.
+func (t *binary[V]) AnyMatch(p Predicate2[string, V]) bool {
+	return !t._traverse(t.root.left, "", VLR, func(key string, n *binaryNode[V]) bool {
+		return !p(key, n.val)
+	})
+}
+
+// AllMatch returns true if all key-value pairs in the Binary Trie satisfy the provided predicate.
+// If the Binary Trie is empty, it returns true.
+func (t *binary[V]) AllMatch(p Predicate2[string, V]) bool {
+	return t._traverse(t.root.left, "", VLR, func(key string, n *binaryNode[V]) bool {
+		return p(key, n.val)
+	})
+}
+
+// Traverse performs a traversal of the Binary Trie using the specified traversal order
+// and yields the key-value pair of each node to the provided VisitFunc2 function.
+//
+// If the function returns false, the traversal is halted.
+func (t *binary[V]) Traverse(order TraverseOrder, visit VisitFunc2[string, V]) {
+	t._traverse(t.root, "", order, func(_ string, n *binaryNode[V]) bool {
+		// Special case of empty string
+		if n == t.root {
+			return visit("", n.val)
+		}
+		return visit(string(n.char), n.val)
+	})
+}
+
+// AllMatch returns true if all key-value pairs in the Binary Trie satisfy the provided predicate.
+// If the Binary Trie is empty, it returns false.
+func (t *binary[V]) _traverse(n *binaryNode[V], prefix string, order TraverseOrder, visit func(string, *binaryNode[V]) bool) bool {
+	if n == nil {
+		return true
+	}
+
+	next := prefix + string(n.char)
+
+	switch order {
+	case VLR, Ascending:
+		return visit(next, n) && t._traverse(n.left, next, order, visit) && t._traverse(n.right, prefix, order, visit)
+	case VRL:
+		return visit(next, n) && t._traverse(n.right, prefix, order, visit) && t._traverse(n.left, next, order, visit)
+	case LVR:
+		return t._traverse(n.left, next, order, visit) && visit(next, n) && t._traverse(n.right, prefix, order, visit)
+	case RVL:
+		return t._traverse(n.right, prefix, order, visit) && visit(next, n) && t._traverse(n.left, next, order, visit)
+	case LRV:
+		return t._traverse(n.left, next, order, visit) && t._traverse(n.right, prefix, order, visit) && visit(next, n)
+	case RLV, Descending:
+		return t._traverse(n.right, prefix, order, visit) && t._traverse(n.left, next, order, visit) && visit(next, n)
+	default:
+		return false
+	}
+}
+
+// Graphviz generates and returns a string representation of the Binary Trie in DOT format.
+// This format is commonly used for visualizing graphs with Graphviz tools.
+func (t *binary[V]) Graphviz() string {
+	// Create a map of node --> id
+	var id int
+	nodeID := map[*binaryNode[V]]int{}
+	t._traverse(t.root, "", VLR, func(_ string, n *binaryNode[V]) bool {
+		id++
+		nodeID[n] = id
+		return true
+	})
+
+	graph := graphviz.NewGraph(true, true, false, "Binary Trie", "", "", "", graphviz.ShapeCircle)
+
+	t._traverse(t.root, "", VLR, func(_ string, n *binaryNode[V]) bool {
+		name := fmt.Sprintf("%d", nodeID[n])
+
+		var label string
+		var style graphviz.Style
+		var color, fontColor graphviz.Color
+
+		switch {
+		case n == t.root:
+			label = "•"
+		case !n.term:
+			label = string(n.char)
+		default:
+			label = fmt.Sprintf("%s,%v", string(n.char), n.val)
+			style, color, fontColor = graphviz.StyleFilled, graphviz.ColorBlack, graphviz.ColorWhite
+		}
+
+		graph.AddNode(graphviz.NewNode(name, "", label, color, style, "", fontColor, ""))
+
+		if n.left != nil {
+			left := fmt.Sprintf("%d", nodeID[n.left])
+			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", graphviz.ColorBlue, "", "", ""))
+		}
+
+		if n.right != nil {
+			right := fmt.Sprintf("%d", nodeID[n.right])
+			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", graphviz.ColorRed, "", "", ""))
+		}
+
+		return true
+	})
+
+	return graph.DotCode()
 }

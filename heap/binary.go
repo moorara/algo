@@ -3,14 +3,14 @@ package heap
 import (
 	"fmt"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 )
 
 // binary implements a Binary heap.
 type binary[K, V any] struct {
-	cmpKey generic.CompareFunc[K]
-	eqVal  generic.EqualFunc[V]
+	cmpKey CompareFunc[K]
+	eqVal  EqualFunc[V]
 
 	n    int // number of items on heap
 	keys []K // binary heap of keys (priorities) using 1-based indexing
@@ -23,7 +23,7 @@ type binary[K, V any] struct {
 // size is the initial size of the heap (priority queue).
 // cmpKey is a function for comparing two keys.
 // eqVal is a function for checking the equality of two values.
-func NewBinary[K, V any](size int, cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) Heap[K, V] {
+func NewBinary[K, V any](size int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) Heap[K, V] {
 	return &binary[K, V]{
 		cmpKey: cmpKey,
 		eqVal:  eqVal,

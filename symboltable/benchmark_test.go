@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 )
 
 const (
@@ -91,8 +91,8 @@ func BenchmarkOrderedSymbolTable_Put(b *testing.B) {
 	seed := time.Now().UTC().UnixNano()
 	r = rand.New(rand.NewSource(seed))
 
-	cmpKey := generic.NewCompareFunc[string]()
-	eqVal := generic.NewEqualFunc[int]()
+	cmpKey := NewCompareFunc[string]()
+	eqVal := NewEqualFunc[int]()
 
 	b.Run("BST.Put", func(b *testing.B) {
 		ost := NewBST[string, int](cmpKey, eqVal)
@@ -114,8 +114,8 @@ func BenchmarkOrderedSymbolTable_Get(b *testing.B) {
 	seed := time.Now().UTC().UnixNano()
 	r = rand.New(rand.NewSource(seed))
 
-	cmpKey := generic.NewCompareFunc[string]()
-	eqVal := generic.NewEqualFunc[int]()
+	cmpKey := NewCompareFunc[string]()
+	eqVal := NewEqualFunc[int]()
 
 	b.Run("BST.Get", func(b *testing.B) {
 		ost := NewBST[string, int](cmpKey, eqVal)
@@ -137,8 +137,8 @@ func BenchmarkOrderedSymbolTable_Delete(b *testing.B) {
 	seed := time.Now().UTC().UnixNano()
 	r = rand.New(rand.NewSource(seed))
 
-	cmpKey := generic.NewCompareFunc[string]()
-	eqVal := generic.NewEqualFunc[int]()
+	cmpKey := NewCompareFunc[string]()
+	eqVal := NewEqualFunc[int]()
 
 	b.Run("BST.Delete", func(b *testing.B) {
 		ost := NewBST[string, int](cmpKey, eqVal)

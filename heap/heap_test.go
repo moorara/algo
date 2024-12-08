@@ -3,16 +3,11 @@ package heap
 import (
 	"testing"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 	"github.com/stretchr/testify/assert"
 )
 
 type (
-	KeyValue[K, V any] struct {
-		key K
-		val V
-	}
-
 	IndexedKeyValue[K, V any] struct {
 		idx int
 		key K
@@ -23,8 +18,8 @@ type (
 		name             string
 		heap             string
 		size             int
-		cmpKey           generic.CompareFunc[K]
-		eqVal            generic.EqualFunc[V]
+		cmpKey           CompareFunc[K]
+		eqVal            EqualFunc[V]
 		insertKVs        []KeyValue[K, V]
 		expectedSize     int
 		expectedIsEmpty  bool
@@ -38,8 +33,8 @@ type (
 		name                string
 		heap                string
 		cap                 int
-		cmpKey              generic.CompareFunc[K]
-		eqVal               generic.EqualFunc[V]
+		cmpKey              CompareFunc[K]
+		eqVal               EqualFunc[V]
 		insertKVs           []IndexedKeyValue[K, V]
 		changeKeyKVs        []IndexedKeyValue[K, V]
 		expectedSize        int
@@ -54,9 +49,9 @@ type (
 )
 
 func getHeapTests() []heapTest[int, string] {
-	eqVal := generic.NewEqualFunc[string]()
-	cmpMin := generic.NewCompareFunc[int]()
-	cmpMax := generic.NewInvertedCompareFunc[int]()
+	eqVal := NewEqualFunc[string]()
+	cmpMin := NewCompareFunc[int]()
+	cmpMax := NewReverseCompareFunc[int]()
 
 	return []heapTest[int, string]{
 		{
@@ -279,9 +274,9 @@ func getHeapTests() []heapTest[int, string] {
 }
 
 func getIndexedHeapTests() []indexedHeapTest[int, string] {
-	eqVal := generic.NewEqualFunc[string]()
-	cmpMin := generic.NewCompareFunc[int]()
-	cmpMax := generic.NewInvertedCompareFunc[int]()
+	eqVal := NewEqualFunc[string]()
+	cmpMin := NewCompareFunc[int]()
+	cmpMax := NewReverseCompareFunc[int]()
 
 	return []indexedHeapTest[int, string]{
 		{
@@ -620,7 +615,7 @@ func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string
 
 		t.Run("AfterInsert", func(t *testing.T) {
 			for _, kv := range test.insertKVs {
-				heap.Insert(kv.key, kv.val)
+				heap.Insert(kv.Key, kv.Val)
 			}
 
 			assert.Equal(t, test.expectedSize, heap.Size())
@@ -632,14 +627,14 @@ func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string
 				assert.Empty(t, peekVal)
 				assert.False(t, peekOK)
 			} else {
-				assert.Equal(t, test.expectedPeek.key, peekKey)
-				assert.Equal(t, test.expectedPeek.val, peekVal)
+				assert.Equal(t, test.expectedPeek.Key, peekKey)
+				assert.Equal(t, test.expectedPeek.Val, peekVal)
 				assert.True(t, peekOK)
 			}
 
 			for _, kv := range test.expectedContains {
-				assert.True(t, heap.ContainsKey(kv.key))
-				assert.True(t, heap.ContainsValue(kv.val))
+				assert.True(t, heap.ContainsKey(kv.Key))
+				assert.True(t, heap.ContainsValue(kv.Val))
 			}
 
 			// Graphviz dot language code
@@ -647,8 +642,8 @@ func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string
 
 			for _, kv := range test.expectedDelete {
 				deleteKey, deleteVal, deleteOK := heap.Delete()
-				assert.Equal(t, kv.key, deleteKey)
-				assert.Equal(t, kv.val, deleteVal)
+				assert.Equal(t, kv.Key, deleteKey)
+				assert.Equal(t, kv.Val, deleteVal)
 				assert.True(t, deleteOK)
 			}
 		})

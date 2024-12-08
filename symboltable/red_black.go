@@ -2,8 +2,10 @@ package symboltable
 
 import (
 	"fmt"
+	"iter"
+	"strings"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 )
 
@@ -23,8 +25,8 @@ type rbNode[K, V any] struct {
 // redBlack is a left-leaning Red-Black tree.
 type redBlack[K, V any] struct {
 	root   *rbNode[K, V]
-	cmpKey generic.CompareFunc[K]
-	eqVal  generic.EqualFunc[V]
+	cmpKey CompareFunc[K]
+	eqVal  EqualFunc[V]
 }
 
 // NewRedBlack creates a new Red-Black tree.
@@ -38,7 +40,7 @@ type redBlack[K, V any] struct {
 //	Every path from root to null link has the same number of black links.
 //
 // The second parameter (eqVal) is needed only if you want to use the Equals method.
-func NewRedBlack[K, V any](cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) OrderedSymbolTable[K, V] {
+func NewRedBlack[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) OrderedSymbolTable[K, V] {
 	return &redBlack[K, V]{
 		root:   nil,
 		cmpKey: cmpKey,
@@ -106,9 +108,9 @@ func (t *redBlack[K, V]) _isRankOK() bool {
 		}
 	}
 
-	for _, kv := range t.KeyValues() {
-		k, _, _ := t.Select(t.Rank(kv.Key))
-		if t.cmpKey(kv.Key, k) != 0 {
+	for key := range t.All() {
+		k, _, _ := t.Select(t.Rank(key))
+		if t.cmpKey(key, k) != 0 {
 			return false
 		}
 	}
@@ -256,7 +258,7 @@ func (t *redBlack[K, V]) _height(n *rbNode[K, V]) int {
 		return 0
 	}
 
-	return 1 + generic.Max[int](t._height(n.left), t._height(n.right))
+	return 1 + Max[int](t._height(n.left), t._height(n.right))
 }
 
 // IsEmpty returns true if the Red-Black tree is empty.
@@ -380,47 +382,6 @@ func (t *redBlack[K, V]) _delete(n *rbNode[K, V], key K) (*rbNode[K, V], V, bool
 	}
 
 	return t.balance(n), val, ok
-}
-
-// KeyValues returns all key-value pairs in the Red-Black tree.
-func (t *redBlack[K, V]) KeyValues() []KeyValue[K, V] {
-	kvs := make([]KeyValue[K, V], 0, t.Size())
-	t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool {
-		kvs = append(kvs, KeyValue[K, V]{n.key, n.val})
-		return true
-	})
-
-	return kvs
-}
-
-// Equals determines whether or not two Red-Black trees have the same key-value pairs.
-func (t *redBlack[K, V]) Equals(u SymbolTable[K, V]) bool {
-	tt, ok := u.(*redBlack[K, V])
-	if !ok {
-		return false
-	}
-
-	return t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool { // t ⊂ tt
-		val, ok := tt.Get(n.key)
-		return ok && t.eqVal(n.val, val)
-	}) && tt._traverse(tt.root, Ascending, func(n *rbNode[K, V]) bool { // tt ⊂ t
-		val, ok := t.Get(n.key)
-		return ok && t.eqVal(n.val, val)
-	})
-}
-
-// Any returns true if any of the key-value pairs in the Red-Black tree satisfy the given predicate.
-func (t *redBlack[K, V]) Any(p Predicate[K, V]) bool {
-	return !t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
-		return !p(n.key, n.val)
-	})
-}
-
-// All returns true if all key-value pairs in the Red-Black tree satisfy a given predicate.
-func (t *redBlack[K, V]) All(p Predicate[K, V]) bool {
-	return t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
-		return p(n.key, n.val)
-	})
 }
 
 // Min returns the minimum key and its value in the Red-Black tree.
@@ -646,17 +607,6 @@ func (t *redBlack[K, V]) _rank(n *rbNode[K, V], key K) int {
 	}
 }
 
-// RangeSize returns the number of keys in the Red-Black tree between two given keys.
-func (t *redBlack[K, V]) RangeSize(lo, hi K) int {
-	if t.cmpKey(lo, hi) > 0 {
-		return 0
-	} else if _, found := t.Get(hi); found {
-		return 1 + t.Rank(hi) - t.Rank(lo)
-	} else {
-		return t.Rank(hi) - t.Rank(lo)
-	}
-}
-
 // Range returns all keys and associated values in the Red-Black tree between two given keys.
 func (t *redBlack[K, V]) Range(lo, hi K) []KeyValue[K, V] {
 	kvs := make([]KeyValue[K, V], 0)
@@ -687,14 +637,82 @@ func (t *redBlack[K, V]) _range(n *rbNode[K, V], kvs *[]KeyValue[K, V], lo, hi K
 	return len
 }
 
-// Traverse is used for visiting all key-value pairs in the Red-Black tree.
-func (t *redBlack[K, V]) Traverse(order TraversalOrder, visit VisitFunc[K, V]) {
+// RangeSize returns the number of keys in the Red-Black tree between two given keys.
+func (t *redBlack[K, V]) RangeSize(lo, hi K) int {
+	if t.cmpKey(lo, hi) > 0 {
+		return 0
+	} else if _, found := t.Get(hi); found {
+		return 1 + t.Rank(hi) - t.Rank(lo)
+	} else {
+		return t.Rank(hi) - t.Rank(lo)
+	}
+}
+
+// String returns a string representation of the Red-Black tree.
+func (t *redBlack[K, V]) String() string {
+	i := 0
+	pairs := make([]string, t.Size())
+
+	t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool {
+		pairs[i] = fmt.Sprintf("<%v:%v>", n.key, n.val)
+		i++
+		return true
+	})
+
+	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
+}
+
+// Equals determines whether or not two Red-Black trees have the same key-value pairs.
+func (t *redBlack[K, V]) Equals(u SymbolTable[K, V]) bool {
+	tt, ok := u.(*redBlack[K, V])
+	if !ok {
+		return false
+	}
+
+	return t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool { // t ⊂ tt
+		val, ok := tt.Get(n.key)
+		return ok && t.eqVal(n.val, val)
+	}) && tt._traverse(tt.root, Ascending, func(n *rbNode[K, V]) bool { // tt ⊂ t
+		val, ok := t.Get(n.key)
+		return ok && t.eqVal(n.val, val)
+	})
+}
+
+// All returns an iterator sequence containing all the key-value pairs in the Red-Black tree.
+func (t *redBlack[K, V]) All() iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool {
+			return yield(n.key, n.val)
+		})
+	}
+}
+
+// AnyMatch returns true if at least one key-value pair in the Red-Black tree satisfies the provided predicate.
+func (t *redBlack[K, V]) AnyMatch(p Predicate2[K, V]) bool {
+	return !t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+		return !p(n.key, n.val)
+	})
+}
+
+// AllMatch returns true if all key-value pairs in the Red-Black tree satisfy the provided predicate.
+// If the Red-Black tree is empty, it returns true.
+func (t *redBlack[K, V]) AllMatch(p Predicate2[K, V]) bool {
+	return t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+		return p(n.key, n.val)
+	})
+}
+
+// Traverse performs a traversal of the Red-Black tree using the specified traversal order
+// and yields the key-value pair of each node to the provided VisitFunc2 function.
+//
+// If the function returns false, the traversal is halted.
+func (t *redBlack[K, V]) Traverse(order TraverseOrder, visit VisitFunc2[K, V]) {
 	t._traverse(t.root, order, func(n *rbNode[K, V]) bool {
 		return visit(n.key, n.val)
 	})
 }
 
-func (t *redBlack[K, V]) _traverse(n *rbNode[K, V], order TraversalOrder, visit func(*rbNode[K, V]) bool) bool {
+func (t *redBlack[K, V]) _traverse(n *rbNode[K, V], order TraverseOrder, visit func(*rbNode[K, V]) bool) bool {
 	if n == nil {
 		return true
 	}
@@ -717,7 +735,8 @@ func (t *redBlack[K, V]) _traverse(n *rbNode[K, V], order TraversalOrder, visit 
 	}
 }
 
-// Graphviz returns a visualization of the Red-Black tree in Graphviz format.
+// Graphviz generates and returns a string representation of the Red-Black tree in DOT format.
+// This format is commonly used for visualizing graphs with Graphviz tools.
 func (t *redBlack[K, V]) Graphviz() string {
 	// Create a map of node --> id
 	var id int

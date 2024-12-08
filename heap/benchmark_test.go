@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 )
 
 const (
@@ -103,9 +103,9 @@ func BenchmarkHeap_Insert(b *testing.B) {
 	r = rand.New(rand.NewSource(seed))
 
 	const size = 1024
-	eqVal := generic.NewEqualFunc[string]()
-	cmpMin := generic.NewCompareFunc[int]()
-	cmpMax := generic.NewInvertedCompareFunc[int]()
+	eqVal := NewEqualFunc[string]()
+	cmpMin := NewCompareFunc[int]()
+	cmpMax := NewReverseCompareFunc[int]()
 
 	b.Run("BinaryMinHeap.Insert", func(b *testing.B) {
 		heap := NewBinary(size, cmpMin, eqVal)
@@ -123,9 +123,9 @@ func BenchmarkHeap_Delete(b *testing.B) {
 	r = rand.New(rand.NewSource(seed))
 
 	const size = 1024
-	eqVal := generic.NewEqualFunc[string]()
-	cmpMin := generic.NewCompareFunc[int]()
-	cmpMax := generic.NewInvertedCompareFunc[int]()
+	eqVal := NewEqualFunc[string]()
+	cmpMin := NewCompareFunc[int]()
+	cmpMax := NewReverseCompareFunc[int]()
 
 	b.Run("BinaryMinHeap.Delete", func(b *testing.B) {
 		heap := NewBinary(size, cmpMin, eqVal)
@@ -142,9 +142,9 @@ func BenchmarkIndexedHeap_Insert(b *testing.B) {
 	seed := time.Now().UTC().UnixNano()
 	r = rand.New(rand.NewSource(seed))
 
-	eqVal := generic.NewEqualFunc[string]()
-	cmpMin := generic.NewCompareFunc[int]()
-	cmpMax := generic.NewInvertedCompareFunc[int]()
+	eqVal := NewEqualFunc[string]()
+	cmpMin := NewCompareFunc[int]()
+	cmpMax := NewReverseCompareFunc[int]()
 
 	b.Run("BinaryMinIndexedHeap.Insert", func(b *testing.B) {
 		heap := NewIndexedBinary[int, string](b.N, cmpMin, eqVal)
@@ -161,9 +161,9 @@ func BenchmarkIndexedHeap_Delete(b *testing.B) {
 	seed := time.Now().UTC().UnixNano()
 	r = rand.New(rand.NewSource(seed))
 
-	eqVal := generic.NewEqualFunc[string]()
-	cmpMin := generic.NewCompareFunc[int]()
-	cmpMax := generic.NewInvertedCompareFunc[int]()
+	eqVal := NewEqualFunc[string]()
+	cmpMin := NewCompareFunc[int]()
+	cmpMax := NewReverseCompareFunc[int]()
 
 	b.Run("BinaryMinIndexedHeap.Delete", func(b *testing.B) {
 		heap := NewIndexedBinary[int, string](b.N, cmpMin, eqVal)

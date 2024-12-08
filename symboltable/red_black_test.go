@@ -3,7 +3,7 @@ package symboltable
 import (
 	"testing"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 )
 
 func getRedBlackTests() []orderedSymbolTableTest[string, int] {
@@ -35,7 +35,7 @@ func getRedBlackTests() []orderedSymbolTableTest[string, int] {
 
 	tests[1].symbolTable = "LLRB Tree"
 	tests[1].expectedHeight = 3
-	tests[1].equals = NewRedBlack[string, int](generic.NewCompareFunc[string](), nil)
+	tests[1].equals = NewRedBlack[string, int](NewCompareFunc[string](), nil)
 	tests[1].expectedEquals = false
 	tests[1].expectedVLRTraverse = []KeyValue[string, int]{{"D", 4}, {"B", 2}, {"A", 1}, {"C", 3}, {"E", 5}}
 	tests[1].expectedVRLTraverse = []KeyValue[string, int]{{"D", 4}, {"E", 5}, {"B", 2}, {"C", 3}, {"A", 1}}
@@ -63,7 +63,7 @@ func getRedBlackTests() []orderedSymbolTableTest[string, int] {
 
 	tests[2].symbolTable = "LLRB Tree"
 	tests[2].expectedHeight = 3
-	tests[2].equals = NewRedBlack[string, int](generic.NewCompareFunc[string](), nil)
+	tests[2].equals = NewRedBlack[string, int](NewCompareFunc[string](), nil)
 	tests[2].equals.Put("D", 4)
 	tests[2].equals.Put("J", 10)
 	tests[2].equals.Put("P", 16)
@@ -98,7 +98,7 @@ func getRedBlackTests() []orderedSymbolTableTest[string, int] {
 
 	tests[3].symbolTable = "LLRB Tree"
 	tests[3].expectedHeight = 3
-	tests[3].equals = NewRedBlack[string, int](generic.NewCompareFunc[string](), nil)
+	tests[3].equals = NewRedBlack[string, int](NewCompareFunc[string](), nil)
 	tests[3].equals.Put("box", 2)
 	tests[3].equals.Put("dad", 3)
 	tests[3].equals.Put("baby", 5)

@@ -2,8 +2,10 @@ package symboltable
 
 import (
 	"fmt"
+	"iter"
+	"strings"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 )
 
@@ -16,8 +18,8 @@ type avlNode[K, V any] struct {
 
 type avl[K, V any] struct {
 	root   *avlNode[K, V]
-	cmpKey generic.CompareFunc[K]
-	eqVal  generic.EqualFunc[V]
+	cmpKey CompareFunc[K]
+	eqVal  EqualFunc[V]
 }
 
 // NewAVL creates a new AVL tree.
@@ -26,7 +28,7 @@ type avl[K, V any] struct {
 // In an AVL tree, the heights of the left and right subtrees of any node differ by at most 1.
 //
 // The second parameter (eqVal) is needed only if you want to use the Equals method.
-func NewAVL[K, V any](cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) OrderedSymbolTable[K, V] {
+func NewAVL[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) OrderedSymbolTable[K, V] {
 	return &avl[K, V]{
 		root:   nil,
 		cmpKey: cmpKey,
@@ -92,9 +94,9 @@ func (t *avl[K, V]) _isRankOK() bool {
 		}
 	}
 
-	for _, kv := range t.KeyValues() {
-		k, _, _ := t.Select(t.Rank(kv.Key))
-		if t.cmpKey(kv.Key, k) != 0 {
+	for key := range t.All() {
+		k, _, _ := t.Select(t.Rank(key))
+		if t.cmpKey(key, k) != 0 {
 			return false
 		}
 	}
@@ -129,8 +131,8 @@ func (t *avl[K, V]) rotateLeft(n *avlNode[K, V]) *avlNode[K, V] {
 
 	r.size = n.size
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + generic.Max[int](t._height(n.left), t._height(n.right))
-	r.height = 1 + generic.Max[int](t._height(r.left), t._height(r.right))
+	n.height = 1 + Max[int](t._height(n.left), t._height(n.right))
+	r.height = 1 + Max[int](t._height(r.left), t._height(r.right))
 
 	return r
 }
@@ -142,8 +144,8 @@ func (t *avl[K, V]) rotateRight(n *avlNode[K, V]) *avlNode[K, V] {
 
 	l.size = n.size
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + generic.Max[int](t._height(n.left), t._height(n.right))
-	l.height = 1 + generic.Max[int](t._height(l.left), t._height(l.right))
+	n.height = 1 + Max[int](t._height(n.left), t._height(n.right))
+	l.height = 1 + Max[int](t._height(l.left), t._height(l.right))
 
 	return l
 }
@@ -206,7 +208,7 @@ func (t *avl[K, V]) _put(n *avlNode[K, V], key K, val V) *avlNode[K, V] {
 	}
 
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + generic.Max[int](t._height(n.left), t._height(n.right))
+	n.height = 1 + Max[int](t._height(n.left), t._height(n.right))
 
 	return t.balance(n)
 }
@@ -270,49 +272,8 @@ func (t *avl[K, V]) _delete(n *avlNode[K, V], key K) (*avlNode[K, V], V, bool) {
 	}
 
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + generic.Max[int](t._height(n.left), t._height(n.right))
+	n.height = 1 + Max[int](t._height(n.left), t._height(n.right))
 	return t.balance(n), val, ok
-}
-
-// KeyValues returns all key-value pairs in the AVL tree.
-func (t *avl[K, V]) KeyValues() []KeyValue[K, V] {
-	kvs := make([]KeyValue[K, V], 0, t.Size())
-	t._traverse(t.root, Ascending, func(n *avlNode[K, V]) bool {
-		kvs = append(kvs, KeyValue[K, V]{n.key, n.val})
-		return true
-	})
-
-	return kvs
-}
-
-// Equals determines whether or not two AVLs have the same key-value pairs.
-func (t *avl[K, V]) Equals(u SymbolTable[K, V]) bool {
-	tt, ok := u.(*avl[K, V])
-	if !ok {
-		return false
-	}
-
-	return t._traverse(t.root, Ascending, func(n *avlNode[K, V]) bool { // t ⊂ tt
-		val, ok := tt.Get(n.key)
-		return ok && t.eqVal(n.val, val)
-	}) && tt._traverse(tt.root, Ascending, func(n *avlNode[K, V]) bool { // tt ⊂ t
-		val, ok := t.Get(n.key)
-		return ok && t.eqVal(n.val, val)
-	})
-}
-
-// Any returns true if any of the key-value pairs in the AVL tree satisfy the given predicate.
-func (t *avl[K, V]) Any(p Predicate[K, V]) bool {
-	return !t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
-		return !p(n.key, n.val)
-	})
-}
-
-// All returns true if all key-value pairs in the AVL tree satisfy a given predicate.
-func (t *avl[K, V]) All(p Predicate[K, V]) bool {
-	return t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
-		return p(n.key, n.val)
-	})
 }
 
 // Min returns the minimum key and its value in the AVL tree.
@@ -436,7 +397,7 @@ func (t *avl[K, V]) _deleteMin(n *avlNode[K, V]) (*avlNode[K, V], *avlNode[K, V]
 	var min *avlNode[K, V]
 	n.left, min = t._deleteMin(n.left)
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + generic.Max[int](t._height(n.left), t._height(n.right))
+	n.height = 1 + Max[int](t._height(n.left), t._height(n.right))
 	return t.balance(n), min
 }
 
@@ -513,17 +474,6 @@ func (t *avl[K, V]) _rank(n *avlNode[K, V], key K) int {
 	}
 }
 
-// RangeSize returns the number of keys in the AVL tree between two given keys.
-func (t *avl[K, V]) RangeSize(lo, hi K) int {
-	if t.cmpKey(lo, hi) > 0 {
-		return 0
-	} else if _, found := t.Get(hi); found {
-		return 1 + t.Rank(hi) - t.Rank(lo)
-	} else {
-		return t.Rank(hi) - t.Rank(lo)
-	}
-}
-
 // Range returns all keys and associated values in the AVL tree between two given keys.
 func (t *avl[K, V]) Range(lo, hi K) []KeyValue[K, V] {
 	kvs := make([]KeyValue[K, V], 0)
@@ -554,14 +504,82 @@ func (t *avl[K, V]) _range(n *avlNode[K, V], kvs *[]KeyValue[K, V], lo, hi K) in
 	return len
 }
 
-// Traverse is used for visiting all key-value pairs in the AVL tree.
-func (t *avl[K, V]) Traverse(order TraversalOrder, visit VisitFunc[K, V]) {
+// RangeSize returns the number of keys in the AVL tree between two given keys.
+func (t *avl[K, V]) RangeSize(lo, hi K) int {
+	if t.cmpKey(lo, hi) > 0 {
+		return 0
+	} else if _, found := t.Get(hi); found {
+		return 1 + t.Rank(hi) - t.Rank(lo)
+	} else {
+		return t.Rank(hi) - t.Rank(lo)
+	}
+}
+
+// String returns a string representation of the AVL tree.
+func (t *avl[K, V]) String() string {
+	i := 0
+	pairs := make([]string, t.Size())
+
+	t._traverse(t.root, Ascending, func(n *avlNode[K, V]) bool {
+		pairs[i] = fmt.Sprintf("<%v:%v>", n.key, n.val)
+		i++
+		return true
+	})
+
+	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
+}
+
+// Equals determines whether or not two AVLs have the same key-value pairs.
+func (t *avl[K, V]) Equals(u SymbolTable[K, V]) bool {
+	tt, ok := u.(*avl[K, V])
+	if !ok {
+		return false
+	}
+
+	return t._traverse(t.root, Ascending, func(n *avlNode[K, V]) bool { // t ⊂ tt
+		val, ok := tt.Get(n.key)
+		return ok && t.eqVal(n.val, val)
+	}) && tt._traverse(tt.root, Ascending, func(n *avlNode[K, V]) bool { // tt ⊂ t
+		val, ok := t.Get(n.key)
+		return ok && t.eqVal(n.val, val)
+	})
+}
+
+// All returns an iterator sequence containing all the key-value pairs in the AVL tree.
+func (t *avl[K, V]) All() iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		t._traverse(t.root, Ascending, func(n *avlNode[K, V]) bool {
+			return yield(n.key, n.val)
+		})
+	}
+}
+
+// AnyMatch returns true if at least one key-value pair in the AVL tree satisfies the provided predicate.
+func (t *avl[K, V]) AnyMatch(p Predicate2[K, V]) bool {
+	return !t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
+		return !p(n.key, n.val)
+	})
+}
+
+// AllMatch returns true if all key-value pairs in the AVL tree satisfy the provided predicate.
+// If the AVL tree is empty, it returns true.
+func (t *avl[K, V]) AllMatch(p Predicate2[K, V]) bool {
+	return t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
+		return p(n.key, n.val)
+	})
+}
+
+// Traverse performs a traversal of the AVL tree using the specified traversal order
+// and yields the key-value pair of each node to the provided VisitFunc2 function.
+//
+// If the function returns false, the traversal is halted.
+func (t *avl[K, V]) Traverse(order TraverseOrder, visit VisitFunc2[K, V]) {
 	t._traverse(t.root, order, func(n *avlNode[K, V]) bool {
 		return visit(n.key, n.val)
 	})
 }
 
-func (t *avl[K, V]) _traverse(n *avlNode[K, V], order TraversalOrder, visit func(*avlNode[K, V]) bool) bool {
+func (t *avl[K, V]) _traverse(n *avlNode[K, V], order TraverseOrder, visit func(*avlNode[K, V]) bool) bool {
 	if n == nil {
 		return true
 	}
@@ -584,7 +602,8 @@ func (t *avl[K, V]) _traverse(n *avlNode[K, V], order TraversalOrder, visit func
 	}
 }
 
-// Graphviz returns a visualization of the AVL tree in Graphviz format.
+// Graphviz generates and returns a string representation of the AVL tree in DOT format.
+// This format is commonly used for visualizing graphs with Graphviz tools.
 func (t *avl[K, V]) Graphviz() string {
 	// Create a map of node --> id
 	var id int

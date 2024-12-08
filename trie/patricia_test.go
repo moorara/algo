@@ -1,20 +1,24 @@
 package trie
 
-import "testing"
+import (
+	"testing"
+
+	. "github.com/moorara/algo/generic"
+)
 
 func getPatriciaTests() []trieTest[int] {
 	tests := getTrieTests()
 
-	tests[0].symbolTable = "Patricia"
+	tests[0].trie = "Patricia"
 	tests[0].expectedHeight = 2
-	tests[0].expectedVLRTraverse = []KeyValue[int]{{"B", 2}, {"A", 1}, {"C", 3}}
-	tests[0].expectedVRLTraverse = []KeyValue[int]{{"B", 2}, {"A", 1}, {"C", 3}}
-	tests[0].expectedLVRTraverse = []KeyValue[int]{{"A", 1}, {"C", 3}, {"B", 2}}
-	tests[0].expectedRVLTraverse = []KeyValue[int]{{"B", 2}, {"C", 3}, {"A", 1}}
-	tests[0].expectedLRVTraverse = []KeyValue[int]{{"C", 3}, {"A", 1}, {"B", 2}}
-	tests[0].expectedRLVTraverse = []KeyValue[int]{{"C", 3}, {"A", 1}, {"B", 2}}
-	tests[0].expectedAscendingTraverse = []KeyValue[int]{{"A", 1}, {"B", 2}, {"C", 3}}
-	tests[0].expectedDescendingTraverse = []KeyValue[int]{{"C", 3}, {"B", 2}, {"A", 1}}
+	tests[0].expectedVLRTraverse = []KeyValue[string, int]{{"B", 2}, {"A", 1}, {"C", 3}}
+	tests[0].expectedVRLTraverse = []KeyValue[string, int]{{"B", 2}, {"A", 1}, {"C", 3}}
+	tests[0].expectedLVRTraverse = []KeyValue[string, int]{{"A", 1}, {"C", 3}, {"B", 2}}
+	tests[0].expectedRVLTraverse = []KeyValue[string, int]{{"B", 2}, {"C", 3}, {"A", 1}}
+	tests[0].expectedLRVTraverse = []KeyValue[string, int]{{"C", 3}, {"A", 1}, {"B", 2}}
+	tests[0].expectedRLVTraverse = []KeyValue[string, int]{{"C", 3}, {"A", 1}, {"B", 2}}
+	tests[0].expectedAscendingTraverse = []KeyValue[string, int]{{"A", 1}, {"B", 2}, {"C", 3}}
+	tests[0].expectedDescendingTraverse = []KeyValue[string, int]{{"C", 3}, {"B", 2}, {"A", 1}}
 	tests[0].equals = nil
 	tests[0].expectedEquals = false
 	tests[0].expectedGraphviz = `strict digraph "Patricia" {
@@ -33,16 +37,16 @@ func getPatriciaTests() []trieTest[int] {
   3:r -> 3 [color=red, style=dashed];
 }`
 
-	tests[1].symbolTable = "Patricia"
+	tests[1].trie = "Patricia"
 	tests[1].expectedHeight = 3
-	tests[1].expectedVLRTraverse = []KeyValue[int]{{"B", 2}, {"D", 4}, {"A", 1}, {"C", 3}, {"E", 5}}
-	tests[1].expectedVRLTraverse = []KeyValue[int]{{"B", 2}, {"D", 4}, {"E", 5}, {"A", 1}, {"C", 3}}
-	tests[1].expectedLVRTraverse = []KeyValue[int]{{"A", 1}, {"C", 3}, {"D", 4}, {"E", 5}, {"B", 2}}
-	tests[1].expectedRVLTraverse = []KeyValue[int]{{"B", 2}, {"E", 5}, {"D", 4}, {"C", 3}, {"A", 1}}
-	tests[1].expectedLRVTraverse = []KeyValue[int]{{"C", 3}, {"A", 1}, {"E", 5}, {"D", 4}, {"B", 2}}
-	tests[1].expectedRLVTraverse = []KeyValue[int]{{"E", 5}, {"C", 3}, {"A", 1}, {"D", 4}, {"B", 2}}
-	tests[1].expectedAscendingTraverse = []KeyValue[int]{{"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5}}
-	tests[1].expectedDescendingTraverse = []KeyValue[int]{{"E", 5}, {"D", 4}, {"C", 3}, {"B", 2}, {"A", 1}}
+	tests[1].expectedVLRTraverse = []KeyValue[string, int]{{"B", 2}, {"D", 4}, {"A", 1}, {"C", 3}, {"E", 5}}
+	tests[1].expectedVRLTraverse = []KeyValue[string, int]{{"B", 2}, {"D", 4}, {"E", 5}, {"A", 1}, {"C", 3}}
+	tests[1].expectedLVRTraverse = []KeyValue[string, int]{{"A", 1}, {"C", 3}, {"D", 4}, {"E", 5}, {"B", 2}}
+	tests[1].expectedRVLTraverse = []KeyValue[string, int]{{"B", 2}, {"E", 5}, {"D", 4}, {"C", 3}, {"A", 1}}
+	tests[1].expectedLRVTraverse = []KeyValue[string, int]{{"C", 3}, {"A", 1}, {"E", 5}, {"D", 4}, {"B", 2}}
+	tests[1].expectedRLVTraverse = []KeyValue[string, int]{{"E", 5}, {"C", 3}, {"A", 1}, {"D", 4}, {"B", 2}}
+	tests[1].expectedAscendingTraverse = []KeyValue[string, int]{{"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5}}
+	tests[1].expectedDescendingTraverse = []KeyValue[string, int]{{"E", 5}, {"D", 4}, {"C", 3}, {"B", 2}, {"A", 1}}
 	tests[1].equals = NewPatricia[int](nil)
 	tests[1].expectedEquals = false
 	tests[1].expectedGraphviz = `strict digraph "Patricia" {
@@ -67,16 +71,16 @@ func getPatriciaTests() []trieTest[int] {
   5:r -> 5 [color=red, style=dashed];
 }`
 
-	tests[2].symbolTable = "Patricia"
+	tests[2].trie = "Patricia"
 	tests[2].expectedHeight = 4
-	tests[2].expectedVLRTraverse = []KeyValue[int]{{"J", 10}, {"P", 16}, {"D", 4}, {"A", 1}, {"G", 7}, {"M", 13}, {"S", 19}}
-	tests[2].expectedVRLTraverse = []KeyValue[int]{{"J", 10}, {"P", 16}, {"S", 19}, {"D", 4}, {"M", 13}, {"A", 1}, {"G", 7}}
-	tests[2].expectedLVRTraverse = []KeyValue[int]{{"A", 1}, {"G", 7}, {"D", 4}, {"M", 13}, {"P", 16}, {"S", 19}, {"J", 10}}
-	tests[2].expectedRVLTraverse = []KeyValue[int]{{"J", 10}, {"S", 19}, {"P", 16}, {"M", 13}, {"D", 4}, {"G", 7}, {"A", 1}}
-	tests[2].expectedLRVTraverse = []KeyValue[int]{{"G", 7}, {"A", 1}, {"M", 13}, {"D", 4}, {"S", 19}, {"P", 16}, {"J", 10}}
-	tests[2].expectedRLVTraverse = []KeyValue[int]{{"S", 19}, {"M", 13}, {"G", 7}, {"A", 1}, {"D", 4}, {"P", 16}, {"J", 10}}
-	tests[2].expectedAscendingTraverse = []KeyValue[int]{{"A", 1}, {"D", 4}, {"G", 7}, {"J", 10}, {"M", 13}, {"P", 16}, {"S", 19}}
-	tests[2].expectedDescendingTraverse = []KeyValue[int]{{"S", 19}, {"P", 16}, {"M", 13}, {"J", 10}, {"G", 7}, {"D", 4}, {"A", 1}}
+	tests[2].expectedVLRTraverse = []KeyValue[string, int]{{"J", 10}, {"P", 16}, {"D", 4}, {"A", 1}, {"G", 7}, {"M", 13}, {"S", 19}}
+	tests[2].expectedVRLTraverse = []KeyValue[string, int]{{"J", 10}, {"P", 16}, {"S", 19}, {"D", 4}, {"M", 13}, {"A", 1}, {"G", 7}}
+	tests[2].expectedLVRTraverse = []KeyValue[string, int]{{"A", 1}, {"G", 7}, {"D", 4}, {"M", 13}, {"P", 16}, {"S", 19}, {"J", 10}}
+	tests[2].expectedRVLTraverse = []KeyValue[string, int]{{"J", 10}, {"S", 19}, {"P", 16}, {"M", 13}, {"D", 4}, {"G", 7}, {"A", 1}}
+	tests[2].expectedLRVTraverse = []KeyValue[string, int]{{"G", 7}, {"A", 1}, {"M", 13}, {"D", 4}, {"S", 19}, {"P", 16}, {"J", 10}}
+	tests[2].expectedRLVTraverse = []KeyValue[string, int]{{"S", 19}, {"M", 13}, {"G", 7}, {"A", 1}, {"D", 4}, {"P", 16}, {"J", 10}}
+	tests[2].expectedAscendingTraverse = []KeyValue[string, int]{{"A", 1}, {"D", 4}, {"G", 7}, {"J", 10}, {"M", 13}, {"P", 16}, {"S", 19}}
+	tests[2].expectedDescendingTraverse = []KeyValue[string, int]{{"S", 19}, {"P", 16}, {"M", 13}, {"J", 10}, {"G", 7}, {"D", 4}, {"A", 1}}
 	tests[2].equals = NewPatricia[int](nil)
 	tests[2].equals.Put("A", 1)
 	tests[2].equals.Put("D", 4)
@@ -110,16 +114,16 @@ func getPatriciaTests() []trieTest[int] {
   7:r -> 7 [color=red, style=dashed];
 }`
 
-	tests[3].symbolTable = "Patricia"
+	tests[3].trie = "Patricia"
 	tests[3].expectedHeight = 4
-	tests[3].expectedVLRTraverse = []KeyValue[int]{{"box", 2}, {"dad", 3}, {"band", 11}, {"baby", 5}, {"balloon", 17}, {"dome", 7}, {"dance", 13}}
-	tests[3].expectedVRLTraverse = []KeyValue[int]{{"box", 2}, {"dad", 3}, {"dome", 7}, {"dance", 13}, {"band", 11}, {"baby", 5}, {"balloon", 17}}
-	tests[3].expectedLVRTraverse = []KeyValue[int]{{"baby", 5}, {"balloon", 17}, {"band", 11}, {"dad", 3}, {"dance", 13}, {"dome", 7}, {"box", 2}}
-	tests[3].expectedRVLTraverse = []KeyValue[int]{{"box", 2}, {"dome", 7}, {"dance", 13}, {"dad", 3}, {"band", 11}, {"balloon", 17}, {"baby", 5}}
-	tests[3].expectedLRVTraverse = []KeyValue[int]{{"balloon", 17}, {"baby", 5}, {"band", 11}, {"dance", 13}, {"dome", 7}, {"dad", 3}, {"box", 2}}
-	tests[3].expectedRLVTraverse = []KeyValue[int]{{"dance", 13}, {"dome", 7}, {"balloon", 17}, {"baby", 5}, {"band", 11}, {"dad", 3}, {"box", 2}}
-	tests[3].expectedAscendingTraverse = []KeyValue[int]{{"baby", 5}, {"balloon", 17}, {"band", 11}, {"box", 2}, {"dad", 3}, {"dance", 13}, {"dome", 7}}
-	tests[3].expectedDescendingTraverse = []KeyValue[int]{{"dome", 7}, {"dance", 13}, {"dad", 3}, {"box", 2}, {"band", 11}, {"balloon", 17}, {"baby", 5}}
+	tests[3].expectedVLRTraverse = []KeyValue[string, int]{{"box", 2}, {"dad", 3}, {"band", 11}, {"baby", 5}, {"balloon", 17}, {"dome", 7}, {"dance", 13}}
+	tests[3].expectedVRLTraverse = []KeyValue[string, int]{{"box", 2}, {"dad", 3}, {"dome", 7}, {"dance", 13}, {"band", 11}, {"baby", 5}, {"balloon", 17}}
+	tests[3].expectedLVRTraverse = []KeyValue[string, int]{{"baby", 5}, {"balloon", 17}, {"band", 11}, {"dad", 3}, {"dance", 13}, {"dome", 7}, {"box", 2}}
+	tests[3].expectedRVLTraverse = []KeyValue[string, int]{{"box", 2}, {"dome", 7}, {"dance", 13}, {"dad", 3}, {"band", 11}, {"balloon", 17}, {"baby", 5}}
+	tests[3].expectedLRVTraverse = []KeyValue[string, int]{{"balloon", 17}, {"baby", 5}, {"band", 11}, {"dance", 13}, {"dome", 7}, {"dad", 3}, {"box", 2}}
+	tests[3].expectedRLVTraverse = []KeyValue[string, int]{{"dance", 13}, {"dome", 7}, {"balloon", 17}, {"baby", 5}, {"band", 11}, {"dad", 3}, {"box", 2}}
+	tests[3].expectedAscendingTraverse = []KeyValue[string, int]{{"baby", 5}, {"balloon", 17}, {"band", 11}, {"box", 2}, {"dad", 3}, {"dance", 13}, {"dome", 7}}
+	tests[3].expectedDescendingTraverse = []KeyValue[string, int]{{"dome", 7}, {"dance", 13}, {"dad", 3}, {"box", 2}, {"band", 11}, {"balloon", 17}, {"baby", 5}}
 	tests[3].equals = NewPatricia[int](nil)
 	tests[3].equals.Put("box", 2)
 	tests[3].equals.Put("dad", 3)

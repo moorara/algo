@@ -173,33 +173,33 @@ func TestWeightedDirected(t *testing.T) {
 				e:   15,
 				ins: []int{2, 1, 1, 1, 2, 3, 3, 2},
 				adj: [][]DirectedEdge{
-					[]DirectedEdge{
+					{
 						{0, 6, 0.58},
 					},
-					[]DirectedEdge{
+					{
 						{1, 5, 0.32},
 					},
-					[]DirectedEdge{
+					{
 						{2, 0, 0.26},
 						{2, 6, 0.40},
 					},
-					[]DirectedEdge{
+					{
 						{3, 1, 0.29},
 						{3, 7, 0.39},
 					},
-					[]DirectedEdge{
+					{
 						{4, 0, 0.38},
 						{4, 5, 0.35},
 						{4, 6, 0.93},
 					},
-					[]DirectedEdge{
+					{
 						{5, 4, 0.35},
 						{5, 7, 0.28},
 					},
-					[]DirectedEdge{
+					{
 						{6, 3, 0.52},
 					},
-					[]DirectedEdge{
+					{
 						{7, 2, 0.34},
 						{7, 4, 0.37},
 						{7, 5, 0.28},

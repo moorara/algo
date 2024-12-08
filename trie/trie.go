@@ -1,50 +1,27 @@
 // Package trie implements prefix tree data structures.
 package trie
 
-// TraversalOrder is the order for traversing nodes in a tree.
-type TraversalOrder int
+import (
+	"fmt"
 
-const (
-	// VLR is a pre-order traversal from left to right.
-	VLR TraversalOrder = iota
-	// VLR is a pre-order traversal from right to left.
-	VRL
-	// VLR is an in-order traversal from left to right.
-	LVR
-	// RVL is an in-order traversal from right to left.
-	RVL
-	// LRV is a post-order traversal from left to right.
-	LRV
-	// LRV is a post-order traversal from right to left.
-	RLV
-	// Ascending is key-ascending traversal.
-	Ascending
-	// Descending is key-descending traversal.
-	Descending
-)
-
-type (
-	// The VisitFunc type is a function for visiting a key-value pair.
-	VisitFunc[V any] func(string, V) bool
-
-	// KeyValue represents a key-value pair.
-	KeyValue[V any] struct {
-		Key string
-		Val V
-	}
+	. "github.com/moorara/algo/generic"
 )
 
 // Trie represents a trie (prefix tree) abstract data type.
 type Trie[V any] interface {
+	fmt.Stringer
+	Equaler[Trie[V]]
+	Collection2[string, V]
+	Tree2[string, V]
+
 	verify() bool
+
 	Size() int
 	Height() int
 	IsEmpty() bool
 	Put(string, V)
 	Get(string) (V, bool)
 	Delete(string) (V, bool)
-	KeyValues() []KeyValue[V]
-	Equals(Trie[V]) bool
 
 	Min() (string, V, bool)
 	Max() (string, V, bool)
@@ -54,12 +31,10 @@ type Trie[V any] interface {
 	DeleteMax() (string, V, bool)
 	Select(int) (string, V, bool)
 	Rank(string) int
+	Range(string, string) []KeyValue[string, V]
 	RangeSize(string, string) int
-	Range(string, string) []KeyValue[V]
-	Traverse(TraversalOrder, VisitFunc[V])
-	Graphviz() string
 
-	Match(string) []KeyValue[V]
-	WithPrefix(string) []KeyValue[V]
+	Match(string) []KeyValue[string, V]
+	WithPrefix(string) []KeyValue[string, V]
 	LongestPrefixOf(string) (string, V, bool)
 }

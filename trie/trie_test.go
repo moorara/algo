@@ -1,18 +1,19 @@
 package trie
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 )
 
 type trieTest[V any] struct {
 	name                       string
-	symbolTable                string
-	eqVal                      generic.EqualFunc[V]
-	keyVals                    []KeyValue[V]
+	trie                       string
+	eqVal                      EqualFunc[V]
+	keyVals                    []KeyValue[string, V]
 	expectedSize               int
 	expectedHeight             int
 	expectedIsEmpty            bool
@@ -38,38 +39,43 @@ type trieTest[V any] struct {
 	expectedRank               int
 	rangeKeyLo                 string
 	rangeKeyHi                 string
+	expectedRange              []KeyValue[string, V]
 	expectedRangeSize          int
-	expectedRange              []KeyValue[V]
-	expectedKeyVals            []KeyValue[V]
-	expectedVLRTraverse        []KeyValue[V]
-	expectedVRLTraverse        []KeyValue[V]
-	expectedLVRTraverse        []KeyValue[V]
-	expectedRVLTraverse        []KeyValue[V]
-	expectedLRVTraverse        []KeyValue[V]
-	expectedRLVTraverse        []KeyValue[V]
-	expectedAscendingTraverse  []KeyValue[V]
-	expectedDescendingTraverse []KeyValue[V]
-	equals                     Trie[V]
-	expectedEquals             bool
-	expectedGraphviz           string
 	matchPattern               string
-	expectedMatch              []KeyValue[V]
+	expectedMatch              []KeyValue[string, V]
 	withPrefixKey              string
-	expectedWithPrefix         []KeyValue[V]
+	expectedWithPrefix         []KeyValue[string, V]
 	longestPrefixOfKey         string
 	expectedLongestPrefixOfKey string
 	expectedLongestPrefixOfVal V
 	expectedLongestPrefixOfOK  bool
+	expectedString             string
+	equals                     Trie[V]
+	expectedEquals             bool
+	expectedAll                []KeyValue[string, V]
+	anyMatchPredicate          Predicate2[string, V]
+	expectedAnyMatch           bool
+	allMatchPredicate          Predicate2[string, V]
+	expectedAllMatch           bool
+	expectedVLRTraverse        []KeyValue[string, V]
+	expectedVRLTraverse        []KeyValue[string, V]
+	expectedLVRTraverse        []KeyValue[string, V]
+	expectedRVLTraverse        []KeyValue[string, V]
+	expectedLRVTraverse        []KeyValue[string, V]
+	expectedRLVTraverse        []KeyValue[string, V]
+	expectedAscendingTraverse  []KeyValue[string, V]
+	expectedDescendingTraverse []KeyValue[string, V]
+	expectedGraphviz           string
 }
 
 func getTrieTests() []trieTest[int] {
-	eqVal := generic.NewEqualFunc[int]()
+	eqVal := NewEqualFunc[int]()
 
 	return []trieTest[int]{
 		{
 			name:  "ABC",
 			eqVal: eqVal,
-			keyVals: []KeyValue[int]{
+			keyVals: []KeyValue[string, int]{
 				{"B", 2},
 				{"A", 1},
 				{"C", 3},
@@ -98,36 +104,41 @@ func getTrieTests() []trieTest[int] {
 			expectedRank:       2,
 			rangeKeyLo:         "A",
 			rangeKeyHi:         "C",
-			expectedRangeSize:  3,
-			expectedRange: []KeyValue[int]{
+			expectedRange: []KeyValue[string, int]{
 				{"A", 1},
 				{"B", 2},
 				{"C", 3},
 			},
-			expectedKeyVals: []KeyValue[int]{
-				{"A", 1},
-				{"B", 2},
-				{"C", 3},
-			},
-			matchPattern: "*",
-			expectedMatch: []KeyValue[int]{
+			expectedRangeSize: 3,
+			matchPattern:      "*",
+			expectedMatch: []KeyValue[string, int]{
 				{"A", 1},
 				{"B", 2},
 				{"C", 3},
 			},
 			withPrefixKey: "A",
-			expectedWithPrefix: []KeyValue[int]{
+			expectedWithPrefix: []KeyValue[string, int]{
 				{"A", 1},
 			},
 			longestPrefixOfKey:         "F",
 			expectedLongestPrefixOfKey: "",
 			expectedLongestPrefixOfVal: 0,
 			expectedLongestPrefixOfOK:  false,
+			expectedString:             "{<A:1> <B:2> <C:3>}",
+			expectedAll: []KeyValue[string, int]{
+				{"A", 1},
+				{"B", 2},
+				{"C", 3},
+			},
+			anyMatchPredicate: func(k string, v int) bool { return v < 0 },
+			expectedAnyMatch:  false,
+			allMatchPredicate: func(k string, v int) bool { return v%2 == 0 },
+			expectedAllMatch:  false,
 		},
 		{
 			name:  "ABCDE",
 			eqVal: eqVal,
-			keyVals: []KeyValue[int]{
+			keyVals: []KeyValue[string, int]{
 				{"B", 2},
 				{"A", 1},
 				{"C", 3},
@@ -158,21 +169,14 @@ func getTrieTests() []trieTest[int] {
 			expectedRank:       4,
 			rangeKeyLo:         "B",
 			rangeKeyHi:         "D",
-			expectedRangeSize:  3,
-			expectedRange: []KeyValue[int]{
+			expectedRange: []KeyValue[string, int]{
 				{"B", 2},
 				{"C", 3},
 				{"D", 4},
 			},
-			expectedKeyVals: []KeyValue[int]{
-				{"A", 1},
-				{"B", 2},
-				{"C", 3},
-				{"D", 4},
-				{"E", 5},
-			},
-			matchPattern: "*",
-			expectedMatch: []KeyValue[int]{
+			expectedRangeSize: 3,
+			matchPattern:      "*",
+			expectedMatch: []KeyValue[string, int]{
 				{"A", 1},
 				{"B", 2},
 				{"C", 3},
@@ -180,18 +184,30 @@ func getTrieTests() []trieTest[int] {
 				{"E", 5},
 			},
 			withPrefixKey: "C",
-			expectedWithPrefix: []KeyValue[int]{
+			expectedWithPrefix: []KeyValue[string, int]{
 				{"C", 3},
 			},
 			longestPrefixOfKey:         "D",
 			expectedLongestPrefixOfKey: "D",
 			expectedLongestPrefixOfVal: 4,
 			expectedLongestPrefixOfOK:  true,
+			expectedString:             "{<A:1> <B:2> <C:3> <D:4> <E:5>}",
+			expectedAll: []KeyValue[string, int]{
+				{"A", 1},
+				{"B", 2},
+				{"C", 3},
+				{"D", 4},
+				{"E", 5},
+			},
+			anyMatchPredicate: func(k string, v int) bool { return v == 0 },
+			expectedAnyMatch:  false,
+			allMatchPredicate: func(k string, v int) bool { return v > 0 },
+			expectedAllMatch:  true,
 		},
 		{
 			name:  "ADGJMPS",
 			eqVal: eqVal,
-			keyVals: []KeyValue[int]{
+			keyVals: []KeyValue[string, int]{
 				{"J", 10},
 				{"A", 1},
 				{"D", 4},
@@ -224,25 +240,16 @@ func getTrieTests() []trieTest[int] {
 			expectedRank:       6,
 			rangeKeyLo:         "B",
 			rangeKeyHi:         "R",
-			expectedRangeSize:  5,
-			expectedRange: []KeyValue[int]{
+			expectedRange: []KeyValue[string, int]{
 				{"D", 4},
 				{"G", 7},
 				{"J", 10},
 				{"M", 13},
 				{"P", 16},
 			},
-			expectedKeyVals: []KeyValue[int]{
-				{"A", 1},
-				{"D", 4},
-				{"G", 7},
-				{"J", 10},
-				{"M", 13},
-				{"P", 16},
-				{"S", 19},
-			},
-			matchPattern: "*",
-			expectedMatch: []KeyValue[int]{
+			expectedRangeSize: 5,
+			matchPattern:      "*",
+			expectedMatch: []KeyValue[string, int]{
 				{"A", 1},
 				{"D", 4},
 				{"G", 7},
@@ -252,18 +259,32 @@ func getTrieTests() []trieTest[int] {
 				{"S", 19},
 			},
 			withPrefixKey: "M",
-			expectedWithPrefix: []KeyValue[int]{
+			expectedWithPrefix: []KeyValue[string, int]{
 				{"M", 13},
 			},
 			longestPrefixOfKey:         "P",
 			expectedLongestPrefixOfKey: "P",
 			expectedLongestPrefixOfVal: 16,
 			expectedLongestPrefixOfOK:  true,
+			expectedString:             "{<A:1> <D:4> <G:7> <J:10> <M:13> <P:16> <S:19>}",
+			expectedAll: []KeyValue[string, int]{
+				{"A", 1},
+				{"D", 4},
+				{"G", 7},
+				{"J", 10},
+				{"M", 13},
+				{"P", 16},
+				{"S", 19},
+			},
+			anyMatchPredicate: func(k string, v int) bool { return v%5 == 0 },
+			expectedAnyMatch:  true,
+			allMatchPredicate: func(k string, v int) bool { return v < 10 },
+			expectedAllMatch:  false,
 		},
 		{
 			name:  "Words",
 			eqVal: eqVal,
-			keyVals: []KeyValue[int]{
+			keyVals: []KeyValue[string, int]{
 				{"box", 2},
 				{"dad", 3},
 				{"baby", 5},
@@ -296,28 +317,19 @@ func getTrieTests() []trieTest[int] {
 			expectedRank:       5,
 			rangeKeyLo:         "a",
 			rangeKeyHi:         "c",
-			expectedRangeSize:  4,
-			expectedRange: []KeyValue[int]{
+			expectedRange: []KeyValue[string, int]{
 				{"baby", 5},
 				{"balloon", 17},
 				{"band", 11},
 				{"box", 2},
 			},
-			expectedKeyVals: []KeyValue[int]{
-				{"baby", 5},
-				{"balloon", 17},
-				{"band", 11},
-				{"box", 2},
-				{"dad", 3},
-				{"dance", 13},
-				{"dome", 7},
-			},
-			matchPattern: "d***e",
-			expectedMatch: []KeyValue[int]{
+			expectedRangeSize: 4,
+			matchPattern:      "d***e",
+			expectedMatch: []KeyValue[string, int]{
 				{"dance", 13},
 			},
 			withPrefixKey: "ba",
-			expectedWithPrefix: []KeyValue[int]{
+			expectedWithPrefix: []KeyValue[string, int]{
 				{"baby", 5},
 				{"balloon", 17},
 				{"band", 11},
@@ -326,13 +338,27 @@ func getTrieTests() []trieTest[int] {
 			expectedLongestPrefixOfKey: "dome",
 			expectedLongestPrefixOfVal: 7,
 			expectedLongestPrefixOfOK:  true,
+			expectedString:             "{<baby:5> <balloon:17> <band:11> <box:2> <dad:3> <dance:13> <dome:7>}",
+			expectedAll: []KeyValue[string, int]{
+				{"baby", 5},
+				{"balloon", 17},
+				{"band", 11},
+				{"box", 2},
+				{"dad", 3},
+				{"dance", 13},
+				{"dome", 7},
+			},
+			anyMatchPredicate: func(k string, v int) bool { return strings.HasSuffix(k, "x") },
+			expectedAnyMatch:  true,
+			allMatchPredicate: func(k string, v int) bool { return k == strings.ToLower(k) },
+			expectedAllMatch:  true,
 		},
 	}
 }
 
 func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 	t.Run(test.name, func(t *testing.T) {
-		var kvs []KeyValue[int]
+		var kvs []KeyValue[string, int]
 		var minKey, maxKey, floorKey, ceilingKey, selectKey string
 		var minVal, maxVal, floorVal, ceilingVal, selectVal int
 		var minOK, maxOK, floorOK, ceilingOK, selectOK bool
@@ -431,80 +457,93 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 			assert.Equal(t, test.expectedSelectVal, selectVal)
 			assert.Equal(t, test.expectedSelectOK, selectOK)
 
-			assert.Equal(t, test.expectedRank, trie.Rank(test.rankKey))
-			assert.Equal(t, test.expectedRangeSize, trie.RangeSize(test.rangeKeyLo, test.rangeKeyHi))
+			rank := trie.Rank(test.rankKey)
+			assert.Equal(t, test.expectedRank, rank)
 
 			kvs = trie.Range(test.rangeKeyLo, test.rangeKeyHi)
 			assert.Equal(t, test.expectedRange, kvs)
 
-			kvs = trie.KeyValues()
-			assert.Equal(t, test.expectedKeyVals, kvs)
+			rangeSize := trie.RangeSize(test.rangeKeyLo, test.rangeKeyHi)
+			assert.Equal(t, test.expectedRangeSize, rangeSize)
+
+			assert.Equal(t, test.expectedString, trie.String())
+
+			equals := trie.Equals(test.equals)
+			assert.Equal(t, test.expectedEquals, equals)
+
+			kvs = Collect(trie.All())
+			assert.Equal(t, test.expectedAll, kvs)
+
+			anyMatch := trie.AnyMatch(test.anyMatchPredicate)
+			assert.Equal(t, test.expectedAnyMatch, anyMatch)
+
+			allMatch := trie.AllMatch(test.allMatchPredicate)
+			assert.Equal(t, test.expectedAllMatch, allMatch)
 
 			// VLR Traversal
-			kvs = []KeyValue[int]{}
+			kvs = []KeyValue[string, int]{}
 			trie.Traverse(VLR, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{key, val})
 				return true
 			})
 			assert.Equal(t, test.expectedVLRTraverse, kvs)
 
 			// VRL Traversal
-			kvs = []KeyValue[int]{}
+			kvs = []KeyValue[string, int]{}
 			trie.Traverse(VRL, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{key, val})
 				return true
 			})
 			assert.Equal(t, test.expectedVRLTraverse, kvs)
 
 			// LVR Traversal
-			kvs = []KeyValue[int]{}
+			kvs = []KeyValue[string, int]{}
 			trie.Traverse(LVR, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{key, val})
 				return true
 			})
 			assert.Equal(t, test.expectedLVRTraverse, kvs)
 
 			// RVL Traversal
-			kvs = []KeyValue[int]{}
+			kvs = []KeyValue[string, int]{}
 			trie.Traverse(RVL, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{key, val})
 				return true
 			})
 			assert.Equal(t, test.expectedRVLTraverse, kvs)
 
 			// LRV Traversal
-			kvs = []KeyValue[int]{}
+			kvs = []KeyValue[string, int]{}
 			trie.Traverse(LRV, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{key, val})
 				return true
 			})
 			assert.Equal(t, test.expectedLRVTraverse, kvs)
 
 			// RLV Traversal
-			kvs = []KeyValue[int]{}
+			kvs = []KeyValue[string, int]{}
 			trie.Traverse(RLV, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{key, val})
 				return true
 			})
 			assert.Equal(t, test.expectedRLVTraverse, kvs)
 
 			// Ascending Traversal
-			kvs = []KeyValue[int]{}
+			kvs = []KeyValue[string, int]{}
 			trie.Traverse(Ascending, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{key, val})
 				return true
 			})
 			assert.Equal(t, test.expectedAscendingTraverse, kvs)
 
 			// Descending Traversal
-			kvs = []KeyValue[int]{}
+			kvs = []KeyValue[string, int]{}
 			trie.Traverse(Descending, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{key, val})
 				return true
 			})
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)
 
-			assert.Equal(t, test.expectedEquals, trie.Equals(test.equals))
 			assert.Equal(t, test.expectedGraphviz, trie.Graphviz())
 
 			kvs = trie.Match(test.matchPattern)

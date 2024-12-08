@@ -2,7 +2,7 @@
 package automata
 
 import (
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/symboltable"
 )
 
@@ -76,10 +76,10 @@ func ToString(s string) String {
 type doubleKeyMap[K1, K2, V any] symboltable.OrderedSymbolTable[K1, symboltable.OrderedSymbolTable[K2, V]]
 
 var (
-	cmpState  = generic.NewCompareFunc[State]()
-	cmpSymbol = generic.NewCompareFunc[Symbol]()
+	cmpState  = NewCompareFunc[State]()
+	cmpSymbol = NewCompareFunc[Symbol]()
 
-	eqState  = generic.NewEqualFunc[State]()
+	eqState  = NewEqualFunc[State]()
 	eqStates = func(a, b States) bool {
 		return a.Equals(b)
 	}

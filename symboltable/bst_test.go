@@ -3,7 +3,7 @@ package symboltable
 import (
 	"testing"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 )
 
 func getBSTTests() []orderedSymbolTableTest[string, int] {
@@ -35,7 +35,7 @@ func getBSTTests() []orderedSymbolTableTest[string, int] {
 
 	tests[1].symbolTable = "BST"
 	tests[1].expectedHeight = 4
-	tests[1].equals = NewBST[string, int](generic.NewCompareFunc[string](), nil)
+	tests[1].equals = NewBST[string, int](NewCompareFunc[string](), nil)
 	tests[1].expectedEquals = false
 	tests[1].expectedVLRTraverse = []KeyValue[string, int]{{"B", 2}, {"A", 1}, {"C", 3}, {"D", 4}, {"E", 5}}
 	tests[1].expectedVRLTraverse = []KeyValue[string, int]{{"B", 2}, {"C", 3}, {"D", 4}, {"E", 5}, {"A", 1}}
@@ -63,7 +63,7 @@ func getBSTTests() []orderedSymbolTableTest[string, int] {
 
 	tests[2].symbolTable = "BST"
 	tests[2].expectedHeight = 4
-	tests[2].equals = NewBST[string, int](generic.NewCompareFunc[string](), nil)
+	tests[2].equals = NewBST[string, int](NewCompareFunc[string](), nil)
 	tests[2].equals.Put("J", 10)
 	tests[2].equals.Put("D", 4)
 	tests[2].equals.Put("P", 16)
@@ -98,7 +98,7 @@ func getBSTTests() []orderedSymbolTableTest[string, int] {
 
 	tests[3].symbolTable = "BST"
 	tests[3].expectedHeight = 4
-	tests[3].equals = NewBST[string, int](generic.NewCompareFunc[string](), nil)
+	tests[3].equals = NewBST[string, int](NewCompareFunc[string](), nil)
 	tests[3].equals.Put("box", 2)
 	tests[3].equals.Put("band", 11)
 	tests[3].equals.Put("balloon", 17)

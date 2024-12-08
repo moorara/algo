@@ -4,10 +4,10 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/generic"
 )
 
-func partition[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) int {
+func partition[T any](a []T, lo, hi int, cmp CompareFunc[T]) int {
 	v := a[lo]
 	var i, j int = lo, hi + 1
 
@@ -27,7 +27,7 @@ func partition[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) int {
 }
 
 // Select finds the kth smallest item of an array in O(n) time on average.
-func Select[T any](a []T, k int, cmp generic.CompareFunc[T]) T {
+func Select[T any](a []T, k int, cmp CompareFunc[T]) T {
 	seed := time.Now().UTC().UnixNano()
 	r := rand.New(rand.NewSource(seed))
 	Shuffle[T](a, r)
@@ -48,7 +48,7 @@ func Select[T any](a []T, k int, cmp generic.CompareFunc[T]) T {
 	return a[k]
 }
 
-func quick[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) {
+func quick[T any](a []T, lo, hi int, cmp CompareFunc[T]) {
 	if lo >= hi {
 		return
 	}
@@ -59,7 +59,7 @@ func quick[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) {
 }
 
 // Quick implements the quick sort algorithm.
-func Quick[T any](a []T, cmp generic.CompareFunc[T]) {
+func Quick[T any](a []T, cmp CompareFunc[T]) {
 	seed := time.Now().UTC().UnixNano()
 	r := rand.New(rand.NewSource(seed))
 	Shuffle[T](a, r)
@@ -67,7 +67,7 @@ func Quick[T any](a []T, cmp generic.CompareFunc[T]) {
 	quick[T](a, 0, len(a)-1, cmp)
 }
 
-func quick3Way[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) {
+func quick3Way[T any](a []T, lo, hi int, cmp CompareFunc[T]) {
 	if lo >= hi {
 		return
 	}
@@ -95,6 +95,6 @@ func quick3Way[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) {
 }
 
 // Quick3Way implements the 3-way version of quick sort algorithm.
-func Quick3Way[T any](a []T, cmp generic.CompareFunc[T]) {
+func Quick3Way[T any](a []T, cmp CompareFunc[T]) {
 	quick3Way[T](a, 0, len(a)-1, cmp)
 }
