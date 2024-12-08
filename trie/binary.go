@@ -387,7 +387,7 @@ func (t *binary[V]) Range(lo, hi string) []KeyValue[string, V] {
 	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if lo <= k && k <= hi {
-				kvs = append(kvs, KeyValue[string, V]{k, n.val})
+				kvs = append(kvs, KeyValue[string, V]{Key: k, Val: n.val})
 			} else if k > hi {
 				return false
 			}
@@ -422,7 +422,7 @@ func (t *binary[V]) RangeSize(lo, hi string) int {
 func (t *binary[V]) Match(pattern string) []KeyValue[string, V] {
 	kvs := []KeyValue[string, V]{}
 	t._match(t.root.left, "", pattern, func(k string, n *binaryNode[V]) {
-		kvs = append(kvs, KeyValue[string, V]{k, n.val})
+		kvs = append(kvs, KeyValue[string, V]{Key: k, Val: n.val})
 	})
 
 	return kvs
@@ -450,7 +450,7 @@ func (t *binary[V]) _match(n *binaryNode[V], prefix, pattern string, visit func(
 func (t *binary[V]) WithPrefix(key string) []KeyValue[string, V] {
 	kvs := []KeyValue[string, V]{}
 	t._withPrefix(t.root.left, "", key, func(k string, n *binaryNode[V]) {
-		kvs = append(kvs, KeyValue[string, V]{k, n.val})
+		kvs = append(kvs, KeyValue[string, V]{Key: k, Val: n.val})
 	})
 
 	return kvs

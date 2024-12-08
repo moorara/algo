@@ -627,7 +627,7 @@ func (t *redBlack[K, V]) _range(n *rbNode[K, V], kvs *[]KeyValue[K, V], lo, hi K
 		len += t._range(n.left, kvs, lo, hi)
 	}
 	if cmpLo <= 0 && cmpHi >= 0 {
-		*kvs = append(*kvs, KeyValue[K, V]{n.key, n.val})
+		*kvs = append(*kvs, KeyValue[K, V]{Key: n.key, Val: n.val})
 		len++
 	}
 	if cmpHi > 0 {

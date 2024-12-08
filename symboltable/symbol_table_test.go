@@ -118,9 +118,9 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
-				{"B", 2},
-				{"A", 1},
-				{"C", 3},
+				{Key: "B", Val: 2},
+				{Key: "A", Val: 1},
+				{Key: "C", Val: 3},
 			},
 			expectedSize:       3,
 			expectedIsEmpty:    false,
@@ -147,16 +147,16 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			rangeKeyLo:         "A",
 			rangeKeyHi:         "C",
 			expectedRange: []KeyValue[string, int]{
-				{"A", 1},
-				{"B", 2},
-				{"C", 3},
+				{Key: "A", Val: 1},
+				{Key: "B", Val: 2},
+				{Key: "C", Val: 3},
 			},
 			expectedRangeSize: 3,
 			expectedString:    "{<A:1> <B:2> <C:3>}",
 			expectedAll: []KeyValue[string, int]{
-				{"A", 1},
-				{"B", 2},
-				{"C", 3},
+				{Key: "A", Val: 1},
+				{Key: "B", Val: 2},
+				{Key: "C", Val: 3},
 			},
 			anyMatchPredicate: func(k string, v int) bool { return v < 0 },
 			expectedAnyMatch:  false,
@@ -168,11 +168,11 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
-				{"B", 2},
-				{"A", 1},
-				{"C", 3},
-				{"E", 5},
-				{"D", 4},
+				{Key: "B", Val: 2},
+				{Key: "A", Val: 1},
+				{Key: "C", Val: 3},
+				{Key: "E", Val: 5},
+				{Key: "D", Val: 4},
 			},
 			expectedSize:       5,
 			expectedIsEmpty:    false,
@@ -199,18 +199,18 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			rangeKeyLo:         "B",
 			rangeKeyHi:         "D",
 			expectedRange: []KeyValue[string, int]{
-				{"B", 2},
-				{"C", 3},
-				{"D", 4},
+				{Key: "B", Val: 2},
+				{Key: "C", Val: 3},
+				{Key: "D", Val: 4},
 			},
 			expectedRangeSize: 3,
 			expectedString:    "{<A:1> <B:2> <C:3> <D:4> <E:5>}",
 			expectedAll: []KeyValue[string, int]{
-				{"A", 1},
-				{"B", 2},
-				{"C", 3},
-				{"D", 4},
-				{"E", 5},
+				{Key: "A", Val: 1},
+				{Key: "B", Val: 2},
+				{Key: "C", Val: 3},
+				{Key: "D", Val: 4},
+				{Key: "E", Val: 5},
 			},
 			anyMatchPredicate: func(k string, v int) bool { return v == 0 },
 			expectedAnyMatch:  false,
@@ -222,13 +222,13 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
-				{"J", 10},
-				{"A", 1},
-				{"D", 4},
-				{"S", 19},
-				{"P", 16},
-				{"M", 13},
-				{"G", 7},
+				{Key: "J", Val: 10},
+				{Key: "A", Val: 1},
+				{Key: "D", Val: 4},
+				{Key: "S", Val: 19},
+				{Key: "P", Val: 16},
+				{Key: "M", Val: 13},
+				{Key: "G", Val: 7},
 			},
 			expectedSize:       7,
 			expectedIsEmpty:    false,
@@ -255,22 +255,22 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			rangeKeyLo:         "B",
 			rangeKeyHi:         "R",
 			expectedRange: []KeyValue[string, int]{
-				{"D", 4},
-				{"G", 7},
-				{"J", 10},
-				{"M", 13},
-				{"P", 16},
+				{Key: "D", Val: 4},
+				{Key: "G", Val: 7},
+				{Key: "J", Val: 10},
+				{Key: "M", Val: 13},
+				{Key: "P", Val: 16},
 			},
 			expectedRangeSize: 5,
 			expectedString:    "{<A:1> <D:4> <G:7> <J:10> <M:13> <P:16> <S:19>}",
 			expectedAll: []KeyValue[string, int]{
-				{"A", 1},
-				{"D", 4},
-				{"G", 7},
-				{"J", 10},
-				{"M", 13},
-				{"P", 16},
-				{"S", 19},
+				{Key: "A", Val: 1},
+				{Key: "D", Val: 4},
+				{Key: "G", Val: 7},
+				{Key: "J", Val: 10},
+				{Key: "M", Val: 13},
+				{Key: "P", Val: 16},
+				{Key: "S", Val: 19},
 			},
 			anyMatchPredicate: func(k string, v int) bool { return v%5 == 0 },
 			expectedAnyMatch:  true,
@@ -282,13 +282,13 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
 			keyVals: []KeyValue[string, int]{
-				{"box", 2},
-				{"dad", 3},
-				{"baby", 5},
-				{"dome", 7},
-				{"band", 11},
-				{"dance", 13},
-				{"balloon", 17},
+				{Key: "box", Val: 2},
+				{Key: "dad", Val: 3},
+				{Key: "baby", Val: 5},
+				{Key: "dome", Val: 7},
+				{Key: "band", Val: 11},
+				{Key: "dance", Val: 13},
+				{Key: "balloon", Val: 17},
 			},
 			expectedSize:       7,
 			expectedIsEmpty:    false,
@@ -315,21 +315,21 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			rangeKeyLo:         "a",
 			rangeKeyHi:         "c",
 			expectedRange: []KeyValue[string, int]{
-				{"baby", 5},
-				{"balloon", 17},
-				{"band", 11},
-				{"box", 2},
+				{Key: "baby", Val: 5},
+				{Key: "balloon", Val: 17},
+				{Key: "band", Val: 11},
+				{Key: "box", Val: 2},
 			},
 			expectedRangeSize: 4,
 			expectedString:    "{<baby:5> <balloon:17> <band:11> <box:2> <dad:3> <dance:13> <dome:7>}",
 			expectedAll: []KeyValue[string, int]{
-				{"baby", 5},
-				{"balloon", 17},
-				{"band", 11},
-				{"box", 2},
-				{"dad", 3},
-				{"dance", 13},
-				{"dome", 7},
+				{Key: "baby", Val: 5},
+				{Key: "balloon", Val: 17},
+				{Key: "band", Val: 11},
+				{Key: "box", Val: 2},
+				{Key: "dad", Val: 3},
+				{Key: "dance", Val: 13},
+				{Key: "dome", Val: 7},
 			},
 			anyMatchPredicate: func(k string, v int) bool { return strings.HasSuffix(k, "x") },
 			expectedAnyMatch:  true,
@@ -525,7 +525,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// VLR Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(VLR, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedVLRTraverse, kvs)
@@ -533,7 +533,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// VRL Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(VRL, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedVRLTraverse, kvs)
@@ -541,7 +541,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// LVR Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(LVR, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedLVRTraverse, kvs)
@@ -549,7 +549,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// RVL Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(RVL, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedRVLTraverse, kvs)
@@ -557,7 +557,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// LRV Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(LRV, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedLRVTraverse, kvs)
@@ -565,7 +565,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// RLV Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(RLV, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedRLVTraverse, kvs)
@@ -573,7 +573,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// Ascending Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(Ascending, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedAscendingTraverse, kvs)
@@ -581,7 +581,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			// Descending Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(Descending, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{key, val})
+				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)

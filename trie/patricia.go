@@ -552,7 +552,7 @@ func (t *patricia[V]) Range(lo, hi string) []KeyValue[string, V] {
 	if t.root != nil {
 		t._traverse(t.root.left, Ascending, func(n *patriciaNode[V]) bool {
 			if lo <= n.key.String() && n.key.String() <= hi {
-				kvs = append(kvs, KeyValue[string, V]{n.key.String(), n.val})
+				kvs = append(kvs, KeyValue[string, V]{Key: n.key.String(), Val: n.val})
 			} else if n.key.String() > hi {
 				return false
 			}
@@ -588,7 +588,7 @@ func (t *patricia[V]) RangeSize(lo, hi string) int {
 func (t *patricia[V]) Match(pattern string) []KeyValue[string, V] {
 	kvs := []KeyValue[string, V]{}
 	t._match(t.root, t.root.left, newBitPattern(pattern), func(n *patriciaNode[V]) {
-		kvs = append(kvs, KeyValue[string, V]{n.key.String(), n.val})
+		kvs = append(kvs, KeyValue[string, V]{Key: n.key.String(), Val: n.val})
 	})
 
 	return kvs
@@ -619,10 +619,10 @@ func (t *patricia[V]) WithPrefix(key string) []KeyValue[string, V] {
 	bitKey := newBitString(key)
 
 	if n := t.search(bitKey); n != nil && n.key.Equals(bitKey) {
-		kvs = append(kvs, KeyValue[string, V]{n.key.String(), n.val})
+		kvs = append(kvs, KeyValue[string, V]{Key: n.key.String(), Val: n.val})
 	} else {
 		t._traverse(n, Ascending, func(n *patriciaNode[V]) bool {
-			kvs = append(kvs, KeyValue[string, V]{n.key.String(), n.val})
+			kvs = append(kvs, KeyValue[string, V]{Key: n.key.String(), Val: n.val})
 			return true
 		})
 	}
