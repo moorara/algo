@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.8.2](https://github.com/moorara/algo/tree/v0.8.2) (2024-12-14)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.8.1...v0.8.2)
+
+**Merged Changes:**
+
+  - Add hash tables [#197](https://github.com/moorara/algo/pull/197) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to 1829a12 [#188](https://github.com/moorara/algo/pull/188) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Add a new package for hash functions [#196](https://github.com/moorara/algo/pull/196) ([moorara](https://github.com/moorara))
+  - Refactor ordered symbol tables [#195](https://github.com/moorara/algo/pull/195) ([moorara](https://github.com/moorara))
+
+
 ## [v0.8.1](https://github.com/moorara/algo/tree/v0.8.1) (2024-12-14)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.8.0...v0.8.1)
