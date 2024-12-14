@@ -1,11 +1,10 @@
 package symboltable
 
 import (
-	"math/rand"
 	"testing"
-	"time"
 
 	. "github.com/moorara/algo/generic"
+	. "github.com/moorara/algo/hash"
 )
 
 const (
@@ -13,8 +12,6 @@ const (
 	maxLen = 100
 	chars  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
-
-var r *rand.Rand
 
 func randIntSlice(size int) []int {
 	vals := make([]int, size)
@@ -46,112 +43,184 @@ func randStringSlice(size int) []string {
 	return s
 }
 
-func runPutBenchmark(b *testing.B, ost OrderedSymbolTable[string, int]) {
+func runPutBenchmark(b *testing.B, st SymbolTable[string, int]) {
 	keys := randStringSlice(b.N)
 	vals := randIntSlice(b.N)
 
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		ost.Put(keys[n], vals[n])
+		st.Put(keys[n], vals[n])
 	}
 }
 
-func runGetBenchmark(b *testing.B, ost OrderedSymbolTable[string, int]) {
+func runGetBenchmark(b *testing.B, st SymbolTable[string, int]) {
 	keys := randStringSlice(b.N)
 	vals := randIntSlice(b.N)
 
 	for n := 0; n < b.N; n++ {
-		ost.Put(keys[n], vals[n])
+		st.Put(keys[n], vals[n])
 	}
 
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		ost.Get(keys[n])
+		st.Get(keys[n])
 	}
 }
 
-func runDeleteBenchmark(b *testing.B, ost OrderedSymbolTable[string, int]) {
+func runDeleteBenchmark(b *testing.B, st SymbolTable[string, int]) {
 	keys := randStringSlice(b.N)
 	vals := randIntSlice(b.N)
 
 	for n := 0; n < b.N; n++ {
-		ost.Put(keys[n], vals[n])
+		st.Put(keys[n], vals[n])
 	}
 
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		ost.Delete(keys[n])
+		st.Delete(keys[n])
 	}
+}
+
+func BenchmarkSymbolTable_Put(b *testing.B) {
+	hashKey := HashFuncForString[string](nil)
+	eqKey := NewEqualFunc[string]()
+	eqVal := NewEqualFunc[int]()
+	opts := HashOpts{}
+
+	b.Run("ChainHashTable.Put", func(b *testing.B) {
+		ht := NewChainHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runPutBenchmark(b, ht)
+	})
+
+	b.Run("LinearHashTable.Put", func(b *testing.B) {
+		ht := NewLinearHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runPutBenchmark(b, ht)
+	})
+
+	b.Run("QuadHashTable.Put", func(b *testing.B) {
+		ht := NewQuadraticHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runPutBenchmark(b, ht)
+	})
+
+	b.Run("DoubleHashTable.Put", func(b *testing.B) {
+		ht := NewDoubleHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runPutBenchmark(b, ht)
+	})
+}
+
+func BenchmarkSymbolTable_Get(b *testing.B) {
+	hashKey := HashFuncForString[string](nil)
+	eqKey := NewEqualFunc[string]()
+	eqVal := NewEqualFunc[int]()
+	opts := HashOpts{}
+
+	b.Run("ChainHashTable.Get", func(b *testing.B) {
+		ht := NewChainHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runGetBenchmark(b, ht)
+	})
+
+	b.Run("LinearHashTable.Get", func(b *testing.B) {
+		ht := NewLinearHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runGetBenchmark(b, ht)
+	})
+
+	b.Run("QuadHashTable.Get", func(b *testing.B) {
+		ht := NewQuadraticHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runGetBenchmark(b, ht)
+	})
+
+	b.Run("DoubleHashTable.Get", func(b *testing.B) {
+		ht := NewDoubleHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runGetBenchmark(b, ht)
+	})
+}
+
+func BenchmarkSymbolTable_Delete(b *testing.B) {
+	hashKey := HashFuncForString[string](nil)
+	eqKey := NewEqualFunc[string]()
+	eqVal := NewEqualFunc[int]()
+	opts := HashOpts{}
+
+	b.Run("ChainHashTable.Delete", func(b *testing.B) {
+		ht := NewChainHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runDeleteBenchmark(b, ht)
+	})
+
+	b.Run("LinearHashTable.Delete", func(b *testing.B) {
+		ht := NewLinearHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runDeleteBenchmark(b, ht)
+	})
+
+	b.Run("QuadHashTable.Delete", func(b *testing.B) {
+		ht := NewQuadraticHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runDeleteBenchmark(b, ht)
+	})
+
+	b.Run("DoubleHashTable.Delete", func(b *testing.B) {
+		ht := NewDoubleHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		runDeleteBenchmark(b, ht)
+	})
 }
 
 func BenchmarkOrderedSymbolTable_Put(b *testing.B) {
-	seed := time.Now().UTC().UnixNano()
-	r = rand.New(rand.NewSource(seed))
-
 	cmpKey := NewCompareFunc[string]()
 	eqVal := NewEqualFunc[int]()
 
 	b.Run("BST.Put", func(b *testing.B) {
-		ost := NewBST[string, int](cmpKey, eqVal)
-		runPutBenchmark(b, ost)
+		bst := NewBST[string, int](cmpKey, eqVal)
+		runPutBenchmark(b, bst)
 	})
 
 	b.Run("AVL.Put", func(b *testing.B) {
-		ost := NewAVL[string, int](cmpKey, eqVal)
-		runPutBenchmark(b, ost)
+		avl := NewAVL[string, int](cmpKey, eqVal)
+		runPutBenchmark(b, avl)
 	})
 
 	b.Run("RedBlack.Put", func(b *testing.B) {
-		ost := NewRedBlack[string, int](cmpKey, eqVal)
-		runPutBenchmark(b, ost)
+		rb := NewRedBlack[string, int](cmpKey, eqVal)
+		runPutBenchmark(b, rb)
 	})
 }
 
 func BenchmarkOrderedSymbolTable_Get(b *testing.B) {
-	seed := time.Now().UTC().UnixNano()
-	r = rand.New(rand.NewSource(seed))
-
 	cmpKey := NewCompareFunc[string]()
 	eqVal := NewEqualFunc[int]()
 
 	b.Run("BST.Get", func(b *testing.B) {
-		ost := NewBST[string, int](cmpKey, eqVal)
-		runGetBenchmark(b, ost)
+		bst := NewBST[string, int](cmpKey, eqVal)
+		runGetBenchmark(b, bst)
 	})
 
 	b.Run("AVL.Get", func(b *testing.B) {
-		ost := NewAVL[string, int](cmpKey, eqVal)
-		runGetBenchmark(b, ost)
+		avl := NewAVL[string, int](cmpKey, eqVal)
+		runGetBenchmark(b, avl)
 	})
 
 	b.Run("RedBlack.Get", func(b *testing.B) {
-		ost := NewRedBlack[string, int](cmpKey, eqVal)
-		runGetBenchmark(b, ost)
+		rb := NewRedBlack[string, int](cmpKey, eqVal)
+		runGetBenchmark(b, rb)
 	})
 }
 
 func BenchmarkOrderedSymbolTable_Delete(b *testing.B) {
-	seed := time.Now().UTC().UnixNano()
-	r = rand.New(rand.NewSource(seed))
-
 	cmpKey := NewCompareFunc[string]()
 	eqVal := NewEqualFunc[int]()
 
 	b.Run("BST.Delete", func(b *testing.B) {
-		ost := NewBST[string, int](cmpKey, eqVal)
-		runDeleteBenchmark(b, ost)
+		bst := NewBST[string, int](cmpKey, eqVal)
+		runDeleteBenchmark(b, bst)
 	})
 
 	b.Run("AVL.Delete", func(b *testing.B) {
-		ost := NewAVL[string, int](cmpKey, eqVal)
-		runDeleteBenchmark(b, ost)
+		avl := NewAVL[string, int](cmpKey, eqVal)
+		runDeleteBenchmark(b, avl)
 	})
 
 	b.Run("RedBlack.Delete", func(b *testing.B) {
-		ost := NewRedBlack[string, int](cmpKey, eqVal)
-		runDeleteBenchmark(b, ost)
+		rb := NewRedBlack[string, int](cmpKey, eqVal)
+		runDeleteBenchmark(b, rb)
 	})
 }

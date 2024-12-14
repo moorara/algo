@@ -337,6 +337,10 @@ func (t *redBlack[K, V]) Delete(key K) (val V, ok bool) {
 		return zeroV, false
 	}
 
+	if val, ok = t.Get(key); !ok {
+		return val, false
+	}
+
 	if !t.isRed(t.root.left) && !t.isRed(t.root.right) {
 		t.root.color = red
 	}
