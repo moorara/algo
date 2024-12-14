@@ -244,7 +244,7 @@ func (t *avl[K, V]) Delete(key K) (val V, ok bool) {
 func (t *avl[K, V]) _delete(n *avlNode[K, V], key K) (*avlNode[K, V], V, bool) {
 	if n == nil {
 		var zeroV V
-		return n, zeroV, false
+		return nil, zeroV, false
 	}
 
 	var ok bool
@@ -530,16 +530,16 @@ func (t *avl[K, V]) String() string {
 }
 
 // Equals determines whether or not two AVLs have the same key-value pairs.
-func (t *avl[K, V]) Equals(u SymbolTable[K, V]) bool {
-	tt, ok := u.(*avl[K, V])
+func (t *avl[K, V]) Equals(rhs SymbolTable[K, V]) bool {
+	t2, ok := rhs.(*avl[K, V])
 	if !ok {
 		return false
 	}
 
-	return t._traverse(t.root, Ascending, func(n *avlNode[K, V]) bool { // t ⊂ tt
-		val, ok := tt.Get(n.key)
+	return t._traverse(t.root, Ascending, func(n *avlNode[K, V]) bool { // t ⊂ t2
+		val, ok := t2.Get(n.key)
 		return ok && t.eqVal(n.val, val)
-	}) && tt._traverse(tt.root, Ascending, func(n *avlNode[K, V]) bool { // tt ⊂ t
+	}) && t2._traverse(t2.root, Ascending, func(n *avlNode[K, V]) bool { // t2 ⊂ t
 		val, ok := t.Get(n.key)
 		return ok && t.eqVal(n.val, val)
 	})
