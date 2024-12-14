@@ -663,16 +663,16 @@ func (t *redBlack[K, V]) String() string {
 }
 
 // Equals determines whether or not two Red-Black trees have the same key-value pairs.
-func (t *redBlack[K, V]) Equals(u SymbolTable[K, V]) bool {
-	tt, ok := u.(*redBlack[K, V])
+func (t *redBlack[K, V]) Equals(rhs SymbolTable[K, V]) bool {
+	t2, ok := rhs.(*redBlack[K, V])
 	if !ok {
 		return false
 	}
 
-	return t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool { // t ⊂ tt
-		val, ok := tt.Get(n.key)
+	return t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool { // t ⊂ t2
+		val, ok := t2.Get(n.key)
 		return ok && t.eqVal(n.val, val)
-	}) && tt._traverse(tt.root, Ascending, func(n *rbNode[K, V]) bool { // tt ⊂ t
+	}) && t2._traverse(t2.root, Ascending, func(n *rbNode[K, V]) bool { // t2 ⊂ t
 		val, ok := t.Get(n.key)
 		return ok && t.eqVal(n.val, val)
 	})
