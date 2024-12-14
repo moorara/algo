@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.8.1](https://github.com/moorara/algo/tree/v0.8.1) (2024-12-14)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.8.0...v0.8.1)
+
+**Merged Changes:**
+
+  - Randomize set iteration order to reflect its unordered nature [#192](https://github.com/moorara/algo/pull/192) ([moorara](https://github.com/moorara))
+  - Implement checking isomorphic automata and fix a bug in DFA minimization [#193](https://github.com/moorara/algo/pull/193) ([moorara](https://github.com/moorara))
+
+
 ## [v0.8.0](https://github.com/moorara/algo/tree/v0.8.0) (2024-12-08)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.7.0...v0.8.0)
