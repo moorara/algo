@@ -12,7 +12,7 @@ import (
 
 func crossCheck(h hash.Hash64, v any) uint64 {
 	h.Reset()
-	binary.Write(h, binary.LittleEndian, v)
+	_ = binary.Write(h, binary.LittleEndian, v)
 	return h.Sum64()
 }
 
