@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/moorara/algo/generic"
 	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
 	"github.com/moorara/algo/list"
@@ -24,7 +25,7 @@ func NewNFA(start State, final States) *NFA {
 	return &NFA{
 		Start: start,
 		Final: final,
-		trans: symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[Symbol, States]](cmpState, eqSymbolStates),
+		trans: symboltable.NewRedBlack[State, symboltable.SymbolTable[Symbol, States]](cmpState, eqSymbolStates),
 	}
 }
 
@@ -86,22 +87,22 @@ func (n *NFA) Next(s State, a Symbol) States {
 	return States{}
 }
 
-// Symbols returns the set of all states of the NFA.
+// States returns the set of all states of the NFA.
 func (n *NFA) States() States {
 	states := States{}
 
 	states = append(states, n.Start)
 	states = append(states, n.Final...)
 
-	for key := range n.trans.All() {
-		if s := key; !states.Contains(s) {
+	for s := range n.trans.All() {
+		if !states.Contains(s) {
 			states = append(states, s)
 		}
 	}
 
-	for _, val := range n.trans.All() {
-		for _, val := range val.All() {
-			for _, s := range val {
+	for _, v := range n.trans.All() {
+		for _, states := range v.All() {
+			for _, s := range states {
 				if !states.Contains(s) {
 					states = append(states, s)
 				}
@@ -116,9 +117,9 @@ func (n *NFA) States() States {
 func (n *NFA) Symbols() Symbols {
 	symbols := Symbols{}
 
-	for _, val := range n.trans.All() {
-		for key := range val.All() {
-			if a := key; a != E && !symbols.Contains(a) {
+	for _, v := range n.trans.All() {
+		for a := range v.All() {
+			if a != E && !symbols.Contains(a) {
 				symbols = append(symbols, a)
 			}
 		}
@@ -308,13 +309,113 @@ func (n *NFA) ToDFA() *DFA {
 	return dfa
 }
 
-// Equals determines whether or not two NFAs are the same.
+// Equals determines whether or not two NFAs are identical in structure and labeling.
+// Two NFAs are considered equal if they have the same start state, final states, and transitions.
 //
-// TODO: Implement isomorphic equality.
-func (n *NFA) Equals(nfa *NFA) bool {
-	return n.Start == nfa.Start &&
-		n.Final.Equals(nfa.Final) &&
-		n.trans.Equals(nfa.trans)
+// For isomorphic equality, structural equivalence with potentially different state names, use the Isomorphic method.
+func (n *NFA) Equals(rhs *NFA) bool {
+	return n.Start == rhs.Start &&
+		n.Final.Equals(rhs.Final) &&
+		n.trans.Equals(rhs.trans)
+}
+
+// Isomorphic determines whether or not two NFAs are isomorphically the same.
+//
+// Two NFAs N₁ and N₂ are said to be isomorphic if there exists a bijection f: S(N₁) → S(N₂) between their state sets such that,
+// for every input symbol a, there is a transition from state s to state t on input a in N₁
+// if and only if there is a transition from state f(s) to state f(t) on input a in N₂.
+//
+// In simpler terms, the two NFAs have the same structure:
+// one can be transformed into the other by renaming its states and preserving the transitions.
+func (n *NFA) Isomorphic(rhs *NFA) bool {
+	// N₁ and N₂ must have the same number of final states.
+	if len(n.Final) != len(rhs.Final) {
+		return false
+	}
+
+	// N₁ and N₂ must have the same number of states.
+	states1, states2 := n.States(), rhs.States()
+	if len(states1) != len(states2) {
+		return false
+	}
+
+	// N₁ and N₂ must have the same input alphabet.
+	symbols1, symbols2 := n.Symbols(), rhs.Symbols()
+	if !symbols1.Equals(symbols2) {
+		return false
+	}
+
+	// N₁ and N₂ must have the same sorted degree sequence.
+	// len(degrees1) == len(degrees2) since N₁ and N₂ have the same number of states.
+	degrees1, degrees2 := n.getSortedDegreeSequence(), rhs.getSortedDegreeSequence()
+	for i := range degrees1 {
+		if degrees1[i] != degrees2[i] {
+			return false
+		}
+	}
+
+	// Since generatePermutations uses backtracking and modifies the slice in-place, we need a copy.
+	clone := make(States, len(states1))
+	copy(clone, states1)
+
+	// Methodically checking if any permutation of N₁ states is equal to N₂.
+	return !generatePermutations(clone, 0, len(clone)-1, func(permutation States) bool {
+		// Create a bijection between the states of N₁ and the current permutation of N₁.
+		// A bijection or bijective function is a type of function that creates a one-to-one correspondence between two sets (states1 ↔ permutation).
+		bijection := make(map[State]State, len(states1))
+		for i, s := range states1 {
+			bijection[s] = permutation[i]
+		}
+
+		permutedStart := bijection[n.Start]
+
+		permutedFinal := make(States, len(n.Final))
+		for i, f := range n.Final {
+			permutedFinal[i] = bijection[f]
+		}
+
+		permutedNFA := NewNFA(permutedStart, permutedFinal)
+
+		for s, table := range n.trans.All() {
+			for a, ts := range table.All() {
+				ss := bijection[s]
+
+				tts := make(States, len(ts))
+				for i, t := range ts {
+					tts[i] = bijection[t]
+				}
+
+				permutedNFA.Add(ss, a, tts)
+			}
+		}
+
+		// If the current permutation of N₁ is equal to N₂, we stop checking more permutations by returning false.
+		// If the current permutation of N₁ is not equal to N₂, we continue with checking more permutations by returning true.
+		return !permutedNFA.Equals(rhs)
+	})
+}
+
+// getSortedDegreeSequence calculates the total degree (sum of in-degrees and out-degrees)
+// for each state in the NFA and returns the degree sequence sorted in ascending order.
+func (n *NFA) getSortedDegreeSequence() []int {
+	totalDegrees := map[State]int{}
+	for s, table := range n.trans.All() {
+		for _, states := range table.All() {
+			for _, t := range states {
+				totalDegrees[s]++
+				totalDegrees[t]++
+			}
+		}
+	}
+
+	sortedDegrees := make([]int, len(totalDegrees))
+	for i, degree := range totalDegrees {
+		sortedDegrees[i] = degree
+	}
+
+	sort.Quick3Way[int](sortedDegrees, generic.NewCompareFunc[int]())
+
+	return sortedDegrees
 }
 
 // Graphviz returns the transition graph of the NFA in DOT Language format.
