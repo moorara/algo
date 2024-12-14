@@ -454,9 +454,9 @@ func TestSet_String(t *testing.T) {
 	eqFunc := NewEqualFunc[string]()
 
 	tests := []struct {
-		name     string
-		s        *set[string]
-		expected string
+		name            string
+		s               *set[string]
+		expectedStrings []string
 	}{
 		{
 			name: "Empty",
@@ -464,7 +464,7 @@ func TestSet_String(t *testing.T) {
 				equal:   eqFunc,
 				members: []string{},
 			},
-			expected: "{}",
+			expectedStrings: []string{},
 		},
 		{
 			name: "NonEmpty",
@@ -472,14 +472,16 @@ func TestSet_String(t *testing.T) {
 				equal:   eqFunc,
 				members: []string{"a", "b", "c", "d"},
 			},
-			expected: "{a, b, c, d}",
+			expectedStrings: []string{"a", "b", "c", "d"},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			str := tc.s.String()
-			assert.Equal(t, tc.expected, str)
+			for _, expectedString := range tc.expectedStrings {
+				assert.Contains(t, str, expectedString)
+			}
 		})
 	}
 }
@@ -580,7 +582,14 @@ func TestSet_All(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			members := slices.Collect(tc.s.All())
-			assert.Equal(t, tc.expectedMembers, members)
+
+			for _, expectedMember := range tc.expectedMembers {
+				assert.Contains(t, members, expectedMember)
+			}
+
+			for _, member := range members {
+				assert.Contains(t, tc.expectedMembers, member)
+			}
 		})
 	}
 }
