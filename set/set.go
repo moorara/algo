@@ -5,11 +5,15 @@ package set
 import (
 	"fmt"
 	"iter"
+	"math/rand"
 	"slices"
 	"strings"
+	"time"
 
 	. "github.com/moorara/algo/generic"
 )
+
+var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // Set represents a set abstract data type.
 type Set[T any] interface {
@@ -32,15 +36,15 @@ type Set[T any] interface {
 }
 
 type set[T any] struct {
-	equal   EqualFunc[T]
 	members []T
+	equal   EqualFunc[T]
 }
 
 // New creates a new empty set.
 func New[T any](equal EqualFunc[T]) Set[T] {
 	return &set[T]{
-		equal:   equal,
 		members: make([]T, 0),
+		equal:   equal,
 	}
 }
 
@@ -89,8 +93,8 @@ func (s *set[T]) Contains(vals ...T) bool {
 
 func (s *set[T]) Clone() Set[T] {
 	t := &set[T]{
-		equal:   s.equal,
 		members: make([]T, len(s.members)),
+		equal:   s.equal,
 	}
 
 	copy(t.members, s.members)
@@ -100,8 +104,8 @@ func (s *set[T]) Clone() Set[T] {
 
 func (s *set[T]) CloneEmpty() Set[T] {
 	t := &set[T]{
-		equal:   s.equal,
 		members: make([]T, 0),
+		equal:   s.equal,
 	}
 
 	return t
@@ -121,8 +125,8 @@ func (s *set[T]) Union(sets ...Set[T]) Set[T] {
 
 func (s *set[T]) Intersection(sets ...Set[T]) Set[T] {
 	t := &set[T]{
-		equal:   s.equal,
 		members: make([]T, 0),
+		equal:   s.equal,
 	}
 
 	for _, m := range s.members {
@@ -155,22 +159,24 @@ func (s *set[T]) Difference(sets ...Set[T]) Set[T] {
 }
 
 func (s *set[T]) String() string {
-	elems := make([]string, len(s.members))
-	for i, m := range s.members {
-		elems[i] = fmt.Sprintf("%v", m)
+	var i int
+	members := make([]string, len(s.members))
+	for m := range s.All() {
+		members[i] = fmt.Sprintf("%v", m)
+		i++
 	}
 
-	return fmt.Sprintf("{%s}", strings.Join(elems, ", "))
+	return fmt.Sprintf("{%s}", strings.Join(members, ", "))
 }
 
-func (s *set[T]) Equals(t Set[T]) bool {
+func (s *set[T]) Equals(rhs Set[T]) bool {
 	for _, m := range s.members {
-		if !t.Contains(m) {
+		if !rhs.Contains(m) {
 			return false
 		}
 	}
 
-	for m := range t.All() {
+	for m := range rhs.All() {
 		if !s.Contains(m) {
 			return false
 		}
@@ -180,10 +186,22 @@ func (s *set[T]) Equals(t Set[T]) bool {
 }
 
 func (s *set[T]) All() iter.Seq[T] {
+	// Create a list of indices representing the members.
+	indices := make([]int, len(s.members))
+	for i := range indices {
+		indices[i] = i
+	}
+
+	// Shuffle the indices list to randomize the order in which members are traversed.
+	// This ensures that the traversal order is non-deterministic, reflecting the unordered nature of set.
+	r.Shuffle(len(indices), func(i, j int) {
+		indices[i], indices[j] = indices[j], indices[i]
+	})
+
 	return func(yield func(T) bool) {
-		for _, m := range s.members {
-			if !yield(m) {
-				break
+		for _, i := range indices {
+			if !yield(s.members[i]) {
+				return
 			}
 		}
 	}
@@ -218,8 +236,8 @@ func (s *set[T]) Filter(p Predicate1[T]) Set[T] {
 	}
 
 	return &set[T]{
-		equal:   s.equal,
 		members: members,
+		equal:   s.equal,
 	}
 }
 
@@ -237,8 +255,8 @@ func (f Transformer[T, U]) Transform(s Set[T], equal EqualFunc[U]) Set[U] {
 	}
 
 	return &set[U]{
-		equal:   equal,
 		members: members,
+		equal:   equal,
 	}
 }
 
