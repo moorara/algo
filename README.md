@@ -34,13 +34,17 @@ A collection of common data structures and algorithms for Go applications.
       - Indexed Binary Heap
     - Symbol Tables
       - Unordered
+        - Separate Chaining Hash Table
+        - Linear Probing Hash Table
+        - Quadratic Probing Hash Table
+        - Double Hashing Hash Table
       - Ordered
         - BST
         - AVL Tree
         - Red-Black Tree
         - Tries
           - Binary Trie
-          - Patricia
+          - Patricia Trie
     - Graphs
       - Undirected Graph
       - Directed Graph

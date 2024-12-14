@@ -6,16 +6,19 @@ package symboltable
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	. "github.com/moorara/algo/generic"
 )
+
+var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // SymbolTable represents an unordered symbol table abstract data type.
 type SymbolTable[K, V any] interface {
 	fmt.Stringer
 	Equaler[SymbolTable[K, V]]
 	Collection2[K, V]
-	Tree2[K, V]
 
 	verify() bool
 
@@ -29,6 +32,7 @@ type SymbolTable[K, V any] interface {
 // OrderedSymbolTable represents an ordered symbol table abstract data type.
 type OrderedSymbolTable[K, V any] interface {
 	SymbolTable[K, V]
+	Tree2[K, V]
 
 	Height() int
 	Min() (K, V, bool)
