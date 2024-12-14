@@ -6,6 +6,27 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
+var (
+	cmpState  = NewCompareFunc[State]()
+	cmpSymbol = NewCompareFunc[Symbol]()
+
+	eqState  = NewEqualFunc[State]()
+	eqStates = func(a, b States) bool {
+		return a.Equals(b)
+	}
+
+	eqSymbolState = func(a, b symboltable.SymbolTable[Symbol, State]) bool {
+		return a.Equals(b)
+	}
+
+	eqSymbolStates = func(a, b symboltable.SymbolTable[Symbol, States]) bool {
+		return a.Equals(b)
+	}
+)
+
+// doubleKeyMap is a map (symbol table) data structure with two keys.
+type doubleKeyMap[K1, K2, V any] symboltable.SymbolTable[K1, symboltable.SymbolTable[K2, V]]
+
 // State represents a state in a finite automaton.
 type State int
 
@@ -24,15 +45,15 @@ func (s States) Contains(t State) bool {
 }
 
 // Equals determines whether or not two sets of states are equal.
-func (s States) Equals(t States) bool {
-	for _, u := range s {
-		if !t.Contains(u) {
+func (s States) Equals(rhs States) bool {
+	for _, state := range s {
+		if !rhs.Contains(state) {
 			return false
 		}
 	}
 
-	for _, u := range t {
-		if !s.Contains(u) {
+	for _, state := range rhs {
+		if !s.Contains(state) {
 			return false
 		}
 	}
@@ -60,6 +81,23 @@ func (s Symbols) Contains(t Symbol) bool {
 	return false
 }
 
+// Equals determines whether or not two sets of symbols are equal.
+func (s Symbols) Equals(rhs Symbols) bool {
+	for _, symbol := range s {
+		if !rhs.Contains(symbol) {
+			return false
+		}
+	}
+
+	for _, symbol := range rhs {
+		if !s.Contains(symbol) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // String represents an input string in a finite automaton.
 type String []Symbol
 
@@ -72,23 +110,22 @@ func ToString(s string) String {
 	return res
 }
 
-// doubleKeyMap is a map (symbol table) data structure with two keys.
-type doubleKeyMap[K1, K2, V any] symboltable.OrderedSymbolTable[K1, symboltable.OrderedSymbolTable[K2, V]]
-
-var (
-	cmpState  = NewCompareFunc[State]()
-	cmpSymbol = NewCompareFunc[Symbol]()
-
-	eqState  = NewEqualFunc[State]()
-	eqStates = func(a, b States) bool {
-		return a.Equals(b)
+// generatePermutations generates all permutations of a sequence of states using recursion and backtracking.
+// Each permutation is passed to the provided yield function.
+func generatePermutations(states States, start, end int, yield func(States) bool) bool {
+	if start == end {
+		return yield(states)
 	}
 
-	eqSymbolState = func(a, b symboltable.OrderedSymbolTable[Symbol, State]) bool {
-		return a.Equals(b)
+	for i := start; i <= end; i++ {
+		states[start], states[i] = states[i], states[start]
+		cont := generatePermutations(states, start+1, end, yield)
+		states[start], states[i] = states[i], states[start]
+
+		if !cont {
+			return false
+		}
 	}
 
-	eqSymbolStates = func(a, b symboltable.OrderedSymbolTable[Symbol, States]) bool {
-		return a.Equals(b)
-	}
-)
+	return true
+}

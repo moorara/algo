@@ -282,7 +282,7 @@ func TestDFA_Minimize(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			dfa := tc.d.Minimize()
-			assert.True(t, dfa.Equals(tc.expectedDFA))
+			assert.True(t, dfa.Isomorphic(tc.expectedDFA))
 		})
 	}
 }
@@ -316,26 +316,112 @@ func TestDFA_Equals(t *testing.T) {
 	tests := []struct {
 		name           string
 		d              *DFA
-		dfa            *DFA
+		rhs            *DFA
 		expectedEquals bool
 	}{
 		{
 			name:           "Equal",
 			d:              dfas[0],
-			dfa:            dfas[0],
+			rhs:            dfas[0],
 			expectedEquals: true,
 		},
 		{
 			name:           "NotEqual",
 			d:              dfas[0],
-			dfa:            dfas[1],
+			rhs:            dfas[1],
 			expectedEquals: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.d.Equals(tc.dfa))
+			assert.Equal(t, tc.expectedEquals, tc.d.Equals(tc.rhs))
+		})
+	}
+}
+
+func TestDFA_Isomorphic(t *testing.T) {
+	// aa*|bb*
+	d0 := NewDFA(0, States{1, 2})
+	d0.Add(0, 'a', 1)
+	d0.Add(1, 'a', 1)
+	d0.Add(0, 'b', 2)
+	d0.Add(2, 'b', 2)
+
+	d1 := NewDFA(0, States{1})
+
+	d2 := NewDFA(0, States{2, 4})
+	d2.Add(0, 'a', 1)
+	d2.Add(1, 'a', 2)
+	d2.Add(2, 'a', 2)
+	d2.Add(0, 'b', 3)
+	d2.Add(3, 'b', 4)
+	d2.Add(4, 'b', 4)
+
+	d3 := NewDFA(0, States{1, 2})
+	d3.Add(0, 'a', 1)
+	d3.Add(1, 'c', 1)
+	d3.Add(0, 'b', 2)
+	d3.Add(2, 'c', 2)
+
+	d4 := NewDFA(0, States{1, 2})
+	d4.Add(0, 'a', 1)
+	d4.Add(1, 'a', 1)
+	d4.Add(0, 'b', 2)
+
+	d5 := NewDFA(2, States{0, 1})
+	d5.Add(2, 'a', 0)
+	d5.Add(0, 'a', 0)
+	d5.Add(2, 'b', 1)
+	d5.Add(1, 'b', 1)
+
+	tests := []struct {
+		name               string
+		d                  *DFA
+		rhs                *DFA
+		expectedIsomorphic bool
+	}{
+		{
+			name:               "FinalStatesNotEqualSize",
+			d:                  d0,
+			rhs:                d1,
+			expectedIsomorphic: false,
+		},
+		{
+			name:               "StatesNotEqualSize",
+			d:                  d0,
+			rhs:                d2,
+			expectedIsomorphic: false,
+		},
+		{
+			name:               "SymbolsNotEqual",
+			d:                  d0,
+			rhs:                d3,
+			expectedIsomorphic: false,
+		},
+		{
+			name:               "DegreesNotEqual",
+			d:                  d0,
+			rhs:                d4,
+			expectedIsomorphic: false,
+		},
+		{
+			name:               "Equal",
+			d:                  d0,
+			rhs:                d0,
+			expectedIsomorphic: true,
+		},
+		{
+			name:               "Isomorphic",
+			d:                  d0,
+			rhs:                d5,
+			expectedIsomorphic: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedIsomorphic, tc.d.Isomorphic(tc.rhs))
 		})
 	}
 }

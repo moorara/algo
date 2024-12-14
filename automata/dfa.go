@@ -2,12 +2,11 @@ package automata
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 
+	"github.com/moorara/algo/generic"
 	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/graphviz"
-	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
@@ -25,7 +24,7 @@ func NewDFA(start State, final States) *DFA {
 	return &DFA{
 		Start: start,
 		Final: final,
-		trans: symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[Symbol, State]](cmpState, eqSymbolState),
+		trans: symboltable.NewRedBlack[State, symboltable.SymbolTable[Symbol, State]](cmpState, eqSymbolState),
 	}
 }
 
@@ -51,22 +50,22 @@ func (d *DFA) Next(s State, a Symbol) State {
 	return State(-1)
 }
 
-// Symbols returns the set of all states of the DFA.
+// States returns the set of all states of the DFA.
 func (d *DFA) States() States {
 	states := States{}
 
 	states = append(states, d.Start)
 	states = append(states, d.Final...)
 
-	for key := range d.trans.All() {
-		if s := key; !states.Contains(s) {
+	for s := range d.trans.All() {
+		if !states.Contains(s) {
 			states = append(states, s)
 		}
 	}
 
-	for _, val := range d.trans.All() {
-		for _, val := range val.All() {
-			if s := val; !states.Contains(s) {
+	for _, v := range d.trans.All() {
+		for _, s := range v.All() {
+			if !states.Contains(s) {
 				states = append(states, s)
 			}
 		}
@@ -79,9 +78,9 @@ func (d *DFA) States() States {
 func (d *DFA) Symbols() Symbols {
 	symbols := Symbols{}
 
-	for _, val := range d.trans.All() {
-		for key := range val.All() {
-			if a := key; a != E && !symbols.Contains(a) {
+	for _, v := range d.trans.All() {
+		for a := range v.All() {
+			if a != E && !symbols.Contains(a) {
 				symbols = append(symbols, a)
 			}
 		}
@@ -126,157 +125,91 @@ func (d *DFA) ToNFA() *NFA {
 //
 // For more details, see Compilers: Principles, Techniques, and Tools (2nd Edition).
 func (d *DFA) Minimize() *DFA {
-	eqFunc := func(a, b State) bool { return a == b }
-	setEqFunc := func(a, b set.Set[State]) bool { return a.Equals(b) }
-
 	/*
 	 * 1. Start with an initial partition P with two groups,
 	 *    F and S - F, the accepting and non-accepting states.
 	 */
 
-	S := set.New[State](eqFunc)
-	S.Add(d.States()...)
+	// F
+	F := States{}
+	F = append(F, d.Final...)
 
-	F := set.New[State](eqFunc)
-	F.Add(d.Final...)
+	// S - F
+	NF := States{}
+	for _, s := range d.States() {
+		if !d.Final.Contains(s) {
+			NF = append(NF, s)
+		}
+	}
 
-	NF := S.Difference(F)
-
-	P := set.New[set.Set[State]](setEqFunc)
-	P.Add(NF, F)
+	Π := newPartition()
+	Π.Add(NF, F)
 
 	/*
-	 * 2. Initially, let Pnew = P.
-	 *    For (each group G of P) {
+	 * 2. Initially, let Πnew = Π.
+	 *    For (each group G of Π) {
 	 *      Partition G into subgroups such that two states s and t are in the same subgroup
-	 *      if and only if for all input symbols a, states s and t have transitions on a to states in the same group of P
+	 *      if and only if for all input symbols a, states s and t have transitions on a to states in the same group of Π
 	 *      (at worst, a state will be in a subgroup by itself).
 	 *
 	 *      Replace G in Pnew by the set of all subgroups formed.
 	 *    }
 	 *
-	 * 3. If Pnew = P, let Pfinal = P and continue with step (4).
-	 *    Otherwise, repeat step (2) with Pnew in place of P.
+	 * 3. If Πnew = Π, let Πfinal = Π and continue with step (4).
+	 *    Otherwise, repeat step (2) with Πnew in place of Π.
 	 */
 
 	for {
-		Pnew := set.New[set.Set[State]](setEqFunc)
+		Πnew := newPartition()
 
-		for G := range P.All() { // For every group in the current partition
-			gtrans := d.createGroupTrans(P, G)
-			populateSubgroups(Pnew, gtrans)
+		// For every group in the current partition
+		for _, G := range Π.groups {
+			Gtrans := Π.BuildGroupTrans(d, G)
+			Πnew.PartitionAndAddGroups(Gtrans)
 		}
 
-		if Pnew.Equals(P) {
+		if Πnew.Equals(Π) {
 			break
 		}
 
-		P = Pnew
+		Π = Πnew
 	}
 
 	/*
-	 * 4. Choose one state in each group of Pfinal as the representative for that group.
+	 * 4. Choose one state in each group of Πfinal as the representative for that group.
 	 *    The representatives will be the states of the minimum-state DFA D′.
 	 *    The other components of D′ are constructed as follows:
 	 *
 	 *    (a) The start state of D′ is the representative of the group containing the start state of D.
 	 *    (b) The accepting states of D′ are the representatives of those groups that contain an accepting state of D
 	 *        (each group contains either only accepting states, or only non-accepting states).
-	 *    (c) Let s be the representative of some group G of Pfinal, and let the transition of D from s on input a be to state t.
+	 *    (c) Let s be the representative of some group G of Πfinal, and let the transition of D from s on input a be to state t.
 	 *        Let r be the representative of t's group H. Then in D′, there is a transition from s to r on input a.
 	 */
 
-	start, _ := groupRep(P, d.Start)
+	start, _ := Π.Rep(d.Start)
 
 	final := States{}
 	for _, f := range d.Final {
-		g, _ := groupRep(P, f)
+		g, _ := Π.Rep(f)
 		final = append(final, g)
 	}
 
 	dfa := NewDFA(start, final)
 
-	Pmembers := slices.Collect(P.All())
+	for _, G := range Π.groups {
+		// Get any (the first) state in the group
+		s := G.states[0]
 
-	for s, G := range Pmembers {
-		Gmembers := slices.Collect(G.All())
-		g := Gmembers[0] // G is non-empty
-
-		if tab, ok := d.trans.Get(g); ok {
-			for key, val := range tab.All() {
-				a, next := key, val
-				rep, _ := groupRep(P, next)
-				dfa.Add(State(s), a, rep)
+		if v, ok := d.trans.Get(s); ok {
+			for a, next := range v.All() {
+				rep, _ := Π.Rep(next)
+				dfa.Add(G.rep, a, rep)
 			}
 		}
 	}
 
 	return dfa
-}
-
-// createGroupTrans create a map of states to symbols to the current partition's group representatives (instead of next states).
-func (d *DFA) createGroupTrans(P set.Set[set.Set[State]], G set.Set[State]) doubleKeyMap[State, Symbol, State] {
-	gtrans := symboltable.NewRedBlack[State, symboltable.OrderedSymbolTable[Symbol, State]](cmpState, eqSymbolState)
-
-	for s := range G.All() { // For every state in the current group
-		strans := symboltable.NewRedBlack[Symbol, State](cmpSymbol, eqState)
-
-		// Create a map of symbols to the current partition's group representatives (instead of next states)
-		if stab, ok := d.trans.Get(s); ok {
-			for key, val := range stab.All() {
-				a, next := key, val
-				if rep, ok := groupRep(P, next); ok {
-					strans.Put(a, rep)
-				}
-			}
-		}
-
-		gtrans.Put(s, strans)
-	}
-
-	return gtrans
-}
-
-// populateSubgroups creates new subgroups based on the transition map of a group and add them to the new partition.
-func populateSubgroups(Pnew set.Set[set.Set[State]], gtrans doubleKeyMap[State, Symbol, State]) {
-	eqFunc := func(a, b State) bool { return a == b }
-
-	kvs := Collect(gtrans.All())
-	for i := 0; i < len(kvs); i++ {
-		s, sreps := kvs[i].Key, kvs[i].Val
-
-		if _, ok := groupRep(Pnew, s); !ok { // If s is not already added to the new partition
-			// Create a new group in the new partition
-			H := set.New[State](eqFunc)
-			H.Add(s)
-
-			// Add all other state with same symbol->rep map to the new group
-			for j := 1; j < len(kvs); j++ {
-				t, treps := kvs[j].Key, kvs[j].Val
-
-				if sreps.Equals(treps) {
-					H.Add(t)
-				}
-			}
-
-			Pnew.Add(H)
-		}
-	}
-}
-
-// groupRep returns the group representaive for a state.
-func groupRep(P set.Set[set.Set[State]], s State) (State, bool) {
-	Pmembers := slices.Collect(P.All())
-	for i, G := range Pmembers {
-		Gmembers := slices.Collect(G.All())
-		for _, state := range Gmembers {
-			if state == s {
-				return State(i), true
-			}
-		}
-	}
-
-	return -1, false
 }
 
 // WithoutDeadStates eliminates the dead states and all transitions to them.
@@ -298,7 +231,7 @@ func (d *DFA) WithoutDeadStates() *DFA {
 		}
 	}
 
-	// 2. Add a new state with edges to all other veritcies representing the final states of the DFA.
+	// 2. Add a new state with transitions to all other states representing the final states of the DFA.
 	u := State(-1)
 	adj[u] = append(adj[u], d.Final...)
 
@@ -341,13 +274,105 @@ func dfs(adj map[State]States, visited map[State]bool, s State) {
 	}
 }
 
-// Equals determines whether or not two DFAs are the same.
+// Equals determines whether or not two DFAs are identical in structure and labeling.
+// Two DFAs are considered equal if they have the same start state, final states, and transitions.
 //
-// TODO: Implement isomorphic equality.
-func (d *DFA) Equals(dfa *DFA) bool {
-	return d.Start == dfa.Start &&
-		d.Final.Equals(dfa.Final) &&
-		d.trans.Equals(dfa.trans)
+// For isomorphic equality, structural equivalence with potentially different state names, use the Isomorphic method.
+func (d *DFA) Equals(rhs *DFA) bool {
+	return d.Start == rhs.Start &&
+		d.Final.Equals(rhs.Final) &&
+		d.trans.Equals(rhs.trans)
+}
+
+// Isomorphic determines whether or not two DFAs are isomorphically the same.
+//
+// Two DFAs D₁ and D₂ are said to be isomorphic if there exists a bijection f: S(D₁) → S(D₂) between their state sets such that,
+// for every input symbol a, there is a transition from state s to state t on input a in D₁
+// if and only if there is a transition from state f(s) to state f(t) on input a in D₂.
+//
+// In simpler terms, the two DFAs have the same structure:
+// one can be transformed into the other by renaming its states and preserving the transitions.
+func (d *DFA) Isomorphic(rhs *DFA) bool {
+	// D₁ and D₂ must have the same number of final states.
+	if len(d.Final) != len(rhs.Final) {
+		return false
+	}
+
+	// D₁ and D₂ must have the same number of states.
+	states1, states2 := d.States(), rhs.States()
+	if len(states1) != len(states2) {
+		return false
+	}
+
+	// D₁ and D₂ must have the same input alphabet.
+	symbols1, symbols2 := d.Symbols(), rhs.Symbols()
+	if !symbols1.Equals(symbols2) {
+		return false
+	}
+
+	// D₁ and D₂ must have the same sorted degree sequence.
+	// len(degrees1) == len(degrees2) since D₁ and D₂ have the same number of states.
+	degrees1, degrees2 := d.getSortedDegreeSequence(), rhs.getSortedDegreeSequence()
+	for i := range degrees1 {
+		if degrees1[i] != degrees2[i] {
+			return false
+		}
+	}
+
+	// Since generatePermutations uses backtracking and modifies the slice in-place, we need a copy.
+	clone := make(States, len(states1))
+	copy(clone, states1)
+
+	// Methodically checking if any permutation of D₁ states is equal to D₂.
+	return !generatePermutations(clone, 0, len(clone)-1, func(permutation States) bool {
+		// Create a bijection between the states of D₁ and the current permutation of D₁.
+		// A bijection or bijective function is a type of function that creates a one-to-one correspondence between two sets (states1 ↔ permutation).
+		bijection := make(map[State]State, len(states1))
+		for i, s := range states1 {
+			bijection[s] = permutation[i]
+		}
+
+		permutedStart := bijection[d.Start]
+
+		permutedFinal := make(States, len(d.Final))
+		for i, f := range d.Final {
+			permutedFinal[i] = bijection[f]
+		}
+
+		permutedDFA := NewDFA(permutedStart, permutedFinal)
+
+		for s, table := range d.trans.All() {
+			for a, t := range table.All() {
+				ss, tt := bijection[s], bijection[t]
+				permutedDFA.Add(ss, a, tt)
+			}
+		}
+
+		// If the current permutation of D₁ is equal to D₂, we stop checking more permutations by returning false.
+		// If the current permutation of D₁ is not equal to D₂, we continue with checking more permutations by returning true.
+		return !permutedDFA.Equals(rhs)
+	})
+}
+
+// getSortedDegreeSequence calculates the total degree (sum of in-degrees and out-degrees)
+// for each state in the DFA and returns the degree sequence sorted in ascending order.
+func (d *DFA) getSortedDegreeSequence() []int {
+	totalDegrees := map[State]int{}
+	for s, table := range d.trans.All() {
+		for _, t := range table.All() {
+			totalDegrees[s]++
+			totalDegrees[t]++
+		}
+	}
+
+	sortedDegrees := make([]int, len(totalDegrees))
+	for i, degree := range totalDegrees {
+		sortedDegrees[i] = degree
+	}
+
+	sort.Quick3Way[int](sortedDegrees, generic.NewCompareFunc[int]())
+
+	return sortedDegrees
 }
 
 // Graphviz returns the transition graph of the DFA in DOT Language format.
