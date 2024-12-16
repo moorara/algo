@@ -22,9 +22,9 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  1 [label="{ 1 | { 10 | ten } }"];
-  0 [label="{ 0 | { 30 | thirty } }"];
-  2 [label="{ 2 | { 20 | twenty } }"];
+  1 [label="{ 1 | { 10 | Task#1 } }"];
+  0 [label="{ 0 | { 30 | Task#3 } }"];
+  2 [label="{ 2 | { 20 | Task#2 } }"];
 
   1 -> 0 [];
   1 -> 2 [];
@@ -35,9 +35,9 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  1 [label="{ 1 | { 30 | thirty } }"];
-  2 [label="{ 2 | { 20 | twenty } }"];
-  0 [label="{ 0 | { 10 | ten } }"];
+  1 [label="{ 1 | { 30 | Task#3 } }"];
+  2 [label="{ 2 | { 20 | Task#2 } }"];
+  0 [label="{ 0 | { 10 | Task#1 } }"];
 
   1 -> 2 [];
   1 -> 0 [];
@@ -48,11 +48,11 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  3 [label="{ 3 | { 10 | ten } }"];
-  4 [label="{ 4 | { 20 | twenty } }"];
-  1 [label="{ 1 | { 30 | thirty } }"];
-  0 [label="{ 0 | { 50 | fifty } }"];
-  2 [label="{ 2 | { 40 | forty } }"];
+  3 [label="{ 3 | { 10 | Task#1 } }"];
+  4 [label="{ 4 | { 20 | Task#2 } }"];
+  1 [label="{ 1 | { 30 | Task#3 } }"];
+  0 [label="{ 0 | { 50 | Task#5 } }"];
+  2 [label="{ 2 | { 40 | Task#4 } }"];
 
   3 -> 4 [];
   3 -> 1 [];
@@ -65,11 +65,11 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  3 [label="{ 3 | { 50 | fifty } }"];
-  4 [label="{ 4 | { 40 | forty } }"];
-  2 [label="{ 2 | { 20 | twenty } }"];
-  0 [label="{ 0 | { 10 | ten } }"];
-  1 [label="{ 1 | { 30 | thirty } }"];
+  3 [label="{ 3 | { 50 | Task#5 } }"];
+  4 [label="{ 4 | { 40 | Task#4 } }"];
+  2 [label="{ 2 | { 20 | Task#2 } }"];
+  0 [label="{ 0 | { 10 | Task#1 } }"];
+  1 [label="{ 1 | { 30 | Task#3 } }"];
 
   3 -> 4 [];
   3 -> 2 [];
@@ -82,15 +82,15 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  7 [label="{ 7 | { 10 | ten } }"];
-  8 [label="{ 8 | { 20 | twenty } }"];
-  4 [label="{ 4 | { 50 | fifty } }"];
-  6 [label="{ 6 | { 30 | thirty } }"];
-  2 [label="{ 2 | { 70 | seventy } }"];
-  1 [label="{ 1 | { 80 | eighty } }"];
-  5 [label="{ 5 | { 60 | sixty } }"];
-  0 [label="{ 0 | { 90 | ninety } }"];
-  3 [label="{ 3 | { 40 | forty } }"];
+  7 [label="{ 7 | { 10 | Task#1 } }"];
+  8 [label="{ 8 | { 20 | Task#2 } }"];
+  4 [label="{ 4 | { 50 | Task#5 } }"];
+  6 [label="{ 6 | { 30 | Task#3 } }"];
+  2 [label="{ 2 | { 70 | Task#7 } }"];
+  1 [label="{ 1 | { 80 | Task#8 } }"];
+  5 [label="{ 5 | { 60 | Task#6 } }"];
+  0 [label="{ 0 | { 90 | Task#9 } }"];
+  3 [label="{ 3 | { 40 | Task#4 } }"];
 
   7 -> 8 [];
   7 -> 4 [];
@@ -107,15 +107,15 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  7 [label="{ 7 | { 90 | ninety } }"];
-  8 [label="{ 8 | { 80 | eighty } }"];
-  5 [label="{ 5 | { 60 | sixty } }"];
-  6 [label="{ 6 | { 70 | seventy } }"];
-  4 [label="{ 4 | { 40 | forty } }"];
-  3 [label="{ 3 | { 50 | fifty } }"];
-  2 [label="{ 2 | { 20 | twenty } }"];
-  0 [label="{ 0 | { 10 | ten } }"];
-  1 [label="{ 1 | { 30 | thirty } }"];
+  7 [label="{ 7 | { 90 | Task#9 } }"];
+  8 [label="{ 8 | { 80 | Task#8 } }"];
+  5 [label="{ 5 | { 60 | Task#6 } }"];
+  6 [label="{ 6 | { 70 | Task#7 } }"];
+  4 [label="{ 4 | { 40 | Task#4 } }"];
+  3 [label="{ 3 | { 50 | Task#5 } }"];
+  2 [label="{ 2 | { 20 | Task#2 } }"];
+  0 [label="{ 0 | { 10 | Task#1 } }"];
+  1 [label="{ 1 | { 30 | Task#3 } }"];
 
   7 -> 8 [];
   7 -> 5 [];
