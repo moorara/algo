@@ -574,7 +574,7 @@ func (t *binary[V]) AllMatch(p Predicate2[string, V]) bool {
 // SelectMatch selects a subset of key-values from the binary trie that satisfy the given predicate.
 // It returns a new binary trie containing the matching key-values, of the same type as the original binary trie.
 func (t *binary[V]) SelectMatch(p Predicate2[string, V]) Collection2[string, V] {
-	newT := NewBinary[V](t.eqVal).(*binary[V])
+	newT := NewBinary[V](t.eqVal)
 
 	t._traverse(t.root.left, "", VLR, func(key string, n *binaryNode[V]) bool {
 		if n.term && p(key, n.val) {

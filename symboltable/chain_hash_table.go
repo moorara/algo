@@ -278,7 +278,7 @@ func (ht *chainHashTable[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V
 	newHT := NewChainHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
-	}).(*chainHashTable[K, V])
+	})
 
 	for key, val := range ht.All() {
 		if p(key, val) {

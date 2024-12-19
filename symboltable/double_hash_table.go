@@ -328,7 +328,7 @@ func (ht *doubleHashTable[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, 
 	newHT := NewDoubleHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
-	}).(*doubleHashTable[K, V])
+	})
 
 	for key, val := range ht.All() {
 		if p(key, val) {

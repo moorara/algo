@@ -509,7 +509,7 @@ func (t *bst[K, V]) AllMatch(p Predicate2[K, V]) bool {
 // SelectMatch selects a subset of key-values from the BST that satisfy the given predicate.
 // It returns a new BST containing the matching key-values, of the same type as the original BST.
 func (t *bst[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
-	newST := NewBST[K, V](t.cmpKey, t.eqVal).(*bst[K, V])
+	newST := NewBST[K, V](t.cmpKey, t.eqVal)
 
 	t._traverse(t.root, VLR, func(n *bstNode[K, V]) bool {
 		if p(n.key, n.val) {

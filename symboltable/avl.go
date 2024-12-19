@@ -572,7 +572,7 @@ func (t *avl[K, V]) AllMatch(p Predicate2[K, V]) bool {
 // SelectMatch selects a subset of key-values from the AVL tree that satisfy the given predicate.
 // It returns a new AVL tree containing the matching key-values, of the same type as the original AVL tree.
 func (t *avl[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
-	newST := NewAVL[K, V](t.cmpKey, t.eqVal).(*avl[K, V])
+	newST := NewAVL[K, V](t.cmpKey, t.eqVal)
 
 	t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
 		if p(n.key, n.val) {

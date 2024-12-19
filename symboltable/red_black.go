@@ -709,7 +709,7 @@ func (t *redBlack[K, V]) AllMatch(p Predicate2[K, V]) bool {
 // SelectMatch selects a subset of key-values from the Red-Black tree that satisfy the given predicate.
 // It returns a new Red-Black tree containing the matching key-values, of the same type as the original Red-Black tree.
 func (t *redBlack[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
-	newST := NewRedBlack[K, V](t.cmpKey, t.eqVal).(*redBlack[K, V])
+	newST := NewRedBlack[K, V](t.cmpKey, t.eqVal)
 
 	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
 		if p(n.key, n.val) {

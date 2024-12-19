@@ -699,7 +699,7 @@ func (t *patricia[V]) AllMatch(p Predicate2[string, V]) bool {
 // SelectMatch selects a subset of key-values from the Patricia trie that satisfy the given predicate.
 // It returns a new Patricia trie containing the matching key-values, of the same type as the original Patricia trie.
 func (t *patricia[V]) SelectMatch(p Predicate2[string, V]) Collection2[string, V] {
-	newT := NewPatricia[V](t.eqVal).(*patricia[V])
+	newT := NewPatricia[V](t.eqVal)
 
 	t._traverse(t.root, VLR, func(n *patriciaNode[V]) bool {
 		if key := n.key.String(); p(key, n.val) {
