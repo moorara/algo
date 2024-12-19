@@ -281,7 +281,7 @@ func (ht *quadraticHashTable[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[
 	newHT := NewQuadraticHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
-	}).(*quadraticHashTable[K, V])
+	})
 
 	for key, val := range ht.All() {
 		if p(key, val) {

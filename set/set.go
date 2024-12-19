@@ -154,17 +154,15 @@ func (s *set[T]) AllMatch(p Predicate1[T]) bool {
 }
 
 func (s *set[T]) SelectMatch(p Predicate1[T]) Collection1[T] {
-	members := make([]T, 0)
+	newS := New[T](s.equal)
+
 	for _, m := range s.members {
 		if p(m) {
-			members = append(members, m)
+			newS.Add(m)
 		}
 	}
 
-	return &set[T]{
-		members: members,
-		equal:   s.equal,
-	}
+	return newS
 }
 
 func (s *set[T]) Clone() Set[T] {
