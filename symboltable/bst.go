@@ -92,7 +92,7 @@ func (t *bst[K, V]) _isRankOK() bool {
 	return true
 }
 
-// Size returns the number of key-value pairs in the BST.
+// Size returns the number of key-values in the BST.
 func (t *bst[K, V]) Size() int {
 	return t._size(t.root)
 }
@@ -115,7 +115,7 @@ func (t *bst[K, V]) _height(n *bstNode[K, V]) int {
 		return 0
 	}
 
-	return 1 + Max[int](t._height(n.left), t._height(n.right))
+	return 1 + max(t._height(n.left), t._height(n.right))
 }
 
 // IsEmpty returns true if the BST is empty.
@@ -123,7 +123,7 @@ func (t *bst[K, V]) IsEmpty() bool {
 	return t.root == nil
 }
 
-// Put adds a new key-value pair to the BST.
+// Put adds a new key-value to the BST.
 func (t *bst[K, V]) Put(key K, val V) {
 	t.root = t._put(t.root, key, val)
 }
@@ -174,7 +174,7 @@ func (t *bst[K, V]) _get(n *bstNode[K, V], key K) (V, bool) {
 	}
 }
 
-// Delete removes a key-value pair from the BST.
+// Delete removes a key-value from the BST.
 func (t *bst[K, V]) Delete(key K) (val V, ok bool) {
 	t.root, val, ok = t._delete(t.root, key)
 	return val, ok
@@ -466,7 +466,7 @@ func (t *bst[K, V]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 }
 
-// Equals determines whether or not two BSTs have the same key-value pairs.
+// Equals determines whether or not two BSTs have the same key-values.
 func (t *bst[K, V]) Equals(rhs SymbolTable[K, V]) bool {
 	t2, ok := rhs.(*bst[K, V])
 	if !ok {
@@ -482,7 +482,7 @@ func (t *bst[K, V]) Equals(rhs SymbolTable[K, V]) bool {
 	})
 }
 
-// All returns an iterator sequence containing all the key-value pairs in the BST.
+// All returns an iterator sequence containing all the key-values in the BST.
 func (t *bst[K, V]) All() iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		t._traverse(t.root, Ascending, func(n *bstNode[K, V]) bool {
@@ -491,14 +491,14 @@ func (t *bst[K, V]) All() iter.Seq2[K, V] {
 	}
 }
 
-// AnyMatch returns true if at least one key-value pair in the BST satisfies the provided predicate.
+// AnyMatch returns true if at least one key-value in the BST satisfies the provided predicate.
 func (t *bst[K, V]) AnyMatch(p Predicate2[K, V]) bool {
 	return !t._traverse(t.root, VLR, func(n *bstNode[K, V]) bool {
 		return !p(n.key, n.val)
 	})
 }
 
-// AllMatch returns true if all key-value pairs in the BST satisfy the provided predicate.
+// AllMatch returns true if all key-values in the BST satisfy the provided predicate.
 // If the BST is empty, it returns true.
 func (t *bst[K, V]) AllMatch(p Predicate2[K, V]) bool {
 	return t._traverse(t.root, VLR, func(n *bstNode[K, V]) bool {
@@ -506,8 +506,23 @@ func (t *bst[K, V]) AllMatch(p Predicate2[K, V]) bool {
 	})
 }
 
+// SelectMatch selects a subset of key-values from the BST that satisfy the given predicate.
+// It returns a new BST containing the matching key-values, of the same type as the original BST.
+func (t *bst[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
+	newST := NewBST[K, V](t.cmpKey, t.eqVal).(*bst[K, V])
+
+	t._traverse(t.root, VLR, func(n *bstNode[K, V]) bool {
+		if p(n.key, n.val) {
+			newST.Put(n.key, n.val)
+		}
+		return true
+	})
+
+	return newST
+}
+
 // Traverse performs a traversal of the BST using the specified traversal order
-// and yields the key-value pair of each node to the provided VisitFunc2 function.
+// and yields the key-value of each node to the provided VisitFunc2 function.
 //
 // If the function returns false, the traversal is halted.
 func (t *bst[K, V]) Traverse(order TraverseOrder, visit VisitFunc2[K, V]) {

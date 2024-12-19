@@ -11,6 +11,8 @@ func getBinaryTests() []trieTest[int] {
 
 	tests[0].trie = "Binary Trie"
 	tests[0].expectedHeight = 3
+	tests[0].equals = nil
+	tests[0].expectedEquals = false
 	tests[0].expectedVLRTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}}
 	tests[0].expectedVRLTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}}
 	tests[0].expectedLVRTraverse = []KeyValue[string, int]{{Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}, {Key: "", Val: 0}}
@@ -19,8 +21,6 @@ func getBinaryTests() []trieTest[int] {
 	tests[0].expectedRLVTraverse = []KeyValue[string, int]{{Key: "C", Val: 3}, {Key: "B", Val: 2}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
 	tests[0].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}}
 	tests[0].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "C", Val: 3}, {Key: "B", Val: 2}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
-	tests[0].equals = nil
-	tests[0].expectedEquals = false
 	tests[0].expectedGraphviz = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];
@@ -37,6 +37,8 @@ func getBinaryTests() []trieTest[int] {
 
 	tests[1].trie = "Binary Trie"
 	tests[1].expectedHeight = 5
+	tests[1].equals = NewBinary[int](nil)
+	tests[1].expectedEquals = false
 	tests[1].expectedVLRTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}, {Key: "D", Val: 4}, {Key: "E", Val: 5}}
 	tests[1].expectedVRLTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}, {Key: "D", Val: 4}, {Key: "E", Val: 5}}
 	tests[1].expectedLVRTraverse = []KeyValue[string, int]{{Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}, {Key: "D", Val: 4}, {Key: "E", Val: 5}, {Key: "", Val: 0}}
@@ -45,8 +47,6 @@ func getBinaryTests() []trieTest[int] {
 	tests[1].expectedRLVTraverse = []KeyValue[string, int]{{Key: "E", Val: 5}, {Key: "D", Val: 4}, {Key: "C", Val: 3}, {Key: "B", Val: 2}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
 	tests[1].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}, {Key: "D", Val: 4}, {Key: "E", Val: 5}}
 	tests[1].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "E", Val: 5}, {Key: "D", Val: 4}, {Key: "C", Val: 3}, {Key: "B", Val: 2}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
-	tests[1].equals = NewBinary[int](nil)
-	tests[1].expectedEquals = false
 	tests[1].expectedGraphviz = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];
@@ -67,6 +67,11 @@ func getBinaryTests() []trieTest[int] {
 
 	tests[2].trie = "Binary Trie"
 	tests[2].expectedHeight = 7
+	tests[2].equals = NewBinary[int](nil)
+	tests[2].equals.Put("A", 1)
+	tests[2].equals.Put("D", 4)
+	tests[2].equals.Put("G", 7)
+	tests[2].expectedEquals = false
 	tests[2].expectedVLRTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "D", Val: 4}, {Key: "G", Val: 7}, {Key: "J", Val: 10}, {Key: "M", Val: 13}, {Key: "P", Val: 16}, {Key: "S", Val: 19}}
 	tests[2].expectedVRLTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "D", Val: 4}, {Key: "G", Val: 7}, {Key: "J", Val: 10}, {Key: "M", Val: 13}, {Key: "P", Val: 16}, {Key: "S", Val: 19}}
 	tests[2].expectedLVRTraverse = []KeyValue[string, int]{{Key: "A", Val: 1}, {Key: "D", Val: 4}, {Key: "G", Val: 7}, {Key: "J", Val: 10}, {Key: "M", Val: 13}, {Key: "P", Val: 16}, {Key: "S", Val: 19}, {Key: "", Val: 0}}
@@ -75,11 +80,6 @@ func getBinaryTests() []trieTest[int] {
 	tests[2].expectedRLVTraverse = []KeyValue[string, int]{{Key: "S", Val: 19}, {Key: "P", Val: 16}, {Key: "M", Val: 13}, {Key: "J", Val: 10}, {Key: "G", Val: 7}, {Key: "D", Val: 4}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
 	tests[2].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "D", Val: 4}, {Key: "G", Val: 7}, {Key: "J", Val: 10}, {Key: "M", Val: 13}, {Key: "P", Val: 16}, {Key: "S", Val: 19}}
 	tests[2].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "S", Val: 19}, {Key: "P", Val: 16}, {Key: "M", Val: 13}, {Key: "J", Val: 10}, {Key: "G", Val: 7}, {Key: "D", Val: 4}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
-	tests[2].equals = NewBinary[int](nil)
-	tests[2].equals.Put("A", 1)
-	tests[2].equals.Put("D", 4)
-	tests[2].equals.Put("G", 7)
-	tests[2].expectedEquals = false
 	tests[2].expectedGraphviz = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];
@@ -104,14 +104,6 @@ func getBinaryTests() []trieTest[int] {
 
 	tests[3].trie = "Binary Trie"
 	tests[3].expectedHeight = 8
-	tests[3].expectedVLRTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "b", Val: 0}, {Key: "a", Val: 0}, {Key: "b", Val: 0}, {Key: "y", Val: 5}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "n", Val: 17}, {Key: "n", Val: 0}, {Key: "d", Val: 11}, {Key: "o", Val: 0}, {Key: "x", Val: 2}, {Key: "d", Val: 0}, {Key: "a", Val: 0}, {Key: "d", Val: 3}, {Key: "n", Val: 0}, {Key: "c", Val: 0}, {Key: "e", Val: 13}, {Key: "o", Val: 0}, {Key: "m", Val: 0}, {Key: "e", Val: 7}}
-	tests[3].expectedVRLTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "b", Val: 0}, {Key: "d", Val: 0}, {Key: "a", Val: 0}, {Key: "o", Val: 0}, {Key: "m", Val: 0}, {Key: "e", Val: 7}, {Key: "d", Val: 3}, {Key: "n", Val: 0}, {Key: "c", Val: 0}, {Key: "e", Val: 13}, {Key: "a", Val: 0}, {Key: "o", Val: 0}, {Key: "x", Val: 2}, {Key: "b", Val: 0}, {Key: "l", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 11}, {Key: "l", Val: 0}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "n", Val: 17}, {Key: "y", Val: 5}}
-	tests[3].expectedLVRTraverse = []KeyValue[string, int]{{Key: "y", Val: 5}, {Key: "b", Val: 0}, {Key: "n", Val: 17}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "d", Val: 11}, {Key: "n", Val: 0}, {Key: "a", Val: 0}, {Key: "x", Val: 2}, {Key: "o", Val: 0}, {Key: "b", Val: 0}, {Key: "d", Val: 3}, {Key: "e", Val: 13}, {Key: "c", Val: 0}, {Key: "n", Val: 0}, {Key: "a", Val: 0}, {Key: "e", Val: 7}, {Key: "m", Val: 0}, {Key: "o", Val: 0}, {Key: "d", Val: 0}, {Key: "", Val: 0}}
-	tests[3].expectedRVLTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "d", Val: 0}, {Key: "o", Val: 0}, {Key: "m", Val: 0}, {Key: "e", Val: 7}, {Key: "a", Val: 0}, {Key: "n", Val: 0}, {Key: "c", Val: 0}, {Key: "e", Val: 13}, {Key: "d", Val: 3}, {Key: "b", Val: 0}, {Key: "o", Val: 0}, {Key: "x", Val: 2}, {Key: "a", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 11}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "n", Val: 17}, {Key: "b", Val: 0}, {Key: "y", Val: 5}}
-	tests[3].expectedLRVTraverse = []KeyValue[string, int]{{Key: "y", Val: 5}, {Key: "n", Val: 17}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "l", Val: 0}, {Key: "d", Val: 11}, {Key: "n", Val: 0}, {Key: "l", Val: 0}, {Key: "b", Val: 0}, {Key: "x", Val: 2}, {Key: "o", Val: 0}, {Key: "a", Val: 0}, {Key: "e", Val: 13}, {Key: "c", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 3}, {Key: "e", Val: 7}, {Key: "m", Val: 0}, {Key: "o", Val: 0}, {Key: "a", Val: 0}, {Key: "d", Val: 0}, {Key: "b", Val: 0}, {Key: "", Val: 0}}
-	tests[3].expectedRLVTraverse = []KeyValue[string, int]{{Key: "e", Val: 7}, {Key: "m", Val: 0}, {Key: "o", Val: 0}, {Key: "e", Val: 13}, {Key: "c", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 3}, {Key: "a", Val: 0}, {Key: "d", Val: 0}, {Key: "x", Val: 2}, {Key: "o", Val: 0}, {Key: "d", Val: 11}, {Key: "n", Val: 0}, {Key: "n", Val: 17}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "y", Val: 5}, {Key: "b", Val: 0}, {Key: "a", Val: 0}, {Key: "b", Val: 0}, {Key: "", Val: 0}}
-	tests[3].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "b", Val: 0}, {Key: "a", Val: 0}, {Key: "b", Val: 0}, {Key: "y", Val: 5}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "n", Val: 17}, {Key: "n", Val: 0}, {Key: "d", Val: 11}, {Key: "o", Val: 0}, {Key: "x", Val: 2}, {Key: "d", Val: 0}, {Key: "a", Val: 0}, {Key: "d", Val: 3}, {Key: "n", Val: 0}, {Key: "c", Val: 0}, {Key: "e", Val: 13}, {Key: "o", Val: 0}, {Key: "m", Val: 0}, {Key: "e", Val: 7}}
-	tests[3].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "e", Val: 7}, {Key: "m", Val: 0}, {Key: "o", Val: 0}, {Key: "e", Val: 13}, {Key: "c", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 3}, {Key: "a", Val: 0}, {Key: "d", Val: 0}, {Key: "x", Val: 2}, {Key: "o", Val: 0}, {Key: "d", Val: 11}, {Key: "n", Val: 0}, {Key: "n", Val: 17}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "y", Val: 5}, {Key: "b", Val: 0}, {Key: "a", Val: 0}, {Key: "b", Val: 0}, {Key: "", Val: 0}}
 	tests[3].equals = NewBinary[int](nil)
 	tests[3].equals.Put("box", 2)
 	tests[3].equals.Put("dad", 3)
@@ -121,6 +113,14 @@ func getBinaryTests() []trieTest[int] {
 	tests[3].equals.Put("dance", 13)
 	tests[3].equals.Put("balloon", 17)
 	tests[3].expectedEquals = true
+	tests[3].expectedVLRTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "b", Val: 0}, {Key: "a", Val: 0}, {Key: "b", Val: 0}, {Key: "y", Val: 5}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "n", Val: 17}, {Key: "n", Val: 0}, {Key: "d", Val: 11}, {Key: "o", Val: 0}, {Key: "x", Val: 2}, {Key: "d", Val: 0}, {Key: "a", Val: 0}, {Key: "d", Val: 3}, {Key: "n", Val: 0}, {Key: "c", Val: 0}, {Key: "e", Val: 13}, {Key: "o", Val: 0}, {Key: "m", Val: 0}, {Key: "e", Val: 7}}
+	tests[3].expectedVRLTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "b", Val: 0}, {Key: "d", Val: 0}, {Key: "a", Val: 0}, {Key: "o", Val: 0}, {Key: "m", Val: 0}, {Key: "e", Val: 7}, {Key: "d", Val: 3}, {Key: "n", Val: 0}, {Key: "c", Val: 0}, {Key: "e", Val: 13}, {Key: "a", Val: 0}, {Key: "o", Val: 0}, {Key: "x", Val: 2}, {Key: "b", Val: 0}, {Key: "l", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 11}, {Key: "l", Val: 0}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "n", Val: 17}, {Key: "y", Val: 5}}
+	tests[3].expectedLVRTraverse = []KeyValue[string, int]{{Key: "y", Val: 5}, {Key: "b", Val: 0}, {Key: "n", Val: 17}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "d", Val: 11}, {Key: "n", Val: 0}, {Key: "a", Val: 0}, {Key: "x", Val: 2}, {Key: "o", Val: 0}, {Key: "b", Val: 0}, {Key: "d", Val: 3}, {Key: "e", Val: 13}, {Key: "c", Val: 0}, {Key: "n", Val: 0}, {Key: "a", Val: 0}, {Key: "e", Val: 7}, {Key: "m", Val: 0}, {Key: "o", Val: 0}, {Key: "d", Val: 0}, {Key: "", Val: 0}}
+	tests[3].expectedRVLTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "d", Val: 0}, {Key: "o", Val: 0}, {Key: "m", Val: 0}, {Key: "e", Val: 7}, {Key: "a", Val: 0}, {Key: "n", Val: 0}, {Key: "c", Val: 0}, {Key: "e", Val: 13}, {Key: "d", Val: 3}, {Key: "b", Val: 0}, {Key: "o", Val: 0}, {Key: "x", Val: 2}, {Key: "a", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 11}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "n", Val: 17}, {Key: "b", Val: 0}, {Key: "y", Val: 5}}
+	tests[3].expectedLRVTraverse = []KeyValue[string, int]{{Key: "y", Val: 5}, {Key: "n", Val: 17}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "l", Val: 0}, {Key: "d", Val: 11}, {Key: "n", Val: 0}, {Key: "l", Val: 0}, {Key: "b", Val: 0}, {Key: "x", Val: 2}, {Key: "o", Val: 0}, {Key: "a", Val: 0}, {Key: "e", Val: 13}, {Key: "c", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 3}, {Key: "e", Val: 7}, {Key: "m", Val: 0}, {Key: "o", Val: 0}, {Key: "a", Val: 0}, {Key: "d", Val: 0}, {Key: "b", Val: 0}, {Key: "", Val: 0}}
+	tests[3].expectedRLVTraverse = []KeyValue[string, int]{{Key: "e", Val: 7}, {Key: "m", Val: 0}, {Key: "o", Val: 0}, {Key: "e", Val: 13}, {Key: "c", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 3}, {Key: "a", Val: 0}, {Key: "d", Val: 0}, {Key: "x", Val: 2}, {Key: "o", Val: 0}, {Key: "d", Val: 11}, {Key: "n", Val: 0}, {Key: "n", Val: 17}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "y", Val: 5}, {Key: "b", Val: 0}, {Key: "a", Val: 0}, {Key: "b", Val: 0}, {Key: "", Val: 0}}
+	tests[3].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "b", Val: 0}, {Key: "a", Val: 0}, {Key: "b", Val: 0}, {Key: "y", Val: 5}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "n", Val: 17}, {Key: "n", Val: 0}, {Key: "d", Val: 11}, {Key: "o", Val: 0}, {Key: "x", Val: 2}, {Key: "d", Val: 0}, {Key: "a", Val: 0}, {Key: "d", Val: 3}, {Key: "n", Val: 0}, {Key: "c", Val: 0}, {Key: "e", Val: 13}, {Key: "o", Val: 0}, {Key: "m", Val: 0}, {Key: "e", Val: 7}}
+	tests[3].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "e", Val: 7}, {Key: "m", Val: 0}, {Key: "o", Val: 0}, {Key: "e", Val: 13}, {Key: "c", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 3}, {Key: "a", Val: 0}, {Key: "d", Val: 0}, {Key: "x", Val: 2}, {Key: "o", Val: 0}, {Key: "d", Val: 11}, {Key: "n", Val: 0}, {Key: "n", Val: 17}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "y", Val: 5}, {Key: "b", Val: 0}, {Key: "a", Val: 0}, {Key: "b", Val: 0}, {Key: "", Val: 0}}
 	tests[3].expectedGraphviz = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];

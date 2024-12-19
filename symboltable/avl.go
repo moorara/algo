@@ -131,8 +131,8 @@ func (t *avl[K, V]) rotateLeft(n *avlNode[K, V]) *avlNode[K, V] {
 
 	r.size = n.size
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + Max[int](t._height(n.left), t._height(n.right))
-	r.height = 1 + Max[int](t._height(r.left), t._height(r.right))
+	n.height = 1 + max(t._height(n.left), t._height(n.right))
+	r.height = 1 + max(t._height(r.left), t._height(r.right))
 
 	return r
 }
@@ -144,13 +144,13 @@ func (t *avl[K, V]) rotateRight(n *avlNode[K, V]) *avlNode[K, V] {
 
 	l.size = n.size
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + Max[int](t._height(n.left), t._height(n.right))
-	l.height = 1 + Max[int](t._height(l.left), t._height(l.right))
+	n.height = 1 + max(t._height(n.left), t._height(n.right))
+	l.height = 1 + max(t._height(l.left), t._height(l.right))
 
 	return l
 }
 
-// Size returns the number of key-value pairs in the AVL tree.
+// Size returns the number of key-values in the AVL tree.
 func (t *avl[K, V]) Size() int {
 	return t._size(t.root)
 }
@@ -181,7 +181,7 @@ func (t *avl[K, V]) IsEmpty() bool {
 	return t.root == nil
 }
 
-// Put adds a new key-value pair to the AVL tree.
+// Put adds a new key-value to the AVL tree.
 func (t *avl[K, V]) Put(key K, val V) {
 	t.root = t._put(t.root, key, val)
 }
@@ -208,7 +208,7 @@ func (t *avl[K, V]) _put(n *avlNode[K, V], key K, val V) *avlNode[K, V] {
 	}
 
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + Max[int](t._height(n.left), t._height(n.right))
+	n.height = 1 + max(t._height(n.left), t._height(n.right))
 
 	return t.balance(n)
 }
@@ -235,7 +235,7 @@ func (t *avl[K, V]) _get(n *avlNode[K, V], key K) (V, bool) {
 	}
 }
 
-// Delete removes a key-value pair from the AVL tree.
+// Delete removes a key-value from the AVL tree.
 func (t *avl[K, V]) Delete(key K) (val V, ok bool) {
 	t.root, val, ok = t._delete(t.root, key)
 	return val, ok
@@ -272,7 +272,7 @@ func (t *avl[K, V]) _delete(n *avlNode[K, V], key K) (*avlNode[K, V], V, bool) {
 	}
 
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + Max[int](t._height(n.left), t._height(n.right))
+	n.height = 1 + max(t._height(n.left), t._height(n.right))
 	return t.balance(n), val, ok
 }
 
@@ -397,7 +397,7 @@ func (t *avl[K, V]) _deleteMin(n *avlNode[K, V]) (*avlNode[K, V], *avlNode[K, V]
 	var min *avlNode[K, V]
 	n.left, min = t._deleteMin(n.left)
 	n.size = 1 + t._size(n.left) + t._size(n.right)
-	n.height = 1 + Max[int](t._height(n.left), t._height(n.right))
+	n.height = 1 + max(t._height(n.left), t._height(n.right))
 	return t.balance(n), min
 }
 
@@ -529,7 +529,7 @@ func (t *avl[K, V]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 }
 
-// Equals determines whether or not two AVLs have the same key-value pairs.
+// Equals determines whether or not two AVLs have the same key-values.
 func (t *avl[K, V]) Equals(rhs SymbolTable[K, V]) bool {
 	t2, ok := rhs.(*avl[K, V])
 	if !ok {
@@ -545,7 +545,7 @@ func (t *avl[K, V]) Equals(rhs SymbolTable[K, V]) bool {
 	})
 }
 
-// All returns an iterator sequence containing all the key-value pairs in the AVL tree.
+// All returns an iterator sequence containing all the key-values in the AVL tree.
 func (t *avl[K, V]) All() iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		t._traverse(t.root, Ascending, func(n *avlNode[K, V]) bool {
@@ -554,14 +554,14 @@ func (t *avl[K, V]) All() iter.Seq2[K, V] {
 	}
 }
 
-// AnyMatch returns true if at least one key-value pair in the AVL tree satisfies the provided predicate.
+// AnyMatch returns true if at least one key-value in the AVL tree satisfies the provided predicate.
 func (t *avl[K, V]) AnyMatch(p Predicate2[K, V]) bool {
 	return !t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
 		return !p(n.key, n.val)
 	})
 }
 
-// AllMatch returns true if all key-value pairs in the AVL tree satisfy the provided predicate.
+// AllMatch returns true if all key-values in the AVL tree satisfy the provided predicate.
 // If the AVL tree is empty, it returns true.
 func (t *avl[K, V]) AllMatch(p Predicate2[K, V]) bool {
 	return t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
@@ -569,8 +569,23 @@ func (t *avl[K, V]) AllMatch(p Predicate2[K, V]) bool {
 	})
 }
 
+// SelectMatch selects a subset of key-values from the AVL tree that satisfy the given predicate.
+// It returns a new AVL tree containing the matching key-values, of the same type as the original AVL tree.
+func (t *avl[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
+	newST := NewAVL[K, V](t.cmpKey, t.eqVal).(*avl[K, V])
+
+	t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
+		if p(n.key, n.val) {
+			newST.Put(n.key, n.val)
+		}
+		return true
+	})
+
+	return newST
+}
+
 // Traverse performs a traversal of the AVL tree using the specified traversal order
-// and yields the key-value pair of each node to the provided VisitFunc2 function.
+// and yields the key-value of each node to the provided VisitFunc2 function.
 //
 // If the function returns false, the traversal is halted.
 func (t *avl[K, V]) Traverse(order TraverseOrder, visit VisitFunc2[K, V]) {

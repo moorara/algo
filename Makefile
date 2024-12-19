@@ -4,7 +4,7 @@ test:
 
 .PHONY: benchmark
 benchmark:
-	go test -run=none -bench=. -benchmem ./...
+	go test -benchmem -bench=. ./...
 
 .PHONY: coverage
 coverage:

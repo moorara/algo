@@ -235,7 +235,7 @@ func (t *redBlack[K, V]) moveRedRight(n *rbNode[K, V]) *rbNode[K, V] {
 	return n
 }
 
-// Size returns the number of key-value pairs in the Red-Black tree.
+// Size returns the number of key-values in the Red-Black tree.
 func (t *redBlack[K, V]) Size() int {
 	return t._size(t.root)
 }
@@ -258,7 +258,7 @@ func (t *redBlack[K, V]) _height(n *rbNode[K, V]) int {
 		return 0
 	}
 
-	return 1 + Max[int](t._height(n.left), t._height(n.right))
+	return 1 + max(t._height(n.left), t._height(n.right))
 }
 
 // IsEmpty returns true if the Red-Black tree is empty.
@@ -266,7 +266,7 @@ func (t *redBlack[K, V]) IsEmpty() bool {
 	return t.root == nil
 }
 
-// Put adds a new key-value pair to the Red-Black tree.
+// Put adds a new key-value to the Red-Black tree.
 func (t *redBlack[K, V]) Put(key K, val V) {
 	t.root = t._put(t.root, key, val)
 	t.root.color = black
@@ -330,7 +330,7 @@ func (t *redBlack[K, V]) _get(n *rbNode[K, V], key K) (V, bool) {
 	}
 }
 
-// Delete removes a key-value pair from the Red-Black tree.
+// Delete removes a key-value from the Red-Black tree.
 func (t *redBlack[K, V]) Delete(key K) (val V, ok bool) {
 	if t.root == nil {
 		var zeroV V
@@ -666,7 +666,7 @@ func (t *redBlack[K, V]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 }
 
-// Equals determines whether or not two Red-Black trees have the same key-value pairs.
+// Equals determines whether or not two Red-Black trees have the same key-values.
 func (t *redBlack[K, V]) Equals(rhs SymbolTable[K, V]) bool {
 	t2, ok := rhs.(*redBlack[K, V])
 	if !ok {
@@ -682,7 +682,7 @@ func (t *redBlack[K, V]) Equals(rhs SymbolTable[K, V]) bool {
 	})
 }
 
-// All returns an iterator sequence containing all the key-value pairs in the Red-Black tree.
+// All returns an iterator sequence containing all the key-values in the Red-Black tree.
 func (t *redBlack[K, V]) All() iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool {
@@ -691,14 +691,14 @@ func (t *redBlack[K, V]) All() iter.Seq2[K, V] {
 	}
 }
 
-// AnyMatch returns true if at least one key-value pair in the Red-Black tree satisfies the provided predicate.
+// AnyMatch returns true if at least one key-value in the Red-Black tree satisfies the provided predicate.
 func (t *redBlack[K, V]) AnyMatch(p Predicate2[K, V]) bool {
 	return !t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
 		return !p(n.key, n.val)
 	})
 }
 
-// AllMatch returns true if all key-value pairs in the Red-Black tree satisfy the provided predicate.
+// AllMatch returns true if all key-values in the Red-Black tree satisfy the provided predicate.
 // If the Red-Black tree is empty, it returns true.
 func (t *redBlack[K, V]) AllMatch(p Predicate2[K, V]) bool {
 	return t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
@@ -706,8 +706,23 @@ func (t *redBlack[K, V]) AllMatch(p Predicate2[K, V]) bool {
 	})
 }
 
+// SelectMatch selects a subset of key-values from the Red-Black tree that satisfy the given predicate.
+// It returns a new Red-Black tree containing the matching key-values, of the same type as the original Red-Black tree.
+func (t *redBlack[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
+	newST := NewRedBlack[K, V](t.cmpKey, t.eqVal).(*redBlack[K, V])
+
+	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+		if p(n.key, n.val) {
+			newST.Put(n.key, n.val)
+		}
+		return true
+	})
+
+	return newST
+}
+
 // Traverse performs a traversal of the Red-Black tree using the specified traversal order
-// and yields the key-value pair of each node to the provided VisitFunc2 function.
+// and yields the key-value of each node to the provided VisitFunc2 function.
 //
 // If the function returns false, the traversal is halted.
 func (t *redBlack[K, V]) Traverse(order TraverseOrder, visit VisitFunc2[K, V]) {
