@@ -11,35 +11,36 @@ import (
 )
 
 type symbolTableTest[K, V any] struct {
-	name              string
-	symbolTable       string
-	hashKey           HashFunc[K]
-	eqKey             EqualFunc[K]
-	eqVal             EqualFunc[V]
-	opts              HashOpts
-	keyVals           []KeyValue[K, V]
-	expectedSize      int
-	expectedIsEmpty   bool
-	expectedStrings   []string
-	equals            SymbolTable[K, V]
-	expectedEquals    bool
-	expectedAll       []KeyValue[K, V]
-	anyMatchPredicate Predicate2[K, V]
-	expectedAnyMatch  bool
-	allMatchPredicate Predicate2[K, V]
-	expectedAllMatch  bool
+	name                 string
+	symbolTable          string
+	hashKey              HashFunc[K]
+	eqKey                EqualFunc[K]
+	eqVal                EqualFunc[V]
+	opts                 HashOpts
+	keyVals              []KeyValue[K, V]
+	expectedSize         int
+	expectedIsEmpty      bool
+	expectedSubstrings   []string
+	equals               SymbolTable[K, V]
+	expectedEquals       bool
+	expectedAll          []KeyValue[K, V]
+	anyMatchPredicate    Predicate2[K, V]
+	expectedAnyMatch     bool
+	allMatchPredicate    Predicate2[K, V]
+	expectedAllMatch     bool
+	selectMatchPredicate Predicate2[K, V]
+	expectedSelectMatch  []KeyValue[K, V]
 }
 
 type orderedSymbolTableTest[K, V any] struct {
-	name            string
-	symbolTable     string
-	cmpKey          CompareFunc[K]
-	eqVal           EqualFunc[V]
-	keyVals         []KeyValue[K, V]
-	expectedSize    int
-	expectedHeight  int
-	expectedIsEmpty bool
-
+	name                       string
+	symbolTable                string
+	cmpKey                     CompareFunc[K]
+	eqVal                      EqualFunc[V]
+	keyVals                    []KeyValue[K, V]
+	expectedSize               int
+	expectedHeight             int
+	expectedIsEmpty            bool
 	expectedMinKey             K
 	expectedMinVal             V
 	expectedMinOK              bool
@@ -72,6 +73,8 @@ type orderedSymbolTableTest[K, V any] struct {
 	expectedAnyMatch           bool
 	allMatchPredicate          Predicate2[K, V]
 	expectedAllMatch           bool
+	selectMatchPredicate       Predicate2[K, V]
+	expectedSelectMatch        []KeyValue[K, V]
 	expectedVLRTraverse        []KeyValue[K, V]
 	expectedVRLTraverse        []KeyValue[K, V]
 	expectedLVRTraverse        []KeyValue[K, V]
@@ -114,7 +117,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			},
 			expectedSize:    15,
 			expectedIsEmpty: false,
-			expectedStrings: []string{
+			expectedSubstrings: []string{
 				"<Apple:182>",
 				"<Avocado:200>",
 				"<Banana:120>",
@@ -148,10 +151,12 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Pineapple", Val: 1200},
 				{Key: "Watermelon", Val: 9000},
 			},
-			anyMatchPredicate: func(k string, v int) bool { return k == "Sour Cherry" },
-			expectedAnyMatch:  false,
-			allMatchPredicate: func(k string, v int) bool { return v > 100 },
-			expectedAllMatch:  false,
+			anyMatchPredicate:    func(k string, v int) bool { return k == "Sour Cherry" },
+			expectedAnyMatch:     false,
+			allMatchPredicate:    func(k string, v int) bool { return v > 100 },
+			expectedAllMatch:     false,
+			selectMatchPredicate: func(k string, v int) bool { return v < 10 },
+			expectedSelectMatch:  []KeyValue[string, int]{},
 		},
 		{
 			name:    "BirdLifespan",
@@ -171,7 +176,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			},
 			expectedSize:    8,
 			expectedIsEmpty: false,
-			expectedStrings: []string{
+			expectedSubstrings: []string{
 				"<Golden Pheasant:15>",
 				"<Harpy Eagle:35>",
 				"<Kingfisher:15>",
@@ -191,10 +196,16 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Scarlet Macaw", Val: 50},
 				{Key: "Snowy Owl", Val: 10},
 			},
-			anyMatchPredicate: func(k string, v int) bool { return k == "Cardinal" },
-			expectedAnyMatch:  false,
-			allMatchPredicate: func(k string, v int) bool { return v >= 10 },
-			expectedAllMatch:  true,
+			anyMatchPredicate:    func(k string, v int) bool { return k == "Cardinal" },
+			expectedAnyMatch:     false,
+			allMatchPredicate:    func(k string, v int) bool { return v >= 10 },
+			expectedAllMatch:     true,
+			selectMatchPredicate: func(k string, v int) bool { return v > 20 },
+			expectedSelectMatch: []KeyValue[string, int]{
+				{Key: "Harpy Eagle", Val: 35},
+				{Key: "Quetzal", Val: 25},
+				{Key: "Scarlet Macaw", Val: 50},
+			},
 		},
 		{
 			name:    "InstrumentLength",
@@ -221,7 +232,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			},
 			expectedSize:    15,
 			expectedIsEmpty: false,
-			expectedStrings: []string{
+			expectedSubstrings: []string{
 				"<Accordion:50>",
 				"<Bassoon:140>",
 				"<Cello:120>",
@@ -255,10 +266,20 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Ukulele", Val: 60},
 				{Key: "Violin", Val: 60},
 			},
-			anyMatchPredicate: func(k string, v int) bool { return k == "Saxophone" },
-			expectedAnyMatch:  true,
-			allMatchPredicate: func(k string, v int) bool { return v < 100 },
-			expectedAllMatch:  false,
+			anyMatchPredicate:    func(k string, v int) bool { return k == "Saxophone" },
+			expectedAnyMatch:     true,
+			allMatchPredicate:    func(k string, v int) bool { return v < 100 },
+			expectedAllMatch:     false,
+			selectMatchPredicate: func(k string, v int) bool { return v < 100 },
+			expectedSelectMatch: []KeyValue[string, int]{
+				{Key: "Accordion", Val: 50},
+				{Key: "Clarinet", Val: 66},
+				{Key: "Flute", Val: 67},
+				{Key: "Saxophone", Val: 80},
+				{Key: "Trumpet", Val: 48},
+				{Key: "Ukulele", Val: 60},
+				{Key: "Violin", Val: 60},
+			},
 		},
 		{
 			name:    "CityTemperature",
@@ -280,7 +301,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			},
 			expectedSize:    10,
 			expectedIsEmpty: false,
-			expectedStrings: []string{
+			expectedSubstrings: []string{
 				"<Berlin:10>",
 				"<London:11>",
 				"<Montreal:6>",
@@ -304,10 +325,16 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Toronto", Val: 8},
 				{Key: "Vancouver", Val: 10},
 			},
-			anyMatchPredicate: func(k string, v int) bool { return k == "Toronto" },
-			expectedAnyMatch:  true,
-			allMatchPredicate: func(k string, v int) bool { return v > 4 && v < 24 },
-			expectedAllMatch:  true,
+			anyMatchPredicate:    func(k string, v int) bool { return k == "Toronto" },
+			expectedAnyMatch:     true,
+			allMatchPredicate:    func(k string, v int) bool { return v > 4 && v < 24 },
+			expectedAllMatch:     true,
+			selectMatchPredicate: func(k string, v int) bool { return v > 15 },
+			expectedSelectMatch: []KeyValue[string, int]{
+				{Key: "Rome", Val: 16},
+				{Key: "Tehran", Val: 17},
+				{Key: "Tokyo", Val: 16},
+			},
 		},
 		{
 			name:    "AnimalLifespan",
@@ -369,7 +396,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			},
 			expectedSize:    50,
 			expectedIsEmpty: false,
-			expectedStrings: []string{
+			expectedSubstrings: []string{
 				"<Ant:1>",
 				"<Bald Eagle:20>",
 				"<Bat:30>",
@@ -473,10 +500,35 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Wolf", Val: 14},
 				{Key: "Zebra", Val: 25},
 			},
-			anyMatchPredicate: func(k string, v int) bool { return k == "Platypus" },
-			expectedAnyMatch:  true,
-			allMatchPredicate: func(k string, v int) bool { return v >= 1 },
-			expectedAllMatch:  true,
+			anyMatchPredicate:    func(k string, v int) bool { return k == "Platypus" },
+			expectedAnyMatch:     true,
+			allMatchPredicate:    func(k string, v int) bool { return v >= 1 },
+			expectedAllMatch:     true,
+			selectMatchPredicate: func(k string, v int) bool { return v < 20 },
+			expectedSelectMatch: []KeyValue[string, int]{
+				{Key: "Dog", Val: 13},
+				{Key: "Cat", Val: 15},
+				{Key: "Rabbit", Val: 9},
+				{Key: "Goldfish", Val: 10},
+				{Key: "Lion", Val: 14},
+				{Key: "Tiger", Val: 16},
+				{Key: "Wolf", Val: 14},
+				{Key: "Cheetah", Val: 12},
+				{Key: "Frog", Val: 10},
+				{Key: "Raven", Val: 15},
+				{Key: "Lizard", Val: 10},
+				{Key: "Hamster", Val: 3},
+				{Key: "Guinea Pig", Val: 6},
+				{Key: "Ferret", Val: 7},
+				{Key: "Hedgehog", Val: 5},
+				{Key: "Platypus", Val: 17},
+				{Key: "Octopus", Val: 5},
+				{Key: "Crab", Val: 10},
+				{Key: "Jellyfish", Val: 1},
+				{Key: "Ant", Val: 1},
+				{Key: "Bee", Val: 5},
+				{Key: "Butterfly", Val: 1},
+			},
 		},
 	}
 }
@@ -531,10 +583,12 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{Key: "B", Val: 2},
 				{Key: "C", Val: 3},
 			},
-			anyMatchPredicate: func(k string, v int) bool { return v < 0 },
-			expectedAnyMatch:  false,
-			allMatchPredicate: func(k string, v int) bool { return v%2 == 0 },
-			expectedAllMatch:  false,
+			anyMatchPredicate:    func(k string, v int) bool { return v < 0 },
+			expectedAnyMatch:     false,
+			allMatchPredicate:    func(k string, v int) bool { return v%2 == 0 },
+			expectedAllMatch:     false,
+			selectMatchPredicate: func(k string, v int) bool { return v%10 == 0 },
+			expectedSelectMatch:  []KeyValue[string, int]{},
 		},
 		{
 			name:   "ABCDE",
@@ -585,10 +639,15 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{Key: "D", Val: 4},
 				{Key: "E", Val: 5},
 			},
-			anyMatchPredicate: func(k string, v int) bool { return v == 0 },
-			expectedAnyMatch:  false,
-			allMatchPredicate: func(k string, v int) bool { return v > 0 },
-			expectedAllMatch:  true,
+			anyMatchPredicate:    func(k string, v int) bool { return v == 0 },
+			expectedAnyMatch:     false,
+			allMatchPredicate:    func(k string, v int) bool { return v > 0 },
+			expectedAllMatch:     true,
+			selectMatchPredicate: func(k string, v int) bool { return v%2 == 0 },
+			expectedSelectMatch: []KeyValue[string, int]{
+				{Key: "B", Val: 2},
+				{Key: "D", Val: 4},
+			},
 		},
 		{
 			name:   "ADGJMPS",
@@ -645,10 +704,16 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{Key: "P", Val: 16},
 				{Key: "S", Val: 19},
 			},
-			anyMatchPredicate: func(k string, v int) bool { return v%5 == 0 },
-			expectedAnyMatch:  true,
-			allMatchPredicate: func(k string, v int) bool { return v < 10 },
-			expectedAllMatch:  false,
+			anyMatchPredicate:    func(k string, v int) bool { return v%5 == 0 },
+			expectedAnyMatch:     true,
+			allMatchPredicate:    func(k string, v int) bool { return v < 10 },
+			expectedAllMatch:     false,
+			selectMatchPredicate: func(k string, v int) bool { return v > 10 },
+			expectedSelectMatch: []KeyValue[string, int]{
+				{Key: "M", Val: 13},
+				{Key: "P", Val: 16},
+				{Key: "S", Val: 19},
+			},
 		},
 		{
 			name:   "Words",
@@ -704,10 +769,16 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{Key: "dance", Val: 13},
 				{Key: "dome", Val: 7},
 			},
-			anyMatchPredicate: func(k string, v int) bool { return strings.HasSuffix(k, "x") },
-			expectedAnyMatch:  true,
-			allMatchPredicate: func(k string, v int) bool { return k == strings.ToLower(k) },
-			expectedAllMatch:  true,
+			anyMatchPredicate:    func(k string, v int) bool { return strings.HasSuffix(k, "x") },
+			expectedAnyMatch:     true,
+			allMatchPredicate:    func(k string, v int) bool { return k == strings.ToLower(k) },
+			expectedAllMatch:     true,
+			selectMatchPredicate: func(k string, v int) bool { return strings.HasPrefix(k, "ba") },
+			expectedSelectMatch: []KeyValue[string, int]{
+				{Key: "baby", Val: 5},
+				{Key: "balloon", Val: 17},
+				{Key: "band", Val: 11},
+			},
 		},
 	}
 }
@@ -738,16 +809,16 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 			assert.Equal(t, test.expectedSize, st.Size())
 			assert.Equal(t, test.expectedIsEmpty, st.IsEmpty())
 
-			// The key-value pairs are unordered, so we need to compare the strings pair-wise.
+			// The key-values are unordered, so we need to compare the strings pair-wise.
 			str := st.String()
-			for _, s := range test.expectedStrings {
-				assert.Contains(t, str, s)
+			for _, expectedSubstring := range test.expectedSubstrings {
+				assert.Contains(t, str, expectedSubstring)
 			}
 
 			equals := st.Equals(test.equals)
 			assert.Equal(t, test.expectedEquals, equals)
 
-			// The key-value pairs are unordered, so we need to compare the lists pair-wise.
+			// The key-values are unordered, so we need to compare the lists pair-wise.
 			all := Collect(st.All())
 			for _, kv := range test.expectedAll {
 				assert.Contains(t, all, kv)
@@ -761,6 +832,14 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 
 			allMatch := st.AllMatch(test.allMatchPredicate)
 			assert.Equal(t, test.expectedAllMatch, allMatch)
+
+			selectMatch := Collect(st.SelectMatch(test.selectMatchPredicate).All())
+			for _, kv := range test.expectedSelectMatch {
+				assert.Contains(t, selectMatch, kv)
+			}
+			for _, kv := range selectMatch {
+				assert.Contains(t, test.expectedSelectMatch, kv)
+			}
 
 			// Delete a a non-existent key
 			val, ok := st.Delete("NonExistentKey")
@@ -893,13 +972,13 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			rangeSize := ost.RangeSize(test.rangeKeyLo, test.rangeKeyHi)
 			assert.Equal(t, test.expectedRangeSize, rangeSize)
 
-			// The key-value pairs are ordered, so we can directly compare the strings.
+			// The key-values are ordered, so we can directly compare the strings.
 			assert.Equal(t, test.expectedString, ost.String())
 
 			equals := ost.Equals(test.equals)
 			assert.Equal(t, test.expectedEquals, equals)
 
-			// The key-value pairs are ordered, so we can directly compare the lists.
+			// The key-values are ordered, so we can directly compare the lists.
 			all := Collect(ost.All())
 			assert.Equal(t, test.expectedAll, all)
 
@@ -908,6 +987,9 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 
 			allMatch := ost.AllMatch(test.allMatchPredicate)
 			assert.Equal(t, test.expectedAllMatch, allMatch)
+
+			selectMatch := Collect(ost.SelectMatch(test.selectMatchPredicate).All())
+			assert.Equal(t, test.expectedSelectMatch, selectMatch)
 
 			// VLR Traversal
 			kvs = []KeyValue[string, int]{}

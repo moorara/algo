@@ -21,18 +21,11 @@ type Set[T any] interface {
 	Equaler[Set[T]]
 	Collection1[T]
 
-	Add(...T)
-	Remove(...T)
-	Cardinality() int
-	IsEmpty() bool
-	Contains(...T) bool
 	Clone() Set[T]
 	CloneEmpty() Set[T]
 	Union(...Set[T]) Set[T]
 	Intersection(...Set[T]) Set[T]
 	Difference(...Set[T]) Set[T]
-
-	Filter(Predicate1[T]) Set[T]
 }
 
 type set[T any] struct {
@@ -58,28 +51,55 @@ func (s *set[T]) find(v T) int {
 	return -1
 }
 
-func (s *set[T]) Add(vals ...T) {
-	for _, v := range vals {
-		if !s.Contains(v) {
-			s.members = append(s.members, v)
-		}
+func (s *set[T]) String() string {
+	var i int
+	members := make([]string, len(s.members))
+	for m := range s.All() {
+		members[i] = fmt.Sprintf("%v", m)
+		i++
 	}
+
+	return fmt.Sprintf("{%s}", strings.Join(members, ", "))
 }
 
-func (s *set[T]) Remove(vals ...T) {
-	for _, v := range vals {
-		if i := s.find(v); i != -1 {
-			s.members = append(s.members[:i], s.members[i+1:]...)
+func (s *set[T]) Equals(rhs Set[T]) bool {
+	for _, m := range s.members {
+		if !rhs.Contains(m) {
+			return false
 		}
 	}
+
+	for m := range rhs.All() {
+		if !s.Contains(m) {
+			return false
+		}
+	}
+
+	return true
 }
 
-func (s *set[T]) Cardinality() int {
+func (s *set[T]) Size() int {
 	return len(s.members)
 }
 
 func (s *set[T]) IsEmpty() bool {
 	return len(s.members) == 0
+}
+
+func (s *set[T]) Add(ss ...T) {
+	for _, t := range ss {
+		if !s.Contains(t) {
+			s.members = append(s.members, t)
+		}
+	}
+}
+
+func (s *set[T]) Remove(ss ...T) {
+	for _, t := range ss {
+		if i := s.find(t); i != -1 {
+			s.members = append(s.members[:i], s.members[i+1:]...)
+		}
+	}
 }
 
 func (s *set[T]) Contains(vals ...T) bool {
@@ -89,6 +109,62 @@ func (s *set[T]) Contains(vals ...T) bool {
 		}
 	}
 	return true
+}
+
+func (s *set[T]) All() iter.Seq[T] {
+	// Create a list of indices representing the members.
+	indices := make([]int, len(s.members))
+	for i := range indices {
+		indices[i] = i
+	}
+
+	// Shuffle the indices list to randomize the order in which members are traversed.
+	// This ensures that the traversal order is non-deterministic, reflecting the unordered nature of set.
+	r.Shuffle(len(indices), func(i, j int) {
+		indices[i], indices[j] = indices[j], indices[i]
+	})
+
+	return func(yield func(T) bool) {
+		for _, i := range indices {
+			if !yield(s.members[i]) {
+				return
+			}
+		}
+	}
+}
+
+func (s *set[T]) AnyMatch(p Predicate1[T]) bool {
+	for _, m := range s.members {
+		if p(m) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *set[T]) AllMatch(p Predicate1[T]) bool {
+	for _, m := range s.members {
+		if !p(m) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (s *set[T]) SelectMatch(p Predicate1[T]) Collection1[T] {
+	members := make([]T, 0)
+	for _, m := range s.members {
+		if p(m) {
+			members = append(members, m)
+		}
+	}
+
+	return &set[T]{
+		members: members,
+		equal:   s.equal,
+	}
 }
 
 func (s *set[T]) Clone() Set[T] {
@@ -158,108 +234,6 @@ func (s *set[T]) Difference(sets ...Set[T]) Set[T] {
 	return t
 }
 
-func (s *set[T]) String() string {
-	var i int
-	members := make([]string, len(s.members))
-	for m := range s.All() {
-		members[i] = fmt.Sprintf("%v", m)
-		i++
-	}
-
-	return fmt.Sprintf("{%s}", strings.Join(members, ", "))
-}
-
-func (s *set[T]) Equals(rhs Set[T]) bool {
-	for _, m := range s.members {
-		if !rhs.Contains(m) {
-			return false
-		}
-	}
-
-	for m := range rhs.All() {
-		if !s.Contains(m) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (s *set[T]) All() iter.Seq[T] {
-	// Create a list of indices representing the members.
-	indices := make([]int, len(s.members))
-	for i := range indices {
-		indices[i] = i
-	}
-
-	// Shuffle the indices list to randomize the order in which members are traversed.
-	// This ensures that the traversal order is non-deterministic, reflecting the unordered nature of set.
-	r.Shuffle(len(indices), func(i, j int) {
-		indices[i], indices[j] = indices[j], indices[i]
-	})
-
-	return func(yield func(T) bool) {
-		for _, i := range indices {
-			if !yield(s.members[i]) {
-				return
-			}
-		}
-	}
-}
-
-func (s *set[T]) AnyMatch(p Predicate1[T]) bool {
-	for _, m := range s.members {
-		if p(m) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (s *set[T]) AllMatch(p Predicate1[T]) bool {
-	for _, m := range s.members {
-		if !p(m) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (s *set[T]) Filter(p Predicate1[T]) Set[T] {
-	members := make([]T, 0)
-	for _, m := range s.members {
-		if p(m) {
-			members = append(members, m)
-		}
-	}
-
-	return &set[T]{
-		members: members,
-		equal:   s.equal,
-	}
-}
-
-// Transformer is a function that converts a value of type T to a value of type U.
-type Transformer[T, U any] func(T) U
-
-// Transform converts the elements of a set from one type (T) to another type (U).
-// It applies the Transformer function (f) to each element of the input set (s) to produce a new set of the transformed type (U).
-//
-// The caller must provide an equality function (equal) to compare elements of the new set (U).
-func (f Transformer[T, U]) Transform(s Set[T], equal EqualFunc[U]) Set[U] {
-	members := make([]U, 0)
-	for m := range s.All() {
-		members = append(members, f(m))
-	}
-
-	return &set[U]{
-		members: members,
-		equal:   equal,
-	}
-}
-
 // Powerset creates and returns the power set of a given set.
 // The power set of a set is the set of all subsets, including the empty set and the set itself.
 //
@@ -272,7 +246,7 @@ func Powerset[T any](s Set[T]) Set[Set[T]] {
 	PS := New[Set[T]](setEqFunc)
 
 	// Recurssion end condition
-	if s.Cardinality() == 0 {
+	if s.Size() == 0 {
 		// Single empty set
 		es := s.CloneEmpty()
 		PS.Add(es)
@@ -308,7 +282,7 @@ func Partitions[T any](s Set[T]) Set[Set[Set[T]]] {
 	Ps := New[Set[Set[T]]](partEqFunc)
 
 	// Recurssion end condition
-	if s.Cardinality() == 0 {
+	if s.Size() == 0 {
 		// Single empty partition
 		P := New[Set[T]](setEqFunc)
 		Ps.Add(P)

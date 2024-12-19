@@ -21,12 +21,6 @@ type SymbolTable[K, V any] interface {
 	Collection2[K, V]
 
 	verify() bool
-
-	Size() int
-	IsEmpty() bool
-	Put(K, V)
-	Get(K) (V, bool)
-	Delete(K) (V, bool)
 }
 
 // OrderedSymbolTable represents an ordered symbol table abstract data type.

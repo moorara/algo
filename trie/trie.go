@@ -16,13 +16,7 @@ type Trie[V any] interface {
 
 	verify() bool
 
-	Size() int
 	Height() int
-	IsEmpty() bool
-	Put(string, V)
-	Get(string) (V, bool)
-	Delete(string) (V, bool)
-
 	Min() (string, V, bool)
 	Max() (string, V, bool)
 	Floor(string) (string, V, bool)
@@ -33,7 +27,6 @@ type Trie[V any] interface {
 	Rank(string) int
 	Range(string, string) []KeyValue[string, V]
 	RangeSize(string, string) int
-
 	Match(string) []KeyValue[string, V]
 	WithPrefix(string) []KeyValue[string, V]
 	LongestPrefixOf(string) (string, V, bool)

@@ -19,7 +19,7 @@ const (
 type quadraticHashTable[K, V any] struct {
 	entries []*hashTableEntry[K, V]
 	m       int     // The total number of entries in the hash table
-	n       int     // The number of key-value pairs stored in the hash table
+	n       int     // The number of key-values stored in the hash table
 	minLF   float32 // The minimum load factor before resizing (shrinking) the hash table
 	maxLF   float32 // The maximum load factor before resizing (expanding) the hash table
 
@@ -125,7 +125,7 @@ func (ht *quadraticHashTable[K, V]) resize(m int) {
 	ht.n = newHT.n
 }
 
-// Size returns the number of key-value pairs in the hash table.
+// Size returns the number of key-values in the hash table.
 func (ht *quadraticHashTable[K, V]) Size() int {
 	return ht.n
 }
@@ -135,7 +135,7 @@ func (ht *quadraticHashTable[K, V]) IsEmpty() bool {
 	return ht.n == 0
 }
 
-// Put adds a new key-value pair to the hash table.
+// Put adds a new key-value to the hash table.
 func (ht *quadraticHashTable[K, V]) Put(key K, val V) {
 	if ht.loadFactor() >= ht.maxLF {
 		ht.resize(2 * ht.m)
@@ -173,7 +173,7 @@ func (ht *quadraticHashTable[K, V]) Get(key K) (V, bool) {
 	return zeroV, false
 }
 
-// Delete removes a key-value pair from the hash table.
+// Delete removes a key-value from the hash table.
 func (ht *quadraticHashTable[K, V]) Delete(key K) (V, bool) {
 	next := ht.probe(key)
 	i := next()
@@ -213,7 +213,7 @@ func (ht *quadraticHashTable[K, V]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 }
 
-// Equals determines whether or not two hash tables have the same key-value pairs.
+// Equals determines whether or not two hash tables have the same key-values.
 func (ht *quadraticHashTable[K, V]) Equals(rhs SymbolTable[K, V]) bool {
 	ht2, ok := rhs.(*quadraticHashTable[K, V])
 	if !ok {
@@ -229,7 +229,7 @@ func (ht *quadraticHashTable[K, V]) Equals(rhs SymbolTable[K, V]) bool {
 	})
 }
 
-// All returns an iterator sequence containing all the key-value pairs in the hash table.
+// All returns an iterator sequence containing all the key-values in the hash table.
 func (ht *quadraticHashTable[K, V]) All() iter.Seq2[K, V] {
 	// Create a list of indices representing the entries.
 	indices := make([]int, len(ht.entries))
@@ -254,7 +254,7 @@ func (ht *quadraticHashTable[K, V]) All() iter.Seq2[K, V] {
 	}
 }
 
-// AnyMatch returns true if at least one key-value pair in the hash table satisfies the provided predicate.
+// AnyMatch returns true if at least one key-value in the hash table satisfies the provided predicate.
 func (ht *quadraticHashTable[K, V]) AnyMatch(p Predicate2[K, V]) bool {
 	for key, val := range ht.All() {
 		if p(key, val) {
@@ -264,7 +264,7 @@ func (ht *quadraticHashTable[K, V]) AnyMatch(p Predicate2[K, V]) bool {
 	return false
 }
 
-// AllMatch returns true if all key-value pairs in the hash table satisfy the provided predicate.
+// AllMatch returns true if all key-values in the hash table satisfy the provided predicate.
 // If the BST is empty, it returns true.
 func (ht *quadraticHashTable[K, V]) AllMatch(p Predicate2[K, V]) bool {
 	for key, val := range ht.All() {
@@ -275,8 +275,25 @@ func (ht *quadraticHashTable[K, V]) AllMatch(p Predicate2[K, V]) bool {
 	return true
 }
 
+// SelectMatch selects a subset of key-values from the hash table that satisfy the given predicate.
+// It returns a new hash table containing the matching key-values, of the same type as the original hash table.
+func (ht *quadraticHashTable[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
+	newHT := NewQuadraticHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+		MinLoadFactor: ht.minLF,
+		MaxLoadFactor: ht.maxLF,
+	}).(*quadraticHashTable[K, V])
+
+	for key, val := range ht.All() {
+		if p(key, val) {
+			newHT.Put(key, val)
+		}
+	}
+
+	return newHT
+}
+
 // print displays the current state of the hash table in the terminal,
-// including its parameters and a detailed table of indices, key-value pairs, and hash function calculations.
+// including its parameters and a detailed table of indices, key-values, and hash function calculations.
 //
 // This method is intended for debugging and troubleshooting purposes.
 /* func (ht *quadraticHashTable[K, V]) print() {
