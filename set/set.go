@@ -23,6 +23,8 @@ type Set[T any] interface {
 
 	Clone() Set[T]
 	CloneEmpty() Set[T]
+	IsSubset(Set[T]) bool
+	IsSuperset(Set[T]) bool
 	Union(...Set[T]) Set[T]
 	Intersection(...Set[T]) Set[T]
 	Difference(...Set[T]) Set[T]
@@ -183,6 +185,26 @@ func (s *set[T]) CloneEmpty() Set[T] {
 	}
 
 	return t
+}
+
+func (s *set[T]) IsSubset(superset Set[T]) bool {
+	for m := range s.All() {
+		if !superset.Contains(m) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (s *set[T]) IsSuperset(subset Set[T]) bool {
+	for m := range subset.All() {
+		if !s.Contains(m) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (s *set[T]) Union(sets ...Set[T]) Set[T] {
