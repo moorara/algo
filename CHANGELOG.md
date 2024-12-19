@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.9.1](https://github.com/moorara/algo/tree/v0.9.1) (2024-12-19)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.9.0...v0.9.1)
+
+**Merged Changes:**
+
+  - Add subset and superset to set API [#204](https://github.com/moorara/algo/pull/204) ([moorara](https://github.com/moorara))
+  - Improve implementations of SelectMatch [#203](https://github.com/moorara/algo/pull/203) ([moorara](https://github.com/moorara))
+
+
 ## [v0.9.0](https://github.com/moorara/algo/tree/v0.9.0) (2024-12-18)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.8.2...v0.9.0)
