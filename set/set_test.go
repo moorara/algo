@@ -19,9 +19,9 @@ func TestSet_String(t *testing.T) {
 	eqFunc := NewEqualFunc[string]()
 
 	tests := []struct {
-		name            string
-		s               *set[string]
-		expectedStrings []string
+		name               string
+		s                  *set[string]
+		expectedSubstrings []string
 	}{
 		{
 			name: "Empty",
@@ -29,7 +29,7 @@ func TestSet_String(t *testing.T) {
 				members: []string{},
 				equal:   eqFunc,
 			},
-			expectedStrings: []string{},
+			expectedSubstrings: []string{},
 		},
 		{
 			name: "NonEmpty",
@@ -37,15 +37,15 @@ func TestSet_String(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
-			expectedStrings: []string{"a", "b", "c", "d"},
+			expectedSubstrings: []string{"a", "b", "c", "d"},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			str := tc.s.String()
-			for _, expectedString := range tc.expectedStrings {
-				assert.Contains(t, str, expectedString)
+			for _, expectedSubstring := range tc.expectedSubstrings {
+				assert.Contains(t, str, expectedSubstring)
 			}
 		})
 	}
@@ -122,9 +122,9 @@ func TestSet_Size(t *testing.T) {
 	eqFunc := NewEqualFunc[string]()
 
 	tests := []struct {
-		name         string
-		s            *set[string]
-		expectedSize int
+		name     string
+		s        *set[string]
+		expected int
 	}{
 		{
 			name: "Empty",
@@ -132,7 +132,7 @@ func TestSet_Size(t *testing.T) {
 				members: []string{},
 				equal:   eqFunc,
 			},
-			expectedSize: 0,
+			expected: 0,
 		},
 		{
 			name: "NonEmpty",
@@ -140,13 +140,14 @@ func TestSet_Size(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
-			expectedSize: 4,
+			expected: 4,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedSize, tc.s.Size())
+			size := tc.s.Size()
+			assert.Equal(t, tc.expected, size)
 		})
 	}
 }
@@ -155,9 +156,9 @@ func TestSet_IsEmpty(t *testing.T) {
 	eqFunc := NewEqualFunc[string]()
 
 	tests := []struct {
-		name            string
-		s               *set[string]
-		expectedIsEmpty bool
+		name     string
+		s        *set[string]
+		expected bool
 	}{
 		{
 			name: "Empty",
@@ -165,7 +166,7 @@ func TestSet_IsEmpty(t *testing.T) {
 				members: []string{},
 				equal:   eqFunc,
 			},
-			expectedIsEmpty: true,
+			expected: true,
 		},
 		{
 			name: "NonEmpty",
@@ -173,13 +174,13 @@ func TestSet_IsEmpty(t *testing.T) {
 				members: []string{"a", "b"},
 				equal:   eqFunc,
 			},
-			expectedIsEmpty: false,
+			expected: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedIsEmpty, tc.s.IsEmpty())
+			assert.Equal(t, tc.expected, tc.s.IsEmpty())
 		})
 	}
 }
@@ -450,10 +451,10 @@ func TestSet_SelectMatch(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		s           *set[string]
-		p           Predicate1[string]
-		expectedSet Set[string]
+		name     string
+		s        *set[string]
+		p        Predicate1[string]
+		expected Set[string]
 	}{
 		{
 			name: "Empty",
@@ -462,7 +463,7 @@ func TestSet_SelectMatch(t *testing.T) {
 				equal:   eqFunc,
 			},
 			p: predicate,
-			expectedSet: &set[string]{
+			expected: &set[string]{
 				members: []string{},
 				equal:   eqFunc,
 			},
@@ -474,7 +475,7 @@ func TestSet_SelectMatch(t *testing.T) {
 				equal:   eqFunc,
 			},
 			p: predicate,
-			expectedSet: &set[string]{
+			expected: &set[string]{
 				members: []string{},
 				equal:   eqFunc,
 			},
@@ -486,7 +487,7 @@ func TestSet_SelectMatch(t *testing.T) {
 				equal:   eqFunc,
 			},
 			p: predicate,
-			expectedSet: &set[string]{
+			expected: &set[string]{
 				members: []string{"A", "C"},
 				equal:   eqFunc,
 			},
@@ -496,7 +497,7 @@ func TestSet_SelectMatch(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			set := tc.s.SelectMatch(tc.p).(*set[string])
-			assert.True(t, set.Equals(tc.expectedSet))
+			assert.True(t, set.Equals(tc.expected))
 		})
 	}
 }
@@ -562,6 +563,92 @@ func TestSet_CloneEmpty(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			set := tc.s.CloneEmpty()
 			assert.True(t, set.Equals(tc.expected))
+		})
+	}
+}
+
+func TestSet_IsSubset(t *testing.T) {
+	eqFunc := NewEqualFunc[string]()
+
+	tests := []struct {
+		name     string
+		s        *set[string]
+		superset Set[string]
+		expected bool
+	}{
+		{
+			name: "Subset",
+			s: &set[string]{
+				members: []string{"a", "b"},
+				equal:   eqFunc,
+			},
+			superset: &set[string]{
+				members: []string{"a", "b", "x", "y"},
+				equal:   eqFunc,
+			},
+			expected: true,
+		},
+		{
+			name: "NotSubset",
+			s: &set[string]{
+				members: []string{"a", "b"},
+				equal:   eqFunc,
+			},
+			superset: &set[string]{
+				members: []string{"x", "y"},
+				equal:   eqFunc,
+			},
+			expected: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			b := tc.s.IsSubset(tc.superset)
+			assert.Equal(t, tc.expected, b)
+		})
+	}
+}
+
+func TestSet_IsSuperset(t *testing.T) {
+	eqFunc := NewEqualFunc[string]()
+
+	tests := []struct {
+		name     string
+		s        *set[string]
+		superset Set[string]
+		expected bool
+	}{
+		{
+			name: "Superset",
+			s: &set[string]{
+				members: []string{"a", "b", "x", "y"},
+				equal:   eqFunc,
+			},
+			superset: &set[string]{
+				members: []string{"a", "b"},
+				equal:   eqFunc,
+			},
+			expected: true,
+		},
+		{
+			name: "NotSuperset",
+			s: &set[string]{
+				members: []string{"a", "b", "x", "y"},
+				equal:   eqFunc,
+			},
+			superset: &set[string]{
+				members: []string{"x", "y", "z"},
+				equal:   eqFunc,
+			},
+			expected: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			b := tc.s.IsSuperset(tc.superset)
+			assert.Equal(t, tc.expected, b)
 		})
 	}
 }
