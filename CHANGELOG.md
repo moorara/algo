@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.9.2](https://github.com/moorara/algo/tree/v0.9.2) (2024-12-19)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.9.1...v0.9.2)
+
+**Merged Changes:**
+
+  - Add Cloner interface to generic package [#205](https://github.com/moorara/algo/pull/205) ([moorara](https://github.com/moorara))
+
+
 ## [v0.9.1](https://github.com/moorara/algo/tree/v0.9.1) (2024-12-19)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.9.0...v0.9.1)
