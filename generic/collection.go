@@ -88,6 +88,13 @@ type (
 	}
 )
 
+// KeyValue is a generic struct that holds a key-value pair.
+// K and V represent the types of the key and value, respectively
+type KeyValue[K, V any] struct {
+	Key K
+	Val V
+}
+
 // Collect collects key-values in a collection from seq2 into a new slice and returns it.
 func Collect[K, V any](seq2 iter.Seq2[K, V]) []KeyValue[K, V] {
 	kvs := make([]KeyValue[K, V], 0)

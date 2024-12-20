@@ -18,10 +18,10 @@ var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 // Set represents a set abstract data type.
 type Set[T any] interface {
 	fmt.Stringer
+	Cloner[Set[T]]
 	Equaler[Set[T]]
 	Collection1[T]
 
-	Clone() Set[T]
 	CloneEmpty() Set[T]
 	IsSubset(Set[T]) bool
 	IsSuperset(Set[T]) bool

@@ -2,11 +2,9 @@ package generic
 
 import "golang.org/x/exp/constraints"
 
-// KeyValue is a generic struct that holds a key-value pair.
-// K and V represent the types of the key and value, respectively
-type KeyValue[K, V any] struct {
-	Key K
-	Val V
+// Cloner is an interface that defines a method for cloning an object (the prototype pattern).
+type Cloner[T any] interface {
+	Clone() T
 }
 
 // Equaler is an interface that defines a method for determining equality between two objects of the same type.
