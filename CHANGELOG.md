@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.9.3](https://github.com/moorara/algo/tree/v0.9.3) (2024-12-22)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.9.2...v0.9.3)
+
+**Fixed Bugs:**
+
+  - Double Hash Hash Table: possible infinite loop [#206](https://github.com/moorara/algo/issues/206) ([moorara](https://github.com/moorara))
+
+**Merged Changes:**
+
+  - Fix double hashing hash table infinite loop bug [#207](https://github.com/moorara/algo/pull/207) ([moorara](https://github.com/moorara))
+
+
 ## [v0.9.2](https://github.com/moorara/algo/tree/v0.9.2) (2024-12-19)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.9.1...v0.9.2)
