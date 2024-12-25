@@ -10,54 +10,10 @@ import (
 )
 
 const (
-	dhMinM          = 32    // Minimum number of entries in the hash table (must be at least 4 and a power of 2 for efficient hashing)
+	dhMinM          = 31    // Minimum number of entries in the hash table (must be a prime number)
 	dhMinLoadFactor = 0.125 // Minimum load factor before resizing (shrinking)
 	dhMaxLoadFactor = 0.50  // Maximum load factor before resizing (expanding)
 )
-
-// isPrime determines whether or not a given integer n is a prime number.
-func isPrime(n int) bool {
-	if n <= 1 {
-		return false
-	}
-
-	// Check for prime numbers less 100 directly
-	if n == 2 || n == 3 || n == 5 || n == 7 || n == 11 || n == 13 || n == 17 || n == 19 || n == 23 || n == 29 || n == 31 || n == 37 ||
-		n == 41 || n == 43 || n == 47 || n == 53 || n == 59 || n == 61 || n == 67 || n == 71 || n == 73 || n == 79 || n == 83 || n == 89 || n == 97 {
-		return true
-	} else if n <= 100 {
-		return false
-	}
-
-	// Check if n is prime using trial division
-	for i := 2; i*i <= n; i++ {
-		if n%i == 0 {
-			return false
-		}
-	}
-
-	return true
-}
-
-// gcd computes the greatest common divisor of two numbers.
-// It implements the Euclidean algorithm.
-func gcd(a, b uint64) uint64 {
-	// Ensure a ≥ b
-	a, b = max(a, b), min(a, b)
-
-	/*
-	 * Let the quotient be q and the remainder be r, so that a = b × q + r
-	 * Replace a with b and b with r
-	 * Repeat this until the remainder r becomes 0
-	 * The GCD is the last non-zero remainder
-	 */
-
-	for b != 0 {
-		a, b = b, a%b
-	}
-
-	return a
-}
 
 // doubleHashTable is a hash table with double hashing for conflict resolution.
 type doubleHashTable[K, V any] struct {
@@ -93,20 +49,14 @@ func NewDoubleHashTable[K, V any](hashKey HashFunc[K], eqKey EqualFunc[K], eqVal
 		opts.MaxLoadFactor = dhMaxLoadFactor
 	}
 
-	opts.verify()
-
-	// Find the biggest prime smaller than M
-	var p int
-	for p = opts.InitialCap; p >= 2; p-- {
-		if isPrime(p) {
-			break
-		}
+	if M := opts.InitialCap; M < dhMinM || !isPrime(M) {
+		panic(fmt.Sprintf("The hash table capacity must be at least %d and a prime number.", dhMinM))
 	}
 
 	return &doubleHashTable[K, V]{
 		entries: make([]*hashTableEntry[K, V], opts.InitialCap),
 		m:       opts.InitialCap,
-		p:       p,
+		p:       largestPrimeSmallerThan(opts.InitialCap),
 		n:       0,
 		minLF:   opts.MinLoadFactor,
 		maxLF:   opts.MaxLoadFactor,
@@ -146,9 +96,8 @@ func (ht *doubleHashTable[K, V]) probe(key K) func() int {
 	h := ht.hashKey(key)
 	h ^= (h >> 20) ^ (h >> 12) ^ (h >> 7) ^ (h >> 4)
 
-	// M must be a power of 2
 	M, P := uint64(ht.m), uint64(ht.p)
-	h1 := h & (M - 1) // [0, M-1]
+	h1 := h % M // [0, M-1]
 
 	var h2, i, next uint64
 
@@ -182,6 +131,14 @@ func (ht *doubleHashTable[K, V]) probe(key K) func() int {
 
 // resize adjusts the hash table to a new size and re-hashes all keys.
 func (ht *doubleHashTable[K, V]) resize(m int) {
+	// Ensure the minimum table size
+	if m < dhMinM {
+		return
+	}
+
+	// Ensure the table size remains prime
+	m = smallestPrimeLargerThan(m)
+
 	newHT := NewDoubleHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		InitialCap:    m,
 		MinLoadFactor: ht.minLF,
@@ -246,7 +203,7 @@ func (ht *doubleHashTable[K, V]) Get(key K) (V, bool) {
 	return zeroV, false
 }
 
-// Delete removes a key-value from the hash table.
+// Delete deletes a key-value from the hash table.
 func (ht *doubleHashTable[K, V]) Delete(key K) (V, bool) {
 	next := ht.probe(key)
 	i := next()
@@ -266,11 +223,17 @@ func (ht *doubleHashTable[K, V]) Delete(key K) (V, bool) {
 	ht.n--
 
 	// During resizing, soft-deleted keys are removed, and remaining active keys are rehashed
-	if ht.m > scMinM && ht.loadFactor() <= ht.minLF {
+	if ht.loadFactor() <= ht.minLF {
 		ht.resize(ht.m / 2)
 	}
 
 	return val, true
+}
+
+// DeleteAll deletes all key-values from the hash table, leaving it empty.
+func (ht *doubleHashTable[K, V]) DeleteAll() {
+	ht.entries = make([]*hashTableEntry[K, V], ht.m)
+	ht.n = 0
 }
 
 // String returns a string representation of the hash table.

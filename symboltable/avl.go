@@ -235,7 +235,7 @@ func (t *avl[K, V]) _get(n *avlNode[K, V], key K) (V, bool) {
 	}
 }
 
-// Delete removes a key-value from the AVL tree.
+// Delete deletes a key-value from the AVL tree.
 func (t *avl[K, V]) Delete(key K) (val V, ok bool) {
 	t.root, val, ok = t._delete(t.root, key)
 	return val, ok
@@ -274,6 +274,11 @@ func (t *avl[K, V]) _delete(n *avlNode[K, V], key K) (*avlNode[K, V], V, bool) {
 	n.size = 1 + t._size(n.left) + t._size(n.right)
 	n.height = 1 + max(t._height(n.left), t._height(n.right))
 	return t.balance(n), val, ok
+}
+
+// DeleteAll deletes all key-values from the AVL tree, leaving it empty.
+func (t *avl[K, V]) DeleteAll() {
+	t.root = nil
 }
 
 // Min returns the minimum key and its value in the AVL tree.
@@ -376,7 +381,7 @@ func (t *avl[K, V]) _ceiling(n *avlNode[K, V], key K) *avlNode[K, V] {
 	return n
 }
 
-// DeleteMin removes the smallest key and associated value from the AVL tree.
+// DeleteMin deletes the smallest key and associated value from the AVL tree.
 func (t *avl[K, V]) DeleteMin() (K, V, bool) {
 	if t.root == nil {
 		var zeroK K
@@ -401,7 +406,7 @@ func (t *avl[K, V]) _deleteMin(n *avlNode[K, V]) (*avlNode[K, V], *avlNode[K, V]
 	return t.balance(n), min
 }
 
-// DeleteMax removes the largest key and associated value from the AVL tree.
+// DeleteMax deletes the largest key and associated value from the AVL tree.
 func (t *avl[K, V]) DeleteMax() (K, V, bool) {
 	if t.root == nil {
 		var zeroK K

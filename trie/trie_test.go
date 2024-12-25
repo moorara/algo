@@ -384,7 +384,7 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 		var minVal, maxVal, floorVal, ceilingVal, selectVal int
 		var minOK, maxOK, floorOK, ceilingOK, selectOK bool
 
-		t.Run("BeforePut", func(t *testing.T) {
+		t.Run("Before", func(t *testing.T) {
 			assert.True(t, trie.verify())
 			assert.Zero(t, trie.Size())
 			assert.Zero(t, trie.Height())
@@ -420,90 +420,137 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 			assert.Len(t, trie.Range("", ""), 0)
 		})
 
-		t.Run("AfterPut", func(t *testing.T) {
-			// Put
+		t.Run("Put", func(t *testing.T) {
 			for _, kv := range test.keyVals {
 				trie.Put(kv.Key, kv.Val)
 				trie.Put(kv.Key, kv.Val) // Update existing key-value
 				assert.True(t, trie.verify())
 			}
+		})
 
-			// Get
+		t.Run("Get", func(t *testing.T) {
+			// Get a non-existent key
+			val, ok := trie.Get("NonExistentKey")
+			assert.False(t, ok)
+			assert.Zero(t, val)
+
 			for _, expected := range test.keyVals {
 				val, ok := trie.Get(expected.Key)
 				assert.True(t, ok)
 				assert.Equal(t, expected.Val, val)
 			}
+		})
 
+		t.Run("Size", func(t *testing.T) {
 			assert.Equal(t, test.expectedSize, trie.Size())
-			assert.Equal(t, test.expectedHeight, trie.Height())
-			assert.Equal(t, test.expectedIsEmpty, trie.IsEmpty())
+		})
 
+		t.Run("Height", func(t *testing.T) {
+			assert.Equal(t, test.expectedHeight, trie.Height())
+		})
+
+		t.Run("IsEmpty", func(t *testing.T) {
+			assert.Equal(t, test.expectedIsEmpty, trie.IsEmpty())
+		})
+
+		t.Run("Min", func(t *testing.T) {
 			minKey, minVal, minOK = trie.Min()
 			assert.Equal(t, test.expectedMinKey, minKey)
 			assert.Equal(t, test.expectedMinVal, minVal)
 			assert.Equal(t, test.expectedMinOK, minOK)
+		})
 
+		t.Run("Max", func(t *testing.T) {
 			maxKey, maxVal, maxOK = trie.Max()
 			assert.Equal(t, test.expectedMaxKey, maxKey)
 			assert.Equal(t, test.expectedMaxVal, maxVal)
 			assert.Equal(t, test.expectedMaxOK, maxOK)
+		})
 
+		t.Run("Floor", func(t *testing.T) {
 			floorKey, floorVal, floorOK = trie.Floor(test.floorKey)
 			assert.Equal(t, test.expectedFloorKey, floorKey)
 			assert.Equal(t, test.expectedFloorVal, floorVal)
 			assert.Equal(t, test.expectedFloorOK, floorOK)
+		})
 
+		t.Run("Ceiling", func(t *testing.T) {
 			ceilingKey, ceilingVal, ceilingOK = trie.Ceiling(test.ceilingKey)
 			assert.Equal(t, test.expectedCeilingKey, ceilingKey)
 			assert.Equal(t, test.expectedCeilingVal, ceilingVal)
 			assert.Equal(t, test.expectedCeilingOK, ceilingOK)
+		})
 
+		t.Run("DeleteMin", func(t *testing.T) {
 			minKey, minVal, minOK = trie.DeleteMin()
 			assert.Equal(t, test.expectedMinKey, minKey)
 			assert.Equal(t, test.expectedMinVal, minVal)
 			assert.Equal(t, test.expectedMinOK, minOK)
 			assert.True(t, trie.verify())
 			trie.Put(minKey, minVal)
+		})
 
+		t.Run("DeleteMax", func(t *testing.T) {
 			maxKey, maxVal, maxOK = trie.DeleteMax()
 			assert.Equal(t, test.expectedMaxKey, maxKey)
 			assert.Equal(t, test.expectedMaxVal, maxVal)
 			assert.Equal(t, test.expectedMaxOK, maxOK)
 			assert.True(t, trie.verify())
 			trie.Put(maxKey, maxVal)
+		})
 
+		t.Run("Select", func(t *testing.T) {
 			selectKey, selectVal, selectOK = trie.Select(test.selectRank)
 			assert.Equal(t, test.expectedSelectKey, selectKey)
 			assert.Equal(t, test.expectedSelectVal, selectVal)
 			assert.Equal(t, test.expectedSelectOK, selectOK)
+		})
 
+		t.Run("Rank", func(t *testing.T) {
 			rank := trie.Rank(test.rankKey)
 			assert.Equal(t, test.expectedRank, rank)
+		})
 
+		t.Run("Range", func(t *testing.T) {
 			kvs = trie.Range(test.rangeKeyLo, test.rangeKeyHi)
 			assert.Equal(t, test.expectedRange, kvs)
+		})
 
+		t.Run("RangeSize", func(t *testing.T) {
 			rangeSize := trie.RangeSize(test.rangeKeyLo, test.rangeKeyHi)
 			assert.Equal(t, test.expectedRangeSize, rangeSize)
+		})
 
+		t.Run("String", func(t *testing.T) {
 			assert.Equal(t, test.expectedString, trie.String())
+		})
 
+		t.Run("Equals", func(t *testing.T) {
 			equals := trie.Equals(test.equals)
 			assert.Equal(t, test.expectedEquals, equals)
+		})
 
+		t.Run("All", func(t *testing.T) {
 			kvs = Collect(trie.All())
 			assert.Equal(t, test.expectedAll, kvs)
+		})
 
+		t.Run("AnyMatch", func(t *testing.T) {
 			anyMatch := trie.AnyMatch(test.anyMatchPredicate)
 			assert.Equal(t, test.expectedAnyMatch, anyMatch)
+		})
 
+		t.Run("AllMatch", func(t *testing.T) {
 			allMatch := trie.AllMatch(test.allMatchPredicate)
 			assert.Equal(t, test.expectedAllMatch, allMatch)
+		})
 
+		t.Run("SelectMatch", func(t *testing.T) {
 			selectMatch := Collect(trie.SelectMatch(test.selectMatchPredicate).All())
 			assert.Equal(t, test.expectedSelectMatch, selectMatch)
+		})
 
+		t.Run("Traverse", func(t *testing.T) {
 			// VLR Traversal
 			kvs = []KeyValue[string, int]{}
 			trie.Traverse(VLR, func(key string, val int) bool {
@@ -567,19 +614,34 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 				return true
 			})
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)
+		})
 
+		t.Run("Graphviz", func(t *testing.T) {
 			assert.Equal(t, test.expectedGraphviz, trie.Graphviz())
+		})
 
+		t.Run("Match", func(t *testing.T) {
 			kvs = trie.Match(test.matchPattern)
 			assert.Equal(t, test.expectedMatch, kvs)
+		})
 
+		t.Run("WithPrefix", func(t *testing.T) {
 			kvs = trie.WithPrefix(test.withPrefixKey)
 			assert.Equal(t, test.expectedWithPrefix, kvs)
+		})
 
+		t.Run("LongestPrefixOf", func(t *testing.T) {
 			longestPrefixOfKey, longestPrefixVal, longestPrefixOK := trie.LongestPrefixOf(test.longestPrefixOfKey)
 			assert.Equal(t, test.expectedLongestPrefixOfKey, longestPrefixOfKey)
 			assert.Equal(t, test.expectedLongestPrefixOfVal, longestPrefixVal)
 			assert.Equal(t, test.expectedLongestPrefixOfOK, longestPrefixOK)
+		})
+
+		t.Run("Delete", func(t *testing.T) {
+			// Delete a non-existent key
+			val, ok := trie.Delete("NonExistentKey")
+			assert.False(t, ok)
+			assert.Zero(t, val)
 
 			for _, expected := range test.keyVals {
 				val, ok := trie.Delete(expected.Key)
@@ -589,7 +651,16 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 			}
 		})
 
-		t.Run("AfterDelete", func(t *testing.T) {
+		t.Run("DeleteAll", func(t *testing.T) {
+			for _, kv := range test.keyVals {
+				trie.Put(kv.Key, kv.Val)
+			}
+
+			trie.DeleteAll()
+			assert.True(t, trie.verify())
+		})
+
+		t.Run("After", func(t *testing.T) {
 			assert.True(t, trie.verify())
 			assert.Zero(t, trie.Size())
 			assert.Zero(t, trie.Height())

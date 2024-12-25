@@ -29,6 +29,9 @@ type (
 		// If an item does not exist, it is ignored.
 		Remove(...T)
 
+		// RemoveAll removes all items from the collection, leaving it empty.
+		RemoveAll()
+
 		// Contains returns true if the collection includes all the specified items.
 		Contains(...T) bool
 
@@ -66,9 +69,12 @@ type (
 		// If the key does not exist, the second return value will be false.
 		Get(K) (V, bool)
 
-		// Delete removes the key-value specified by the given key from the collection.
+		// Delete deletes the key-value specified by the given key from the collection.
 		// If the key does not exist, the second return value will be false.
 		Delete(K) (V, bool)
+
+		// DeleteAll deletes all key-values from the collection, leaving it empty.
+		DeleteAll()
 
 		// All returns an iterator sequence containing all the key-values in the collection.
 		// This allows for iterating over the entire collection using the range keyword.

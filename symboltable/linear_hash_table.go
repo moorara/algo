@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	lpMinM          = 32    // Minimum number of entries in the hash table (must be at least 4 and a power of 2 for efficient hashing)
+	lpMinM          = 32    // Minimum number of entries in the hash table (must be a power of 2 for efficient hashing)
 	lpMinLoadFactor = 0.125 // Minimum load factor before resizing (shrinking)
 	lpMaxLoadFactor = 0.50  // Maximum load factor before resizing (expanding)
 )
@@ -46,7 +46,9 @@ func NewLinearHashTable[K, V any](hashKey HashFunc[K], eqKey EqualFunc[K], eqVal
 		opts.MaxLoadFactor = lpMaxLoadFactor
 	}
 
-	opts.verify()
+	if M := opts.InitialCap; M < lpMinM || !isPowerOf2(M) {
+		panic(fmt.Sprintf("The hash table capacity must be at least %d and a power of 2 for efficient hashing.", lpMinM))
+	}
 
 	return &linearHashTable[K, V]{
 		entries: make([]*KeyValue[K, V], opts.InitialCap),
@@ -110,6 +112,11 @@ func (ht *linearHashTable[K, V]) probe(key K) func() int {
 
 // resize adjusts the hash table to a new size and re-hashes all keys.
 func (ht *linearHashTable[K, V]) resize(m int) {
+	// Ensure the minimum table size
+	if m < lpMinM {
+		return
+	}
+
 	newHT := NewLinearHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		InitialCap:    m,
 		MinLoadFactor: ht.minLF,
@@ -171,7 +178,7 @@ func (ht *linearHashTable[K, V]) Get(key K) (V, bool) {
 	return zeroV, false
 }
 
-// Delete removes a key-value from the hash table.
+// Delete deletes a key-value from the hash table.
 func (ht *linearHashTable[K, V]) Delete(key K) (V, bool) {
 	next := ht.probe(key)
 	i := next()
@@ -198,11 +205,17 @@ func (ht *linearHashTable[K, V]) Delete(key K) (V, bool) {
 		ht.Put(key, val)
 	}
 
-	if ht.m > scMinM && ht.loadFactor() <= ht.minLF {
+	if ht.loadFactor() <= ht.minLF {
 		ht.resize(ht.m / 2)
 	}
 
 	return val, true
+}
+
+// DeleteAll deletes all key-values from the hash table, leaving it empty.
+func (ht *linearHashTable[K, V]) DeleteAll() {
+	ht.entries = make([]*KeyValue[K, V], ht.m)
+	ht.n = 0
 }
 
 // String returns a string representation of the hash table.

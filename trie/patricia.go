@@ -335,7 +335,7 @@ func (t *patricia[V]) _get(key *bitString) (V, bool) {
 	return zeroV, false
 }
 
-// Delete removes a key-value from the Patricia trie.
+// Delete deletes a key-value from the Patricia trie.
 func (t *patricia[V]) Delete(key string) (V, bool) {
 	return t._delete(newBitString(key))
 }
@@ -376,6 +376,12 @@ func (t *patricia[V]) _delete(key *bitString) (V, bool) {
 	t.remove(n, r, rp, np)
 
 	return n.val, true
+}
+
+// DeleteAll deletes all key-values from the binary trie, leaving it empty.
+func (t *patricia[V]) DeleteAll() {
+	t.size = 0
+	t.root = nil
 }
 
 // Min returns the minimum key and its value in the Patricia trie.
@@ -455,7 +461,7 @@ func (t *patricia[V]) Ceiling(key string) (string, V, bool) {
 	return lastKey, lastVal, ok
 }
 
-// DeleteMin removes the smallest key and associated value from the Patricia trie.
+// DeleteMin deletes the smallest key and associated value from the Patricia trie.
 func (t *patricia[V]) DeleteMin() (string, V, bool) {
 	if t.root == nil {
 		var zeroV V
@@ -479,7 +485,7 @@ func (t *patricia[V]) DeleteMin() (string, V, bool) {
 	return n.key.String(), n.val, true
 }
 
-// DeleteMax removes the largest key and associated value from the Patricia trie.
+// DeleteMax deletes the largest key and associated value from the Patricia trie.
 func (t *patricia[V]) DeleteMax() (string, V, bool) {
 	if t.root == nil {
 		var zeroV V
