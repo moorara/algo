@@ -1,4 +1,5 @@
-// Package automata provides data structures and algorithms for working with finite automata, a.k.a. finite state machines.
+// Package automata provides data structures and algorithms for working with finite automata,
+// also known as finite state machines.
 package automata
 
 import (
