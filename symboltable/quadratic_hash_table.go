@@ -9,8 +9,19 @@ import (
 	. "github.com/moorara/algo/hash"
 )
 
+/*
+ * If i ≥ M:
+ *   • The quadratic probing sequence may revisit indices due to periodicity in i² % M.
+ *   • This can lead to infinite loops or redundant checks if the table is not full.
+ *   • For non-prime M, some slots may never be visited because (h1 + i²) % M might not yield all indices in [0, M-1]
+ *
+ * To ensure robustness:
+ *   • Use a prime number for M to guarantee the sequence can visit all slots.
+ *   • Alternatively, handle the case where i ≥ M by resizing the table or signaling an error.
+ */
+
 const (
-	qpMinM          = 32    // Minimum number of entries in the hash table (must be at least 4 and a power of 2 for efficient hashing)
+	qpMinM          = 31    // Minimum number of entries in the hash table (must be a prime number)
 	qpMinLoadFactor = 0.125 // Minimum load factor before resizing (shrinking)
 	qpMaxLoadFactor = 0.50  // Maximum load factor before resizing (expanding)
 )
@@ -46,7 +57,9 @@ func NewQuadraticHashTable[K, V any](hashKey HashFunc[K], eqKey EqualFunc[K], eq
 		opts.MaxLoadFactor = qpMaxLoadFactor
 	}
 
-	opts.verify()
+	if M := opts.InitialCap; M < qpMinM || !isPrime(M) {
+		panic(fmt.Sprintf("The hash table capacity must be at least %d and a prime number.", qpMinM))
+	}
 
 	return &quadraticHashTable[K, V]{
 		entries: make([]*hashTableEntry[K, V], opts.InitialCap),
@@ -90,9 +103,8 @@ func (ht *quadraticHashTable[K, V]) probe(key K) func() int {
 	h := ht.hashKey(key)
 	h ^= (h >> 20) ^ (h >> 12) ^ (h >> 7) ^ (h >> 4)
 
-	// M must be a power of 2
 	M := uint64(ht.m)
-	h1 := h & (M - 1) // [0, M-1]
+	h1 := h % M // [0, M-1]
 
 	var i, next uint64
 
@@ -110,6 +122,14 @@ func (ht *quadraticHashTable[K, V]) probe(key K) func() int {
 
 // resize adjusts the hash table to a new size and re-hashes all keys.
 func (ht *quadraticHashTable[K, V]) resize(m int) {
+	// Ensure the minimum table size
+	if m < qpMinM {
+		return
+	}
+
+	// Ensure the table size remains prime
+	m = smallestPrimeLargerThan(m)
+
 	newHT := NewQuadraticHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		InitialCap:    m,
 		MinLoadFactor: ht.minLF,
@@ -173,7 +193,7 @@ func (ht *quadraticHashTable[K, V]) Get(key K) (V, bool) {
 	return zeroV, false
 }
 
-// Delete removes a key-value from the hash table.
+// Delete deletes a key-value from the hash table.
 func (ht *quadraticHashTable[K, V]) Delete(key K) (V, bool) {
 	next := ht.probe(key)
 	i := next()
@@ -193,11 +213,17 @@ func (ht *quadraticHashTable[K, V]) Delete(key K) (V, bool) {
 	ht.n--
 
 	// During resizing, soft-deleted keys are removed, and remaining active keys are rehashed
-	if ht.m > scMinM && ht.loadFactor() <= ht.minLF {
+	if ht.loadFactor() <= ht.minLF {
 		ht.resize(ht.m / 2)
 	}
 
 	return val, true
+}
+
+// DeleteAll deletes all key-values from the hash table, leaving it empty.
+func (ht *quadraticHashTable[K, V]) DeleteAll() {
+	ht.entries = make([]*hashTableEntry[K, V], ht.m)
+	ht.n = 0
 }
 
 // String returns a string representation of the hash table.

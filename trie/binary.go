@@ -197,7 +197,7 @@ func (t *binary[V]) _get(n *binaryNode[V], key string) (V, bool) {
 	return t._get(n.right, key)
 }
 
-// Delete removes a key-value from the binary trie.
+// Delete deletes a key-value from the binary trie.
 func (t *binary[V]) Delete(key string) (val V, ok bool) {
 	// Special case of empty string
 	if key == "" {
@@ -213,7 +213,7 @@ func (t *binary[V]) _delete(n *binaryNode[V], key string) (*binaryNode[V], V, bo
 	var ok bool
 
 	if n == nil || n.char > key[0] { // right links are sorted
-		return nil, zeroV, false
+		return n, zeroV, false
 	}
 
 	if n.char == key[0] {
@@ -232,6 +232,12 @@ func (t *binary[V]) _delete(n *binaryNode[V], key string) (*binaryNode[V], V, bo
 	}
 
 	return n, val, ok
+}
+
+// DeleteAll deletes all key-values from the binary trie, leaving it empty.
+func (t *binary[V]) DeleteAll() {
+	t.size = 0
+	t.root = new(binaryNode[V])
 }
 
 // Min returns the minimum key and its value in the binary trie.
@@ -308,7 +314,7 @@ func (t *binary[V]) Ceiling(key string) (string, V, bool) {
 	return lastKey, lastVal, ok
 }
 
-// DeleteMin removes the smallest key and associated value from the binary trie.
+// DeleteMin deletes the smallest key and associated value from the binary trie.
 func (t *binary[V]) DeleteMin() (string, V, bool) {
 	key, val, ok := t.Min()
 	if !ok {
@@ -322,7 +328,7 @@ func (t *binary[V]) DeleteMin() (string, V, bool) {
 	return key, val, true
 }
 
-// DeleteMax removes the largest key and associated value from the binary trie.
+// DeleteMax deletes the largest key and associated value from the binary trie.
 func (t *binary[V]) DeleteMax() (string, V, bool) {
 	key, val, ok := t.Max()
 	if !ok {

@@ -11,8 +11,28 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	set := New(NewEqualFunc[string]())
-	assert.NotNil(t, set)
+	tests := []struct {
+		name            string
+		equal           EqualFunc[string]
+		vals            []string
+		expectedMembers []string
+	}{
+		{
+			name:            "OK",
+			equal:           NewEqualFunc[string](),
+			vals:            []string{"a", "b", "c", "d"},
+			expectedMembers: []string{"a", "b", "c", "d"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			s := New(tc.equal, tc.vals...)
+
+			assert.NotNil(t, s)
+			assert.Equal(t, tc.expectedMembers, s.(*set[string]).members)
+		})
+	}
 }
 
 func TestSet_String(t *testing.T) {
@@ -191,7 +211,7 @@ func TestSet_Add(t *testing.T) {
 	tests := []struct {
 		name            string
 		s               *set[string]
-		ss              []string
+		vals            []string
 		expectedMembers []string
 	}{
 		{
@@ -200,7 +220,7 @@ func TestSet_Add(t *testing.T) {
 				members: []string{},
 				equal:   eqFunc,
 			},
-			ss:              []string{"a", "b", "c", "d"},
+			vals:            []string{"a", "b", "c", "d"},
 			expectedMembers: []string{"a", "b", "c", "d"},
 		},
 		{
@@ -209,14 +229,14 @@ func TestSet_Add(t *testing.T) {
 				members: []string{"a", "b"},
 				equal:   eqFunc,
 			},
-			ss:              []string{"a", "c", "d"},
+			vals:            []string{"a", "c", "d"},
 			expectedMembers: []string{"a", "b", "c", "d"},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.s.Add(tc.ss...)
+			tc.s.Add(tc.vals...)
 			assert.Equal(t, tc.expectedMembers, tc.s.members)
 		})
 	}
@@ -228,7 +248,7 @@ func TestSet_Remove(t *testing.T) {
 	tests := []struct {
 		name            string
 		s               *set[string]
-		ss              []string
+		vals            []string
 		expectedMembers []string
 	}{
 		{
@@ -237,7 +257,7 @@ func TestSet_Remove(t *testing.T) {
 				members: []string{},
 				equal:   eqFunc,
 			},
-			ss:              []string{"a", "b"},
+			vals:            []string{"a", "b"},
 			expectedMembers: []string{},
 		},
 		{
@@ -246,15 +266,47 @@ func TestSet_Remove(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
-			ss:              []string{"a", "c"},
+			vals:            []string{"a", "c"},
 			expectedMembers: []string{"b", "d"},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.s.Remove(tc.ss...)
+			tc.s.Remove(tc.vals...)
 			assert.Equal(t, tc.expectedMembers, tc.s.members)
+		})
+	}
+}
+
+func TestSet_RemoveAll(t *testing.T) {
+	eqFunc := NewEqualFunc[string]()
+
+	tests := []struct {
+		name string
+		s    *set[string]
+	}{
+		{
+			name: "Empty",
+			s: &set[string]{
+				members: []string{},
+				equal:   eqFunc,
+			},
+		},
+		{
+			name: "NonEmpty",
+			s: &set[string]{
+				members: []string{"a", "b", "c", "d"},
+				equal:   eqFunc,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.s.RemoveAll()
+			assert.Zero(t, tc.s.Size())
+			assert.True(t, tc.s.IsEmpty())
 		})
 	}
 }

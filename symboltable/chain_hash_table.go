@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	scMinM          = 4    // Minimum number of buckets in the hash table (must be at least 4 and a power of 2 for efficient hashing)
+	scMinM          = 4    // Minimum number of buckets in the hash table (must be a power of 2 for efficient hashing)
 	scMinLoadFactor = 2.0  // Minimum load factor before resizing (shrinking)
 	scMaxLoadFactor = 10.0 // Maximum load factor before resizing (expanding)
 )
@@ -53,7 +53,9 @@ func NewChainHashTable[K, V any](hashKey HashFunc[K], eqKey EqualFunc[K], eqVal 
 		opts.MaxLoadFactor = scMaxLoadFactor
 	}
 
-	opts.verify()
+	if M := opts.InitialCap; M < scMinM || !isPowerOf2(M) {
+		panic(fmt.Sprintf("The hash table capacity must be at least %d and a power of 2 for efficient hashing.", scMinM))
+	}
 
 	return &chainHashTable[K, V]{
 		buckets: make([]*chainNode[K, V], opts.InitialCap),
@@ -105,6 +107,11 @@ func (ht *chainHashTable[K, V]) hash(key K) int {
 
 // resize adjusts the hash table to a new size and re-hashes all keys.
 func (ht *chainHashTable[K, V]) resize(m int) {
+	// Ensure the minimum table size
+	if m < scMinM {
+		return
+	}
+
 	newHT := NewChainHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		InitialCap:    m,
 		MinLoadFactor: ht.minLF,
@@ -167,12 +174,12 @@ func (ht *chainHashTable[K, V]) Get(key K) (V, bool) {
 	return zeroV, false
 }
 
-// Delete removes a key-value from the hash table.
+// Delete deletes a key-value from the hash table.
 func (ht *chainHashTable[K, V]) Delete(key K) (val V, ok bool) {
 	i := ht.hash(key)
 	ht.buckets[i], val, ok = ht._delete(ht.buckets[i], key)
 
-	if ht.m > scMinM && ht.loadFactor() <= ht.minLF {
+	if ht.loadFactor() <= ht.minLF {
 		ht.resize(ht.m / 2)
 	}
 
@@ -195,6 +202,12 @@ func (ht *chainHashTable[K, V]) _delete(n *chainNode[K, V], key K) (*chainNode[K
 	n.next, val, ok = ht._delete(n.next, key)
 
 	return n, val, ok
+}
+
+// DeleteAll deletes all key-values from the hash table, leaving it empty.
+func (ht *chainHashTable[K, V]) DeleteAll() {
+	ht.buckets = make([]*chainNode[K, V], ht.m)
+	ht.n = 0
 }
 
 // String returns a string representation of the hash table.

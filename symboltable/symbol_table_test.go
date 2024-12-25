@@ -785,63 +785,92 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 
 func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTableTest[string, int]) {
 	t.Run(test.name, func(t *testing.T) {
-		t.Run("BeforePut", func(t *testing.T) {
+		t.Run("Before", func(t *testing.T) {
 			assert.True(t, st.verify())
 			assert.Zero(t, st.Size())
 			assert.True(t, st.IsEmpty())
 		})
 
-		t.Run("AfterPut", func(t *testing.T) {
-			// Put
+		t.Run("Put", func(t *testing.T) {
 			for _, kv := range test.keyVals {
 				st.Put(kv.Key, kv.Val)
 				st.Put(kv.Key, kv.Val) // Update existing key-value
 				assert.True(t, st.verify())
 			}
+		})
 
-			// Get
+		t.Run("Get", func(t *testing.T) {
+			// Get a non-existent key
+			val, ok := st.Get("NonExistentKey")
+			assert.False(t, ok)
+			assert.Zero(t, val)
+
 			for _, expected := range test.keyVals {
 				val, ok := st.Get(expected.Key)
 				assert.True(t, ok)
 				assert.Equal(t, expected.Val, val)
 			}
+		})
 
+		t.Run("Size", func(t *testing.T) {
 			assert.Equal(t, test.expectedSize, st.Size())
-			assert.Equal(t, test.expectedIsEmpty, st.IsEmpty())
+		})
 
+		t.Run("IsEmpty", func(t *testing.T) {
+			assert.Equal(t, test.expectedIsEmpty, st.IsEmpty())
+		})
+
+		t.Run("String", func(t *testing.T) {
 			// The key-values are unordered, so we need to compare the strings pair-wise.
 			str := st.String()
+
 			for _, expectedSubstring := range test.expectedSubstrings {
 				assert.Contains(t, str, expectedSubstring)
 			}
+		})
 
+		t.Run("Equals", func(t *testing.T) {
 			equals := st.Equals(test.equals)
 			assert.Equal(t, test.expectedEquals, equals)
+		})
 
+		t.Run("All", func(t *testing.T) {
 			// The key-values are unordered, so we need to compare the lists pair-wise.
 			all := Collect(st.All())
+
 			for _, kv := range test.expectedAll {
 				assert.Contains(t, all, kv)
 			}
+
 			for _, kv := range all {
 				assert.Contains(t, test.expectedAll, kv)
 			}
+		})
 
+		t.Run("AnyMatch", func(t *testing.T) {
 			anyMatch := st.AnyMatch(test.anyMatchPredicate)
 			assert.Equal(t, test.expectedAnyMatch, anyMatch)
+		})
 
+		t.Run("AllMatch", func(t *testing.T) {
 			allMatch := st.AllMatch(test.allMatchPredicate)
 			assert.Equal(t, test.expectedAllMatch, allMatch)
+		})
 
+		t.Run("SelectMatch", func(t *testing.T) {
 			selectMatch := Collect(st.SelectMatch(test.selectMatchPredicate).All())
+
 			for _, kv := range test.expectedSelectMatch {
 				assert.Contains(t, selectMatch, kv)
 			}
+
 			for _, kv := range selectMatch {
 				assert.Contains(t, test.expectedSelectMatch, kv)
 			}
+		})
 
-			// Delete a a non-existent key
+		t.Run("Delete", func(t *testing.T) {
+			// Delete a non-existent key
 			val, ok := st.Delete("NonExistentKey")
 			assert.False(t, ok)
 			assert.Zero(t, val)
@@ -854,7 +883,16 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 			}
 		})
 
-		t.Run("AfterDelete", func(t *testing.T) {
+		t.Run("DeleteAll", func(t *testing.T) {
+			for _, kv := range test.keyVals {
+				st.Put(kv.Key, kv.Val)
+			}
+
+			st.DeleteAll()
+			assert.True(t, st.verify())
+		})
+
+		t.Run("After", func(t *testing.T) {
 			assert.True(t, st.verify())
 			assert.Zero(t, st.Size())
 			assert.True(t, st.IsEmpty())
@@ -869,7 +907,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 		var minVal, maxVal, floorVal, ceilingVal, selectVal int
 		var minOK, maxOK, floorOK, ceilingOK, selectOK bool
 
-		t.Run("BeforePut", func(t *testing.T) {
+		t.Run("Before", func(t *testing.T) {
 			assert.True(t, ost.verify())
 			assert.Zero(t, ost.Size())
 			assert.Zero(t, ost.Height())
@@ -905,92 +943,139 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			assert.Zero(t, ost.RangeSize("", ""))
 		})
 
-		t.Run("AfterPut", func(t *testing.T) {
-			// Put
+		t.Run("Put", func(t *testing.T) {
 			for _, kv := range test.keyVals {
 				ost.Put(kv.Key, kv.Val)
 				ost.Put(kv.Key, kv.Val) // Update existing key-value
 				assert.True(t, ost.verify())
 			}
+		})
 
-			// Get
+		t.Run("Get", func(t *testing.T) {
+			// Get a non-existent key
+			val, ok := ost.Get("NonExistentKey")
+			assert.False(t, ok)
+			assert.Zero(t, val)
+
 			for _, expected := range test.keyVals {
 				val, ok := ost.Get(expected.Key)
 				assert.True(t, ok)
 				assert.Equal(t, expected.Val, val)
 			}
+		})
 
+		t.Run("Size", func(t *testing.T) {
 			assert.Equal(t, test.expectedSize, ost.Size())
-			assert.Equal(t, test.expectedHeight, ost.Height())
-			assert.Equal(t, test.expectedIsEmpty, ost.IsEmpty())
+		})
 
+		t.Run("Height", func(t *testing.T) {
+			assert.Equal(t, test.expectedHeight, ost.Height())
+		})
+
+		t.Run("IsEmpty", func(t *testing.T) {
+			assert.Equal(t, test.expectedIsEmpty, ost.IsEmpty())
+		})
+
+		t.Run("Min", func(t *testing.T) {
 			minKey, minVal, minOK = ost.Min()
 			assert.Equal(t, test.expectedMinKey, minKey)
 			assert.Equal(t, test.expectedMinVal, minVal)
 			assert.Equal(t, test.expectedMinOK, minOK)
+		})
 
+		t.Run("Max", func(t *testing.T) {
 			maxKey, maxVal, maxOK = ost.Max()
 			assert.Equal(t, test.expectedMaxKey, maxKey)
 			assert.Equal(t, test.expectedMaxVal, maxVal)
 			assert.Equal(t, test.expectedMaxOK, maxOK)
+		})
 
+		t.Run("Floor", func(t *testing.T) {
 			floorKey, floorVal, floorOK = ost.Floor(test.floorKey)
 			assert.Equal(t, test.expectedFloorKey, floorKey)
 			assert.Equal(t, test.expectedFloorVal, floorVal)
 			assert.Equal(t, test.expectedFloorOK, floorOK)
+		})
 
+		t.Run("Ceiling", func(t *testing.T) {
 			ceilingKey, ceilingVal, ceilingOK = ost.Ceiling(test.ceilingKey)
 			assert.Equal(t, test.expectedCeilingKey, ceilingKey)
 			assert.Equal(t, test.expectedCeilingVal, ceilingVal)
 			assert.Equal(t, test.expectedCeilingOK, ceilingOK)
+		})
 
+		t.Run("DeleteMin", func(t *testing.T) {
 			minKey, minVal, minOK = ost.DeleteMin()
 			assert.Equal(t, test.expectedMinKey, minKey)
 			assert.Equal(t, test.expectedMinVal, minVal)
 			assert.Equal(t, test.expectedMinOK, minOK)
 			assert.True(t, ost.verify())
 			ost.Put(minKey, minVal)
+		})
 
+		t.Run("DeleteMax", func(t *testing.T) {
 			maxKey, maxVal, maxOK = ost.DeleteMax()
 			assert.Equal(t, test.expectedMaxKey, maxKey)
 			assert.Equal(t, test.expectedMaxVal, maxVal)
 			assert.Equal(t, test.expectedMaxOK, maxOK)
 			assert.True(t, ost.verify())
 			ost.Put(maxKey, maxVal)
+		})
 
+		t.Run("Select", func(t *testing.T) {
 			selectKey, selectVal, selectOK = ost.Select(test.selectRank)
 			assert.Equal(t, test.expectedSelectKey, selectKey)
 			assert.Equal(t, test.expectedSelectVal, selectVal)
 			assert.Equal(t, test.expectedSelectOK, selectOK)
+		})
 
+		t.Run("Rank", func(t *testing.T) {
 			rank := ost.Rank(test.rankKey)
 			assert.Equal(t, test.expectedRank, rank)
+		})
 
+		t.Run("Range", func(t *testing.T) {
 			kvs = ost.Range(test.rangeKeyLo, test.rangeKeyHi)
 			assert.Equal(t, test.expectedRange, kvs)
+		})
 
+		t.Run("RangeSize", func(t *testing.T) {
 			rangeSize := ost.RangeSize(test.rangeKeyLo, test.rangeKeyHi)
 			assert.Equal(t, test.expectedRangeSize, rangeSize)
+		})
 
+		t.Run("String", func(t *testing.T) {
 			// The key-values are ordered, so we can directly compare the strings.
 			assert.Equal(t, test.expectedString, ost.String())
+		})
 
+		t.Run("Equals", func(t *testing.T) {
 			equals := ost.Equals(test.equals)
 			assert.Equal(t, test.expectedEquals, equals)
+		})
 
+		t.Run("All", func(t *testing.T) {
 			// The key-values are ordered, so we can directly compare the lists.
 			all := Collect(ost.All())
 			assert.Equal(t, test.expectedAll, all)
+		})
 
+		t.Run("AnyMatch", func(t *testing.T) {
 			anyMatch := ost.AnyMatch(test.anyMatchPredicate)
 			assert.Equal(t, test.expectedAnyMatch, anyMatch)
+		})
 
+		t.Run("AllMatch", func(t *testing.T) {
 			allMatch := ost.AllMatch(test.allMatchPredicate)
 			assert.Equal(t, test.expectedAllMatch, allMatch)
+		})
 
+		t.Run("SelectMatch", func(t *testing.T) {
 			selectMatch := Collect(ost.SelectMatch(test.selectMatchPredicate).All())
 			assert.Equal(t, test.expectedSelectMatch, selectMatch)
+		})
 
+		t.Run("Traverse", func(t *testing.T) {
 			// VLR Traversal
 			kvs = []KeyValue[string, int]{}
 			ost.Traverse(VLR, func(key string, val int) bool {
@@ -1054,11 +1139,15 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 				return true
 			})
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)
+		})
 
+		t.Run("Graphviz", func(t *testing.T) {
 			graphviz := ost.Graphviz()
 			assert.Equal(t, test.expectedGraphviz, graphviz)
+		})
 
-			// Delete a a non-existent key
+		t.Run("Delete", func(t *testing.T) {
+			// Delete a non-existent key
 			val, ok := ost.Delete("NonExistentKey")
 			assert.False(t, ok)
 			assert.Zero(t, val)
@@ -1071,7 +1160,16 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			}
 		})
 
-		t.Run("AfterDelete", func(t *testing.T) {
+		t.Run("DeleteAll", func(t *testing.T) {
+			for _, kv := range test.keyVals {
+				ost.Put(kv.Key, kv.Val)
+			}
+
+			ost.DeleteAll()
+			assert.True(t, ost.verify())
+		})
+
+		t.Run("After", func(t *testing.T) {
 			assert.True(t, ost.verify())
 			assert.Zero(t, ost.Size())
 			assert.Zero(t, ost.Height())

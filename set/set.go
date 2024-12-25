@@ -35,12 +35,16 @@ type set[T any] struct {
 	equal   EqualFunc[T]
 }
 
-// New creates a new empty set.
-func New[T any](equal EqualFunc[T]) Set[T] {
-	return &set[T]{
+// New creates a new set.
+func New[T any](equal EqualFunc[T], vals ...T) Set[T] {
+	s := &set[T]{
 		members: make([]T, 0),
 		equal:   equal,
 	}
+
+	s.Add(vals...)
+
+	return s
 }
 
 func (s *set[T]) find(v T) int {
@@ -88,20 +92,24 @@ func (s *set[T]) IsEmpty() bool {
 	return len(s.members) == 0
 }
 
-func (s *set[T]) Add(ss ...T) {
-	for _, t := range ss {
-		if !s.Contains(t) {
-			s.members = append(s.members, t)
+func (s *set[T]) Add(vals ...T) {
+	for _, v := range vals {
+		if !s.Contains(v) {
+			s.members = append(s.members, v)
 		}
 	}
 }
 
-func (s *set[T]) Remove(ss ...T) {
-	for _, t := range ss {
-		if i := s.find(t); i != -1 {
+func (s *set[T]) Remove(vals ...T) {
+	for _, v := range vals {
+		if i := s.find(v); i != -1 {
 			s.members = append(s.members[:i], s.members[i+1:]...)
 		}
 	}
+}
+
+func (s *set[T]) RemoveAll() {
+	s.members = make([]T, 0)
 }
 
 func (s *set[T]) Contains(vals ...T) bool {

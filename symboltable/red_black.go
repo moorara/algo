@@ -330,7 +330,7 @@ func (t *redBlack[K, V]) _get(n *rbNode[K, V], key K) (V, bool) {
 	}
 }
 
-// Delete removes a key-value from the Red-Black tree.
+// Delete deletes a key-value from the Red-Black tree.
 func (t *redBlack[K, V]) Delete(key K) (val V, ok bool) {
 	if t.root == nil {
 		var zeroV V
@@ -386,6 +386,11 @@ func (t *redBlack[K, V]) _delete(n *rbNode[K, V], key K) (*rbNode[K, V], V, bool
 	}
 
 	return t.balance(n), val, ok
+}
+
+// DeleteAll deletes all key-values from the Red-Black tree, leaving it empty.
+func (t *redBlack[K, V]) DeleteAll() {
+	t.root = nil
 }
 
 // Min returns the minimum key and its value in the Red-Black tree.
@@ -488,7 +493,7 @@ func (t *redBlack[K, V]) _ceiling(n *rbNode[K, V], key K) *rbNode[K, V] {
 	return n
 }
 
-// DeleteMin removes the smallest key and associated value from the Red-Black tree.
+// DeleteMin deletes the smallest key and associated value from the Red-Black tree.
 func (t *redBlack[K, V]) DeleteMin() (K, V, bool) {
 	if t.root == nil {
 		var zeroK K
@@ -523,7 +528,7 @@ func (t *redBlack[K, V]) _deleteMin(n *rbNode[K, V]) (*rbNode[K, V], *rbNode[K, 
 	return t.balance(n), min
 }
 
-// DeleteMax removes the largest key and associated value from the Red-Black tree.
+// DeleteMax deletes the largest key and associated value from the Red-Black tree.
 func (t *redBlack[K, V]) DeleteMax() (K, V, bool) {
 	if t.root == nil {
 		var zeroK K

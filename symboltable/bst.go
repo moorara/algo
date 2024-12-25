@@ -174,7 +174,7 @@ func (t *bst[K, V]) _get(n *bstNode[K, V], key K) (V, bool) {
 	}
 }
 
-// Delete removes a key-value from the BST.
+// Delete deletes a key-value from the BST.
 func (t *bst[K, V]) Delete(key K) (val V, ok bool) {
 	t.root, val, ok = t._delete(t.root, key)
 	return val, ok
@@ -212,6 +212,11 @@ func (t *bst[K, V]) _delete(n *bstNode[K, V], key K) (*bstNode[K, V], V, bool) {
 
 	n.size = 1 + t._size(n.left) + t._size(n.right)
 	return n, val, ok
+}
+
+// DeleteAll deletes all key-values from the BST, leaving it empty.
+func (t *bst[K, V]) DeleteAll() {
+	t.root = nil
 }
 
 // Min returns the minimum key and its value in the BST.
@@ -314,7 +319,7 @@ func (t *bst[K, V]) _ceiling(n *bstNode[K, V], key K) *bstNode[K, V] {
 	return n
 }
 
-// DeleteMin removes the smallest key and associated value from the BST.
+// DeleteMin deletes the smallest key and associated value from the BST.
 func (t *bst[K, V]) DeleteMin() (K, V, bool) {
 	if t.root == nil {
 		var zeroK K
@@ -338,7 +343,7 @@ func (t *bst[K, V]) _deleteMin(n *bstNode[K, V]) (*bstNode[K, V], *bstNode[K, V]
 	return n, min
 }
 
-// DeleteMax removes the largest key and associated value from the BST.
+// DeleteMax deletes the largest key and associated value from the BST.
 func (t *bst[K, V]) DeleteMax() (K, V, bool) {
 	if t.root == nil {
 		var zeroK K
