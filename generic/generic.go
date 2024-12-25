@@ -1,3 +1,4 @@
+// Package generic provides types, interfaces, and functions to support generic programming use cases.
 package generic
 
 import "golang.org/x/exp/constraints"
