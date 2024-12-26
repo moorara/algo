@@ -68,88 +68,6 @@ func TestStates_Equals(t *testing.T) {
 	}
 }
 
-func TestSymbols_Contains(t *testing.T) {
-	tests := []struct {
-		name             string
-		s                Symbols
-		t                Symbol
-		expectedContains bool
-	}{
-		{
-			name:             "Yes",
-			s:                Symbols{'a', 'b'},
-			t:                'b',
-			expectedContains: true,
-		},
-		{
-			name:             "No",
-			s:                Symbols{'a', 'b'},
-			t:                'c',
-			expectedContains: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedContains, tc.s.Contains(tc.t))
-		})
-	}
-}
-
-func TestSymbols_Equals(t *testing.T) {
-	tests := []struct {
-		name           string
-		s              Symbols
-		rhs            Symbols
-		expectedEquals bool
-	}{
-		{
-			name:           "Equal",
-			s:              Symbols{'a', 'b'},
-			rhs:            Symbols{'b', 'a'},
-			expectedEquals: true,
-		},
-		{
-			name:           "NotEqual",
-			s:              Symbols{'a', 'b'},
-			rhs:            Symbols{'a'},
-			expectedEquals: false,
-		},
-		{
-			name:           "NotEqual",
-			s:              Symbols{'a'},
-			rhs:            Symbols{'a', 'b'},
-			expectedEquals: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.s.Equals(tc.rhs))
-		})
-	}
-}
-
-func TestToString(t *testing.T) {
-	tests := []struct {
-		name           string
-		s              string
-		expectedString String
-	}{
-		{
-			name:           "OK",
-			s:              "ababb",
-			expectedString: String{'a', 'b', 'a', 'b', 'b'},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedString, ToString(tc.s))
-		})
-	}
-}
-
 func TestGeneratePermutations(t *testing.T) {
 	tests := []struct {
 		name                 string
@@ -181,6 +99,32 @@ func TestGeneratePermutations(t *testing.T) {
 				assert.Contains(t, tc.expectedPermutations, perm)
 				return true
 			}))
+		})
+	}
+}
+
+func TestStateFactory(t *testing.T) {
+	tests := []struct {
+		name          string
+		last          State
+		id            int
+		s             State
+		expectedState State
+	}{
+		{
+			name:          "OK",
+			last:          10,
+			id:            0,
+			s:             1,
+			expectedState: 11,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			factory := newStateFactory(tc.last)
+			state := factory.StateFor(tc.id, tc.s)
+			assert.Equal(t, tc.expectedState, state)
 		})
 	}
 }
