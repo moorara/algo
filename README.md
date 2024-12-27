@@ -32,6 +32,12 @@ A collection of common data structures and algorithms for Go applications.
     - Heaps
       - Binary Heap
       - Indexed Binary Heap
+    - Sets
+      - Union
+      - Intersection
+      - Difference
+      - Powerset,
+      - Partitions
     - Symbol Tables
       - Unordered
         - Separate Chaining Hash Table
@@ -50,10 +56,14 @@ A collection of common data structures and algorithms for Go applications.
       - Directed Graph
       - Weighted Undirected Graph
       - Weighted Directed Graph
-    - Finite Automata
+    - Automata
       - DFA
       - NFA
-    - Sets (union, intersection, difference, powerset, partitions, etc.)
+    - Grammars
+      - Context-Free Grammar
+        - Chomsky Normal Form
+        - Left Recursion Elimination
+        - Left Factoring
 
 ## Development
 
