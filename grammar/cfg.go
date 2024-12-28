@@ -9,7 +9,7 @@ import (
 	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
-	"github.com/moorara/algo/symboltable"
+	. "github.com/moorara/algo/symboltable"
 )
 
 var (
@@ -74,16 +74,16 @@ var (
 type CFG struct {
 	Terminals    set.Set[Terminal]
 	NonTerminals set.Set[NonTerminal]
-	Productions  CFProductions
+	Productions  Productions
 	Start        NonTerminal
 }
 
 // NewCFG creates a new context-free grammar.
-func NewCFG(terms []Terminal, nonTerms []NonTerminal, prods []CFProduction, start NonTerminal) CFG {
+func NewCFG(terms []Terminal, nonTerms []NonTerminal, prods []Production, start NonTerminal) CFG {
 	g := CFG{
 		Terminals:    set.New(eqTerminal),
 		NonTerminals: set.New(eqNonTerminal),
-		Productions:  NewCFProductions(),
+		Productions:  NewProductions(),
 		Start:        start,
 	}
 
@@ -99,8 +99,8 @@ func NewCFG(terms []Terminal, nonTerms []NonTerminal, prods []CFProduction, star
 func (g CFG) Verify() error {
 	var err error
 
-	getPredicate := func(n NonTerminal) Predicate1[CFProduction] {
-		return func(p CFProduction) bool {
+	getPredicate := func(n NonTerminal) Predicate1[Production] {
+		return func(p Production) bool {
 			return p.Head.Equals(n)
 		}
 	}
@@ -161,7 +161,7 @@ func (g CFG) Clone() CFG {
 	}
 }
 
-// NullableNonTerminals finds all non-terminal symbols in a context-free grammar
+// NullableNonTerminals finds all non-terminals in a context-free grammar
 // that can derive the empty string ε in one or more steps (A ⇒* ε for some non-terminal A).
 func (g CFG) NullableNonTerminals() set.Set[NonTerminal] {
 	// Define a set for all non-terminals that can derive the empty string ε
@@ -204,7 +204,7 @@ func (g CFG) EliminateEmptyProductions() CFG {
 	newG := CFG{
 		Terminals:    g.Terminals.Clone(),
 		NonTerminals: g.NonTerminals.Clone(),
-		Productions:  NewCFProductions(),
+		Productions:  NewProductions(),
 		Start:        g.Start,
 	}
 
@@ -239,7 +239,7 @@ func (g CFG) EliminateEmptyProductions() CFG {
 		for _, β := range bodies {
 			// Skip ε-production rules (A → ε)
 			if len(β) > 0 {
-				newG.Productions.Add(CFProduction{p.Head, β})
+				newG.Productions.Add(Production{p.Head, β})
 			}
 		}
 	}
@@ -253,8 +253,8 @@ func (g CFG) EliminateEmptyProductions() CFG {
 	if start := newG.Start; nullable.Contains(start) {
 		newStart := newG.addNewNonTerminal(start, primeSuffixes...)
 		newG.Start = newStart
-		newG.Productions.Add(CFProduction{newStart, String[Symbol]{start}}) // S′ → S
-		newG.Productions.Add(CFProduction{newStart, ε})                     // S′ → ε
+		newG.Productions.Add(Production{newStart, String[Symbol]{start}}) // S′ → S
+		newG.Productions.Add(Production{newStart, ε})                     // S′ → ε
 	}
 
 	return newG
@@ -309,7 +309,7 @@ func (g CFG) EliminateSingleProductions() CFG {
 	newG := CFG{
 		Terminals:    g.Terminals.Clone(),
 		NonTerminals: g.NonTerminals.Clone(),
-		Productions:  NewCFProductions(),
+		Productions:  NewProductions(),
 		Start:        g.Start,
 	}
 
@@ -320,7 +320,7 @@ func (g CFG) EliminateSingleProductions() CFG {
 			for p := range g.Productions.Get(B).All() {
 				// Skip single productions
 				if !p.IsSingle() {
-					newG.Productions.Add(CFProduction{A, p.Body})
+					newG.Productions.Add(Production{A, p.Body})
 				}
 			}
 		}
@@ -340,7 +340,7 @@ func (g CFG) EliminateSingleProductions() CFG {
 func (g CFG) EliminateUnreachableProductions() CFG {
 	reachableT := set.New(eqTerminal)
 	reachableN := set.New(eqNonTerminal, g.Start)
-	reachableP := NewCFProductions()
+	reachableP := NewProductions()
 
 	// Reppeat until no new non-terminal is added to reachable non-terminals:
 	//   For each production rule of the form A → α:
@@ -369,7 +369,7 @@ func (g CFG) EliminateUnreachableProductions() CFG {
 
 	// Gather reachable terminals.
 	for t := range g.Terminals.All() {
-		if reachableP.AnyMatch(func(p CFProduction) bool {
+		if reachableP.AnyMatch(func(p Production) bool {
 			return p.Body.ContainsSymbol(t)
 		}) {
 			reachableT.Add(t)
@@ -405,8 +405,8 @@ func (g CFG) EliminateCycles() CFG {
 // Note that the resulting non-left-recursive grammar may have ε-productions.
 func (g CFG) EliminateLeftRecursion() CFG {
 	// Define predicates for identifying left-recursive and non-left-recursive productions
-	isLeftRecursivePredicate := func(p CFProduction) bool { return p.IsLeftRecursive() }
-	isNotLeftRecursivePredicate := func(p CFProduction) bool { return !p.IsLeftRecursive() }
+	isLeftRecursivePredicate := func(p Production) bool { return p.IsLeftRecursive() }
+	isNotLeftRecursivePredicate := func(p Production) bool { return !p.IsLeftRecursive() }
 
 	// The algorithm implemented here is guaranteed to work if the grammar has no cycles or ε-productions.
 	newG := g.EliminateCycles()
@@ -426,14 +426,14 @@ func (g CFG) EliminateLeftRecursion() CFG {
 			Ai, Aj := nonTerms[i], nonTerms[j]
 			AiProds, AjProds := newG.Productions.Get(Ai), newG.Productions.Get(Aj)
 
-			AiAjProds := AiProds.SelectMatch(func(p CFProduction) bool {
+			AiAjProds := AiProds.SelectMatch(func(p Production) bool {
 				return len(p.Body) > 0 && p.Body[0].Equals(Aj)
 			})
 
 			for AiAjProd := range AiAjProds.All() {
 				newG.Productions.Remove(AiAjProd)
 				for AjProd := range AjProds.All() {
-					p := CFProduction{Ai, AjProd.Body.Concat(AiAjProd.Body[1:])}
+					p := Production{Ai, AjProd.Body.Concat(AiAjProd.Body[1:])}
 					newG.Productions.Add(p)
 				}
 			}
@@ -468,17 +468,17 @@ func (g CFG) EliminateLeftRecursion() CFG {
 
 			// Add A → β₁A′ | β₂A′ | ... | βₙA′
 			for nonLRProd := range nonLRProds.All() {
-				newG.Productions.Add(CFProduction{A, nonLRProd.Body.Append(Anew)})
+				newG.Productions.Add(Production{A, nonLRProd.Body.Append(Anew)})
 			}
 
 			// Single productions of the form A → A, where α = ε, are already eliminated.
 			// Add A′ → α₁A′ | α₂A′ | ... | αₘA′ | ε
 			for LRProd := range LRProds.All() {
-				newG.Productions.Add(CFProduction{Anew, LRProd.Body[1:].Append(Anew)})
+				newG.Productions.Add(Production{Anew, LRProd.Body[1:].Append(Anew)})
 			}
 
 			// Add A′ → ε
-			newG.Productions.Add(CFProduction{Anew, ε})
+			newG.Productions.Add(Production{Anew, ε})
 		}
 	}
 
@@ -545,18 +545,18 @@ func (g CFG) LeftFactor() CFG {
 					Anew := newG.addNewNonTerminal(A, primeSuffixes...)
 
 					// Add A-production A → αA′
-					newG.Productions.Add(CFProduction{A, prefix.Append(Anew)})
+					newG.Productions.Add(Production{A, prefix.Append(Anew)})
 
 					// Add A′-productions A′ → β₁ | β₂ | ... | βₙ
 					for suffix := range suffixes.All() {
-						newG.Productions.Add(CFProduction{Anew, suffix})
+						newG.Productions.Add(Production{Anew, suffix})
 					}
 				}
 
 				// Add alternative A-productions A → γ
 				for prefix, suffixes := range altGroups.All() {
 					for suffix := range suffixes.All() {
-						newG.Productions.Add(CFProduction{A, prefix.Concat(suffix)})
+						newG.Productions.Add(Production{A, prefix.Concat(suffix)})
 					}
 				}
 			}
@@ -569,14 +569,9 @@ func (g CFG) LeftFactor() CFG {
 // groupByCommonPrefix groups production bodies by their common prefixes.
 // It prioritizes shorter prefixes that encompass more suffixes and production bodies
 // over longer prefixes that encompass fewer suffixes or production bodies.
-func groupByCommonPrefix(prods set.Set[CFProduction]) symboltable.SymbolTable[String[Symbol], set.Set[String[Symbol]]] {
+func groupByCommonPrefix(prods set.Set[Production]) SymbolTable[String[Symbol], set.Set[String[Symbol]]] {
 	// Define a map of prefixes to their corresponding suffixes.
-	groups := symboltable.NewQuadraticHashTable[String[Symbol], set.Set[String[Symbol]]](
-		HashFuncForSymbolString(nil),
-		eqString,
-		eqStringSet,
-		symboltable.HashOpts{},
-	)
+	groups := NewQuadraticHashTable(hashString, eqString, eqStringSet, HashOpts{})
 
 	for prod := range prods.All() {
 		prefixFound := false
@@ -610,7 +605,7 @@ func groupByCommonPrefix(prods set.Set[CFProduction]) symboltable.SymbolTable[St
 				prefix, suffix = prod.Body[:1], prod.Body[1:]
 			}
 
-			suffixes := set.New[String[Symbol]](eqString, suffix)
+			suffixes := set.New(eqString, suffix)
 			groups.Put(prefix, suffixes)
 		}
 	}
@@ -654,12 +649,12 @@ func (g CFG) ChomskyNormalForm() CFG {
 func (g CFG) eliminateStartSymbolFromRight() CFG {
 	newG := g.Clone()
 
-	if S := newG.Start; newG.Productions.AnyMatch(func(p CFProduction) bool {
+	if S := newG.Start; newG.Productions.AnyMatch(func(p Production) bool {
 		return p.Body.ContainsSymbol(S)
 	}) {
 		Snew := newG.addNewNonTerminal(S, primeSuffixes...)
 		newG.Start = Snew
-		newG.Productions.Add(CFProduction{Snew, String[Symbol]{S}})
+		newG.Productions.Add(Production{Snew, String[Symbol]{S}})
 	}
 
 	return newG
@@ -673,7 +668,7 @@ func (g CFG) eliminateNonSolitaryTerminals() CFG {
 	newG := CFG{
 		Terminals:    g.Terminals.Clone(),
 		NonTerminals: g.NonTerminals.Clone(),
-		Productions:  NewCFProductions(),
+		Productions:  NewProductions(),
 		Start:        g.Start,
 	}
 
@@ -694,13 +689,13 @@ func (g CFG) eliminateNonSolitaryTerminals() CFG {
 				}
 
 				newBody = append(newBody, newN)
-				newG.Productions.Add(CFProduction{newN, String[Symbol]{sym}})
+				newG.Productions.Add(Production{newN, String[Symbol]{sym}})
 			} else {
 				newBody = append(newBody, sym)
 			}
 		}
 
-		newG.Productions.Add(CFProduction{p.Head, newBody})
+		newG.Productions.Add(Production{p.Head, newBody})
 	}
 
 	return newG
@@ -712,7 +707,7 @@ func (g CFG) eliminateNonBinaryProductions() CFG {
 	newG := CFG{
 		Terminals:    g.Terminals.Clone(),
 		NonTerminals: g.NonTerminals.Clone(),
-		Productions:  NewCFProductions(),
+		Productions:  NewProductions(),
 		Start:        g.Start,
 	}
 
@@ -739,10 +734,10 @@ func (g CFG) eliminateNonBinaryProductions() CFG {
 
 			for head, i := A, 0; i <= len(p.Body)-2; i++ {
 				if i == len(p.Body)-2 {
-					newG.Productions.Add(CFProduction{head, p.Body[i:]})
+					newG.Productions.Add(Production{head, p.Body[i:]})
 				} else {
 					headN := newG.addNewNonTerminal(A, numericSuffixes...)
-					newG.Productions.Add(CFProduction{head, p.Body[i : i+1].Append(headN)})
+					newG.Productions.Add(Production{head, p.Body[i : i+1].Append(headN)})
 					head = headN
 				}
 			}
@@ -750,6 +745,197 @@ func (g CFG) eliminateNonBinaryProductions() CFG {
 	}
 
 	return newG
+}
+
+// ComputeFIRST returns the FIRST function for a context-free grammar.
+// The returned function memoizes the FIRST(X) for all grammar symbols (terminals and non-terminals).
+// It will compute FIRST(α) based on the pre-computed FIRST(X) and memoize the result.
+//
+// FIRST(α), where α is any string of grammar symbols (terminals and non-terminals),
+// is the set of terminals that begin strings derived from α.
+// If α ⇒* ε, then ε is also in FIRST(α).
+func (g CFG) ComputeFIRST() FIRST {
+	/*
+	 * To compute FIRST(X) for all grammar symbols (terminals and non-terminals),
+	 * we apply the following rules until no more terminals or ε can be added to any FIRST set.
+	 *
+	 *   1. If X is a terminal, then FIRST(X) = {X}.
+	 *   2. If X is a non-terminal and X → Y₁Y₂...Yₖ is a production for some k ≥ 1,
+	 *      then place 𝑎 in FIRST(X) if for some i, 𝑎 is in FIRST(Yᵢ), and ε is in all of
+	 *      FIRST(Y₁), FIRST(Y₂), ..., FIRST(Yᵢ₋₁); that is Y₁Y₂...Yᵢ₋₁ ⇒* ε. If ε is in
+	 *      FIRST(Yᵢ) for all i = 1, 2, ..., k, then add ε to FIRST(X).
+	 *   3. If X → ε is a production, then add ε to FIRST(X).
+	 *
+	 * Now, we can compute FIRST for any string X₁X₂...Xₙ as follows.
+	 * Add to FIRST(X₁X₂...Xₙ):
+	 *
+	 *   • All non-ε symbols of FIRST(X₁)
+	 *   • Add the non-ε symbols of FIRST(X₂), if ε is in FIRST(X₁)
+	 *   • Add the non-ε symbols of FIRST(X₃), if ε is in FIRST(X₁) and FIRST(X₂)
+	 *   • ...
+	 *   • Finally add ε if for all i = 1, 2, ..., n, ε is in FIRST(Xᵢ)
+	 */
+
+	firstBySymbol, firstByString := newFirstBySymbolTable(), newFirstByStringTable()
+
+	// Compute FIRST(X) for all terminals.
+	for X := range g.Terminals.All() {
+		firstBySymbol.Put(X, newTerminalsAndEmpty(X))
+	}
+
+	// Initialize FIRST(X) for all non-terminals.
+	for X := range g.NonTerminals.All() {
+		firstBySymbol.Put(X, newTerminalsAndEmpty())
+	}
+
+	// If a production rule for non-terminal A has A in its body,
+	// we need to process the A-productions multiple times until FIRST(A) no longer changes.
+	for updated := true; updated; {
+		updated = false
+
+		// Compute FIRST(X) for all non-terminals.
+		for X, prods := range g.Productions.AllByHead() {
+			for p := range prods.All() {
+				firstX, _ := firstBySymbol.Get(X)
+
+				// Add ε to FIRST(X) if X → ε.
+				if p.IsEmpty() {
+					updated = updated || !firstX.IncludesEmpty
+					firstX.IncludesEmpty = true
+					continue
+				}
+
+				// Update FIRST(X) based on X → Y₁Y₂...Yₖ.
+				allIncludesEmpty := true
+				for _, Y := range p.Body {
+					firstY, _ := firstBySymbol.Get(Y)
+
+					preSize := firstX.Terminals.Size()
+					firstX.Terminals = firstX.Terminals.Union(firstY.Terminals)
+					updated = updated || firstX.Terminals.Size() > preSize
+
+					if !firstY.IncludesEmpty {
+						allIncludesEmpty = false
+						break
+					}
+				}
+
+				// Add ε to FIRST(X) if ε ∈ FIRST(Yᵢ) for all Yᵢ.
+				updated = updated || (allIncludesEmpty && !firstX.IncludesEmpty)
+				firstX.IncludesEmpty = firstX.IncludesEmpty || allIncludesEmpty
+			}
+		}
+	}
+
+	return func(s String[Symbol]) TerminalsAndEmpty {
+		if f, ok := firstByString.Get(s); ok {
+			return *f
+		}
+
+		firstS := newTerminalsAndEmpty()
+		firstByString.Put(s, firstS)
+
+		// Update FIRST(X) based on X → Y₁Y₂...Yₖ.
+		allIncludesEmpty := true
+		for _, X := range s {
+			f, ok := firstBySymbol.Get(X)
+			if !ok {
+				panic(fmt.Sprintf("undefined grammar symbol %s", X))
+			}
+
+			firstS.Terminals = firstS.Terminals.Union(f.Terminals)
+
+			if !f.IncludesEmpty {
+				allIncludesEmpty = false
+				break
+			}
+		}
+
+		// Add ε to FIRST(X) if ε ∈ FIRST(Yᵢ) for all Yᵢ.
+		if allIncludesEmpty {
+			firstS.IncludesEmpty = true
+		}
+
+		return *firstS
+	}
+}
+
+// ComputeFOLLOW returns the FOLLOW function for a context-free grammar.
+// The returned function memoizes the FOLLOW(A) for all non-terminals A.
+//
+// FOLLOW(A), for non-terminal A, is the set of terminals 𝑎
+// that can appear immediately to the right of A in some sentential form;
+// that is; the set of terminals 𝑎 such that there exists a derivation of the form S ⇒* αAaβ
+// for some α and β strings of grammar symbols (terminals and non-terminals).
+func (g CFG) ComputeFOLLOW(first FIRST) FOLLOW {
+	/*
+	 * To compute FOLLOW(A) for all non-terminals A,
+	 * we apply the following rules until no more terminals can be added to any FOLLOW set.
+	 *
+	 *   1. Place $ in FOLLOW(S), where S is the start symbol, and $ is the input right endmarker.
+	 *   2. If there is a production A → αBβ, then everything in FIRST(β) except ε is in FOLLOW(B).
+	 *   3. If there is a production A → αB, or a production A → αBβ where FIRST(β) contains ε,
+	 *      then everything in FOLLOW(A) is in FOLLOW(B).
+	 */
+
+	follow := newFollowTable()
+
+	// Initialize FOLLOW sets.
+	for B := range g.NonTerminals.All() {
+		follow.Put(B, newTerminalsAndEndmarker())
+	}
+
+	// Add the special endmarker symbol to the FOLLOW(S).
+	followS, _ := follow.Get(g.Start)
+	followS.IncludesEndmarker = true
+
+	// Compute FOLLOW(B) for all non-terminals.
+	for updated := true; updated; {
+		updated = false
+
+		for A, AProds := range g.Productions.AllByHead() {
+			for p := range AProds.All() {
+				for i, X := range p.Body {
+					if B, ok := X.(NonTerminal); ok {
+						// A → αBβ
+						// α := p.Body[:i]
+						β := p.Body[i+1:]
+
+						firstβ := first(β)
+						followB, _ := follow.Get(B)
+
+						// Add everything in FIRST(β) except ε to FOLLOW(B).
+						preSize := followB.Terminals.Size()
+						followB.Terminals = followB.Terminals.Union(firstβ.Terminals)
+						updated = updated || followB.Terminals.Size() > preSize
+
+						// If A → αBβ where β = ε or ε ∈ FIRST(β), then FIRST(β) = {ε} (FIRST(ε) = {ε}).
+						if firstβ.IncludesEmpty {
+							followA, _ := follow.Get(A)
+
+							// Add everything in FOLLOW(A) to FOLLOW(B).
+							preSize := followB.Terminals.Size()
+							followB.Terminals = followB.Terminals.Union(followA.Terminals)
+							updated = updated || followB.Terminals.Size() > preSize
+
+							// Add ε to FIRST(X) if ε ∈ FIRST(Yᵢ) for all Yᵢ.
+							updated = updated || (followA.IncludesEndmarker && !followB.IncludesEndmarker)
+							followB.IncludesEndmarker = followB.IncludesEndmarker || followA.IncludesEndmarker
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return func(A NonTerminal) TerminalsAndEndmarker {
+		f, ok := follow.Get(A)
+		if !ok {
+			panic(fmt.Sprintf("undefined non-terminal %s", A))
+		}
+
+		return *f
+	}
 }
 
 // String returns a string representation of a context-free grammar.

@@ -9,42 +9,42 @@ import (
 	"github.com/moorara/algo/set"
 )
 
-func getTestProductions() []*cfProductions {
-	p0 := NewCFProductions().(*cfProductions)
+func getTestProductions() []*productions {
+	p0 := NewProductions().(*productions)
 
-	p1 := NewCFProductions().(*cfProductions)
-	p1.Add(CFProduction{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}) // S → aSbS
-	p1.Add(CFProduction{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}) // S → bSaS
-	p1.Add(CFProduction{"S", ε})                                                                                // S → ε
+	p1 := NewProductions().(*productions)
+	p1.Add(Production{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}) // S → aSbS
+	p1.Add(Production{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}) // S → bSaS
+	p1.Add(Production{"S", ε})                                                                                // S → ε
 
-	p2 := NewCFProductions().(*cfProductions)
-	p2.Add(CFProduction{"S", String[Symbol]{NonTerminal("E")}})                                  // S → E
-	p2.Add(CFProduction{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}}) // E → E + T
-	p2.Add(CFProduction{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}}) // E → E - T
-	p2.Add(CFProduction{"E", String[Symbol]{NonTerminal("T")}})                                  // E → T
-	p2.Add(CFProduction{"T", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}}) // T → T * F
-	p2.Add(CFProduction{"T", String[Symbol]{NonTerminal("T"), Terminal("/"), NonTerminal("F")}}) // T → T / F
-	p2.Add(CFProduction{"T", String[Symbol]{NonTerminal("F")}})                                  // T → F
-	p2.Add(CFProduction{"F", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}})    // F → ( E )
-	p2.Add(CFProduction{"F", String[Symbol]{Terminal("id")}})                                    // F → id
+	p2 := NewProductions().(*productions)
+	p2.Add(Production{"S", String[Symbol]{NonTerminal("E")}})                                  // S → E
+	p2.Add(Production{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}}) // E → E + T
+	p2.Add(Production{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}}) // E → E - T
+	p2.Add(Production{"E", String[Symbol]{NonTerminal("T")}})                                  // E → T
+	p2.Add(Production{"T", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}}) // T → T * F
+	p2.Add(Production{"T", String[Symbol]{NonTerminal("T"), Terminal("/"), NonTerminal("F")}}) // T → T / F
+	p2.Add(Production{"T", String[Symbol]{NonTerminal("F")}})                                  // T → F
+	p2.Add(Production{"F", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}})    // F → ( E )
+	p2.Add(Production{"F", String[Symbol]{Terminal("id")}})                                    // F → id
 
-	p3 := NewCFProductions().(*cfProductions)
-	p3.Add(CFProduction{"S", String[Symbol]{NonTerminal("E")}})                                  // S → E
-	p3.Add(CFProduction{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}) // E → E + E
-	p3.Add(CFProduction{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}) // E → E - E
-	p3.Add(CFProduction{"E", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}}) // E → E * E
-	p3.Add(CFProduction{"E", String[Symbol]{NonTerminal("E"), Terminal("/"), NonTerminal("E")}}) // E → E / E
-	p3.Add(CFProduction{"E", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}})    // E → ( E )
-	p3.Add(CFProduction{"E", String[Symbol]{Terminal("-"), NonTerminal("E")}})                   // E → - E
-	p3.Add(CFProduction{"E", String[Symbol]{Terminal("id")}})                                    // E → id
+	p3 := NewProductions().(*productions)
+	p3.Add(Production{"S", String[Symbol]{NonTerminal("E")}})                                  // S → E
+	p3.Add(Production{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}) // E → E + E
+	p3.Add(Production{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}) // E → E - E
+	p3.Add(Production{"E", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}}) // E → E * E
+	p3.Add(Production{"E", String[Symbol]{NonTerminal("E"), Terminal("/"), NonTerminal("E")}}) // E → E / E
+	p3.Add(Production{"E", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}})    // E → ( E )
+	p3.Add(Production{"E", String[Symbol]{Terminal("-"), NonTerminal("E")}})                   // E → - E
+	p3.Add(Production{"E", String[Symbol]{Terminal("id")}})                                    // E → id
 
-	return []*cfProductions{p0, p1, p2, p3}
+	return []*productions{p0, p1, p2, p3}
 }
 
 func TestProduction(t *testing.T) {
 	tests := []struct {
 		name                    string
-		p                       CFProduction
+		p                       Production
 		expectedString          string
 		expectedIsEmpty         bool
 		expectedIsSingle        bool
@@ -54,7 +54,7 @@ func TestProduction(t *testing.T) {
 	}{
 		{
 			name:                    "1st",
-			p:                       CFProduction{"S", ε},
+			p:                       Production{"S", ε},
 			expectedString:          `S → ε`,
 			expectedIsEmpty:         true,
 			expectedIsSingle:        false,
@@ -64,7 +64,7 @@ func TestProduction(t *testing.T) {
 		},
 		{
 			name:                    "2nd",
-			p:                       CFProduction{"A", String[Symbol]{Terminal("a")}},
+			p:                       Production{"A", String[Symbol]{Terminal("a")}},
 			expectedString:          `A → "a"`,
 			expectedIsEmpty:         false,
 			expectedIsSingle:        false,
@@ -74,7 +74,7 @@ func TestProduction(t *testing.T) {
 		},
 		{
 			name:                    "3rd",
-			p:                       CFProduction{"A", String[Symbol]{NonTerminal("A")}},
+			p:                       Production{"A", String[Symbol]{NonTerminal("A")}},
 			expectedString:          `A → A`,
 			expectedIsEmpty:         false,
 			expectedIsSingle:        true,
@@ -84,7 +84,7 @@ func TestProduction(t *testing.T) {
 		},
 		{
 			name:                    "4th",
-			p:                       CFProduction{"A", String[Symbol]{NonTerminal("B")}},
+			p:                       Production{"A", String[Symbol]{NonTerminal("B")}},
 			expectedString:          `A → B`,
 			expectedIsEmpty:         false,
 			expectedIsSingle:        true,
@@ -94,7 +94,7 @@ func TestProduction(t *testing.T) {
 		},
 		{
 			name:                    "5th",
-			p:                       CFProduction{"A", String[Symbol]{NonTerminal("A"), Terminal("a")}},
+			p:                       Production{"A", String[Symbol]{NonTerminal("A"), Terminal("a")}},
 			expectedString:          `A → A "a"`,
 			expectedIsEmpty:         false,
 			expectedIsSingle:        false,
@@ -104,7 +104,7 @@ func TestProduction(t *testing.T) {
 		},
 		{
 			name:                    "6th",
-			p:                       CFProduction{"A", String[Symbol]{NonTerminal("A"), NonTerminal("B")}},
+			p:                       Production{"A", String[Symbol]{NonTerminal("A"), NonTerminal("B")}},
 			expectedString:          `A → A B`,
 			expectedIsEmpty:         false,
 			expectedIsSingle:        false,
@@ -114,7 +114,7 @@ func TestProduction(t *testing.T) {
 		},
 		{
 			name:                    "7th",
-			p:                       CFProduction{"stmt", String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt")}},
+			p:                       Production{"stmt", String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt")}},
 			expectedString:          `stmt → "if" expr "then" stmt`,
 			expectedIsEmpty:         false,
 			expectedIsSingle:        false,
@@ -122,7 +122,7 @@ func TestProduction(t *testing.T) {
 		},
 	}
 
-	notEqual := CFProduction{"😐", String[Symbol]{Terminal("🙂"), NonTerminal("🙃")}}
+	notEqual := Production{"😐", String[Symbol]{Terminal("🙂"), NonTerminal("🙃")}}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -140,9 +140,9 @@ func TestProduction(t *testing.T) {
 	}
 }
 
-func TestNewCFProductions(t *testing.T) {
+func TestNewProductions(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
-		p := NewCFProductions()
+		p := NewProductions()
 		assert.NotNil(t, p)
 	})
 }
@@ -152,7 +152,7 @@ func TestProductions_String(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		p                  *cfProductions
+		p                  *productions
 		expectedSubstrings []string
 	}{
 		{
@@ -198,7 +198,7 @@ func TestProductions_Clone(t *testing.T) {
 
 	tests := []struct {
 		name string
-		p    *cfProductions
+		p    *productions
 	}{
 		{
 			name: "1st",
@@ -228,8 +228,8 @@ func TestProductions_Equals(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		p              *cfProductions
-		rhs            CFProductions
+		p              *productions
+		rhs            Productions
 		expectedEquals bool
 	}{
 		{
@@ -258,14 +258,14 @@ func TestProductions_Add(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *cfProductions
-		ps                  []CFProduction
-		expectedProductions *cfProductions
+		p                   *productions
+		ps                  []Production
+		expectedProductions *productions
 	}{
 		{
 			name: "1st",
 			p:    p[1],
-			ps: []CFProduction{
+			ps: []Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
 				{"S", ε}, // S → ε
@@ -275,7 +275,7 @@ func TestProductions_Add(t *testing.T) {
 		{
 			name: "2nd",
 			p:    p[2],
-			ps: []CFProduction{
+			ps: []Production{
 				{"S", String[Symbol]{NonTerminal("E")}},                                  // S → E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}}, // E → E + T
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}}, // E → E - T
@@ -291,7 +291,7 @@ func TestProductions_Add(t *testing.T) {
 		{
 			name: "3rd",
 			p:    p[3],
-			ps: []CFProduction{
+			ps: []Production{
 				{"S", String[Symbol]{NonTerminal("E")}},                                  // S → E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
@@ -318,14 +318,14 @@ func TestProductions_Remove(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *cfProductions
-		ps                  []CFProduction
-		expectedProductions *cfProductions
+		p                   *productions
+		ps                  []Production
+		expectedProductions *productions
 	}{
 		{
 			name: "1st",
 			p:    p[1],
-			ps: []CFProduction{
+			ps: []Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
 				{"S", ε}, // S → ε
@@ -335,7 +335,7 @@ func TestProductions_Remove(t *testing.T) {
 		{
 			name: "2nd",
 			p:    p[2],
-			ps: []CFProduction{
+			ps: []Production{
 				{"S", String[Symbol]{NonTerminal("E")}},                                  // S → E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}}, // E → E + T
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}}, // E → E - T
@@ -351,7 +351,7 @@ func TestProductions_Remove(t *testing.T) {
 		{
 			name: "3rd",
 			p:    p[3],
-			ps: []CFProduction{
+			ps: []Production{
 				{"S", String[Symbol]{NonTerminal("E")}},                                  // S → E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
@@ -378,9 +378,9 @@ func TestProductions_RemoveAll(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *cfProductions
+		p                   *productions
 		heads               []NonTerminal
-		expectedProductions *cfProductions
+		expectedProductions *productions
 	}{
 		{
 			name:                "1st",
@@ -413,33 +413,33 @@ func TestProductions_RemoveAll(t *testing.T) {
 func TestProductions_Get(t *testing.T) {
 	p := getTestProductions()
 
-	s1 := set.New[CFProduction](eqCFProduction,
-		CFProduction{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
-		CFProduction{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
-		CFProduction{"S", ε}, // S → ε
+	s1 := set.New(eqProduction,
+		Production{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
+		Production{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
+		Production{"S", ε}, // S → ε
 	)
 
-	s2 := set.New[CFProduction](eqCFProduction,
-		CFProduction{"T", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}}, // T → T * F
-		CFProduction{"T", String[Symbol]{NonTerminal("T"), Terminal("/"), NonTerminal("F")}}, // T → T / F
-		CFProduction{"T", String[Symbol]{NonTerminal("F")}},                                  // T → F
+	s2 := set.New(eqProduction,
+		Production{"T", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}}, // T → T * F
+		Production{"T", String[Symbol]{NonTerminal("T"), Terminal("/"), NonTerminal("F")}}, // T → T / F
+		Production{"T", String[Symbol]{NonTerminal("F")}},                                  // T → F
 	)
 
-	s3 := set.New[CFProduction](eqCFProduction,
-		CFProduction{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
-		CFProduction{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
-		CFProduction{"E", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}}, // E → E * E
-		CFProduction{"E", String[Symbol]{NonTerminal("E"), Terminal("/"), NonTerminal("E")}}, // E → E / E
-		CFProduction{"E", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}},    // E → ( E )
-		CFProduction{"E", String[Symbol]{Terminal("-"), NonTerminal("E")}},                   // E → - E
-		CFProduction{"E", String[Symbol]{Terminal("id")}},                                    // E → id
+	s3 := set.New(eqProduction,
+		Production{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
+		Production{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
+		Production{"E", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}}, // E → E * E
+		Production{"E", String[Symbol]{NonTerminal("E"), Terminal("/"), NonTerminal("E")}}, // E → E / E
+		Production{"E", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}},    // E → ( E )
+		Production{"E", String[Symbol]{Terminal("-"), NonTerminal("E")}},                   // E → - E
+		Production{"E", String[Symbol]{Terminal("id")}},                                    // E → id
 	)
 
 	tests := []struct {
 		name                string
-		p                   *cfProductions
+		p                   *productions
 		head                NonTerminal
-		expectedProductions set.Set[CFProduction]
+		expectedProductions set.Set[Production]
 	}{
 		{
 			name:                "Nil",
@@ -485,15 +485,15 @@ func TestProductions_Order(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *cfProductions
+		p                   *productions
 		head                NonTerminal
-		expectedProductions []CFProduction
+		expectedProductions []Production
 	}{
 		{
 			name: "1st",
 			p:    p[1],
 			head: NonTerminal("S"),
-			expectedProductions: []CFProduction{
+			expectedProductions: []Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
 				{"S", ε}, // S → ε
@@ -503,7 +503,7 @@ func TestProductions_Order(t *testing.T) {
 			name: "2nd",
 			p:    p[2],
 			head: NonTerminal("T"),
-			expectedProductions: []CFProduction{
+			expectedProductions: []Production{
 				{"T", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}}, // T → T * F
 				{"T", String[Symbol]{NonTerminal("T"), Terminal("/"), NonTerminal("F")}}, // T → T / F
 				{"T", String[Symbol]{NonTerminal("F")}},                                  // T → F
@@ -513,7 +513,7 @@ func TestProductions_Order(t *testing.T) {
 			name: "3rd",
 			p:    p[3],
 			head: NonTerminal("E"),
-			expectedProductions: []CFProduction{
+			expectedProductions: []Production{
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}}, // E → E * E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
@@ -538,13 +538,13 @@ func TestProductions_All(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *cfProductions
-		expectedProductions []CFProduction
+		p                   *productions
+		expectedProductions []Production
 	}{
 		{
 			name: "1st",
 			p:    p[1],
-			expectedProductions: []CFProduction{
+			expectedProductions: []Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
 				{"S", ε}, // S → ε
@@ -553,7 +553,7 @@ func TestProductions_All(t *testing.T) {
 		{
 			name: "2nd",
 			p:    p[2],
-			expectedProductions: []CFProduction{
+			expectedProductions: []Production{
 				{"S", String[Symbol]{NonTerminal("E")}},                                  // S → E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}}, // E → E + T
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}}, // E → E - T
@@ -568,7 +568,7 @@ func TestProductions_All(t *testing.T) {
 		{
 			name: "3rd",
 			p:    p[3],
-			expectedProductions: []CFProduction{
+			expectedProductions: []Production{
 				{"S", String[Symbol]{NonTerminal("E")}},                                  // S → E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
@@ -595,13 +595,13 @@ func TestProductions_AllByHead(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *cfProductions
-		expectedProductions []CFProduction
+		p                   *productions
+		expectedProductions []Production
 	}{
 		{
 			name: "1st",
 			p:    p[1],
-			expectedProductions: []CFProduction{
+			expectedProductions: []Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
 				{"S", ε}, // S → ε
@@ -610,7 +610,7 @@ func TestProductions_AllByHead(t *testing.T) {
 		{
 			name: "2nd",
 			p:    p[2],
-			expectedProductions: []CFProduction{
+			expectedProductions: []Production{
 				{"S", String[Symbol]{NonTerminal("E")}},                                  // S → E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}}, // E → E + T
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}}, // E → E - T
@@ -625,7 +625,7 @@ func TestProductions_AllByHead(t *testing.T) {
 		{
 			name: "3rd",
 			p:    p[3],
-			expectedProductions: []CFProduction{
+			expectedProductions: []Production{
 				{"S", String[Symbol]{NonTerminal("E")}},                                  // S → E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
 				{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
@@ -655,20 +655,20 @@ func TestProductions_AnyMatch(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		p                *cfProductions
-		pred             Predicate1[CFProduction]
+		p                *productions
+		pred             Predicate1[Production]
 		expectedAnyMatch bool
 	}{
 		{
 			name:             "OK",
 			p:                p[2],
-			pred:             func(p CFProduction) bool { return p.IsSingle() },
+			pred:             func(p Production) bool { return p.IsSingle() },
 			expectedAnyMatch: true,
 		},
 		{
 			name:             "NotOK",
 			p:                p[2],
-			pred:             func(p CFProduction) bool { return p.IsEmpty() },
+			pred:             func(p Production) bool { return p.IsEmpty() },
 			expectedAnyMatch: false,
 		},
 	}
@@ -686,20 +686,20 @@ func TestProductions_AllMatch(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		p                *cfProductions
-		pred             Predicate1[CFProduction]
+		p                *productions
+		pred             Predicate1[Production]
 		expectedAllMatch bool
 	}{
 		{
 			name:             "OK",
 			p:                p[2],
-			pred:             func(p CFProduction) bool { return !p.IsEmpty() },
+			pred:             func(p Production) bool { return !p.IsEmpty() },
 			expectedAllMatch: true,
 		},
 		{
 			name:             "NotOK",
 			p:                p[2],
-			pred:             func(p CFProduction) bool { return !p.IsSingle() },
+			pred:             func(p Production) bool { return !p.IsSingle() },
 			expectedAllMatch: false,
 		},
 	}
@@ -715,21 +715,21 @@ func TestProductions_AllMatch(t *testing.T) {
 func TestProductions_SelectMatch(t *testing.T) {
 	p := getTestProductions()
 
-	q1 := NewCFProductions().(*cfProductions)
-	q1.Add(CFProduction{"S", String[Symbol]{NonTerminal("E")}}) // S → E
-	q1.Add(CFProduction{"E", String[Symbol]{NonTerminal("T")}}) // E → T
-	q1.Add(CFProduction{"T", String[Symbol]{NonTerminal("F")}}) // T → F
+	q1 := NewProductions().(*productions)
+	q1.Add(Production{"S", String[Symbol]{NonTerminal("E")}}) // S → E
+	q1.Add(Production{"E", String[Symbol]{NonTerminal("T")}}) // E → T
+	q1.Add(Production{"T", String[Symbol]{NonTerminal("F")}}) // T → F
 
 	tests := []struct {
 		name                string
-		p                   *cfProductions
-		pred                Predicate1[CFProduction]
-		expectedSelectMatch *cfProductions
+		p                   *productions
+		pred                Predicate1[Production]
+		expectedSelectMatch *productions
 	}{
 		{
 			name:                "OK",
 			p:                   p[2],
-			pred:                func(p CFProduction) bool { return p.IsSingle() },
+			pred:                func(p Production) bool { return p.IsSingle() },
 			expectedSelectMatch: q1,
 		},
 	}

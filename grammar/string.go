@@ -1,8 +1,8 @@
 package grammar
 
 import (
-	"hash"
 	"hash/fnv"
+	"io"
 	"strings"
 
 	. "github.com/moorara/algo/generic"
@@ -10,10 +10,12 @@ import (
 	"github.com/moorara/algo/set"
 )
 
-// The empty string ε
+// The empty string ε (unexported).
 var ε = String[Symbol]{}
 
 var (
+	hashString = hashFuncForString()
+
 	eqString = func(lhs, rhs String[Symbol]) bool {
 		return lhs.Equals(rhs)
 	}
@@ -56,9 +58,9 @@ func (s String[T]) Equals(rhs String[T]) bool {
 }
 
 // ContainsSymbol checks whether a string contains the given symbol.
-func (s String[T]) ContainsSymbol(t T) bool {
+func (s String[T]) ContainsSymbol(symbol T) bool {
 	for _, sym := range s {
-		if sym.Equals(t) {
+		if sym.Equals(symbol) {
 			return true
 		}
 	}
@@ -161,21 +163,29 @@ func LongestCommonPrefixOf(ss ...String[Symbol]) String[Symbol] {
 	return lcp
 }
 
-// HashFuncForSymbolString creates a HashFunc for a string of symbols.
-// If h is nil, a default hash.Hash64 implementation will be used.
-func HashFuncForSymbolString(h hash.Hash64) HashFunc[String[Symbol]] {
-	if h == nil {
-		h = fnv.New64()
+// WriteString writes a string of symbols to the provided io.Writer.
+// It returns the number of bytes written and any error encountered.
+func WriteString(w io.Writer, s String[Symbol]) (n int, err error) {
+	total := 0
+	for _, x := range s {
+		n, err := WriteSymbol(w, x)
+		total += n
+
+		if err != nil {
+			return total, err
+		}
 	}
+
+	return total, nil
+}
+
+// hashFuncForString creates a HashFunc for hashing strings of symbols.
+func hashFuncForString() HashFunc[String[Symbol]] {
+	h := fnv.New64()
 
 	return func(s String[Symbol]) uint64 {
 		h.Reset()
-
-		for _, x := range s {
-			// Hash.Write never returns an error
-			_, _ = h.Write([]byte(x.String()))
-		}
-
+		_, _ = WriteString(h, s) // Hash.Write never returns an error
 		return h.Sum64()
 	}
 }

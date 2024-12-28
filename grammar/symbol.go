@@ -2,12 +2,29 @@ package grammar
 
 import (
 	"fmt"
+	"hash/fnv"
+	"io"
 
 	. "github.com/moorara/algo/generic"
 	. "github.com/moorara/algo/hash"
 )
 
+// The endmarker is a special symbol that is used to indicate the end of a string.
+// This special symbol assumed not to be a symbol of any grammar and
+// it is taken from a Private Use Area (PUA) in Unicode.
+//
+// The endmarker is not a formal part of the grammar itself but is introduced during parsing
+// to simplify the handling of end-of-input scenarios, especially in parsing algorithms like LL(1) or LR(1).
+//
+// For more details, see Compilers: Principles, Techniques, and Tools (2nd Edition).
+// const endmarker rune = 0xEEEE
+
 var (
+	hashSymbol = hashFuncForSymbol()
+	eqSymbol   = func(lhs, rhs Symbol) bool {
+		return lhs.Equals(rhs)
+	}
+
 	eqTerminal  = NewEqualFunc[Terminal]()
 	cmpTerminal = NewCompareFunc[Terminal]()
 
@@ -23,6 +40,23 @@ type Symbol interface {
 	Name() string
 	Equals(Symbol) bool
 	IsTerminal() bool
+}
+
+// WriteSymbol writes the string representation of a symbol to the provided io.Writer.
+// It returns the number of bytes written and any error encountered.
+func WriteSymbol(w io.Writer, s Symbol) (n int, err error) {
+	return w.Write([]byte(s.String()))
+}
+
+// hashFuncForSymbol creates a HashFunc for hashing symbols.
+func hashFuncForSymbol() HashFunc[Symbol] {
+	h := fnv.New64()
+
+	return func(s Symbol) uint64 {
+		h.Reset()
+		_, _ = WriteSymbol(h, s) // Hash.Write never returns an error
+		return h.Sum64()
+	}
 }
 
 // Terminal represents a terminal symbol.
