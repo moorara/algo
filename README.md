@@ -65,6 +65,9 @@ A collection of common data structures and algorithms for Go applications.
         - Left Recursion Elimination
         - Left Factoring
         - FIRST and FOLLOW
+    - Parsers
+      - Two-Buffer Input Reader
+      - Parser Combinators
 
 ## Development
 
