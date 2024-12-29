@@ -64,6 +64,7 @@ A collection of common data structures and algorithms for Go applications.
         - Chomsky Normal Form
         - Left Recursion Elimination
         - Left Factoring
+        - FIRST and FOLLOW
 
 ## Development
 
