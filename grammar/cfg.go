@@ -143,12 +143,37 @@ func (g CFG) Verify() error {
 	return err
 }
 
-// Equals determines whether or not two context-free grammars are the same.
-func (g CFG) Equals(rhs CFG) bool {
-	return g.Terminals.Equals(rhs.Terminals) &&
-		g.NonTerminals.Equals(rhs.NonTerminals) &&
-		g.Productions.Equals(rhs.Productions) &&
-		g.Start.Equals(rhs.Start)
+// String returns a string representation of a context-free grammar.
+func (g CFG) String() string {
+	var b bytes.Buffer
+
+	terms := g.orderTerminals()
+	visited, unvisited, nonTerms := g.orderNonTerminals()
+
+	fmt.Fprintf(&b, "Terminal Symbols: %s\n", terms)
+	fmt.Fprintf(&b, "Non-Terminal Symbols: %s\n", nonTerms)
+	fmt.Fprintf(&b, "Start Symbol: %s\n", g.Start)
+	fmt.Fprintln(&b, "Production Rules:")
+
+	for _, head := range visited {
+		fmt.Fprintf(&b, "  %s → ", head)
+		for _, p := range g.Productions.Order(head) {
+			fmt.Fprintf(&b, "%s | ", p.Body.String())
+		}
+		b.Truncate(b.Len() - 3)
+		fmt.Fprintln(&b)
+	}
+
+	for _, head := range unvisited {
+		fmt.Fprintf(&b, "  %s → ", head)
+		for _, p := range g.Productions.Order(head) {
+			fmt.Fprintf(&b, "%s | ", p.Body.String())
+		}
+		b.Truncate(b.Len() - 3)
+		fmt.Fprintln(&b)
+	}
+
+	return b.String()
 }
 
 // Clone returns a deep copy of a context-free grammar, ensuring the clone is independent of the original.
@@ -159,6 +184,32 @@ func (g CFG) Clone() CFG {
 		Productions:  g.Productions.Clone(),
 		Start:        g.Start,
 	}
+}
+
+// Equals determines whether or not two context-free grammars are the same.
+func (g CFG) Equals(rhs CFG) bool {
+	return g.Terminals.Equals(rhs.Terminals) &&
+		g.NonTerminals.Equals(rhs.NonTerminals) &&
+		g.Productions.Equals(rhs.Productions) &&
+		g.Start.Equals(rhs.Start)
+}
+
+// IsCNF checks if a context-free grammar is in Chomsky Normal Form (CNF).
+//
+// A context-free grammar G is in Chomsky Normal Form (CNF) if all of its production rules are of the form
+//
+//   - A → BC, or
+//   - A → a, or
+//   - S → ε
+//
+// where A, B, and C are non-terminal symbols, a is a terminal symbol, and S is the start symbol.
+// Also, neither B nor C may be the start symbol, and the third production rule can only appear if ε is in L(G).
+func (g CFG) IsCNF() bool {
+	return g.Productions.AllMatch(func(p Production) bool {
+		isBinary, isTerminal := p.IsCNF()
+		isStartEmpty := p.IsEmpty() && p.Head.Equals(g.Start)
+		return isBinary || isTerminal || isStartEmpty
+	})
 }
 
 // NullableNonTerminals finds all non-terminals in a context-free grammar
@@ -936,39 +987,6 @@ func (g CFG) ComputeFOLLOW(first FIRST) FOLLOW {
 
 		return *f
 	}
-}
-
-// String returns a string representation of a context-free grammar.
-func (g CFG) String() string {
-	var b bytes.Buffer
-
-	terms := g.orderTerminals()
-	visited, unvisited, nonTerms := g.orderNonTerminals()
-
-	fmt.Fprintf(&b, "Terminal Symbols: %s\n", terms)
-	fmt.Fprintf(&b, "Non-Terminal Symbols: %s\n", nonTerms)
-	fmt.Fprintf(&b, "Start Symbol: %s\n", g.Start)
-	fmt.Fprintln(&b, "Production Rules:")
-
-	for _, head := range visited {
-		fmt.Fprintf(&b, "  %s → ", head)
-		for _, p := range g.Productions.Order(head) {
-			fmt.Fprintf(&b, "%s | ", p.Body.String())
-		}
-		b.Truncate(b.Len() - 3)
-		fmt.Fprintln(&b)
-	}
-
-	for _, head := range unvisited {
-		fmt.Fprintf(&b, "  %s → ", head)
-		for _, p := range g.Productions.Order(head) {
-			fmt.Fprintf(&b, "%s | ", p.Body.String())
-		}
-		b.Truncate(b.Len() - 3)
-		fmt.Fprintln(&b)
-	}
-
-	return b.String()
 }
 
 // addNewNonTerminal generates and adds a new non-terminal symbol to the grammar.
