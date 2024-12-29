@@ -184,6 +184,7 @@ func TestNewCFG(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			g := NewCFG(tc.terms, tc.nonTerms, tc.prods, tc.start)
 			assert.NotEmpty(t, g)
+			assert.NoError(t, g.Verify())
 		})
 	}
 }
@@ -294,6 +295,84 @@ func TestCFG_Verify(t *testing.T) {
 			} else {
 				assert.EqualError(t, err, tc.expectedError)
 			}
+		})
+	}
+}
+
+func TestCFG_String(t *testing.T) {
+	tests := []struct {
+		name           string
+		g              CFG
+		expectedString string
+	}{
+		{
+			name:           "1st",
+			g:              CFGrammars[0],
+			expectedString: "Terminal Symbols: \"0\" \"1\"\nNon-Terminal Symbols: S X Y\nStart Symbol: S\nProduction Rules:\n  S → X Y X\n  X → \"0\" X | ε\n  Y → \"1\" Y | ε\n",
+		},
+		{
+			name:           "2nd",
+			g:              CFGrammars[1],
+			expectedString: "Terminal Symbols: \"a\" \"b\"\nNon-Terminal Symbols: S\nStart Symbol: S\nProduction Rules:\n  S → \"a\" S \"b\" S | \"b\" S \"a\" S | ε\n",
+		},
+		{
+			name:           "3rd",
+			g:              CFGrammars[2],
+			expectedString: "Terminal Symbols: \"a\" \"b\"\nNon-Terminal Symbols: S B A\nStart Symbol: S\nProduction Rules:\n  S → \"a\" B \"a\" | A \"b\" | \"a\"\n  B → A | \"b\"\n  A → \"b\" | ε\n",
+		},
+		{
+			name:           "4th",
+			g:              CFGrammars[3],
+			expectedString: "Terminal Symbols: \"b\" \"c\" \"d\" \"s\"\nNon-Terminal Symbols: S A B C D\nStart Symbol: S\nProduction Rules:\n  S → A | \"s\"\n  A → B\n  B → C | \"b\"\n  C → D\n  D → \"d\"\n",
+		},
+		{
+			name:           "5th",
+			g:              CFGrammars[4],
+			expectedString: "Terminal Symbols: \"a\" \"b\" \"c\" \"d\"\nNon-Terminal Symbols: S A B C D\nStart Symbol: S\nProduction Rules:\n  S → A B\n  A → \"a\" A | \"a\"\n  B → \"b\" B | \"b\"\n  C → \"c\" C | \"c\"\n  D → \"d\"\n",
+		},
+		{
+			name:           "6th",
+			g:              CFGrammars[5],
+			expectedString: "Terminal Symbols: \"(\" \")\" \"*\" \"+\" \"-\" \"/\" \"id\"\nNon-Terminal Symbols: S E\nStart Symbol: S\nProduction Rules:\n  S → E\n  E → E \"*\" E | E \"+\" E | E \"-\" E | E \"/\" E | \"(\" E \")\" | \"-\" E | \"id\"\n",
+		},
+		{
+			name:           "7th",
+			g:              CFGrammars[6],
+			expectedString: "Terminal Symbols: \"(\" \")\" \"*\" \"+\" \"-\" \"/\" \"id\"\nNon-Terminal Symbols: S E T F\nStart Symbol: S\nProduction Rules:\n  S → E\n  E → E \"+\" T | E \"-\" T | T\n  T → T \"*\" F | T \"/\" F | F\n  F → \"(\" E \")\" | \"id\"\n",
+		},
+		{
+			name:           "8th",
+			g:              CFGrammars[7],
+			expectedString: "Terminal Symbols: \"(\" \")\" \"=\" \"GRAMMAR\" \"IDENT\" \"REGEX\" \"STRING\" \"TOKEN\" \"[\" \"]\" \"{\" \"{{\" \"|\" \"}\" \"}}\"\nNon-Terminal Symbols: grammar name decls decl rule token lhs rhs nonterm term\nStart Symbol: grammar\nProduction Rules:\n  grammar → name decls\n  name → \"GRAMMAR\" \"IDENT\"\n  decls → decls decl | ε\n  decl → rule | token\n  rule → lhs \"=\" rhs\n  token → \"TOKEN\" \"=\" \"REGEX\" | \"TOKEN\" \"=\" \"STRING\"\n  lhs → nonterm\n  rhs → rhs \"|\" rhs | rhs rhs | \"(\" rhs \")\" | \"[\" rhs \"]\" | \"{\" rhs \"}\" | \"{{\" rhs \"}}\" | nonterm | term\n  nonterm → \"IDENT\"\n  term → \"STRING\" | \"TOKEN\"\n",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
+			assert.Equal(t, tc.expectedString, tc.g.String())
+		})
+	}
+}
+
+func TestCFG_Clone(t *testing.T) {
+	tests := []struct {
+		name string
+		g    CFG
+	}{
+		{
+			name: "OK",
+			g:    CFGrammars[1],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
+			newG := tc.g.Clone()
+			assert.NoError(t, newG.Verify())
+			assert.False(t, newG == tc.g)
+			assert.True(t, newG.Equals(tc.g))
 		})
 	}
 }
@@ -449,23 +528,54 @@ func TestCFG_Equals(t *testing.T) {
 	}
 }
 
-func TestCFG_Clone(t *testing.T) {
+func TestCFG_expectedIsCNF(t *testing.T) {
 	tests := []struct {
-		name string
-		g    CFG
+		name          string
+		g             CFG
+		expectedIsCNF bool
 	}{
 		{
-			name: "OK",
-			g:    CFGrammars[1],
+			name: "NotCNF",
+			g: NewCFG(
+				[]Terminal{"a", "b"},
+				[]NonTerminal{"S", "A", "B"},
+				[]Production{
+					{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S → AB
+					{"S", ε}, // S → ε
+					{"A", String[Symbol]{Terminal("a"), NonTerminal("A")}}, // A → aA
+					{"A", String[Symbol]{Terminal("a")}},                   // A → a
+					{"B", String[Symbol]{Terminal("b"), NonTerminal("B")}}, // B → bB
+					{"B", String[Symbol]{Terminal("b")}},                   // B → b
+				},
+				"S",
+			),
+			expectedIsCNF: false,
+		},
+		{
+			name: "CNF",
+			g: NewCFG(
+				[]Terminal{"a", "b"},
+				[]NonTerminal{"S", "A", "A₁", "B", "B₁"},
+				[]Production{
+					{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S → AB
+					{"S", ε}, // S → ε
+					{"A", String[Symbol]{NonTerminal("A₁"), NonTerminal("A")}}, // A → A₁A
+					{"A", String[Symbol]{Terminal("a")}},                       // A → a
+					{"A₁", String[Symbol]{Terminal("a")}},                      // A₁ → a
+					{"B", String[Symbol]{NonTerminal("B₁"), NonTerminal("B")}}, // B → B₁B
+					{"B", String[Symbol]{Terminal("b")}},                       // B → b
+					{"B₁", String[Symbol]{Terminal("b")}},                      // B₁ → b
+				},
+				"S",
+			),
+			expectedIsCNF: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			newG := tc.g.Clone()
-			assert.NoError(t, newG.Verify())
-			assert.False(t, newG == tc.g)
-			assert.True(t, newG.Equals(tc.g))
+			assert.NoError(t, tc.g.Verify())
+			assert.Equal(t, tc.expectedIsCNF, tc.g.IsCNF())
 		})
 	}
 }
@@ -520,6 +630,7 @@ func TestCFG_NullableNonTerminals(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			nullables := tc.g.NullableNonTerminals()
 
 			for nullable := range nullables.All() {
@@ -659,6 +770,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			g := tc.g.EliminateEmptyProductions()
 			assert.NoError(t, g.Verify())
 			assert.True(t, g.Equals(tc.expectedGrammar))
@@ -817,6 +929,7 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			g := tc.g.EliminateSingleProductions()
 			assert.NoError(t, g.Verify())
 			assert.True(t, g.Equals(tc.expectedGrammar))
@@ -898,6 +1011,7 @@ func TestCFG_EliminateUnreachableProductions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			g := tc.g.EliminateUnreachableProductions()
 			assert.NoError(t, g.Verify())
 			assert.True(t, g.Equals(tc.expectedGrammar))
@@ -1100,6 +1214,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			g := tc.g.EliminateCycles()
 			assert.NoError(t, g.Verify())
 			assert.True(t, g.Equals(tc.expectedGrammar))
@@ -1307,6 +1422,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			g := tc.g.EliminateLeftRecursion()
 			assert.NoError(t, g.Verify())
 			assert.True(t, g.Equals(tc.expectedGrammar))
@@ -1438,6 +1554,7 @@ func TestCFG_LeftFactor(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			g := tc.g.LeftFactor()
 			assert.NoError(t, g.Verify())
 			assert.True(t, g.Equals(tc.expectedGrammar))
@@ -1795,6 +1912,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			g := tc.g.ChomskyNormalForm()
 			assert.NoError(t, g.Verify())
 			assert.True(t, g.Equals(tc.expectedGrammar))
@@ -2121,6 +2239,7 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			first := tc.g.ComputeFIRST()
 
 			for i, s := range tc.firsts {
@@ -2275,6 +2394,7 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			first := tc.g.ComputeFIRST()
 			follow := tc.g.ComputeFOLLOW(first)
 
@@ -2285,61 +2405,6 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 					assert.Equal(t, tc.expectedFollows[i].IncludesEndmarker, f.IncludesEndmarker)
 				})
 			}
-		})
-	}
-}
-
-func TestCFG_String(t *testing.T) {
-	tests := []struct {
-		name           string
-		g              CFG
-		expectedString string
-	}{
-		{
-			name:           "1st",
-			g:              CFGrammars[0],
-			expectedString: "Terminal Symbols: \"0\" \"1\"\nNon-Terminal Symbols: S X Y\nStart Symbol: S\nProduction Rules:\n  S → X Y X\n  X → \"0\" X | ε\n  Y → \"1\" Y | ε\n",
-		},
-		{
-			name:           "2nd",
-			g:              CFGrammars[1],
-			expectedString: "Terminal Symbols: \"a\" \"b\"\nNon-Terminal Symbols: S\nStart Symbol: S\nProduction Rules:\n  S → \"a\" S \"b\" S | \"b\" S \"a\" S | ε\n",
-		},
-		{
-			name:           "3rd",
-			g:              CFGrammars[2],
-			expectedString: "Terminal Symbols: \"a\" \"b\"\nNon-Terminal Symbols: S B A\nStart Symbol: S\nProduction Rules:\n  S → \"a\" B \"a\" | A \"b\" | \"a\"\n  B → A | \"b\"\n  A → \"b\" | ε\n",
-		},
-		{
-			name:           "4th",
-			g:              CFGrammars[3],
-			expectedString: "Terminal Symbols: \"b\" \"c\" \"d\" \"s\"\nNon-Terminal Symbols: S A B C D\nStart Symbol: S\nProduction Rules:\n  S → A | \"s\"\n  A → B\n  B → C | \"b\"\n  C → D\n  D → \"d\"\n",
-		},
-		{
-			name:           "5th",
-			g:              CFGrammars[4],
-			expectedString: "Terminal Symbols: \"a\" \"b\" \"c\" \"d\"\nNon-Terminal Symbols: S A B C D\nStart Symbol: S\nProduction Rules:\n  S → A B\n  A → \"a\" A | \"a\"\n  B → \"b\" B | \"b\"\n  C → \"c\" C | \"c\"\n  D → \"d\"\n",
-		},
-		{
-			name:           "6th",
-			g:              CFGrammars[5],
-			expectedString: "Terminal Symbols: \"(\" \")\" \"*\" \"+\" \"-\" \"/\" \"id\"\nNon-Terminal Symbols: S E\nStart Symbol: S\nProduction Rules:\n  S → E\n  E → E \"*\" E | E \"+\" E | E \"-\" E | E \"/\" E | \"(\" E \")\" | \"-\" E | \"id\"\n",
-		},
-		{
-			name:           "7th",
-			g:              CFGrammars[6],
-			expectedString: "Terminal Symbols: \"(\" \")\" \"*\" \"+\" \"-\" \"/\" \"id\"\nNon-Terminal Symbols: S E T F\nStart Symbol: S\nProduction Rules:\n  S → E\n  E → E \"+\" T | E \"-\" T | T\n  T → T \"*\" F | T \"/\" F | F\n  F → \"(\" E \")\" | \"id\"\n",
-		},
-		{
-			name:           "8th",
-			g:              CFGrammars[7],
-			expectedString: "Terminal Symbols: \"(\" \")\" \"=\" \"GRAMMAR\" \"IDENT\" \"REGEX\" \"STRING\" \"TOKEN\" \"[\" \"]\" \"{\" \"{{\" \"|\" \"}\" \"}}\"\nNon-Terminal Symbols: grammar name decls decl rule token lhs rhs nonterm term\nStart Symbol: grammar\nProduction Rules:\n  grammar → name decls\n  name → \"GRAMMAR\" \"IDENT\"\n  decls → decls decl | ε\n  decl → rule | token\n  rule → lhs \"=\" rhs\n  token → \"TOKEN\" \"=\" \"REGEX\" | \"TOKEN\" \"=\" \"STRING\"\n  lhs → nonterm\n  rhs → rhs \"|\" rhs | rhs rhs | \"(\" rhs \")\" | \"[\" rhs \"]\" | \"{\" rhs \"}\" | \"{{\" rhs \"}}\" | nonterm | term\n  nonterm → \"IDENT\"\n  term → \"STRING\" | \"TOKEN\"\n",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedString, tc.g.String())
 		})
 	}
 }
@@ -2363,6 +2428,7 @@ func TestCFG_addNewNonTerminal(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			nonTerm := tc.g.addNewNonTerminal(tc.prefix, tc.suffixes...)
 			assert.Equal(t, tc.expectedNonTerminal, nonTerm)
 		})
@@ -2384,6 +2450,7 @@ func TestCFG_orderTerminals(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			terms := tc.g.orderTerminals()
 			assert.Equal(t, tc.expectedTerminals, terms)
 		})
@@ -2409,6 +2476,7 @@ func TestCFG_orderNonTerminals(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
 			visited, unvisited, nonTerms := tc.g.orderNonTerminals()
 			assert.Equal(t, tc.expectedVisited, visited)
 			assert.Equal(t, tc.expectedUnvisited, unvisited)
