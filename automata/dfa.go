@@ -123,7 +123,7 @@ func (d *DFA) ToNFA() *NFA {
 // This automaton has one fewer state than the minimum-state DFA.
 // Strictly speaking, such an automaton is not a DFA, because of the missing transitions to the dead state.
 //
-// For more details, see Compilers: Principles, Techniques, and Tools (2nd Edition).
+// For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 func (d *DFA) Minimize() *DFA {
 	/*
 	 * 1. Start with an initial partition P with two groups,

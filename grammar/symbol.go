@@ -16,7 +16,7 @@ import (
 // The endmarker is not a formal part of the grammar itself but is introduced during parsing
 // to simplify the handling of end-of-input scenarios, especially in parsing algorithms like LL(1) or LR(1).
 //
-// For more details, see Compilers: Principles, Techniques, and Tools (2nd Edition).
+// For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 // const endmarker rune = 0xEEEE
 
 var (
