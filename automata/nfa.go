@@ -268,7 +268,7 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 // ToDFA constructs a new DFA accepting the same language as the NFA.
 // It implements the subset construction algorithm.
 //
-// For more details, see Compilers: Principles, Techniques, and Tools (2nd Edition).
+// For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 func (n *NFA) ToDFA() *DFA {
 	symbols := n.Symbols()
 
