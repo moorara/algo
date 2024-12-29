@@ -1,8 +1,9 @@
 package grammar
 
 import (
-	"hash"
-	"hash/fnv"
+	"bytes"
+	"errors"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -164,26 +165,58 @@ func TestLongestCommonPrefixOf(t *testing.T) {
 	}
 }
 
-func TestHashFuncForSymbolString(t *testing.T) {
+func TestWriteString(t *testing.T) {
 	tests := []struct {
-		h            hash.Hash64
+		name          string
+		w             io.Writer
+		s             String[Symbol]
+		expectedN     int
+		expectedError error
+	}{
+		{
+			name:          "OK",
+			w:             new(bytes.Buffer),
+			s:             String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt")},
+			expectedN:     18,
+			expectedError: nil,
+		},
+		{
+			name: "Error",
+			w: &MockWriter{
+				WriteMocks: []WriteMock{
+					{OutN: 0, OutError: errors.New("error on write")},
+				},
+			},
+			s:             String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt")},
+			expectedN:     0,
+			expectedError: errors.New("error on write"),
+		},
+	}
+
+	for _, tc := range tests {
+		n, err := WriteString(tc.w, tc.s)
+		assert.Equal(t, tc.expectedN, n)
+		assert.Equal(t, tc.expectedError, err)
+	}
+}
+
+func TestHashFuncForString(t *testing.T) {
+	tests := []struct {
 		s            String[Symbol]
 		expectedHash uint64
 	}{
 		{
-			h:            nil,
 			s:            String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt")},
 			expectedHash: 0xb0616925421a7df6,
 		},
 		{
-			h:            fnv.New64(),
 			s:            String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt"), Terminal("else"), NonTerminal("stmt")},
 			expectedHash: 0xdf211ff9239df1ed,
 		},
 	}
 
 	for _, tc := range tests {
-		hash := HashFuncForSymbolString(tc.h)(tc.s)
+		hash := hashFuncForString()(tc.s)
 		assert.Equal(t, tc.expectedHash, hash)
 	}
 }

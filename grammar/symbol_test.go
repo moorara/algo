@@ -1,10 +1,69 @@
 package grammar
 
 import (
+	"bytes"
+	"errors"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestWriteSymbol(t *testing.T) {
+	tests := []struct {
+		name          string
+		w             io.Writer
+		s             Symbol
+		expectedN     int
+		expectedError error
+	}{
+		{
+			name:          "OK",
+			w:             new(bytes.Buffer),
+			s:             NonTerminal("expr"),
+			expectedN:     4,
+			expectedError: nil,
+		},
+		{
+			name: "Error",
+			w: &MockWriter{
+				WriteMocks: []WriteMock{
+					{OutN: 0, OutError: errors.New("error on write")},
+				},
+			},
+			s:             NonTerminal("expr"),
+			expectedN:     0,
+			expectedError: errors.New("error on write"),
+		},
+	}
+
+	for _, tc := range tests {
+		n, err := WriteSymbol(tc.w, tc.s)
+		assert.Equal(t, tc.expectedN, n)
+		assert.Equal(t, tc.expectedError, err)
+	}
+}
+
+func TestHashFuncForSymbol(t *testing.T) {
+	tests := []struct {
+		s            Symbol
+		expectedHash uint64
+	}{
+		{
+			s:            Terminal("map"),
+			expectedHash: 0x7d481fd1761e83a5,
+		},
+		{
+			s:            NonTerminal("map"),
+			expectedHash: 0xd8b3c5186b8ca065,
+		},
+	}
+
+	for _, tc := range tests {
+		hash := hashFuncForSymbol()(tc.s)
+		assert.Equal(t, tc.expectedHash, hash)
+	}
+}
 
 func TestTerminal(t *testing.T) {
 	tests := []struct {
