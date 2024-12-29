@@ -119,6 +119,7 @@ var CFGrammars = []CFG{
 			{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}}, // token → TOKEN "=" STRING
 			{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},  // token → TOKEN "=" REGEX
 			{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // rule → lhs "=" rhs
+			{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // rule → lhs "="
 			{"lhs", String[Symbol]{NonTerminal("nonterm")}},                                 // lhs → nonterm
 			{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs")}},                 // rhs → rhs rhs
 			{"rhs", String[Symbol]{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")}},  // rhs → rhs "|" rhs
@@ -343,7 +344,7 @@ func TestCFG_String(t *testing.T) {
 		{
 			name:           "8th",
 			g:              CFGrammars[7],
-			expectedString: "Terminal Symbols: \"(\" \")\" \"=\" \"GRAMMAR\" \"IDENT\" \"REGEX\" \"STRING\" \"TOKEN\" \"[\" \"]\" \"{\" \"{{\" \"|\" \"}\" \"}}\"\nNon-Terminal Symbols: grammar name decls decl rule token lhs rhs nonterm term\nStart Symbol: grammar\nProduction Rules:\n  grammar → name decls\n  name → \"GRAMMAR\" \"IDENT\"\n  decls → decls decl | ε\n  decl → rule | token\n  rule → lhs \"=\" rhs\n  token → \"TOKEN\" \"=\" \"REGEX\" | \"TOKEN\" \"=\" \"STRING\"\n  lhs → nonterm\n  rhs → rhs \"|\" rhs | rhs rhs | \"(\" rhs \")\" | \"[\" rhs \"]\" | \"{\" rhs \"}\" | \"{{\" rhs \"}}\" | nonterm | term\n  nonterm → \"IDENT\"\n  term → \"STRING\" | \"TOKEN\"\n",
+			expectedString: "Terminal Symbols: \"(\" \")\" \"=\" \"GRAMMAR\" \"IDENT\" \"REGEX\" \"STRING\" \"TOKEN\" \"[\" \"]\" \"{\" \"{{\" \"|\" \"}\" \"}}\"\nNon-Terminal Symbols: grammar name decls decl rule token lhs rhs nonterm term\nStart Symbol: grammar\nProduction Rules:\n  grammar → name decls\n  name → \"GRAMMAR\" \"IDENT\"\n  decls → decls decl | ε\n  decl → rule | token\n  rule → lhs \"=\" rhs | lhs \"=\"\n  token → \"TOKEN\" \"=\" \"REGEX\" | \"TOKEN\" \"=\" \"STRING\"\n  lhs → nonterm\n  rhs → rhs \"|\" rhs | rhs rhs | \"(\" rhs \")\" | \"[\" rhs \"]\" | \"{\" rhs \"}\" | \"{{\" rhs \"}}\" | nonterm | term\n  nonterm → \"IDENT\"\n  term → \"STRING\" | \"TOKEN\"\n",
 		},
 	}
 
@@ -750,6 +751,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}}, // token → TOKEN "=" STRING
 					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},  // token → TOKEN "=" REGEX
 					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // rule → lhs "=" rhs
+					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // rule → lhs "="
 					{"lhs", String[Symbol]{NonTerminal("nonterm")}},                                 // lhs → nonterm
 					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs")}},                 // rhs → rhs rhs
 					{"rhs", String[Symbol]{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")}},  // rhs → rhs "|" rhs
@@ -903,11 +905,13 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
 					{"decls", ε}, // decls → ε
 					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // decl → lhs "=" rhs
+					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // decl → lhs "="
 					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},  // decl → TOKEN "=" STRING
 					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},   // decl → TOKEN "=" REGEX
 					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}}, // token → TOKEN "=" STRING
 					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},  // token → TOKEN "=" REGEX
 					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // rule → lhs "=" rhs
+					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // rule → lhs "="
 					{"lhs", String[Symbol]{Terminal("IDENT")}},                                      // lhs → IDENT
 					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs")}},                 // rhs → rhs rhs
 					{"rhs", String[Symbol]{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")}},  // rhs → rhs "|" rhs
@@ -1191,9 +1195,11 @@ func TestCFG_EliminateCycles(t *testing.T) {
 					{"name", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},                 // name → GRAMMAR IDENT
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},             // decls → decls decl
 					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // decls → lhs "=" rhs
+					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // decls → lhs "="
 					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},  // decls → TOKEN "=" STRING
 					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},   // decls → TOKEN "=" REGEX
 					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}},  // decl → lhs "=" rhs
+					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                      // decl → lhs "="
 					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},   // decl → TOKEN "=" STRING
 					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},    // decl → TOKEN "=" REGEX
 					{"lhs", String[Symbol]{Terminal("IDENT")}},                                       // lhs → IDENT
@@ -1396,11 +1402,13 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 					{"grammar", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},                                     // grammar → GRAMMAR IDENT
 					{"name", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},                                        // name → GRAMMAR IDENT
 					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs"), NonTerminal("decls′")}}, // decls → lhs "=" rhs decls′
+					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("decls′")}},                     // decls → lhs "=" decls′
 					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX"), NonTerminal("decls′")}},   // decls → TOKEN "=" REGEX decls′
 					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING"), NonTerminal("decls′")}},  // decls → TOKEN "=" STRING decls′
 					{"decls′", String[Symbol]{NonTerminal("decl"), NonTerminal("decls′")}},                                  // decls′ → decl decls′
 					{"decls′", ε}, // decls′ → ε
 					{"decl", String[Symbol]{Terminal("IDENT"), Terminal("="), NonTerminal("rhs")}},                   // decl → IDENT "=" rhs
+					{"decl", String[Symbol]{Terminal("IDENT"), Terminal("=")}},                                       // decl → IDENT "="
 					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},                    // decl → TOKEN "=" REGEX
 					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},                   // decl → TOKEN "=" STRING
 					{"lhs", String[Symbol]{Terminal("IDENT")}},                                                       // lhs → IDENT
@@ -1533,6 +1541,7 @@ func TestCFG_LeftFactor(t *testing.T) {
 					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}}, // token → TOKEN "=" STRING
 					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},  // token → TOKEN "=" REGEX
 					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // rule → lhs "=" rhs
+					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // rule → lhs "="
 					{"lhs", String[Symbol]{NonTerminal("nonterm")}},                                 // lhs → nonterm
 					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs′")}},                // rhs → rhs rhs′
 					{"rhs", String[Symbol]{Terminal("("), NonTerminal("rhs"), Terminal(")")}},       // rhs → "(" rhs ")"
@@ -1868,9 +1877,11 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					{"decls", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₁")}},     // decls → TOKENₙ token₁
 					{"decls", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₂")}},     // decls → TOKENₙ token₂
 					{"decls", String[Symbol]{NonTerminal("lhs"), NonTerminal("rule₁")}},         // decls → lhs rule₁
+					{"decls", String[Symbol]{NonTerminal("lhs"), NonTerminal("=ₙ")}},            // decls → lhs =ₙ
 					{"decl", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₁")}},      // decl → TOKENₙ token₁
 					{"decl", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₂")}},      // decl → TOKENₙ token₂
 					{"decl", String[Symbol]{NonTerminal("lhs"), NonTerminal("rule₁")}},          // decl → lhs rule₁
+					{"decl", String[Symbol]{NonTerminal("lhs"), NonTerminal("=ₙ")}},             // decl → lhs =ₙ
 					{"token₁", String[Symbol]{NonTerminal("=ₙ"), NonTerminal("REGEXₙ")}},        // token₁ → =ₙ REGEXₙ
 					{"token₂", String[Symbol]{NonTerminal("=ₙ"), NonTerminal("STRINGₙ")}},       // token₂ → =ₙ STRINGₙ
 					{"rule₁", String[Symbol]{NonTerminal("=ₙ"), NonTerminal("rhs")}},            // rule₁ → =ₙ rhs
