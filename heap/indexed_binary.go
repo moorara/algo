@@ -7,23 +7,22 @@ import (
 	"github.com/moorara/algo/internal/graphviz"
 )
 
-// binary implements an indexed Binary heap.
+// binary implements an indexed binary heap tree.
 type indexedBinary[K, V any] struct {
 	cmpKey CompareFunc[K]
 	eqVal  EqualFunc[V]
 
-	cap  int   // maximum number of items on heap
-	n    int   // current number of items on heap
-	heap []int // binary heap of indices using 1-based indexing
-	pos  []int // map of indices to positions on heap
-	keys []K   // map of indices to keys (priorities)
-	vals []V   // map of indices to values
+	cap  int              // maximum number of items on heap
+	n    int              // current number of items on heap
+	heap []int            // binary heap of indices using 1-based indexing
+	pos  []int            // map of indices to positions on heap
+	kvs  []KeyValue[K, V] // map of indices to key-values
 }
 
-// NewIndexedBinary creates a new indexed Binary heap that can be used as a priority queue.
+// NewIndexedBinary creates a new indexed binary heap that can be used as a priority queue.
 // An indexed heap (priority queue) associates an index with each key-value pair.
 // It allows changing the key (priority) of an index, deleting by index, and looking up by index.
-// The size of an indexed Binary heap is fixed.
+// The size of an indexed binary heap is fixed.
 //
 // cap is the maximum number of items on the heap (priority queue).
 // cmpKey is a function for comparing two keys.
@@ -37,13 +36,11 @@ func NewIndexedBinary[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFunc[
 	return &indexedBinary[K, V]{
 		cmpKey: cmpKey,
 		eqVal:  eqVal,
-
-		cap:  cap,
-		n:    0,
-		heap: make([]int, cap+1),
-		pos:  pos,
-		keys: make([]K, cap),
-		vals: make([]V, cap),
+		cap:    cap,
+		n:      0,
+		heap:   make([]int, cap+1),
+		pos:    pos,
+		kvs:    make([]KeyValue[K, V], cap),
 	}
 }
 
@@ -56,7 +53,7 @@ func (h *indexedBinary[K, V]) validateIndex(i int) {
 // compare compares two keys on the heap by their positions.
 func (h *indexedBinary[K, V]) compare(a, b int) int {
 	i, j := h.heap[a], h.heap[b]
-	return h.cmpKey(h.keys[i], h.keys[j])
+	return h.cmpKey(h.kvs[i].Key, h.kvs[j].Key)
 }
 
 // Promotion operation in heap (a.k.a. swim).
@@ -111,8 +108,11 @@ func (h *indexedBinary[K, V]) Insert(i int, key K, val V) {
 	h.n++
 	h.heap[h.n] = i
 	h.pos[i] = h.n
-	h.keys[i] = key
-	h.vals[i] = val
+	h.kvs[i] = KeyValue[K, V]{
+		Key: key,
+		Val: val,
+	}
+
 	h.promote(h.n)
 }
 
@@ -123,7 +123,7 @@ func (h *indexedBinary[K, V]) ChangeKey(i int, key K) {
 		panic("index is not on heap")
 	}
 
-	h.keys[i] = key
+	h.kvs[i].Key = key
 	h.promote(h.pos[i])
 	h.demote(h.pos[i])
 }
@@ -139,19 +139,17 @@ func (h *indexedBinary[K, V]) Delete() (int, K, V, bool) {
 	}
 
 	i := h.heap[1]
-	key := h.keys[i]
-	val := h.vals[i]
+	key, val := h.kvs[i].Key, h.kvs[i].Val
 
 	h.heap[1], h.heap[h.n] = h.heap[h.n], h.heap[1]
 	h.n--
 	h.demote(1)
 
-	// delete index
+	// Delete index
 	h.pos[i] = -1
 
-	// remove stale references to help with garbage collection
-	h.keys[i] = zeroK
-	h.vals[i] = zeroV
+	// Remove stale references to help with garbage collection
+	h.kvs[i].Key, h.kvs[i].Val = zeroK, zeroV
 
 	return i, key, val, true
 }
@@ -168,22 +166,33 @@ func (h *indexedBinary[K, V]) DeleteIndex(i int) (K, V, bool) {
 	}
 
 	k := h.pos[i]
-	key := h.keys[i]
-	val := h.vals[i]
+	key, val := h.kvs[i].Key, h.kvs[i].Val
 
 	h.heap[k], h.heap[h.n] = h.heap[h.n], h.heap[k]
 	h.n--
 	h.promote(k)
 	h.demote(k)
 
-	// delete index
+	// Delete index
 	h.pos[i] = -1
 
-	// remove stale references to help with garbage collection
-	h.keys[i] = zeroK
-	h.vals[i] = zeroV
+	// Remove stale references to help with garbage collection
+	h.kvs[i].Key, h.kvs[i].Val = zeroK, zeroV
 
 	return key, val, true
+}
+
+// DeleteAll deletes all keys with their values and indices on the heap, leaving it empty.
+func (h *indexedBinary[K, V]) DeleteAll() {
+	pos := make([]int, h.cap)
+	for i := range pos {
+		pos[i] = -1
+	}
+
+	h.n = 0
+	h.heap = make([]int, h.cap+1)
+	h.pos = pos
+	h.kvs = make([]KeyValue[K, V], h.cap)
 }
 
 // Peek returns the extremum (minimum or maximum) key with its value and index on the heap without removing it.
@@ -196,7 +205,7 @@ func (h *indexedBinary[K, V]) Peek() (int, K, V, bool) {
 	}
 
 	i := h.heap[1]
-	return i, h.keys[i], h.vals[i], true
+	return i, h.kvs[i].Key, h.kvs[i].Val, true
 }
 
 // PeekIndex returns a key-value pair on the heap by its associated index without removing it.
@@ -209,7 +218,7 @@ func (h *indexedBinary[K, V]) PeekIndex(i int) (K, V, bool) {
 		return zeroK, zeroV, false
 	}
 
-	return h.keys[i], h.vals[i], true
+	return h.kvs[i].Key, h.kvs[i].Val, true
 }
 
 // ContainsIndex returns true if a given index is on the heap.
@@ -221,7 +230,7 @@ func (h *indexedBinary[K, V]) ContainsIndex(i int) bool {
 // ContainsKey returns true if a given key is on the heap.
 func (h *indexedBinary[K, V]) ContainsKey(key K) bool {
 	for k := 0; k < h.n; k++ {
-		if h.cmpKey(h.keys[k], key) == 0 {
+		if h.cmpKey(h.kvs[k].Key, key) == 0 {
 			return true
 		}
 	}
@@ -232,7 +241,7 @@ func (h *indexedBinary[K, V]) ContainsKey(key K) bool {
 // ContainsValue returns true if a given value is on the heap.
 func (h *indexedBinary[K, V]) ContainsValue(val V) bool {
 	for k := 0; k < h.n; k++ {
-		if h.eqVal(h.vals[k], val) {
+		if h.eqVal(h.kvs[k].Val, val) {
 			return true
 		}
 	}
@@ -254,8 +263,8 @@ func (h *indexedBinary[K, V]) Graphviz() string {
 					graphviz.NewSimpleField("", fmt.Sprintf("%v", i)),
 					graphviz.NewComplexField(
 						graphviz.NewRecord(
-							graphviz.NewSimpleField("", fmt.Sprintf("%v", h.keys[i])),
-							graphviz.NewSimpleField("", fmt.Sprintf("%v", h.vals[i])),
+							graphviz.NewSimpleField("", fmt.Sprintf("%v", h.kvs[i].Key)),
+							graphviz.NewSimpleField("", fmt.Sprintf("%v", h.kvs[i].Val)),
 						),
 					),
 				),
