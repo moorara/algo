@@ -22,9 +22,9 @@ func getBinaryTests() []heapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  1 [label="10 | ten"];
-  2 [label="30 | thirty"];
-  3 [label="20 | twenty"];
+  1 [label="10 | Task#1"];
+  2 [label="30 | Task#3"];
+  3 [label="20 | Task#2"];
 
   1 -> 2 [];
   1 -> 3 [];
@@ -35,9 +35,9 @@ func getBinaryTests() []heapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  1 [label="30 | thirty"];
-  2 [label="10 | ten"];
-  3 [label="20 | twenty"];
+  1 [label="30 | Task#3"];
+  2 [label="10 | Task#1"];
+  3 [label="20 | Task#2"];
 
   1 -> 2 [];
   1 -> 3 [];
@@ -48,11 +48,11 @@ func getBinaryTests() []heapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  1 [label="10 | ten"];
-  2 [label="20 | twenty"];
-  3 [label="40 | forty"];
-  4 [label="50 | fifty"];
-  5 [label="30 | thirty"];
+  1 [label="10 | Task#1"];
+  2 [label="20 | Task#2"];
+  3 [label="40 | Task#4"];
+  4 [label="50 | Task#5"];
+  5 [label="30 | Task#3"];
 
   1 -> 2 [];
   1 -> 3 [];
@@ -65,11 +65,11 @@ func getBinaryTests() []heapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  1 [label="50 | fifty"];
-  2 [label="40 | forty"];
-  3 [label="20 | twenty"];
-  4 [label="10 | ten"];
-  5 [label="30 | thirty"];
+  1 [label="50 | Task#5"];
+  2 [label="40 | Task#4"];
+  3 [label="20 | Task#2"];
+  4 [label="10 | Task#1"];
+  5 [label="30 | Task#3"];
 
   1 -> 2 [];
   1 -> 3 [];
@@ -82,15 +82,15 @@ func getBinaryTests() []heapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  1 [label="10 | ten"];
-  2 [label="20 | twenty"];
-  3 [label="40 | forty"];
-  4 [label="30 | thirty"];
-  5 [label="70 | seventy"];
-  6 [label="80 | eighty"];
-  7 [label="60 | sixty"];
-  8 [label="90 | ninety"];
-  9 [label="50 | fifty"];
+  1 [label="10 | Task#1"];
+  2 [label="20 | Task#2"];
+  3 [label="40 | Task#4"];
+  4 [label="30 | Task#3"];
+  5 [label="70 | Task#7"];
+  6 [label="80 | Task#8"];
+  7 [label="60 | Task#6"];
+  8 [label="90 | Task#9"];
+  9 [label="50 | Task#5"];
 
   1 -> 2 [];
   1 -> 3 [];
@@ -107,15 +107,15 @@ func getBinaryTests() []heapTest[int, string] {
   concentrate=false;
   node [shape=Mrecord];
 
-  1 [label="90 | ninety"];
-  2 [label="80 | eighty"];
-  3 [label="60 | sixty"];
-  4 [label="70 | seventy"];
-  5 [label="30 | thirty"];
-  6 [label="20 | twenty"];
-  7 [label="50 | fifty"];
-  8 [label="10 | ten"];
-  9 [label="40 | forty"];
+  1 [label="90 | Task#9"];
+  2 [label="80 | Task#8"];
+  3 [label="60 | Task#6"];
+  4 [label="70 | Task#7"];
+  5 [label="30 | Task#3"];
+  6 [label="20 | Task#2"];
+  7 [label="50 | Task#5"];
+  8 [label="10 | Task#1"];
+  9 [label="40 | Task#4"];
 
   1 -> 2 [];
   1 -> 3 [];
