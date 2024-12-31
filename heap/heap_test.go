@@ -52,6 +52,7 @@ type indexedHeapTest[K, V any] struct {
 	expectedGraphviz    string
 }
 
+// nolint: unused
 type mergeableHeapTest[K, V any] struct {
 	name             string
 	heap             string
@@ -68,6 +69,7 @@ type mergeableHeapTest[K, V any] struct {
 	expectedGraphviz string
 }
 
+// nolint: unused
 type indexedMergeableHeapTest[K, V any] struct {
 	name                string
 	heap                string
@@ -625,6 +627,7 @@ func getIndexedHeapTests() []indexedHeapTest[int, string] {
 	}
 }
 
+// nolint: unused
 func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 	return []mergeableHeapTest[int, string]{
 		{
@@ -854,6 +857,7 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 	}
 }
 
+// nolint: unused
 func getIndexedMergeableHeapTest() []indexedMergeableHeapTest[int, string] {
 	return []indexedMergeableHeapTest[int, string]{
 		{
@@ -1420,6 +1424,7 @@ func runIndexedHeapTest(t *testing.T, heap IndexedHeap[int, string], test indexe
 	})
 }
 
+// nolint: unused
 func runMergeableHeapTest(t *testing.T, heap MergeableHeap[int, string], test mergeableHeapTest[int, string]) {
 	t.Run(test.name, func(t *testing.T) {
 		t.Run("Before", func(t *testing.T) {
@@ -1517,6 +1522,7 @@ func runMergeableHeapTest(t *testing.T, heap MergeableHeap[int, string], test me
 	})
 }
 
+// nolint: unused
 func runIndexedMergeableHeapTest(t *testing.T, heap IndexedMergeableHeap[int, string], test indexedMergeableHeapTest[int, string]) {
 	t.Run(test.name, func(t *testing.T) {
 		t.Run("Before", func(t *testing.T) {
