@@ -52,11 +52,9 @@ type indexedHeapTest[K, V any] struct {
 	expectedGraphviz    string
 }
 
-// nolint: unused
 type mergeableHeapTest[K, V any] struct {
 	name             string
 	heap             string
-	size             int
 	cmpKey           CompareFunc[K]
 	eqVal            EqualFunc[V]
 	inserts          []KeyValue[K, V]
@@ -627,16 +625,13 @@ func getIndexedHeapTests() []indexedHeapTest[int, string] {
 	}
 }
 
-// nolint: unused
-func getMergeableHeapTest() []mergeableHeapTest[int, string] {
+func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 	return []mergeableHeapTest[int, string]{
 		{
 			name:             "MinHeap_Empty",
-			size:             2,
 			cmpKey:           cmpMin,
 			eqVal:            eqVal,
 			inserts:          []KeyValue[int, string]{},
-			merge:            nil,
 			expectedSize:     0,
 			expectedIsEmpty:  true,
 			expectedPeek:     KeyValue[int, string]{Key: 0, Val: ""},
@@ -645,11 +640,9 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 		},
 		{
 			name:             "MaxHeap_Empty",
-			size:             2,
 			cmpKey:           cmpMax,
 			eqVal:            eqVal,
 			inserts:          []KeyValue[int, string]{},
-			merge:            nil,
 			expectedSize:     0,
 			expectedIsEmpty:  true,
 			expectedPeek:     KeyValue[int, string]{Key: 0, Val: ""},
@@ -658,7 +651,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 		},
 		{
 			name:   "MinHeap_FewItems",
-			size:   2,
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
 			inserts: []KeyValue[int, string]{
@@ -666,7 +658,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 			},
-			merge:           nil,
 			expectedSize:    3,
 			expectedIsEmpty: false,
 			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "Task#1"},
@@ -683,7 +674,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 		},
 		{
 			name:   "MaxHeap_FewItems",
-			size:   2,
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
 			inserts: []KeyValue[int, string]{
@@ -691,7 +681,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
 			},
-			merge:           nil,
 			expectedSize:    3,
 			expectedIsEmpty: false,
 			expectedPeek:    KeyValue[int, string]{Key: 30, Val: "Task#3"},
@@ -708,7 +697,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 		},
 		{
 			name:   "MinHeap_SomeItems",
-			size:   4,
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
 			inserts: []KeyValue[int, string]{
@@ -718,7 +706,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 			},
-			merge:           nil,
 			expectedSize:    5,
 			expectedIsEmpty: false,
 			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "Task#1"},
@@ -739,7 +726,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 		},
 		{
 			name:   "MaxHeap_SomeItems",
-			size:   4,
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
 			inserts: []KeyValue[int, string]{
@@ -749,7 +735,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 				{Key: 50, Val: "Task#5"},
 				{Key: 40, Val: "Task#4"},
 			},
-			merge:           nil,
 			expectedSize:    5,
 			expectedIsEmpty: false,
 			expectedPeek:    KeyValue[int, string]{Key: 50, Val: "Task#5"},
@@ -770,7 +755,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 		},
 		{
 			name:   "MinHeap_ManyItems",
-			size:   4,
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
 			inserts: []KeyValue[int, string]{
@@ -784,7 +768,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 			},
-			merge:           nil,
 			expectedSize:    9,
 			expectedIsEmpty: false,
 			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "Task#1"},
@@ -813,7 +796,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 		},
 		{
 			name:   "MaxHeap_ManyItems",
-			size:   4,
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
 			inserts: []KeyValue[int, string]{
@@ -827,7 +809,6 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 				{Key: 90, Val: "Task#9"},
 				{Key: 80, Val: "Task#8"},
 			},
-			merge:           nil,
 			expectedSize:    9,
 			expectedIsEmpty: false,
 			expectedPeek:    KeyValue[int, string]{Key: 90, Val: "Task#9"},
@@ -858,7 +839,7 @@ func getMergeableHeapTest() []mergeableHeapTest[int, string] {
 }
 
 // nolint: unused
-func getIndexedMergeableHeapTest() []indexedMergeableHeapTest[int, string] {
+func getIndexedMergeableHeapTests() []indexedMergeableHeapTest[int, string] {
 	return []indexedMergeableHeapTest[int, string]{
 		{
 			name:                "MinHeap_Empty",
@@ -867,7 +848,6 @@ func getIndexedMergeableHeapTest() []indexedMergeableHeapTest[int, string] {
 			eqVal:               eqVal,
 			inserts:             []indexedKeyValue[int, string]{},
 			changeKeys:          []indexedKeyValue[int, string]{},
-			merge:               nil,
 			expectedSize:        0,
 			expectedIsEmpty:     true,
 			expectedPeek:        indexedKeyValue[int, string]{},
@@ -883,7 +863,6 @@ func getIndexedMergeableHeapTest() []indexedMergeableHeapTest[int, string] {
 			eqVal:               eqVal,
 			inserts:             []indexedKeyValue[int, string]{},
 			changeKeys:          []indexedKeyValue[int, string]{},
-			merge:               nil,
 			expectedSize:        0,
 			expectedIsEmpty:     true,
 			expectedPeek:        indexedKeyValue[int, string]{},
@@ -906,7 +885,6 @@ func getIndexedMergeableHeapTest() []indexedMergeableHeapTest[int, string] {
 				{index: 1, key: 10},
 				{index: 2, key: 20},
 			},
-			merge:           nil,
 			expectedSize:    3,
 			expectedIsEmpty: false,
 			expectedPeek:    indexedKeyValue[int, string]{1, 10, "Task#1"},
@@ -942,7 +920,6 @@ func getIndexedMergeableHeapTest() []indexedMergeableHeapTest[int, string] {
 				{index: 1, key: 30},
 				{index: 2, key: 20},
 			},
-			merge:           nil,
 			expectedSize:    3,
 			expectedIsEmpty: false,
 			expectedPeek:    indexedKeyValue[int, string]{1, 30, "Task#3"},
@@ -981,7 +958,6 @@ func getIndexedMergeableHeapTest() []indexedMergeableHeapTest[int, string] {
 				{index: 3, key: 10},
 				{index: 4, key: 20},
 			},
-			merge:           nil,
 			expectedSize:    5,
 			expectedIsEmpty: false,
 			expectedPeek:    indexedKeyValue[int, string]{3, 10, "Task#1"},
@@ -1026,7 +1002,6 @@ func getIndexedMergeableHeapTest() []indexedMergeableHeapTest[int, string] {
 				{index: 3, key: 50},
 				{index: 4, key: 40},
 			},
-			merge:           nil,
 			expectedSize:    5,
 			expectedIsEmpty: false,
 			expectedPeek:    indexedKeyValue[int, string]{3, 50, "Task#5"},
@@ -1077,7 +1052,6 @@ func getIndexedMergeableHeapTest() []indexedMergeableHeapTest[int, string] {
 				{index: 7, key: 10},
 				{index: 8, key: 20},
 			},
-			merge:           nil,
 			expectedSize:    9,
 			expectedIsEmpty: false,
 			expectedPeek:    indexedKeyValue[int, string]{7, 10, "Task#1"},
@@ -1140,7 +1114,6 @@ func getIndexedMergeableHeapTest() []indexedMergeableHeapTest[int, string] {
 				{index: 7, key: 90},
 				{index: 8, key: 80},
 			},
-			merge:           nil,
 			expectedSize:    9,
 			expectedIsEmpty: false,
 			expectedPeek:    indexedKeyValue[int, string]{7, 90, "Task#9"},
@@ -1424,7 +1397,6 @@ func runIndexedHeapTest(t *testing.T, heap IndexedHeap[int, string], test indexe
 	})
 }
 
-// nolint: unused
 func runMergeableHeapTest(t *testing.T, heap MergeableHeap[int, string], test mergeableHeapTest[int, string]) {
 	t.Run(test.name, func(t *testing.T) {
 		t.Run("Before", func(t *testing.T) {

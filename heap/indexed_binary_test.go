@@ -134,7 +134,7 @@ func TestIndexedBinaryHeap(t *testing.T) {
 	tests := getIndexedBinaryTests()
 
 	for _, tc := range tests {
-		heap := NewIndexedBinary[int, string](tc.cap, tc.cmpKey, tc.eqVal)
+		heap := NewIndexedBinary(tc.cap, tc.cmpKey, tc.eqVal)
 		runIndexedHeapTest(t, heap, tc)
 	}
 }
