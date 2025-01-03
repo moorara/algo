@@ -31,6 +31,7 @@ A collection of common data structures and algorithms for Go applications.
       - Stack
     - Heaps
       - Binary Heap
+      - Binomial Heap
       - Indexed Binary Heap
     - Sets
       - Union
