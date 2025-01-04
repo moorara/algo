@@ -38,9 +38,3 @@ type MergeableHeap[K, V any] interface {
 	Heap[K, V]
 	Merge(MergeableHeap[K, V])
 }
-
-// IndexedMergeableHeap represents a mergeable indexed heap (priority queue) abstract data type.
-type IndexedMergeableHeap[K, V any] interface {
-	IndexedHeap[K, V]
-	Merge(IndexedMergeableHeap[K, V])
-}
