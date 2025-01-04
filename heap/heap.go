@@ -20,8 +20,8 @@ type Heap[K, V any] interface {
 type IndexedHeap[K, V any] interface {
 	Size() int
 	IsEmpty() bool
-	Insert(int, K, V)
-	ChangeKey(int, K)
+	Insert(int, K, V) bool
+	ChangeKey(int, K) bool
 	Delete() (int, K, V, bool)
 	DeleteIndex(int) (K, V, bool)
 	DeleteAll()

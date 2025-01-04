@@ -43,12 +43,6 @@ func NewIndexedBinary[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFunc[
 	}
 }
 
-func (h *indexedBinary[K, V]) validateIndex(i int) {
-	if i < 0 || i >= len(h.kvs) {
-		panic("index is out of range")
-	}
-}
-
 // compare compares two keys on the heap by their positions.
 func (h *indexedBinary[K, V]) compare(a, b int) int {
 	i, j := h.heap[a], h.heap[b]
@@ -95,10 +89,10 @@ func (h *indexedBinary[K, V]) IsEmpty() bool {
 }
 
 // Insert adds a new key-value pair to the heap with an associated index.
-func (h *indexedBinary[K, V]) Insert(i int, key K, val V) {
+func (h *indexedBinary[K, V]) Insert(i int, key K, val V) bool {
 	// ContainsIndex validates the index too.
 	if h.ContainsIndex(i) {
-		panic(fmt.Sprintf("index %d is already on the heap", i))
+		return false
 	}
 
 	h.n++
@@ -110,18 +104,22 @@ func (h *indexedBinary[K, V]) Insert(i int, key K, val V) {
 	}
 
 	h.promote(h.n)
+
+	return true
 }
 
 // ChangeKey changes the key associated with an index.
-func (h *indexedBinary[K, V]) ChangeKey(i int, key K) {
+func (h *indexedBinary[K, V]) ChangeKey(i int, key K) bool {
 	// ContainsIndex validates the index too.
 	if !h.ContainsIndex(i) {
-		panic(fmt.Sprintf("index %d is not on the heap", i))
+		return false
 	}
 
 	h.kvs[i].Key = key
 	h.promote(h.pos[i])
 	h.demote(h.pos[i])
+
+	return true
 }
 
 // Delete removes the extremum (minimum or maximum) key with its value and index on the heap.
@@ -212,8 +210,7 @@ func (h *indexedBinary[K, V]) PeekIndex(i int) (K, V, bool) {
 
 // ContainsIndex returns true if a given index is on the heap.
 func (h *indexedBinary[K, V]) ContainsIndex(i int) bool {
-	h.validateIndex(i)
-	return h.pos[i] != -1
+	return 0 <= i && i < len(h.kvs) && h.pos[i] != -1
 }
 
 // ContainsKey returns true if a given key is on the heap.

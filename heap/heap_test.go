@@ -946,14 +946,27 @@ func runIndexedHeapTest(t *testing.T, heap IndexedHeap[int, string], test indexe
 
 		t.Run("Insert", func(t *testing.T) {
 			for _, kv := range test.inserts {
-				heap.Insert(kv.index, kv.key, kv.val)
+				ok := heap.Insert(kv.index, kv.key, kv.val)
+				assert.True(t, ok)
+			}
+
+			// Try inserting an index already on the heap.
+			if len(test.inserts) > 0 {
+				kv := test.inserts[0]
+				ok := heap.Insert(kv.index, kv.key, kv.val)
+				assert.False(t, ok)
 			}
 		})
 
 		t.Run("ChangeKey", func(t *testing.T) {
 			for _, kv := range test.changeKeys {
-				heap.ChangeKey(kv.index, kv.key)
+				ok := heap.ChangeKey(kv.index, kv.key)
+				assert.True(t, ok)
 			}
+
+			// Try changing the key for an index not on the heap.
+			ok := heap.ChangeKey(-1, 69)
+			assert.False(t, ok)
 		})
 
 		t.Run("Size", func(t *testing.T) {
