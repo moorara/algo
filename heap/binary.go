@@ -12,8 +12,8 @@ type binary[K, V any] struct {
 	cmpKey CompareFunc[K]
 	eqVal  EqualFunc[V]
 
-	n    int              // number of items on heap
-	heap []KeyValue[K, V] // binary heap of key-values using 1-based indexing
+	n    int               // number of items on heap
+	heap []*KeyValue[K, V] // binary heap of key-values using 1-based indexing
 }
 
 // NewBinary creates a new binary heap that can be used as a priority queue.
@@ -27,14 +27,14 @@ func NewBinary[K, V any](size int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) He
 		cmpKey: cmpKey,
 		eqVal:  eqVal,
 		n:      0,
-		heap:   make([]KeyValue[K, V], size+1),
+		heap:   make([]*KeyValue[K, V], size+1),
 	}
 }
 
 func (h *binary[K, V]) resize(size int) {
-	newHeap := make([]KeyValue[K, V], size)
-	copy(newHeap, h.heap)
-	h.heap = newHeap
+	newH := make([]*KeyValue[K, V], size)
+	copy(newH, h.heap)
+	h.heap = newH
 }
 
 // Size returns the number of items on the heap.
@@ -56,13 +56,13 @@ func (h *binary[K, V]) Insert(key K, val V) {
 	h.n++
 
 	// Swim/Promotion
-	// Exchange k with its parent (k/2) until heap is restored.
+	// Exchange child k with its parent k/2 until the heap is restored.
 	var k int
 	for k = h.n; k > 1 && h.cmpKey(h.heap[k/2].Key, key) > 0; k /= 2 {
 		h.heap[k] = h.heap[k/2]
 	}
 
-	h.heap[k] = KeyValue[K, V]{
+	h.heap[k] = &KeyValue[K, V]{
 		Key: key,
 		Val: val,
 	}
@@ -71,47 +71,45 @@ func (h *binary[K, V]) Insert(key K, val V) {
 // Delete removes the extremum (minimum or maximum) key with its value on the heap.
 // If the heap is empty, the second return value will be false.
 func (h *binary[K, V]) Delete() (K, V, bool) {
-	var zeroK K
-	var zeroV V
-
 	if h.IsEmpty() {
+		var zeroK K
+		var zeroV V
 		return zeroK, zeroV, false
 	}
 
-	extKey, extVal := h.heap[1].Key, h.heap[1].Val // extremum key-value
-	key, val := h.heap[h.n].Key, h.heap[h.n].Val
-
+	ext := h.heap[1] // extremum key-value
+	kv := h.heap[h.n]
 	h.n--
 
 	// Sink/Demotion
-	// Exchange k with its smallest/largest child (j) until heap is restored.
+	// Exchange parent k with its smallest/largest child j until the heap is restored.
 	var k, j int
 	for k, j = 1, 2; j <= h.n; k, j = j, 2*j {
-		if j < h.n && h.cmpKey(h.heap[j].Key, h.heap[j+1].Key) > 0 {
+		if j < h.n && h.cmpKey(h.heap[j+1].Key, h.heap[j].Key) < 0 {
 			j++
 		}
-		if h.cmpKey(key, h.heap[j].Key) <= 0 {
+		if h.cmpKey(kv.Key, h.heap[j].Key) < 0 {
 			break
 		}
 		h.heap[k] = h.heap[j]
 	}
 
-	h.heap[k].Key, h.heap[k].Val = key, val
+	h.heap[k] = kv
 
-	// Remove stale references to help with garbage collection
-	h.heap[h.n+1].Key, h.heap[h.n+1].Val = zeroK, zeroV
+	// Remove stale reference to help with garbage collection.
+	h.heap[h.n+1] = nil
 
 	if h.n < len(h.heap)/4 {
 		h.resize(len(h.heap) / 2)
 	}
 
-	return extKey, extVal, true
+	return ext.Key, ext.Val, true
 }
 
 // DeleteAll deletes all keys with their values on the heap, leaving it empty.
 func (h *binary[K, V]) DeleteAll() {
 	h.n = 0
-	h.heap = make([]KeyValue[K, V], len(h.heap))
+	h.heap = make([]*KeyValue[K, V], len(h.heap))
 }
 
 // Peek returns the extremum (minimum or maximum) key with its value on the heap without removing it.
