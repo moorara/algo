@@ -55,7 +55,7 @@ type binomial[K, V any] struct {
 	head *binomialNode[K, V] // head of the root list
 }
 
-// NewBinomial creates a new binomial heap that can be used as a priority queue.
+// NewBinomial creates a new binomial heap that can be used as a mergeable priority queue.
 //
 // Binomial heap is an implementation of the mergeable heap ADT, a priority queue supporting merge operation.
 // A binomial heap is implemented as a set of binomial trees that satisfy the binomial heap properties:
@@ -115,7 +115,7 @@ func NewBinomial[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) MergeableH
 	}
 }
 
-// mergeBinomialTrees constructs a binomial tree of order k+1 from two binomial trees of order k.
+// link constructs a binomial tree of order k+1 from two binomial trees of order k.
 // It attaches one of the root nodes as the left-most child of the other.
 //
 // It accepts two root nodes and assumes the key of the first root comes after
@@ -141,7 +141,10 @@ func NewBinomial[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) MergeableH
 //	[ 9 ]                  [ 8 ]                     [ 7 ]----[ 5 ]  [ 8 ]
 //	                                                   │
 //	                                                 [ 8 ]
-func mergeBinomialTrees[K, V any](child, parent *binomialNode[K, V]) {
+//
+// This method is defined on the binomial struct to prevent name clashes
+// with other similar implementations in this package.
+func (_ *binomial[K, V]) link(child, parent *binomialNode[K, V]) {
 	child.sibling = parent.child
 	parent.child = child
 	parent.order++
@@ -156,23 +159,23 @@ func mergeBinomialTrees[K, V any](child, parent *binomialNode[K, V]) {
 // Below are examples illustrating all possible cases when merging two root lists.
 // The number inside each node denotes the order of the binomial tree rooted at that node.
 //
-// Case 1: x = nil, y = nil
+// Case 1: h1 = nil, h2 = nil
 //
 //	nil    +    nil    =    nil
 //
-// Case 2: x = nil, y ≠ nil
+// Case 2: h1 = nil, h2 ≠ nil
 //
 //	nil    +    [ 0 ]----[ 1 ]    =    [ 0 ]----[ 1 ]
 //	                       │                      │
 //	                     [ 0 ]                  [ 0 ]
 //
-// Case 3: x ≠ nil, y = nil
+// Case 3: h1 ≠ nil, h2 = nil
 //
 //	[ 0 ]----[ 1 ]    +    nil    =    [ 0 ]----[ 1 ]
 //	           │                                  │
 //	         [ 0 ]                              [ 0 ]
 //
-// Case 4: x.order < y.order
+// Case 4: h1.order < h2.order
 //
 //	[ 0 ]----[ 2 ]                  [ 1 ]----[ 3 ]                                  [ 0 ]----[ 1 ]----[ 2 ]-------------[ 3 ]
 //	           │                      │        │                                               │        │                 │
@@ -182,7 +185,7 @@ func mergeBinomialTrees[K, V any](child, parent *binomialNode[K, V]) {
 //	                                           │                                                                          │
 //	                                         [ 0 ]                                                                      [ 0 ]
 //
-// Case 5: x.order ≥ y.order
+// Case 5: h1.order ≥ h2.order
 //
 //	[ 1 ]----[ 3 ]                                  [ 0 ]----[ 2 ]                  [ 0 ]----[ 1 ]----[ 2 ]-------------[ 3 ]
 //	  │        │                                               │                               │        │                 │
@@ -191,25 +194,28 @@ func mergeBinomialTrees[K, V any](child, parent *binomialNode[K, V]) {
 //	         [ 1 ]----[ 0 ]  [ 0 ]                           [ 0 ]                                    [ 0 ]             [ 1 ]----[ 0 ]  [ 0 ]
 //	           │                                                                                                          │
 //	         [ 0 ]                                                                                                      [ 0 ]
-func mergeRootLists[K, V any](x, y *binomialNode[K, V]) *binomialNode[K, V] {
+//
+// This method is defined on the binomial struct to prevent name clashes
+// with other similar implementations in this package.
+func (h *binomial[K, V]) merge(h1, h2 *binomialNode[K, V]) *binomialNode[K, V] {
 	switch {
-	case x == nil:
-		return y
-	case y == nil:
-		return x
-	case x.order < y.order:
-		x.sibling = mergeRootLists(x.sibling, y)
-		return x
+	case h1 == nil:
+		return h2
+	case h2 == nil:
+		return h1
+	case h1.order < h2.order:
+		h1.sibling = h.merge(h1.sibling, h2)
+		return h1
 	default:
-		y.sibling = mergeRootLists(x, y.sibling)
-		return y
+		h2.sibling = h.merge(h1, h2.sibling)
+		return h2
 	}
 }
 
-// consolidateRootList consolidates the root list of a binomial heap by
+// consolidate consolidates the root list of a binomial heap by
 // iterating through the root list and merging binomial trees of the same order.
 // It ensures after consolidation, no two binomial trees in the root list have the same order.
-func consolidateRootList[K, V any](head *binomialNode[K, V], cmpKey CompareFunc[K]) *binomialNode[K, V] {
+func (h *binomial[K, V]) consolidate(head *binomialNode[K, V]) *binomialNode[K, V] {
 	if head == nil {
 		return nil
 	}
@@ -235,10 +241,10 @@ func consolidateRootList[K, V any](head *binomialNode[K, V], cmpKey CompareFunc[
 			 *         Instead, we defer merging of the two binomial trees of order k to avoid creating additional conflicts.
 			 */
 			prev, curr = curr, next
-		} else if cmpKey(next.key, curr.key) > 0 {
+		} else if h.cmpKey(next.key, curr.key) > 0 {
 			// Case 3: The next binomial tree should become the child of current one.
 			curr.sibling = next.sibling
-			mergeBinomialTrees(next, curr)
+			h.link(next, curr)
 		} else {
 			// Case 4: The current binomial tree should become the child of next one.
 			if prev == nil {
@@ -246,7 +252,7 @@ func consolidateRootList[K, V any](head *binomialNode[K, V], cmpKey CompareFunc[
 			} else {
 				prev.sibling = next
 			}
-			mergeBinomialTrees(curr, next)
+			h.link(curr, next)
 			curr = next
 		}
 	}
@@ -255,9 +261,9 @@ func consolidateRootList[K, V any](head *binomialNode[K, V], cmpKey CompareFunc[
 }
 
 // union merges two binomial heaps into a single binomial heap.
-func union[K, V any](h1, h2 *binomialNode[K, V], cmpKey CompareFunc[K]) *binomialNode[K, V] {
-	head := mergeRootLists(h1, h2)
-	head = consolidateRootList(head, cmpKey)
+func (h *binomial[K, V]) union(h1, h2 *binomialNode[K, V]) *binomialNode[K, V] {
+	head := h.merge(h1, h2)
+	head = h.consolidate(head)
 	return head
 }
 
@@ -279,16 +285,16 @@ func (h *binomial[K, V]) Insert(key K, val V) {
 		order: 0,
 	}
 
-	h.head = union(h.head, n, h.cmpKey)
+	h.head = h.union(h.head, n)
 	h.n++
 }
 
 // Merge merges the current heap with another heap.
 // The new heap must have the same underlying type as the current one.
 func (h *binomial[K, V]) Merge(H MergeableHeap[K, V]) {
-	if v, ok := H.(*binomial[K, V]); ok {
-		h.head = union(h.head, v.head, h.cmpKey)
-		h.n += v.n
+	if hh, ok := H.(*binomial[K, V]); ok {
+		h.head = h.union(h.head, hh.head)
+		h.n += hh.n
 	}
 }
 
@@ -324,7 +330,7 @@ func (h *binomial[K, V]) Delete() (K, V, bool) {
 	}
 
 	// prev is now the head of the new root list.
-	h.head = union(h.head, prev, h.cmpKey)
+	h.head = h.union(h.head, prev)
 	h.n--
 
 	return ext.key, ext.val, true
