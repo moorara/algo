@@ -115,6 +115,26 @@ func NewBinomial[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) MergeableH
 	}
 }
 
+// findExtremum traverses the sibling linked list starting from the given node n
+// and finds the extremum (minimum in min heap or maximum in max heap) node.
+//
+// It returns the predecessor of the extremum node and the extremum node itself.
+// If the list is empty, it returns nil for both values.
+func (h *binomial[K, V]) findExtremum(n *binomialNode[K, V]) (*binomialNode[K, V], *binomialNode[K, V]) {
+	if n == nil {
+		return nil, nil
+	}
+
+	var prev, ext, curr *binomialNode[K, V]
+	for prev, ext, curr = nil, n, n; curr.sibling != nil; curr = curr.sibling {
+		if h.cmpKey(curr.sibling.key, ext.key) < 0 {
+			prev, ext = curr, curr.sibling
+		}
+	}
+
+	return prev, ext
+}
+
 // link constructs a binomial tree of order k+1 from two binomial trees of order k.
 // It attaches one of the root nodes as the left-most child of the other.
 //
@@ -267,6 +287,44 @@ func (h *binomial[K, V]) union(h1, h2 *binomialNode[K, V]) *binomialNode[K, V] {
 	return head
 }
 
+// childrenToRootList reverses the order of a binomial tree node's children,
+// converting the child list into a reversed root list.
+func (h *binomial[K, V]) childrenToRootList(n *binomialNode[K, V]) *binomialNode[K, V] {
+	var prev, curr, next *binomialNode[K, V]
+	for prev, curr = nil, n.child; curr != nil; prev, curr = curr, next {
+		next = curr.sibling
+		curr.sibling = prev
+	}
+
+	// prev is now the head of the reversed root list.
+	return prev
+}
+
+// traverse performs a depth-first traversal of the binomial heap,
+// visiting each node according to the specified traversal order.
+func (h *binomial[K, V]) traverse(n *binomialNode[K, V], order TraverseOrder, visit func(*binomialNode[K, V]) bool) bool {
+	if n == nil {
+		return true
+	}
+
+	switch order {
+	case VLR:
+		return visit(n) && h.traverse(n.child, order, visit) && h.traverse(n.sibling, order, visit)
+	case VRL:
+		return visit(n) && h.traverse(n.sibling, order, visit) && h.traverse(n.child, order, visit)
+	case LVR:
+		return h.traverse(n.child, order, visit) && visit(n) && h.traverse(n.sibling, order, visit)
+	case RVL:
+		return h.traverse(n.sibling, order, visit) && visit(n) && h.traverse(n.child, order, visit)
+	case LRV:
+		return h.traverse(n.child, order, visit) && h.traverse(n.sibling, order, visit) && visit(n)
+	case RLV:
+		return h.traverse(n.sibling, order, visit) && h.traverse(n.child, order, visit) && visit(n)
+	default:
+		return false
+	}
+}
+
 // Size returns the number of items on the heap.
 func (h *binomial[K, V]) Size() int {
 	return h.n
@@ -307,30 +365,19 @@ func (h *binomial[K, V]) Delete() (K, V, bool) {
 		return zeroK, zeroV, false
 	}
 
-	// Find the extermum (minimum in min heap or maximum in max heap) root.
-	var prev, ext, curr *binomialNode[K, V]
-	for prev, ext, curr = nil, h.head, h.head; curr.sibling != nil; curr = curr.sibling {
-		if h.cmpKey(curr.sibling.key, ext.key) < 0 {
-			prev, ext = curr, curr.sibling
-		}
-	}
+	// Find the extremum (minimum in min heap or maximum in max heap) node in the root list.
+	prev, ext := h.findExtremum(h.head)
 
-	// Remove the extermum node from the root list.
+	// Remove the extremum node from the root list.
 	if prev == nil { // ext == h.head
 		h.head = ext.sibling
 	} else {
 		prev.sibling = ext.sibling
 	}
 
-	// Reverse the order of the extermum node's children making a new root list.
-	var next *binomialNode[K, V]
-	for prev, curr = nil, ext.child; curr != nil; prev, curr = curr, next {
-		next = curr.sibling
-		curr.sibling = prev
-	}
-
-	// prev is now the head of the new root list.
-	h.head = h.union(h.head, prev)
+	// Convert the deleted root's children into a root list and merge it with the current heap.
+	head := h.childrenToRootList(ext)
+	h.head = h.union(h.head, head)
 	h.n--
 
 	return ext.key, ext.val, true
@@ -351,13 +398,8 @@ func (h *binomial[K, V]) Peek() (K, V, bool) {
 		return zeroK, zeroV, false
 	}
 
-	// Find the extermum (minimum in min heap or maximum in max heap) root.
-	var ext, curr *binomialNode[K, V]
-	for ext, curr = h.head, h.head; curr.sibling != nil; curr = curr.sibling {
-		if h.cmpKey(curr.sibling.key, ext.key) < 0 {
-			ext = curr.sibling
-		}
-	}
+	// Find the extremum (minimum in min heap or maximum in max heap) node in the root list.
+	_, ext := h.findExtremum(h.head)
 
 	return ext.key, ext.val, true
 }
@@ -369,7 +411,7 @@ func (h *binomial[K, V]) ContainsKey(key K) bool {
 	}
 
 	// A false result indicates a match was found.
-	return !h._traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
+	return !h.traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
 		// If a match is found, stop the traversal by returning false.
 		return h.cmpKey(n.key, key) != 0
 	})
@@ -382,7 +424,7 @@ func (h *binomial[K, V]) ContainsValue(val V) bool {
 	}
 
 	// A false result indicates a match was found.
-	return !h._traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
+	return !h.traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
 		// If a match is found, stop the traversal by returning false.
 		return !h.eqVal(n.val, val)
 	})
@@ -393,7 +435,7 @@ func (h *binomial[K, V]) Graphviz() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*binomialNode[K, V]]int{}
-	h._traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
+	h.traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
 		id++
 		nodeID[n] = id
 		return true
@@ -401,7 +443,7 @@ func (h *binomial[K, V]) Graphviz() string {
 
 	graph := graphviz.NewGraph(true, true, false, "Binomial Heap", "", "", "", graphviz.ShapeMrecord)
 
-	h._traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
+	h.traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 
 		rec := graphviz.NewRecord(
@@ -425,29 +467,4 @@ func (h *binomial[K, V]) Graphviz() string {
 	})
 
 	return graph.DotCode()
-}
-
-// _traverse performs a depth-first traversal of the binomial heap,
-// visiting each node according to the specified traversal order.
-func (h *binomial[K, V]) _traverse(n *binomialNode[K, V], order TraverseOrder, visit func(*binomialNode[K, V]) bool) bool {
-	if n == nil {
-		return true
-	}
-
-	switch order {
-	case VLR:
-		return visit(n) && h._traverse(n.child, order, visit) && h._traverse(n.sibling, order, visit)
-	case VRL:
-		return visit(n) && h._traverse(n.sibling, order, visit) && h._traverse(n.child, order, visit)
-	case LVR:
-		return h._traverse(n.child, order, visit) && visit(n) && h._traverse(n.sibling, order, visit)
-	case RVL:
-		return h._traverse(n.sibling, order, visit) && visit(n) && h._traverse(n.child, order, visit)
-	case LRV:
-		return h._traverse(n.child, order, visit) && h._traverse(n.sibling, order, visit) && visit(n)
-	case RLV:
-		return h._traverse(n.sibling, order, visit) && h._traverse(n.child, order, visit) && visit(n)
-	default:
-		return false
-	}
 }
