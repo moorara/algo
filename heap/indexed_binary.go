@@ -51,6 +51,9 @@ func (h *indexedBinary[K, V]) compare(a, b int) int {
 
 // swap exchanges the elements at indices i and j in the heap array
 // and updates their corresponding positions in the pos map.
+//
+// This method is defined on the indexedBinomial struct to prevent name clashes
+// with other similar implementations in this package.
 func (h *indexedBinary[K, V]) swap(i, j int) {
 	h.heap[i], h.heap[j] = h.heap[j], h.heap[i]
 	h.pos[h.heap[i]], h.pos[h.heap[j]] = i, j
