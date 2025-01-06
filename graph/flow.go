@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 )
 
 // FlowEdge represents a capacitated edge data type.
@@ -176,13 +176,13 @@ func (g *FlowNetwork) Edges() []FlowEdge {
 	return edges
 }
 
-// Graphviz returns a visualization of the graph in Graphviz format.
-func (g *FlowNetwork) Graphviz() string {
-	graph := graphviz.NewGraph(true, true, false, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
+// DOT generates a DOT representation of the graph.
+func (g *FlowNetwork) DOT() string {
+	graph := dot.NewGraph(true, true, false, "", "", "", dot.StyleSolid, dot.ShapeCircle)
 
 	for i := 0; i < g.v; i++ {
 		name := fmt.Sprintf("%d", i)
-		graph.AddNode(graphviz.NewNode("", "", name, "", "", "", "", ""))
+		graph.AddNode(dot.NewNode("", "", name, "", "", "", "", ""))
 	}
 
 	for v := range g.adj {
@@ -190,9 +190,9 @@ func (g *FlowNetwork) Graphviz() string {
 			from := fmt.Sprintf("%d", e.From())
 			to := fmt.Sprintf("%d", e.To())
 			label := fmt.Sprintf("%f/%f", e.Flow(), e.Capacity())
-			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", label, "", "", "", ""))
+			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", label, "", "", "", ""))
 		}
 	}
 
-	return graph.DotCode()
+	return graph.DOT()
 }

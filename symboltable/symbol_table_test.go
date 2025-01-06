@@ -83,7 +83,7 @@ type orderedSymbolTableTest[K, V any] struct {
 	expectedRLVTraverse        []KeyValue[K, V]
 	expectedAscendingTraverse  []KeyValue[K, V]
 	expectedDescendingTraverse []KeyValue[K, V]
-	expectedGraphviz           string
+	expectedDOT                string
 }
 
 func getSymbolTableTests() []symbolTableTest[string, int] {
@@ -1141,9 +1141,8 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)
 		})
 
-		t.Run("Graphviz", func(t *testing.T) {
-			graphviz := ost.Graphviz()
-			assert.Equal(t, test.expectedGraphviz, graphviz)
+		t.Run("DOT", func(t *testing.T) {
+			assert.Equal(t, test.expectedDOT, ost.DOT())
 		})
 
 		t.Run("Delete", func(t *testing.T) {

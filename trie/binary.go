@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 )
 
 type binaryNode[V any] struct {
@@ -633,9 +633,9 @@ func (t *binary[V]) _traverse(n *binaryNode[V], prefix string, order TraverseOrd
 	}
 }
 
-// Graphviz generates and returns a string representation of the binary trie in DOT format.
+// DOT generates a DOT representation of the binary trie in DOT format.
 // This format is commonly used for visualizing graphs with Graphviz tools.
-func (t *binary[V]) Graphviz() string {
+func (t *binary[V]) DOT() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*binaryNode[V]]int{}
@@ -645,14 +645,14 @@ func (t *binary[V]) Graphviz() string {
 		return true
 	})
 
-	graph := graphviz.NewGraph(true, true, false, "Binary Trie", "", "", "", graphviz.ShapeCircle)
+	graph := dot.NewGraph(true, true, false, "Binary Trie", "", "", "", dot.ShapeCircle)
 
 	t._traverse(t.root, "", VLR, func(_ string, n *binaryNode[V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 
 		var label string
-		var style graphviz.Style
-		var color, fontColor graphviz.Color
+		var style dot.Style
+		var color, fontColor dot.Color
 
 		switch {
 		case n == t.root:
@@ -661,23 +661,23 @@ func (t *binary[V]) Graphviz() string {
 			label = string(n.char)
 		default:
 			label = fmt.Sprintf("%s,%v", string(n.char), n.val)
-			style, color, fontColor = graphviz.StyleFilled, graphviz.ColorBlack, graphviz.ColorWhite
+			style, color, fontColor = dot.StyleFilled, dot.ColorBlack, dot.ColorWhite
 		}
 
-		graph.AddNode(graphviz.NewNode(name, "", label, color, style, "", fontColor, ""))
+		graph.AddNode(dot.NewNode(name, "", label, color, style, "", fontColor, ""))
 
 		if n.left != nil {
 			left := fmt.Sprintf("%d", nodeID[n.left])
-			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", graphviz.ColorBlue, "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, left, dot.EdgeTypeDirected, "", "", dot.ColorBlue, "", "", ""))
 		}
 
 		if n.right != nil {
 			right := fmt.Sprintf("%d", nodeID[n.right])
-			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", graphviz.ColorRed, "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, right, dot.EdgeTypeDirected, "", "", dot.ColorRed, "", "", ""))
 		}
 
 		return true
 	})
 
-	return graph.DotCode()
+	return graph.DOT()
 }

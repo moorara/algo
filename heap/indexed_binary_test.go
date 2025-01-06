@@ -6,19 +6,19 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
 	tests := getIndexedHeapTests()
 
 	tests[0].heap = "Indexed Binary Min Heap"
-	tests[0].expectedGraphviz = `strict digraph "Indexed Binary Heap" {
+	tests[0].expectedDOT = `strict digraph "Indexed Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 }`
 
 	tests[1].heap = "Indexed Binary Max Heap"
-	tests[1].expectedGraphviz = `strict digraph "Indexed Binary Heap" {
+	tests[1].expectedDOT = `strict digraph "Indexed Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 }`
 
 	tests[2].heap = "Indexed Binary Min Heap"
-	tests[2].expectedGraphviz = `strict digraph "Indexed Binary Heap" {
+	tests[2].expectedDOT = `strict digraph "Indexed Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -31,7 +31,7 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
 }`
 
 	tests[3].heap = "Indexed Binary Max Heap"
-	tests[3].expectedGraphviz = `strict digraph "Indexed Binary Heap" {
+	tests[3].expectedDOT = `strict digraph "Indexed Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -44,7 +44,7 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
 }`
 
 	tests[4].heap = "Indexed Binary Min Heap"
-	tests[4].expectedGraphviz = `strict digraph "Indexed Binary Heap" {
+	tests[4].expectedDOT = `strict digraph "Indexed Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -61,7 +61,7 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
 }`
 
 	tests[5].heap = "Indexed Binary Max Heap"
-	tests[5].expectedGraphviz = `strict digraph "Indexed Binary Heap" {
+	tests[5].expectedDOT = `strict digraph "Indexed Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -78,7 +78,7 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
 }`
 
 	tests[6].heap = "Indexed Binary Min Heap"
-	tests[6].expectedGraphviz = `strict digraph "Indexed Binary Heap" {
+	tests[6].expectedDOT = `strict digraph "Indexed Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -103,7 +103,7 @@ func getIndexedBinaryTests() []indexedHeapTest[int, string] {
 }`
 
 	tests[7].heap = "Indexed Binary Max Heap"
-	tests[7].expectedGraphviz = `strict digraph "Indexed Binary Heap" {
+	tests[7].expectedDOT = `strict digraph "Indexed Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 

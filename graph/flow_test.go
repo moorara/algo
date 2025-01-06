@@ -200,7 +200,7 @@ func TestFlowNetwork(t *testing.T) {
 				assert.Equal(t, tc.expectedEdges, g.Edges())
 			})
 
-			assert.NotEmpty(t, g.Graphviz())
+			assert.NotEmpty(t, g.DOT())
 		})
 	}
 }

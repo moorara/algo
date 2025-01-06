@@ -13,7 +13,7 @@ type Heap[K, V any] interface {
 	Peek() (K, V, bool)
 	ContainsKey(K) bool
 	ContainsValue(V) bool
-	Graphviz() string
+	DOT() string
 }
 
 // IndexedHeap represents an indexed heap (priority queue) abstract data type.
@@ -30,7 +30,7 @@ type IndexedHeap[K, V any] interface {
 	ContainsIndex(int) bool
 	ContainsKey(K) bool
 	ContainsValue(V) bool
-	Graphviz() string
+	DOT() string
 }
 
 // MergeableHeap represents a mergeable heap (priority queue) abstract data type.

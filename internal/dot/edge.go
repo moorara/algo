@@ -1,4 +1,4 @@
-package graphviz
+package dot
 
 import (
 	"bytes"
@@ -33,8 +33,8 @@ func NewEdge(from, to string, edgeType EdgeType, edgeDir EdgeDir, label string, 
 	}
 }
 
-// DotCode generates the Graphviz dot language code.
-func (e *Edge) DotCode() string {
+// DOT generates a DOT representation of the Edge object.
+func (e *Edge) DOT() string {
 	first := true
 	buf := new(bytes.Buffer)
 

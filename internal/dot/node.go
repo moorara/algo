@@ -1,4 +1,4 @@
-package graphviz
+package dot
 
 import (
 	"bytes"
@@ -31,8 +31,8 @@ func NewNode(name, group, label string, color Color, style Style, shape Shape, f
 	}
 }
 
-// DotCode generates the Graphviz dot language code.
-func (n *Node) DotCode() string {
+// DOT generates a DOT representation of the Node object.
+func (n *Node) DOT() string {
 	first := true
 	buf := new(bytes.Buffer)
 

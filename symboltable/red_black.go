@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 )
 
 const (
@@ -759,9 +759,9 @@ func (t *redBlack[K, V]) _traverse(n *rbNode[K, V], order TraverseOrder, visit f
 	}
 }
 
-// Graphviz generates and returns a string representation of the Red-Black tree in DOT format.
+// DOT generates a DOT representation of the Red-Black tree in DOT format.
 // This format is commonly used for visualizing graphs with Graphviz tools.
-func (t *redBlack[K, V]) Graphviz() string {
+func (t *redBlack[K, V]) DOT() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*rbNode[K, V]]int{}
@@ -771,41 +771,41 @@ func (t *redBlack[K, V]) Graphviz() string {
 		return true
 	})
 
-	graph := graphviz.NewGraph(true, true, false, "Red-Black", "", "", graphviz.StyleFilled, graphviz.ShapeOval)
+	graph := dot.NewGraph(true, true, false, "Red-Black", "", "", dot.StyleFilled, dot.ShapeOval)
 
 	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
-		var nodeColor, fontColor, edgeColor graphviz.Color
+		var nodeColor, fontColor, edgeColor dot.Color
 
 		name := fmt.Sprintf("%d", nodeID[n])
 		label := fmt.Sprintf("%v,%v", n.key, n.val)
 
 		if t.isRed(n) {
-			nodeColor = graphviz.ColorRed
-			fontColor = graphviz.ColorWhite
+			nodeColor = dot.ColorRed
+			fontColor = dot.ColorWhite
 		} else {
-			nodeColor = graphviz.ColorBlack
-			fontColor = graphviz.ColorWhite
+			nodeColor = dot.ColorBlack
+			fontColor = dot.ColorWhite
 		}
 
-		graph.AddNode(graphviz.NewNode(name, "", label, nodeColor, "", "", fontColor, ""))
+		graph.AddNode(dot.NewNode(name, "", label, nodeColor, "", "", fontColor, ""))
 
 		if n.left != nil {
 			left := fmt.Sprintf("%d", nodeID[n.left])
 			if t.isRed(n.left) {
-				edgeColor = graphviz.ColorRed
+				edgeColor = dot.ColorRed
 			} else {
-				edgeColor = graphviz.ColorBlack
+				edgeColor = dot.ColorBlack
 			}
-			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", edgeColor, "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, left, dot.EdgeTypeDirected, "", "", edgeColor, "", "", ""))
 		}
 
 		if n.right != nil {
 			right := fmt.Sprintf("%d", nodeID[n.right])
-			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, right, dot.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		return true
 	})
 
-	return graph.DotCode()
+	return graph.DOT()
 }

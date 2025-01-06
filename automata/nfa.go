@@ -6,7 +6,7 @@ import (
 
 	"github.com/moorara/algo/generic"
 	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
@@ -418,9 +418,9 @@ func (n *NFA) getSortedDegreeSequence() []int {
 	return sortedDegrees
 }
 
-// Graphviz returns the transition graph of the NFA in DOT Language format.
-func (n *NFA) Graphviz() string {
-	graph := graphviz.NewGraph(false, true, false, "NFA", graphviz.RankDirLR, "", "", graphviz.ShapeCircle)
+// DOT generates a DOT representation of the transition graph of the NFA.
+func (n *NFA) DOT() string {
+	graph := dot.NewGraph(false, true, false, "NFA", dot.RankDirLR, "", "", dot.ShapeCircle)
 
 	states := n.States()
 	sort.Quick(states, NewCompareFunc[State]())
@@ -429,19 +429,19 @@ func (n *NFA) Graphviz() string {
 		name := fmt.Sprintf("%d", state)
 		label := fmt.Sprintf("%d", state)
 
-		var shape graphviz.Shape
+		var shape dot.Shape
 		if n.Final.Contains(state) {
-			shape = graphviz.ShapeDoubleCircle
+			shape = dot.ShapeDoubleCircle
 		} else {
-			shape = graphviz.ShapeCircle
+			shape = dot.ShapeCircle
 		}
 
 		if state == n.Start {
-			graph.AddNode(graphviz.NewNode("start", "", "", "", graphviz.StyleInvis, "", "", ""))
-			graph.AddEdge(graphviz.NewEdge("start", name, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
+			graph.AddNode(dot.NewNode("start", "", "", "", dot.StyleInvis, "", "", ""))
+			graph.AddEdge(dot.NewEdge("start", name, dot.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
-		graph.AddNode(graphviz.NewNode(name, "", label, "", "", shape, "", ""))
+		graph.AddNode(dot.NewNode(name, "", label, "", "", shape, "", ""))
 	}
 
 	// Group all the transitions with the same states and combine their symbols into one label
@@ -482,9 +482,9 @@ func (n *NFA) Graphviz() string {
 			sort.Quick(symbols, NewCompareFunc[string]())
 			label := strings.Join(symbols, ",")
 
-			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", label, "", "", "", ""))
+			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", label, "", "", "", ""))
 		}
 	}
 
-	return graph.DotCode()
+	return graph.DOT()
 }

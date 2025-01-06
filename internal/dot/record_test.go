@@ -1,4 +1,4 @@
-package graphviz
+package dot
 
 import (
 	"testing"
@@ -94,38 +94,38 @@ func TestRecord_AddField(t *testing.T) {
 
 func TestNewSimpleField(t *testing.T) {
 	tests := []struct {
-		name            string
-		fieldName       string
-		label           string
-		expectedDotCode string
+		name        string
+		fieldName   string
+		label       string
+		expectedDOT string
 	}{
 		{
-			name:            "Left",
-			fieldName:       "l",
-			label:           "left",
-			expectedDotCode: "<l>left",
+			name:        "Left",
+			fieldName:   "l",
+			label:       "left",
+			expectedDOT: "<l>left",
 		},
 		{
-			name:            "Right",
-			fieldName:       "r",
-			label:           "right",
-			expectedDotCode: "<r>right",
+			name:        "Right",
+			fieldName:   "r",
+			label:       "right",
+			expectedDOT: "<r>right",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			f := NewSimpleField(tc.fieldName, tc.label)
-			assert.Equal(t, tc.expectedDotCode, f.dotCode())
+			assert.Equal(t, tc.expectedDOT, f.DOT())
 		})
 	}
 }
 
 func TestNewComplexField(t *testing.T) {
 	tests := []struct {
-		name            string
-		record          Record
-		expectedDotCode string
+		name        string
+		record      Record
+		expectedDOT string
 	}{
 		{
 			name: "OK",
@@ -144,14 +144,14 @@ func TestNewComplexField(t *testing.T) {
 					&simpleField{Label: "e"},
 				},
 			},
-			expectedDotCode: "{ a | { b | <id>c | d } | e }",
+			expectedDOT: "{ a | { b | <id>c | d } | e }",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			f := NewComplexField(tc.record)
-			assert.Equal(t, tc.expectedDotCode, f.dotCode())
+			assert.Equal(t, tc.expectedDOT, f.DOT())
 		})
 	}
 }

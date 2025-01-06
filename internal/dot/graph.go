@@ -1,4 +1,4 @@
-package graphviz
+package dot
 
 import (
 	"bytes"
@@ -56,8 +56,8 @@ func (g *Graph) AddSubgraph(subgraphs ...Subgraph) {
 	g.Subgraphs = append(g.Subgraphs, subgraphs...)
 }
 
-// DotCode generates the Graphviz dot language code.
-func (g *Graph) DotCode() string {
+// DOT generates a DOT representation of the Graph object.
+func (g *Graph) DOT() string {
 	first := true
 	buf := new(bytes.Buffer)
 

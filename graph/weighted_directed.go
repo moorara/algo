@@ -3,7 +3,7 @@ package graph
 import (
 	"fmt"
 
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 	"github.com/moorara/algo/list"
 )
 
@@ -368,13 +368,13 @@ func (g *WeightedDirected) ShortestPathTree(s int) *ShortestPathTree {
 	return newShortestPathTree(g, s)
 }
 
-// Graphviz returns a visualization of the graph in Graphviz format.
-func (g *WeightedDirected) Graphviz() string {
-	graph := graphviz.NewGraph(true, true, false, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
+// DOT generates a DOT representation of the graph.
+func (g *WeightedDirected) DOT() string {
+	graph := dot.NewGraph(true, true, false, "", "", "", dot.StyleSolid, dot.ShapeCircle)
 
 	for i := 0; i < g.v; i++ {
 		name := fmt.Sprintf("%d", i)
-		graph.AddNode(graphviz.NewNode("", "", name, "", "", "", "", ""))
+		graph.AddNode(dot.NewNode("", "", name, "", "", "", "", ""))
 	}
 
 	for v := range g.adj {
@@ -382,9 +382,9 @@ func (g *WeightedDirected) Graphviz() string {
 			from := fmt.Sprintf("%d", e.From())
 			to := fmt.Sprintf("%d", e.To())
 			weight := fmt.Sprintf("%f", e.Weight())
-			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeDirected, "", weight, "", "", "", ""))
+			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", weight, "", "", "", ""))
 		}
 	}
 
-	return graph.DotCode()
+	return graph.DOT()
 }

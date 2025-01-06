@@ -473,39 +473,39 @@ func TestNFA_Isomorphic(t *testing.T) {
 	}
 }
 
-func TestNFA_Graphviz(t *testing.T) {
+func TestNFA_DOT(t *testing.T) {
 	nfas := getTestNFAs()
 
 	tests := []struct {
-		name             string
-		n                *NFA
-		expectedGraphviz string
+		name        string
+		n           *NFA
+		expectedDOT string
 	}{
 		{
-			name:             "Empty",
-			n:                NewNFA(0, States{1, 2}),
-			expectedGraphviz: nfaEmpty,
+			name:        "Empty",
+			n:           NewNFA(0, States{1, 2}),
+			expectedDOT: nfaEmpty,
 		},
 		{
-			name:             "First",
-			n:                nfas[0],
-			expectedGraphviz: nfa01,
+			name:        "First",
+			n:           nfas[0],
+			expectedDOT: nfa01,
 		},
 		{
-			name:             "Second",
-			n:                nfas[1],
-			expectedGraphviz: nfa02,
+			name:        "Second",
+			n:           nfas[1],
+			expectedDOT: nfa02,
 		},
 		{
-			name:             "Third",
-			n:                nfas[3],
-			expectedGraphviz: nfa03,
+			name:        "Third",
+			n:           nfas[3],
+			expectedDOT: nfa03,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedGraphviz, tc.n.Graphviz())
+			assert.Equal(t, tc.expectedDOT, tc.n.DOT())
 		})
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 )
 
 // binary implements an indexed binary heap tree.
@@ -238,40 +238,40 @@ func (h *indexedBinary[K, V]) ContainsValue(val V) bool {
 	return false
 }
 
-// Graphviz returns a visualization of the heap in Graphviz format.
-func (h *indexedBinary[K, V]) Graphviz() string {
-	graph := graphviz.NewGraph(true, true, false, "Indexed Binary Heap", "", "", "", graphviz.ShapeMrecord)
+// DOT generates a DOT representation of the heap.
+func (h *indexedBinary[K, V]) DOT() string {
+	graph := dot.NewGraph(true, true, false, "Indexed Binary Heap", "", "", "", dot.ShapeMrecord)
 
 	for k := 1; k <= h.n; k++ {
 		i := h.heap[k]
 		name := fmt.Sprintf("%d", i)
 
-		rec := graphviz.NewRecord(
-			graphviz.NewComplexField(
-				graphviz.NewRecord(
-					graphviz.NewSimpleField("", fmt.Sprintf("%v", i)),
-					graphviz.NewComplexField(
-						graphviz.NewRecord(
-							graphviz.NewSimpleField("", fmt.Sprintf("%v", h.kvs[i].Key)),
-							graphviz.NewSimpleField("", fmt.Sprintf("%v", h.kvs[i].Val)),
+		rec := dot.NewRecord(
+			dot.NewComplexField(
+				dot.NewRecord(
+					dot.NewSimpleField("", fmt.Sprintf("%v", i)),
+					dot.NewComplexField(
+						dot.NewRecord(
+							dot.NewSimpleField("", fmt.Sprintf("%v", h.kvs[i].Key)),
+							dot.NewSimpleField("", fmt.Sprintf("%v", h.kvs[i].Val)),
 						),
 					),
 				),
 			),
 		)
 
-		graph.AddNode(graphviz.NewNode(name, "", rec.Label(), "", "", "", "", ""))
+		graph.AddNode(dot.NewNode(name, "", rec.Label(), "", "", "", "", ""))
 
 		if l := 2 * k; l <= h.n {
 			left := fmt.Sprintf("%d", h.heap[l])
-			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, left, dot.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		if r := 2*k + 1; r <= h.n {
 			right := fmt.Sprintf("%d", h.heap[r])
-			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, right, dot.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 	}
 
-	return graph.DotCode()
+	return graph.DOT()
 }

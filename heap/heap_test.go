@@ -31,7 +31,7 @@ type heapTest[K, V any] struct {
 	expectedPeek     KeyValue[K, V]
 	expectedContains []KeyValue[K, V]
 	expectedDelete   []KeyValue[K, V]
-	expectedGraphviz string
+	expectedDOT      string
 }
 
 type indexedHeapTest[K, V any] struct {
@@ -49,7 +49,7 @@ type indexedHeapTest[K, V any] struct {
 	expectedContains    []indexedKeyValue[K, V]
 	expectedDelete      []indexedKeyValue[K, V]
 	expectedDeleteIndex []indexedKeyValue[K, V]
-	expectedGraphviz    string
+	expectedDOT         string
 }
 
 type mergeableHeapTest[K, V any] struct {
@@ -64,7 +64,7 @@ type mergeableHeapTest[K, V any] struct {
 	expectedPeek     KeyValue[K, V]
 	expectedContains []KeyValue[K, V]
 	expectedDelete   []KeyValue[K, V]
-	expectedGraphviz string
+	expectedDOT      string
 }
 
 func getHeapTests() []heapTest[int, string] {
@@ -871,8 +871,8 @@ func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string
 			}
 		})
 
-		t.Run("Graphviz", func(t *testing.T) {
-			assert.Equal(t, test.expectedGraphviz, heap.Graphviz())
+		t.Run("DOT", func(t *testing.T) {
+			assert.Equal(t, test.expectedDOT, heap.DOT())
 		})
 
 		t.Run("Delete", func(t *testing.T) {
@@ -1009,8 +1009,8 @@ func runIndexedHeapTest(t *testing.T, heap IndexedHeap[int, string], test indexe
 			}
 		})
 
-		t.Run("Graphviz", func(t *testing.T) {
-			assert.Equal(t, test.expectedGraphviz, heap.Graphviz())
+		t.Run("DOT", func(t *testing.T) {
+			assert.Equal(t, test.expectedDOT, heap.DOT())
 		})
 
 		t.Run("Delete", func(t *testing.T) {
@@ -1129,8 +1129,8 @@ func runMergeableHeapTest(t *testing.T, heap MergeableHeap[int, string], test me
 			}
 		})
 
-		t.Run("Graphviz", func(t *testing.T) {
-			assert.Equal(t, test.expectedGraphviz, heap.Graphviz())
+		t.Run("DOT", func(t *testing.T) {
+			assert.Equal(t, test.expectedDOT, heap.DOT())
 		})
 
 		t.Run("Delete", func(t *testing.T) {

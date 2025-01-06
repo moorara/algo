@@ -11,14 +11,14 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 
 	tests[0].heap = "Binomial Min Heap"
 	tests[0].merge = nil
-	tests[0].expectedGraphviz = `strict digraph "Binomial Heap" {
+	tests[0].expectedDOT = `strict digraph "Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 }`
 
 	tests[1].heap = "Binomial Max Heap"
 	tests[1].merge = nil
-	tests[1].expectedGraphviz = `strict digraph "Binomial Heap" {
+	tests[1].expectedDOT = `strict digraph "Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 }`
@@ -43,7 +43,7 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 		{Key: 30, Val: "Task#3"},
 		{Key: 33, Val: "Task#3.a"},
 	}
-	tests[2].expectedGraphviz = `strict digraph "Binomial Heap" {
+	tests[2].expectedDOT = `strict digraph "Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -81,7 +81,7 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 		{Key: 11, Val: "Task#1.a"},
 		{Key: 10, Val: "Task#1"},
 	}
-	tests[3].expectedGraphviz = `strict digraph "Binomial Heap" {
+	tests[3].expectedDOT = `strict digraph "Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -127,7 +127,7 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 		{Key: 50, Val: "Task#5"},
 		{Key: 55, Val: "Task#5.a"},
 	}
-	tests[4].expectedGraphviz = `strict digraph "Binomial Heap" {
+	tests[4].expectedDOT = `strict digraph "Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -181,7 +181,7 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 		{Key: 11, Val: "Task#1.a"},
 		{Key: 10, Val: "Task#1"},
 	}
-	tests[5].expectedGraphviz = `strict digraph "Binomial Heap" {
+	tests[5].expectedDOT = `strict digraph "Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -251,7 +251,7 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 		{Key: 90, Val: "Task#9"},
 		{Key: 99, Val: "Task#9.a"},
 	}
-	tests[6].expectedGraphviz = `strict digraph "Binomial Heap" {
+	tests[6].expectedDOT = `strict digraph "Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -337,7 +337,7 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 		{Key: 11, Val: "Task#1.a"},
 		{Key: 10, Val: "Task#1"},
 	}
-	tests[7].expectedGraphviz = `strict digraph "Binomial Heap" {
+	tests[7].expectedDOT = `strict digraph "Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 

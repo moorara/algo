@@ -1,4 +1,4 @@
-package graphviz
+package dot
 
 import "bytes"
 
@@ -43,7 +43,7 @@ func addNodes(buf *bytes.Buffer, first bool, indent int, nodes []Node) bool {
 
 	for _, node := range nodes {
 		addIndent(buf, indent)
-		buf.WriteString(node.DotCode())
+		buf.WriteString(node.DOT())
 		buf.WriteString("\n")
 	}
 
@@ -58,7 +58,7 @@ func addEdges(buf *bytes.Buffer, first bool, indent int, edges []Edge) bool {
 
 	for _, edge := range edges {
 		addIndent(buf, indent)
-		buf.WriteString(edge.DotCode())
+		buf.WriteString(edge.DOT())
 		buf.WriteString("\n")
 	}
 
@@ -72,7 +72,7 @@ func addSubgraphs(buf *bytes.Buffer, first bool, indent int, subgraphs []Subgrap
 		if !first {
 			buf.WriteString("\n")
 		}
-		buf.WriteString(subgraph.DotCode(indent))
+		buf.WriteString(subgraph.DOT(indent))
 		buf.WriteString("\n")
 		first = false
 	}
