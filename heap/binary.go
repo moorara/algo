@@ -31,6 +31,7 @@ func NewBinary[K, V any](size int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) He
 	}
 }
 
+// nolint: unused
 // This method verifies the integrity of a binary heap.
 func (h *binary[K, V]) verify() bool {
 	if h.heap[0] != nil {

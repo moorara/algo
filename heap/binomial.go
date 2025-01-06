@@ -115,6 +115,7 @@ func NewBinomial[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) MergeableH
 	}
 }
 
+// nolint: unused
 // This method verifies the integrity of a binomial heap.
 func (h *binomial[K, V]) verify() bool {
 	if h.head == nil {
@@ -139,6 +140,7 @@ func (h *binomial[K, V]) verify() bool {
 	return true
 }
 
+// nolint: unused
 // verifyBinomialTree verifies the properties of a binomial tree rooted at the given node.
 func (h *binomial[K, V]) verifyBinomialTree(n *binomialNode[K, V]) bool {
 	for i, curr := 1, n.child; curr != nil; i, curr = i+1, curr.sibling {

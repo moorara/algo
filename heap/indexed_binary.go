@@ -43,6 +43,7 @@ func NewIndexedBinary[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFunc[
 	}
 }
 
+// nolint: unused
 // This method verifies the integrity of an indexed binary heap.
 func (h *indexedBinary[K, V]) verify() bool {
 	// Verify the heap is a complete tree.

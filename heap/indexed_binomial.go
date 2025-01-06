@@ -56,6 +56,7 @@ func NewIndexedBinomial[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFun
 	}
 }
 
+// nolint: unused
 // This method verifies the integrity of an indexed binomial heap.
 func (h *indexedBinomial[K, V]) verify() bool {
 	if h.head == nil {
@@ -80,6 +81,7 @@ func (h *indexedBinomial[K, V]) verify() bool {
 	return true
 }
 
+// nolint: unused
 // verifyBinomialTree verifies the properties of a binomial tree rooted at the given node.
 func (h *indexedBinomial[K, V]) verifyBinomialTree(n *indexedBinomialNode[K, V]) bool {
 	// Verifry the index map for the current node.
