@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 )
 
 // The Left-Child-Right-Sibling (LCRS) representation, a.k.a. the Binary Representation of N-ary Tree,
@@ -428,46 +428,46 @@ func (h *indexedBinomial[K, V]) ContainsValue(val V) bool {
 	return false
 }
 
-// Graphviz returns a visualization of the heap in Graphviz format.
-func (h *indexedBinomial[K, V]) Graphviz() string {
-	graph := graphviz.NewGraph(true, true, false, "Indexed Binomial Heap", "", "", "", graphviz.ShapeMrecord)
+// DOT generates a DOT representation of the heap.
+func (h *indexedBinomial[K, V]) DOT() string {
+	graph := dot.NewGraph(true, true, false, "Indexed Binomial Heap", "", "", "", dot.ShapeMrecord)
 
 	h.traverse(h.head, VLR, func(n *indexedBinomialNode[K, V]) bool {
 		name := fmt.Sprintf("%d", n.index)
 
-		rec := graphviz.NewRecord(
-			graphviz.NewComplexField(
-				graphviz.NewRecord(
-					graphviz.NewSimpleField("", fmt.Sprintf("%v", n.index)),
-					graphviz.NewComplexField(
-						graphviz.NewRecord(
-							graphviz.NewSimpleField("", fmt.Sprintf("%v", n.key)),
-							graphviz.NewSimpleField("", fmt.Sprintf("%v", n.val)),
+		rec := dot.NewRecord(
+			dot.NewComplexField(
+				dot.NewRecord(
+					dot.NewSimpleField("", fmt.Sprintf("%v", n.index)),
+					dot.NewComplexField(
+						dot.NewRecord(
+							dot.NewSimpleField("", fmt.Sprintf("%v", n.key)),
+							dot.NewSimpleField("", fmt.Sprintf("%v", n.val)),
 						),
 					),
 				),
 			),
 		)
 
-		graph.AddNode(graphviz.NewNode(name, "", rec.Label(), "", "", "", "", ""))
+		graph.AddNode(dot.NewNode(name, "", rec.Label(), "", "", "", "", ""))
 
 		if n.parent != nil {
 			parent := fmt.Sprintf("%d", n.parent.index)
-			graph.AddEdge(graphviz.NewEdge(name, parent, graphviz.EdgeTypeDirected, "", "", "turquoise", graphviz.StyleDashed, "", ""))
+			graph.AddEdge(dot.NewEdge(name, parent, dot.EdgeTypeDirected, "", "", "turquoise", dot.StyleDashed, "", ""))
 		}
 
 		if n.child != nil {
 			child := fmt.Sprintf("%d", n.child.index)
-			graph.AddEdge(graphviz.NewEdge(name, child, graphviz.EdgeTypeDirected, "", "", graphviz.ColorBlue, "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, child, dot.EdgeTypeDirected, "", "", dot.ColorBlue, "", "", ""))
 		}
 
 		if n.sibling != nil {
 			sibling := fmt.Sprintf("%d", n.sibling.index)
-			graph.AddEdge(graphviz.NewEdge(name, sibling, graphviz.EdgeTypeDirected, "", "", graphviz.ColorRed, graphviz.StyleDashed, "", ""))
+			graph.AddEdge(dot.NewEdge(name, sibling, dot.EdgeTypeDirected, "", "", dot.ColorRed, dot.StyleDashed, "", ""))
 		}
 
 		return true
 	})
 
-	return graph.DotCode()
+	return graph.DOT()
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 )
 
 // The Left-Child-Right-Sibling (LCRS) representation, a.k.a. the Binary Representation of N-ary Tree,
@@ -430,8 +430,8 @@ func (h *binomial[K, V]) ContainsValue(val V) bool {
 	})
 }
 
-// Graphviz returns a visualization of the heap in Graphviz format.
-func (h *binomial[K, V]) Graphviz() string {
+// DOT generates a DOT representation of the heap.
+func (h *binomial[K, V]) DOT() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*binomialNode[K, V]]int{}
@@ -441,30 +441,30 @@ func (h *binomial[K, V]) Graphviz() string {
 		return true
 	})
 
-	graph := graphviz.NewGraph(true, true, false, "Binomial Heap", "", "", "", graphviz.ShapeMrecord)
+	graph := dot.NewGraph(true, true, false, "Binomial Heap", "", "", "", dot.ShapeMrecord)
 
 	h.traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 
-		rec := graphviz.NewRecord(
-			graphviz.NewSimpleField("", fmt.Sprintf("%v", n.key)),
-			graphviz.NewSimpleField("", fmt.Sprintf("%v", n.val)),
+		rec := dot.NewRecord(
+			dot.NewSimpleField("", fmt.Sprintf("%v", n.key)),
+			dot.NewSimpleField("", fmt.Sprintf("%v", n.val)),
 		)
 
-		graph.AddNode(graphviz.NewNode(name, "", rec.Label(), "", "", "", "", ""))
+		graph.AddNode(dot.NewNode(name, "", rec.Label(), "", "", "", "", ""))
 
 		if n.child != nil {
 			child := fmt.Sprintf("%d", nodeID[n.child])
-			graph.AddEdge(graphviz.NewEdge(name, child, graphviz.EdgeTypeDirected, "", "", graphviz.ColorBlue, "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, child, dot.EdgeTypeDirected, "", "", dot.ColorBlue, "", "", ""))
 		}
 
 		if n.sibling != nil {
 			sibling := fmt.Sprintf("%d", nodeID[n.sibling])
-			graph.AddEdge(graphviz.NewEdge(name, sibling, graphviz.EdgeTypeDirected, "", "", graphviz.ColorRed, graphviz.StyleDashed, "", ""))
+			graph.AddEdge(dot.NewEdge(name, sibling, dot.EdgeTypeDirected, "", "", dot.ColorRed, dot.StyleDashed, "", ""))
 		}
 
 		return true
 	})
 
-	return graph.DotCode()
+	return graph.DOT()
 }

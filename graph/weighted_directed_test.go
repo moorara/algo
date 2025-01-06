@@ -512,7 +512,7 @@ func TestWeightedDirected(t *testing.T) {
 				}
 			})
 
-			assert.NotEmpty(t, g.Graphviz())
+			assert.NotEmpty(t, g.DOT())
 		})
 	}
 }

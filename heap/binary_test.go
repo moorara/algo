@@ -6,19 +6,19 @@ func getBinaryTests() []heapTest[int, string] {
 	tests := getHeapTests()
 
 	tests[0].heap = "Binary Min Heap"
-	tests[0].expectedGraphviz = `strict digraph "Binary Heap" {
+	tests[0].expectedDOT = `strict digraph "Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 }`
 
 	tests[1].heap = "Binary Max Heap"
-	tests[1].expectedGraphviz = `strict digraph "Binary Heap" {
+	tests[1].expectedDOT = `strict digraph "Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 }`
 
 	tests[2].heap = "Binary Min Heap"
-	tests[2].expectedGraphviz = `strict digraph "Binary Heap" {
+	tests[2].expectedDOT = `strict digraph "Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -31,7 +31,7 @@ func getBinaryTests() []heapTest[int, string] {
 }`
 
 	tests[3].heap = "Binary Max Heap"
-	tests[3].expectedGraphviz = `strict digraph "Binary Heap" {
+	tests[3].expectedDOT = `strict digraph "Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -44,7 +44,7 @@ func getBinaryTests() []heapTest[int, string] {
 }`
 
 	tests[4].heap = "Binary Min Heap"
-	tests[4].expectedGraphviz = `strict digraph "Binary Heap" {
+	tests[4].expectedDOT = `strict digraph "Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -61,7 +61,7 @@ func getBinaryTests() []heapTest[int, string] {
 }`
 
 	tests[5].heap = "Binary Max Heap"
-	tests[5].expectedGraphviz = `strict digraph "Binary Heap" {
+	tests[5].expectedDOT = `strict digraph "Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -78,7 +78,7 @@ func getBinaryTests() []heapTest[int, string] {
 }`
 
 	tests[6].heap = "Binary Min Heap"
-	tests[6].expectedGraphviz = `strict digraph "Binary Heap" {
+	tests[6].expectedDOT = `strict digraph "Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -103,7 +103,7 @@ func getBinaryTests() []heapTest[int, string] {
 }`
 
 	tests[7].heap = "Binary Max Heap"
-	tests[7].expectedGraphviz = `strict digraph "Binary Heap" {
+	tests[7].expectedDOT = `strict digraph "Binary Heap" {
   concentrate=false;
   node [shape=Mrecord];
 

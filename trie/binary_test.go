@@ -21,7 +21,7 @@ func getBinaryTests() []trieTest[int] {
 	tests[0].expectedRLVTraverse = []KeyValue[string, int]{{Key: "C", Val: 3}, {Key: "B", Val: 2}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
 	tests[0].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}}
 	tests[0].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "C", Val: 3}, {Key: "B", Val: 2}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
-	tests[0].expectedGraphviz = `strict digraph "Binary Trie" {
+	tests[0].expectedDOT = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];
 
@@ -47,7 +47,7 @@ func getBinaryTests() []trieTest[int] {
 	tests[1].expectedRLVTraverse = []KeyValue[string, int]{{Key: "E", Val: 5}, {Key: "D", Val: 4}, {Key: "C", Val: 3}, {Key: "B", Val: 2}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
 	tests[1].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}, {Key: "D", Val: 4}, {Key: "E", Val: 5}}
 	tests[1].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "E", Val: 5}, {Key: "D", Val: 4}, {Key: "C", Val: 3}, {Key: "B", Val: 2}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
-	tests[1].expectedGraphviz = `strict digraph "Binary Trie" {
+	tests[1].expectedDOT = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];
 
@@ -80,7 +80,7 @@ func getBinaryTests() []trieTest[int] {
 	tests[2].expectedRLVTraverse = []KeyValue[string, int]{{Key: "S", Val: 19}, {Key: "P", Val: 16}, {Key: "M", Val: 13}, {Key: "J", Val: 10}, {Key: "G", Val: 7}, {Key: "D", Val: 4}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
 	tests[2].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "A", Val: 1}, {Key: "D", Val: 4}, {Key: "G", Val: 7}, {Key: "J", Val: 10}, {Key: "M", Val: 13}, {Key: "P", Val: 16}, {Key: "S", Val: 19}}
 	tests[2].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "S", Val: 19}, {Key: "P", Val: 16}, {Key: "M", Val: 13}, {Key: "J", Val: 10}, {Key: "G", Val: 7}, {Key: "D", Val: 4}, {Key: "A", Val: 1}, {Key: "", Val: 0}}
-	tests[2].expectedGraphviz = `strict digraph "Binary Trie" {
+	tests[2].expectedDOT = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];
 
@@ -121,7 +121,7 @@ func getBinaryTests() []trieTest[int] {
 	tests[3].expectedRLVTraverse = []KeyValue[string, int]{{Key: "e", Val: 7}, {Key: "m", Val: 0}, {Key: "o", Val: 0}, {Key: "e", Val: 13}, {Key: "c", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 3}, {Key: "a", Val: 0}, {Key: "d", Val: 0}, {Key: "x", Val: 2}, {Key: "o", Val: 0}, {Key: "d", Val: 11}, {Key: "n", Val: 0}, {Key: "n", Val: 17}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "y", Val: 5}, {Key: "b", Val: 0}, {Key: "a", Val: 0}, {Key: "b", Val: 0}, {Key: "", Val: 0}}
 	tests[3].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "", Val: 0}, {Key: "b", Val: 0}, {Key: "a", Val: 0}, {Key: "b", Val: 0}, {Key: "y", Val: 5}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "n", Val: 17}, {Key: "n", Val: 0}, {Key: "d", Val: 11}, {Key: "o", Val: 0}, {Key: "x", Val: 2}, {Key: "d", Val: 0}, {Key: "a", Val: 0}, {Key: "d", Val: 3}, {Key: "n", Val: 0}, {Key: "c", Val: 0}, {Key: "e", Val: 13}, {Key: "o", Val: 0}, {Key: "m", Val: 0}, {Key: "e", Val: 7}}
 	tests[3].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "e", Val: 7}, {Key: "m", Val: 0}, {Key: "o", Val: 0}, {Key: "e", Val: 13}, {Key: "c", Val: 0}, {Key: "n", Val: 0}, {Key: "d", Val: 3}, {Key: "a", Val: 0}, {Key: "d", Val: 0}, {Key: "x", Val: 2}, {Key: "o", Val: 0}, {Key: "d", Val: 11}, {Key: "n", Val: 0}, {Key: "n", Val: 17}, {Key: "o", Val: 0}, {Key: "o", Val: 0}, {Key: "l", Val: 0}, {Key: "l", Val: 0}, {Key: "y", Val: 5}, {Key: "b", Val: 0}, {Key: "a", Val: 0}, {Key: "b", Val: 0}, {Key: "", Val: 0}}
-	tests[3].expectedGraphviz = `strict digraph "Binary Trie" {
+	tests[3].expectedDOT = `strict digraph "Binary Trie" {
   concentrate=false;
   node [shape=circle];
 

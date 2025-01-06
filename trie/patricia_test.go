@@ -21,7 +21,7 @@ func getPatriciaTests() []trieTest[int] {
 	tests[0].expectedRLVTraverse = []KeyValue[string, int]{{Key: "C", Val: 3}, {Key: "A", Val: 1}, {Key: "B", Val: 2}}
 	tests[0].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}}
 	tests[0].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "C", Val: 3}, {Key: "B", Val: 2}, {Key: "A", Val: 1}}
-	tests[0].expectedGraphviz = `strict digraph "Patricia Trie" {
+	tests[0].expectedDOT = `strict digraph "Patricia Trie" {
   rankdir=TB;
   concentrate=false;
   node [shape=Mrecord];
@@ -49,7 +49,7 @@ func getPatriciaTests() []trieTest[int] {
 	tests[1].expectedRLVTraverse = []KeyValue[string, int]{{Key: "E", Val: 5}, {Key: "C", Val: 3}, {Key: "A", Val: 1}, {Key: "D", Val: 4}, {Key: "B", Val: 2}}
 	tests[1].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "A", Val: 1}, {Key: "B", Val: 2}, {Key: "C", Val: 3}, {Key: "D", Val: 4}, {Key: "E", Val: 5}}
 	tests[1].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "E", Val: 5}, {Key: "D", Val: 4}, {Key: "C", Val: 3}, {Key: "B", Val: 2}, {Key: "A", Val: 1}}
-	tests[1].expectedGraphviz = `strict digraph "Patricia Trie" {
+	tests[1].expectedDOT = `strict digraph "Patricia Trie" {
   rankdir=TB;
   concentrate=false;
   node [shape=Mrecord];
@@ -86,7 +86,7 @@ func getPatriciaTests() []trieTest[int] {
 	tests[2].expectedRLVTraverse = []KeyValue[string, int]{{Key: "S", Val: 19}, {Key: "M", Val: 13}, {Key: "G", Val: 7}, {Key: "A", Val: 1}, {Key: "D", Val: 4}, {Key: "P", Val: 16}, {Key: "J", Val: 10}}
 	tests[2].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "A", Val: 1}, {Key: "D", Val: 4}, {Key: "G", Val: 7}, {Key: "J", Val: 10}, {Key: "M", Val: 13}, {Key: "P", Val: 16}, {Key: "S", Val: 19}}
 	tests[2].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "S", Val: 19}, {Key: "P", Val: 16}, {Key: "M", Val: 13}, {Key: "J", Val: 10}, {Key: "G", Val: 7}, {Key: "D", Val: 4}, {Key: "A", Val: 1}}
-	tests[2].expectedGraphviz = `strict digraph "Patricia Trie" {
+	tests[2].expectedDOT = `strict digraph "Patricia Trie" {
   rankdir=TB;
   concentrate=false;
   node [shape=Mrecord];
@@ -133,7 +133,7 @@ func getPatriciaTests() []trieTest[int] {
 	tests[3].expectedRLVTraverse = []KeyValue[string, int]{{Key: "dance", Val: 13}, {Key: "dome", Val: 7}, {Key: "balloon", Val: 17}, {Key: "baby", Val: 5}, {Key: "band", Val: 11}, {Key: "dad", Val: 3}, {Key: "box", Val: 2}}
 	tests[3].expectedAscendingTraverse = []KeyValue[string, int]{{Key: "baby", Val: 5}, {Key: "balloon", Val: 17}, {Key: "band", Val: 11}, {Key: "box", Val: 2}, {Key: "dad", Val: 3}, {Key: "dance", Val: 13}, {Key: "dome", Val: 7}}
 	tests[3].expectedDescendingTraverse = []KeyValue[string, int]{{Key: "dome", Val: 7}, {Key: "dance", Val: 13}, {Key: "dad", Val: 3}, {Key: "box", Val: 2}, {Key: "band", Val: 11}, {Key: "balloon", Val: 17}, {Key: "baby", Val: 5}}
-	tests[3].expectedGraphviz = `strict digraph "Patricia Trie" {
+	tests[3].expectedDOT = `strict digraph "Patricia Trie" {
   rankdir=TB;
   concentrate=false;
   node [shape=Mrecord];

@@ -1,4 +1,4 @@
-package graphviz
+package dot
 
 import (
 	"bytes"
@@ -26,7 +26,7 @@ func (r *Record) AddField(f Field) {
 func (r *Record) Label() string {
 	fields := []string{}
 	for _, f := range r.Fields {
-		fields = append(fields, f.dotCode())
+		fields = append(fields, f.DOT())
 	}
 
 	return strings.Join(fields, " | ")
@@ -34,7 +34,7 @@ func (r *Record) Label() string {
 
 // Field represents a field.
 type Field interface {
-	dotCode() string
+	DOT() string
 }
 
 // simpleField represents a simple field.
@@ -51,8 +51,8 @@ func NewSimpleField(name, label string) Field {
 	}
 }
 
-// DotCode generates the Graphviz dot language code.
-func (f *simpleField) dotCode() string {
+// DOT generates a DOT representation of the simpleField object.
+func (f *simpleField) DOT() string {
 	buf := new(bytes.Buffer)
 
 	if f.Name != "" {
@@ -78,8 +78,8 @@ func NewComplexField(record Record) Field {
 	}
 }
 
-// DotCode generates the Graphviz dot language code.
-func (f *complexField) dotCode() string {
+// DOT generates a DOT representation of the complexField object.
+func (f *complexField) DOT() string {
 	buf := new(bytes.Buffer)
 
 	buf.WriteString("{ ")

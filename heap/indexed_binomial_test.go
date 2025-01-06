@@ -6,19 +6,19 @@ func getIndexedBinomialTests() []indexedHeapTest[int, string] {
 	tests := getIndexedHeapTests()
 
 	tests[0].heap = "Indexed Binomial Min Heap"
-	tests[0].expectedGraphviz = `strict digraph "Indexed Binomial Heap" {
+	tests[0].expectedDOT = `strict digraph "Indexed Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 }`
 
 	tests[1].heap = "Indexed Binomial Max Heap"
-	tests[1].expectedGraphviz = `strict digraph "Indexed Binomial Heap" {
+	tests[1].expectedDOT = `strict digraph "Indexed Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 }`
 
 	tests[2].heap = "Indexed Binomial Min Heap"
-	tests[2].expectedGraphviz = `strict digraph "Indexed Binomial Heap" {
+	tests[2].expectedDOT = `strict digraph "Indexed Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -32,7 +32,7 @@ func getIndexedBinomialTests() []indexedHeapTest[int, string] {
 }`
 
 	tests[3].heap = "Indexed Binomial Max Heap"
-	tests[3].expectedGraphviz = `strict digraph "Indexed Binomial Heap" {
+	tests[3].expectedDOT = `strict digraph "Indexed Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -46,7 +46,7 @@ func getIndexedBinomialTests() []indexedHeapTest[int, string] {
 }`
 
 	tests[4].heap = "Indexed Binomial Min Heap"
-	tests[4].expectedGraphviz = `strict digraph "Indexed Binomial Heap" {
+	tests[4].expectedDOT = `strict digraph "Indexed Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -66,7 +66,7 @@ func getIndexedBinomialTests() []indexedHeapTest[int, string] {
 }`
 
 	tests[5].heap = "Indexed Binomial Max Heap"
-	tests[5].expectedGraphviz = `strict digraph "Indexed Binomial Heap" {
+	tests[5].expectedDOT = `strict digraph "Indexed Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -86,7 +86,7 @@ func getIndexedBinomialTests() []indexedHeapTest[int, string] {
 }`
 
 	tests[6].heap = "Indexed Binomial Min Heap"
-	tests[6].expectedGraphviz = `strict digraph "Indexed Binomial Heap" {
+	tests[6].expectedDOT = `strict digraph "Indexed Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 
@@ -118,7 +118,7 @@ func getIndexedBinomialTests() []indexedHeapTest[int, string] {
 }`
 
 	tests[7].heap = "Indexed Binomial Max Heap"
-	tests[7].expectedGraphviz = `strict digraph "Indexed Binomial Heap" {
+	tests[7].expectedDOT = `strict digraph "Indexed Binomial Heap" {
   concentrate=false;
   node [shape=Mrecord];
 

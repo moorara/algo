@@ -67,7 +67,7 @@ type trieTest[V any] struct {
 	expectedRLVTraverse        []KeyValue[string, V]
 	expectedAscendingTraverse  []KeyValue[string, V]
 	expectedDescendingTraverse []KeyValue[string, V]
-	expectedGraphviz           string
+	expectedDOT                string
 }
 
 func getTrieTests() []trieTest[int] {
@@ -616,8 +616,8 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)
 		})
 
-		t.Run("Graphviz", func(t *testing.T) {
-			assert.Equal(t, test.expectedGraphviz, trie.Graphviz())
+		t.Run("DOT", func(t *testing.T) {
+			assert.Equal(t, test.expectedDOT, trie.DOT())
 		})
 
 		t.Run("Match", func(t *testing.T) {

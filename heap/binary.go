@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 )
 
 // binary implements a binary heap tree.
@@ -146,30 +146,30 @@ func (h *binary[K, V]) ContainsValue(val V) bool {
 	return false
 }
 
-// Graphviz returns a visualization of the heap in Graphviz format.
-func (h *binary[K, V]) Graphviz() string {
-	graph := graphviz.NewGraph(true, true, false, "Binary Heap", "", "", "", graphviz.ShapeMrecord)
+// DOT generates a DOT representation of the heap.
+func (h *binary[K, V]) DOT() string {
+	graph := dot.NewGraph(true, true, false, "Binary Heap", "", "", "", dot.ShapeMrecord)
 
 	for k := 1; k <= h.n; k++ {
 		name := fmt.Sprintf("%d", k)
 
-		rec := graphviz.NewRecord(
-			graphviz.NewSimpleField("", fmt.Sprintf("%v", h.heap[k].Key)),
-			graphviz.NewSimpleField("", fmt.Sprintf("%v", h.heap[k].Val)),
+		rec := dot.NewRecord(
+			dot.NewSimpleField("", fmt.Sprintf("%v", h.heap[k].Key)),
+			dot.NewSimpleField("", fmt.Sprintf("%v", h.heap[k].Val)),
 		)
 
-		graph.AddNode(graphviz.NewNode(name, "", rec.Label(), "", "", "", "", ""))
+		graph.AddNode(dot.NewNode(name, "", rec.Label(), "", "", "", "", ""))
 
 		if l := 2 * k; l <= h.n {
 			left := fmt.Sprintf("%d", l)
-			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, left, dot.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		if r := 2*k + 1; r <= h.n {
 			right := fmt.Sprintf("%d", r)
-			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, right, dot.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 	}
 
-	return graph.DotCode()
+	return graph.DOT()
 }

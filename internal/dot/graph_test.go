@@ -1,4 +1,4 @@
-package graphviz
+package dot
 
 import (
 	"testing"
@@ -8,19 +8,19 @@ import (
 
 func TestGraph(t *testing.T) {
 	tests := []struct {
-		name            string
-		strict          bool
-		diagraph        bool
-		concentrate     bool
-		graphName       string
-		rankDir         RankDir
-		nodeColor       Color
-		nodeStyle       Style
-		nodeShape       Shape
-		nodes           []Node
-		edges           []Edge
-		subgraphs       []Subgraph
-		expectedDotCode string
+		name        string
+		strict      bool
+		diagraph    bool
+		concentrate bool
+		graphName   string
+		rankDir     RankDir
+		nodeColor   Color
+		nodeStyle   Style
+		nodeShape   Shape
+		nodes       []Node
+		edges       []Edge
+		subgraphs   []Subgraph
+		expectedDOT string
 	}{
 		{
 			name:        "SimpleGraph",
@@ -33,14 +33,14 @@ func TestGraph(t *testing.T) {
 			nodeStyle:   "",
 			nodeShape:   "",
 			nodes: []Node{
-				Node{Name: "a0"},
-				Node{Name: "a1"},
+				{Name: "a0"},
+				{Name: "a1"},
 			},
 			edges: []Edge{
-				Edge{From: "a0", To: "a1", EdgeType: EdgeTypeUndirected},
+				{From: "a0", To: "a1", EdgeType: EdgeTypeUndirected},
 			},
-			subgraphs:       []Subgraph{},
-			expectedDotCode: graph01,
+			subgraphs:   []Subgraph{},
+			expectedDOT: graph01,
 		},
 		{
 			name:        "GraphWithLabels",
@@ -53,16 +53,16 @@ func TestGraph(t *testing.T) {
 			nodeStyle:   "",
 			nodeShape:   "",
 			nodes: []Node{
-				Node{Name: "b0", Label: "B0"},
-				Node{Name: "b1", Label: "B3"},
-				Node{Name: "b2", Label: "B2"},
+				{Name: "b0", Label: "B0"},
+				{Name: "b1", Label: "B3"},
+				{Name: "b2", Label: "B2"},
 			},
 			edges: []Edge{
-				Edge{From: "b0", To: "b1", EdgeType: EdgeTypeUndirected, Color: ColorRed},
-				Edge{From: "b0", To: "b2", EdgeType: EdgeTypeUndirected, Color: ColorBlack},
+				{From: "b0", To: "b1", EdgeType: EdgeTypeUndirected, Color: ColorRed},
+				{From: "b0", To: "b2", EdgeType: EdgeTypeUndirected, Color: ColorBlack},
 			},
-			subgraphs:       []Subgraph{},
-			expectedDotCode: graph02,
+			subgraphs:   []Subgraph{},
+			expectedDOT: graph02,
 		},
 		{
 			name:        "GraphWithSubgraph",
@@ -75,20 +75,20 @@ func TestGraph(t *testing.T) {
 			nodeStyle:   "",
 			nodeShape:   "",
 			nodes: []Node{
-				Node{Name: "c0", Label: "C0", Shape: ShapePlain},
-				Node{Name: "c1", Label: "C1", Shape: ShapePlain},
-				Node{Name: "c2", Label: "C2", Shape: ShapePlain},
-				Node{Name: "c3", Label: "C3", Shape: ShapePlain},
+				{Name: "c0", Label: "C0", Shape: ShapePlain},
+				{Name: "c1", Label: "C1", Shape: ShapePlain},
+				{Name: "c2", Label: "C2", Shape: ShapePlain},
+				{Name: "c3", Label: "C3", Shape: ShapePlain},
 			},
 			edges: []Edge{
-				Edge{From: "c0", To: "c1", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
-				Edge{From: "c0", To: "c2", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
-				Edge{From: "c2", To: "c3", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
+				{From: "c0", To: "c1", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
+				{From: "c0", To: "c2", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
+				{From: "c2", To: "c3", EdgeType: EdgeTypeDirected, EdgeDir: EdgeDirBoth, ArrowHead: ArrowTypeOpen, ArrowTail: ArrowTypeDot},
 			},
 			subgraphs: []Subgraph{
-				Subgraph{Name: "", Label: "Thread", Rank: RankSame},
+				{Name: "", Label: "Thread", Rank: RankSame},
 			},
-			expectedDotCode: graph03,
+			expectedDOT: graph03,
 		},
 		{
 			name:        "ComplexGraph",
@@ -101,38 +101,38 @@ func TestGraph(t *testing.T) {
 			nodeStyle:   StyleFilled,
 			nodeShape:   ShapeMrecord,
 			nodes: []Node{
-				Node{Name: "start", Label: "Start", Color: ColorBlue, Shape: ShapeBox},
-				Node{Name: "end", Label: "End", Color: ColorBlue, Shape: ShapeBox},
+				{Name: "start", Label: "Start", Color: ColorBlue, Shape: ShapeBox},
+				{Name: "end", Label: "End", Color: ColorBlue, Shape: ShapeBox},
 			},
 			edges: []Edge{
-				Edge{From: "start", To: "e0", EdgeType: EdgeTypeDirected, Label: "Start", Color: ColorRed, Style: StyleSolid},
-				Edge{From: "start", To: "f0", EdgeType: EdgeTypeDirected, Label: "Start", Color: ColorRed, Style: StyleSolid},
-				Edge{From: "e1", To: "end", EdgeType: EdgeTypeDirected, Label: "End", Color: ColorRed, Style: StyleSolid},
-				Edge{From: "f1", To: "end", EdgeType: EdgeTypeDirected, Label: "End", Color: ColorRed, Style: StyleSolid},
+				{From: "start", To: "e0", EdgeType: EdgeTypeDirected, Label: "Start", Color: ColorRed, Style: StyleSolid},
+				{From: "start", To: "f0", EdgeType: EdgeTypeDirected, Label: "Start", Color: ColorRed, Style: StyleSolid},
+				{From: "e1", To: "end", EdgeType: EdgeTypeDirected, Label: "End", Color: ColorRed, Style: StyleSolid},
+				{From: "f1", To: "end", EdgeType: EdgeTypeDirected, Label: "End", Color: ColorRed, Style: StyleSolid},
 			},
 			subgraphs: []Subgraph{
-				Subgraph{
+				{
 					Name: "cluster0", Label: "Process 0", Color: ColorGray, Style: StyleFilled,
 					Nodes: []Node{
-						Node{Name: "e0"},
-						Node{Name: "e1"},
+						{Name: "e0"},
+						{Name: "e1"},
 					},
 					Edges: []Edge{
-						Edge{From: "e0", To: "e1", EdgeType: EdgeTypeDirected, Style: StyleDashed},
+						{From: "e0", To: "e1", EdgeType: EdgeTypeDirected, Style: StyleDashed},
 					},
 				},
-				Subgraph{
+				{
 					Name: "cluster1", Label: "Process 1", Color: ColorGray, Style: StyleFilled,
 					Nodes: []Node{
-						Node{Name: "f0"},
-						Node{Name: "f1"},
+						{Name: "f0"},
+						{Name: "f1"},
 					},
 					Edges: []Edge{
-						Edge{From: "f0", To: "f1", EdgeType: EdgeTypeDirected, Style: StyleDashed},
+						{From: "f0", To: "f1", EdgeType: EdgeTypeDirected, Style: StyleDashed},
 					},
 				},
 			},
-			expectedDotCode: graph04,
+			expectedDOT: graph04,
 		},
 	}
 
@@ -143,7 +143,7 @@ func TestGraph(t *testing.T) {
 			g.AddEdge(tc.edges...)
 			g.AddSubgraph(tc.subgraphs...)
 
-			assert.Equal(t, tc.expectedDotCode, g.DotCode())
+			assert.Equal(t, tc.expectedDOT, g.DOT())
 		})
 	}
 }

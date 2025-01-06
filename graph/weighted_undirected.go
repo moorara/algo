@@ -3,7 +3,7 @@ package graph
 import (
 	"fmt"
 
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 	"github.com/moorara/algo/list"
 )
 
@@ -356,13 +356,13 @@ func (g *WeightedUndirected) MinimumSpanningTree() *MinimumSpanningTree {
 	return newMinimumSpanningTree(g)
 }
 
-// Graphviz returns a visualization of the graph in Graphviz format.
-func (g *WeightedUndirected) Graphviz() string {
-	graph := graphviz.NewGraph(true, false, false, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
+// DOT generates a DOT representation of the graph.
+func (g *WeightedUndirected) DOT() string {
+	graph := dot.NewGraph(true, false, false, "", "", "", dot.StyleSolid, dot.ShapeCircle)
 
 	for i := 0; i < g.v; i++ {
 		name := fmt.Sprintf("%d", i)
-		graph.AddNode(graphviz.NewNode("", "", name, "", "", "", "", ""))
+		graph.AddNode(dot.NewNode("", "", name, "", "", "", "", ""))
 	}
 
 	for v := range g.adj {
@@ -371,10 +371,10 @@ func (g *WeightedUndirected) Graphviz() string {
 				from := fmt.Sprintf("%d", v)
 				to := fmt.Sprintf("%d", e.Other(v))
 				weight := fmt.Sprintf("%f", e.Weight())
-				graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeUndirected, "", weight, "", "", "", ""))
+				graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeUndirected, "", weight, "", "", "", ""))
 			}
 		}
 	}
 
-	return graph.DotCode()
+	return graph.DOT()
 }

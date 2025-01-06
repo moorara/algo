@@ -3,7 +3,7 @@ package graph
 import (
 	"fmt"
 
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 	"github.com/moorara/algo/list"
 )
 
@@ -303,22 +303,22 @@ func (g *Undirected) ConnectedComponents() *ConnectedComponents {
 	return cc
 }
 
-// Graphviz returns a visualization of the graph in Graphviz format.
-func (g *Undirected) Graphviz() string {
-	graph := graphviz.NewGraph(true, false, false, "", "", "", graphviz.StyleSolid, graphviz.ShapeCircle)
+// DOT generates a DOT representation of the graph.
+func (g *Undirected) DOT() string {
+	graph := dot.NewGraph(true, false, false, "", "", "", dot.StyleSolid, dot.ShapeCircle)
 
 	for i := 0; i < g.v; i++ {
 		name := fmt.Sprintf("%d", i)
-		graph.AddNode(graphviz.NewNode(name, "", name, "", "", "", "", ""))
+		graph.AddNode(dot.NewNode(name, "", name, "", "", "", "", ""))
 	}
 
 	for v := range g.adj {
 		for _, w := range g.adj[v] {
 			from := fmt.Sprintf("%d", v)
 			to := fmt.Sprintf("%d", w)
-			graph.AddEdge(graphviz.NewEdge(from, to, graphviz.EdgeTypeUndirected, "", "", "", "", "", ""))
+			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeUndirected, "", "", "", "", "", ""))
 		}
 	}
 
-	return graph.DotCode()
+	return graph.DOT()
 }

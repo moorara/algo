@@ -426,39 +426,39 @@ func TestDFA_Isomorphic(t *testing.T) {
 	}
 }
 
-func TestDFA_Graphviz(t *testing.T) {
+func TestDFA_DOT(t *testing.T) {
 	dfas := getTestDFAs()
 
 	tests := []struct {
-		name             string
-		d                *DFA
-		expectedGraphviz string
+		name        string
+		d           *DFA
+		expectedDOT string
 	}{
 		{
-			name:             "Empty",
-			d:                NewDFA(0, States{1}),
-			expectedGraphviz: dfaEmpty,
+			name:        "Empty",
+			d:           NewDFA(0, States{1}),
+			expectedDOT: dfaEmpty,
 		},
 		{
-			name:             "First",
-			d:                dfas[0],
-			expectedGraphviz: dfa01,
+			name:        "First",
+			d:           dfas[0],
+			expectedDOT: dfa01,
 		},
 		{
-			name:             "Second",
-			d:                dfas[1],
-			expectedGraphviz: dfa02,
+			name:        "Second",
+			d:           dfas[1],
+			expectedDOT: dfa02,
 		},
 		{
-			name:             "Third",
-			d:                dfas[3],
-			expectedGraphviz: dfa03,
+			name:        "Third",
+			d:           dfas[3],
+			expectedDOT: dfa03,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedGraphviz, tc.d.Graphviz())
+			assert.Equal(t, tc.expectedDOT, tc.d.DOT())
 		})
 	}
 }

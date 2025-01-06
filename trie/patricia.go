@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 )
 
 type patriciaNode[V any] struct {
@@ -785,9 +785,9 @@ func (t *patricia[V]) _traverse(n *patriciaNode[V], order TraverseOrder, visit f
 	}
 }
 
-// Graphviz generates and returns a string representation of the Patricia trie in DOT format.
+// DOT generates a DOT representation of the Patricia trie in DOT format.
 // This format is commonly used for visualizing graphs with Graphviz tools.
-func (t *patricia[V]) Graphviz() string {
+func (t *patricia[V]) DOT() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*patriciaNode[V]]int{}
@@ -797,63 +797,63 @@ func (t *patricia[V]) Graphviz() string {
 		return true
 	})
 
-	graph := graphviz.NewGraph(true, true, false, "Patricia Trie", graphviz.RankDirTB, "", "", graphviz.ShapeMrecord)
+	graph := dot.NewGraph(true, true, false, "Patricia Trie", dot.RankDirTB, "", "", dot.ShapeMrecord)
 
 	t._traverse(t.root, VLR, func(n *patriciaNode[V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 
-		rec := graphviz.NewRecord(
-			graphviz.NewComplexField(
-				graphviz.NewRecord(
-					graphviz.NewSimpleField("", fmt.Sprintf("%s,%v", n.key, n.val)),
-					graphviz.NewComplexField(
-						graphviz.NewRecord(
-							graphviz.NewSimpleField("l", "•"),
-							graphviz.NewSimpleField("", fmt.Sprintf("%d", n.bp)),
-							graphviz.NewSimpleField("", n.key.BitString()),
-							graphviz.NewSimpleField("r", "•"),
+		rec := dot.NewRecord(
+			dot.NewComplexField(
+				dot.NewRecord(
+					dot.NewSimpleField("", fmt.Sprintf("%s,%v", n.key, n.val)),
+					dot.NewComplexField(
+						dot.NewRecord(
+							dot.NewSimpleField("l", "•"),
+							dot.NewSimpleField("", fmt.Sprintf("%d", n.bp)),
+							dot.NewSimpleField("", n.key.BitString()),
+							dot.NewSimpleField("r", "•"),
 						),
 					),
 				),
 			),
 		)
 
-		graph.AddNode(graphviz.NewNode(name, "", rec.Label(), "", "", "", "", ""))
+		graph.AddNode(dot.NewNode(name, "", rec.Label(), "", "", "", "", ""))
 
 		from := fmt.Sprintf("%s:l", name)
 		left := fmt.Sprintf("%d", nodeID[n.left])
 
-		var color graphviz.Color
-		var style graphviz.Style
+		var color dot.Color
+		var style dot.Style
 
 		if n.left.bp > n.bp {
-			color = graphviz.ColorBlue
+			color = dot.ColorBlue
 		} else {
-			color = graphviz.ColorRed
-			style = graphviz.StyleDashed
+			color = dot.ColorRed
+			style = dot.StyleDashed
 		}
 
-		graph.AddEdge(graphviz.NewEdge(from, left, graphviz.EdgeTypeDirected, "", "", color, style, "", ""))
+		graph.AddEdge(dot.NewEdge(from, left, dot.EdgeTypeDirected, "", "", color, style, "", ""))
 
 		if n != t.root {
 			from := fmt.Sprintf("%s:r", name)
 			right := fmt.Sprintf("%d", nodeID[n.right])
 
-			var color graphviz.Color
-			var style graphviz.Style
+			var color dot.Color
+			var style dot.Style
 
 			if n.right.bp > n.bp {
-				color = graphviz.ColorBlue
+				color = dot.ColorBlue
 			} else {
-				color = graphviz.ColorRed
-				style = graphviz.StyleDashed
+				color = dot.ColorRed
+				style = dot.StyleDashed
 			}
 
-			graph.AddEdge(graphviz.NewEdge(from, right, graphviz.EdgeTypeDirected, "", "", color, style, "", ""))
+			graph.AddEdge(dot.NewEdge(from, right, dot.EdgeTypeDirected, "", "", color, style, "", ""))
 		}
 
 		return true
 	})
 
-	return graph.DotCode()
+	return graph.DOT()
 }

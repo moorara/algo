@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/graphviz"
+	"github.com/moorara/algo/internal/dot"
 )
 
 type avlNode[K, V any] struct {
@@ -622,9 +622,9 @@ func (t *avl[K, V]) _traverse(n *avlNode[K, V], order TraverseOrder, visit func(
 	}
 }
 
-// Graphviz generates and returns a string representation of the AVL tree in DOT format.
+// DOT generates a DOT representation of the AVL tree in DOT format.
 // This format is commonly used for visualizing graphs with Graphviz tools.
-func (t *avl[K, V]) Graphviz() string {
+func (t *avl[K, V]) DOT() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*avlNode[K, V]]int{}
@@ -634,26 +634,26 @@ func (t *avl[K, V]) Graphviz() string {
 		return true
 	})
 
-	graph := graphviz.NewGraph(true, true, false, "AVL", "", "", "", graphviz.ShapeOval)
+	graph := dot.NewGraph(true, true, false, "AVL", "", "", "", dot.ShapeOval)
 
 	t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 		label := fmt.Sprintf("%v,%v", n.key, n.val)
 
-		graph.AddNode(graphviz.NewNode(name, "", label, "", "", "", "", ""))
+		graph.AddNode(dot.NewNode(name, "", label, "", "", "", "", ""))
 
 		if n.left != nil {
 			left := fmt.Sprintf("%d", nodeID[n.left])
-			graph.AddEdge(graphviz.NewEdge(name, left, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, left, dot.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		if n.right != nil {
 			right := fmt.Sprintf("%d", nodeID[n.right])
-			graph.AddEdge(graphviz.NewEdge(name, right, graphviz.EdgeTypeDirected, "", "", "", "", "", ""))
+			graph.AddEdge(dot.NewEdge(name, right, dot.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		return true
 	})
 
-	return graph.DotCode()
+	return graph.DOT()
 }
