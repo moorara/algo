@@ -43,6 +43,34 @@ func NewIndexedBinary[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFunc[
 	}
 }
 
+// nolint: unused
+// This method verifies the integrity of an indexed binary heap.
+func (h *indexedBinary[K, V]) verify() bool {
+	// Verify the heap is a complete tree.
+	for i := 1; i <= h.n; i++ {
+		if j := h.heap[i]; h.pos[j] == -1 || h.kvs[j] == nil {
+			return false
+		}
+	}
+
+	// Verify the heap property (heap order).
+	for k := 1; k <= h.n; k++ {
+		if l := 2 * k; l <= h.n {
+			if h.compare(k, l) > 0 {
+				return false
+			}
+		}
+
+		if r := 2*k + 1; r <= h.n {
+			if h.compare(k, r) > 0 {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 // compare compares two keys on the heap by their positions.
 func (h *indexedBinary[K, V]) compare(a, b int) int {
 	i, j := h.heap[a], h.heap[b]

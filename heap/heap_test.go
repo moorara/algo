@@ -821,6 +821,8 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string]) {
 	t.Run(test.name, func(t *testing.T) {
 		t.Run("Before", func(t *testing.T) {
+			assert.True(t, heap.verify())
+
 			assert.Zero(t, heap.Size())
 			assert.True(t, heap.IsEmpty())
 			assert.False(t, heap.ContainsKey(0))
@@ -840,6 +842,7 @@ func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string
 		t.Run("Insert", func(t *testing.T) {
 			for _, kv := range test.inserts {
 				heap.Insert(kv.Key, kv.Val)
+				assert.True(t, heap.verify())
 			}
 		})
 
@@ -881,6 +884,7 @@ func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string
 				assert.Equal(t, kv.Key, deleteKey)
 				assert.Equal(t, kv.Val, deleteVal)
 				assert.True(t, deleteOK)
+				assert.True(t, heap.verify())
 			}
 		})
 
@@ -890,9 +894,12 @@ func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string
 			}
 
 			heap.DeleteAll()
+			assert.True(t, heap.verify())
 		})
 
 		t.Run("After", func(t *testing.T) {
+			assert.True(t, heap.verify())
+
 			assert.Zero(t, heap.Size())
 			assert.True(t, heap.IsEmpty())
 			assert.False(t, heap.ContainsKey(0))
@@ -914,6 +921,8 @@ func runHeapTest(t *testing.T, heap Heap[int, string], test heapTest[int, string
 func runIndexedHeapTest(t *testing.T, heap IndexedHeap[int, string], test indexedHeapTest[int, string]) {
 	t.Run(test.name, func(t *testing.T) {
 		t.Run("Before", func(t *testing.T) {
+			assert.True(t, heap.verify())
+
 			assert.Zero(t, heap.Size())
 			assert.True(t, heap.IsEmpty())
 			assert.False(t, heap.ContainsIndex(0))
@@ -948,6 +957,7 @@ func runIndexedHeapTest(t *testing.T, heap IndexedHeap[int, string], test indexe
 			for _, kv := range test.inserts {
 				ok := heap.Insert(kv.index, kv.key, kv.val)
 				assert.True(t, ok)
+				assert.True(t, heap.verify())
 			}
 
 			// Try inserting an index already on the heap.
@@ -962,6 +972,7 @@ func runIndexedHeapTest(t *testing.T, heap IndexedHeap[int, string], test indexe
 			for _, kv := range test.changeKeys {
 				ok := heap.ChangeKey(kv.index, kv.key)
 				assert.True(t, ok)
+				assert.True(t, heap.verify())
 			}
 
 			// Try changing the key for an index not on the heap.
@@ -1020,6 +1031,7 @@ func runIndexedHeapTest(t *testing.T, heap IndexedHeap[int, string], test indexe
 				assert.Equal(t, kv.key, deleteKey)
 				assert.Equal(t, kv.val, deleteVal)
 				assert.True(t, deleteOK)
+				assert.True(t, heap.verify())
 			}
 		})
 
@@ -1029,6 +1041,7 @@ func runIndexedHeapTest(t *testing.T, heap IndexedHeap[int, string], test indexe
 				assert.Equal(t, kv.key, deleteKey)
 				assert.Equal(t, kv.val, deleteVal)
 				assert.True(t, deleteOK)
+				assert.True(t, heap.verify())
 			}
 		})
 
@@ -1038,9 +1051,12 @@ func runIndexedHeapTest(t *testing.T, heap IndexedHeap[int, string], test indexe
 			}
 
 			heap.DeleteAll()
+			assert.True(t, heap.verify())
 		})
 
 		t.Run("After", func(t *testing.T) {
+			assert.True(t, heap.verify())
+
 			assert.Zero(t, heap.Size())
 			assert.True(t, heap.IsEmpty())
 			assert.False(t, heap.ContainsKey(0))
@@ -1075,6 +1091,8 @@ func runIndexedHeapTest(t *testing.T, heap IndexedHeap[int, string], test indexe
 func runMergeableHeapTest(t *testing.T, heap MergeableHeap[int, string], test mergeableHeapTest[int, string]) {
 	t.Run(test.name, func(t *testing.T) {
 		t.Run("Before", func(t *testing.T) {
+			assert.True(t, heap.verify())
+
 			assert.Zero(t, heap.Size())
 			assert.True(t, heap.IsEmpty())
 			assert.False(t, heap.ContainsKey(0))
@@ -1094,11 +1112,13 @@ func runMergeableHeapTest(t *testing.T, heap MergeableHeap[int, string], test me
 		t.Run("Insert", func(t *testing.T) {
 			for _, kv := range test.inserts {
 				heap.Insert(kv.Key, kv.Val)
+				assert.True(t, heap.verify())
 			}
 		})
 
 		t.Run("Merge", func(t *testing.T) {
 			heap.Merge(test.merge)
+			assert.True(t, heap.verify())
 		})
 
 		t.Run("Size", func(t *testing.T) {
@@ -1139,6 +1159,7 @@ func runMergeableHeapTest(t *testing.T, heap MergeableHeap[int, string], test me
 				assert.Equal(t, kv.Key, deleteKey)
 				assert.Equal(t, kv.Val, deleteVal)
 				assert.True(t, deleteOK)
+				assert.True(t, heap.verify())
 			}
 		})
 
@@ -1148,9 +1169,12 @@ func runMergeableHeapTest(t *testing.T, heap MergeableHeap[int, string], test me
 			}
 
 			heap.DeleteAll()
+			assert.True(t, heap.verify())
 		})
 
 		t.Run("After", func(t *testing.T) {
+			assert.True(t, heap.verify())
+
 			assert.Zero(t, heap.Size())
 			assert.True(t, heap.IsEmpty())
 			assert.False(t, heap.ContainsKey(0))

@@ -5,6 +5,8 @@ package heap
 
 // Heap represents a heap (priority queue) abstract data type.
 type Heap[K, V any] interface {
+	verify() bool
+
 	Size() int
 	IsEmpty() bool
 	Insert(K, V)
@@ -18,6 +20,8 @@ type Heap[K, V any] interface {
 
 // IndexedHeap represents an indexed heap (priority queue) abstract data type.
 type IndexedHeap[K, V any] interface {
+	verify() bool
+
 	Size() int
 	IsEmpty() bool
 	Insert(int, K, V) bool
