@@ -115,6 +115,53 @@ func NewBinomial[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) MergeableH
 	}
 }
 
+// This method verifies the integrity of a binomial heap.
+func (h *binomial[K, V]) verify() bool {
+	if h.head == nil {
+		return true
+	}
+
+	// Verify the structural property:
+	// Ensure the root list is sorted in monotonically increasing order of binomial tree orders.
+	for curr, next := h.head, h.head.sibling; next != nil; curr, next = next, next.sibling {
+		if curr.order >= next.order {
+			return false
+		}
+	}
+
+	// Verify the properties of each binomial tree in the root list.
+	for curr := h.head; curr != nil; curr = curr.sibling {
+		if !h.verifyBinomialTree(curr) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// verifyBinomialTree verifies the properties of a binomial tree rooted at the given node.
+func (h *binomial[K, V]) verifyBinomialTree(n *binomialNode[K, V]) bool {
+	for i, curr := 1, n.child; curr != nil; i, curr = i+1, curr.sibling {
+		// In a min-heap, each node's key must be smaller than or equal to its children's keys.
+		// In a max-heap, each node's key must be greater than or equal to its children's keys.
+		if h.cmpKey(n.key, curr.key) > 0 {
+			return false
+		}
+
+		// A binomial node of order k has children with orders k-1, k-2, ..., 0 from left to right.
+		if curr.order != n.order-i {
+			return false
+		}
+
+		// Recursively, verify each binomial tree root at the current child.
+		if !h.verifyBinomialTree(curr) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // findExtremum traverses the sibling linked list starting from the given node n
 // and finds the extremum (minimum in min heap or maximum in max heap) node.
 //
@@ -172,7 +219,7 @@ func (_ *binomial[K, V]) link(child, parent *binomialNode[K, V]) {
 
 // merge performs a merge sort on two root lists of binomial trees.
 //
-// The resulting root list is sorted in monotonically increasing order of binomial tree orders,
+// The resulting root list is sorted in monotonically non-decreasing order of binomial tree orders,
 // and it may contain up to two binomial trees of the same order.
 // These trees are combined later during the consolidate operation, which follows this merge operation.
 //

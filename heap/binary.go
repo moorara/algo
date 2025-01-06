@@ -31,6 +31,44 @@ func NewBinary[K, V any](size int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) He
 	}
 }
 
+// This method verifies the integrity of a binary heap.
+func (h *binary[K, V]) verify() bool {
+	if h.heap[0] != nil {
+		return false
+	}
+
+	// Verify the heap is a complete tree.
+	for i := 1; i <= h.n; i++ {
+		if h.heap[i] == nil {
+			return false
+		}
+	}
+
+	// Verify the deleted items are dereferenced.
+	for i := h.n + 1; i < len(h.heap); i++ {
+		if h.heap[i] != nil {
+			return false
+		}
+	}
+
+	// Verify the heap property (heap order).
+	for k := 1; k <= h.n; k++ {
+		if l := 2 * k; l <= h.n {
+			if h.cmpKey(h.heap[k].Key, h.heap[l].Key) > 0 {
+				return false
+			}
+		}
+
+		if r := 2*k + 1; r <= h.n {
+			if h.cmpKey(h.heap[k].Key, h.heap[r].Key) > 0 {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 func (h *binary[K, V]) resize(size int) {
 	newH := make([]*KeyValue[K, V], size)
 	copy(newH, h.heap)
