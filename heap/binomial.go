@@ -45,7 +45,7 @@ type binomialNode[K, V any] struct {
 }
 
 // binomial implements a binomial heap.
-// A binomial heap is implemented as a list of root nodes (root list) of binomial trees
+// A binomial heap is implemented as a linked list of root nodes (root list) of binomial trees
 // sorted by the increasing order of binomial trees.
 type binomial[K, V any] struct {
 	cmpKey CompareFunc[K]
@@ -104,8 +104,10 @@ type binomial[K, V any] struct {
 //   - The children of the root of a Bₖ tree are the roots of B₀, B₁, ..., Bₖ₋₁ trees.
 //   - A binomial tree Bₖ of order k has C(k, d) nodes at depth d, a binomial coefficient.
 //
-// cmpKey is a function for comparing two keys.
-// eqVal is a function for checking the equality of two values.
+// Parameters:
+//
+//   - cmpKey is a function for comparing two keys.
+//   - eqVal is a function for checking the equality of two values.
 func NewBinomial[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) MergeableHeap[K, V] {
 	return &binomial[K, V]{
 		cmpKey: cmpKey,
@@ -143,20 +145,20 @@ func (h *binomial[K, V]) verify() bool {
 // nolint: unused
 // verifyBinomialTree verifies the properties of a binomial tree rooted at the given node.
 func (h *binomial[K, V]) verifyBinomialTree(n *binomialNode[K, V]) bool {
-	for i, curr := 1, n.child; curr != nil; i, curr = i+1, curr.sibling {
+	for i, child := 1, n.child; child != nil; i, child = i+1, child.sibling {
 		// In a min-heap, each node's key must be smaller than or equal to its children's keys.
 		// In a max-heap, each node's key must be greater than or equal to its children's keys.
-		if h.cmpKey(n.key, curr.key) > 0 {
+		if h.cmpKey(n.key, child.key) > 0 {
 			return false
 		}
 
 		// A binomial node of order k has children with orders k-1, k-2, ..., 0 from left to right.
-		if curr.order != n.order-i {
+		if child.order != n.order-i {
 			return false
 		}
 
 		// Recursively, verify each binomial tree root at the current child.
-		if !h.verifyBinomialTree(curr) {
+		if !h.verifyBinomialTree(child) {
 			return false
 		}
 	}
@@ -164,12 +166,12 @@ func (h *binomial[K, V]) verifyBinomialTree(n *binomialNode[K, V]) bool {
 	return true
 }
 
-// findExtremum traverses the sibling linked list starting from the given node n
-// and finds the extremum (minimum in min heap or maximum in max heap) node.
+// findExt traverses the sibling linked list starting from the given node n
+// and finds the extremum (minimum in min-heap or maximum in max-heap) node.
 //
 // It returns the predecessor of the extremum node and the extremum node itself.
 // If the list is empty, it returns nil for both values.
-func (h *binomial[K, V]) findExtremum(n *binomialNode[K, V]) (*binomialNode[K, V], *binomialNode[K, V]) {
+func (h *binomial[K, V]) findExt(n *binomialNode[K, V]) (*binomialNode[K, V], *binomialNode[K, V]) {
 	if n == nil {
 		return nil, nil
 	}
@@ -184,39 +186,24 @@ func (h *binomial[K, V]) findExtremum(n *binomialNode[K, V]) (*binomialNode[K, V
 	return prev, ext
 }
 
-// link constructs a binomial tree of order k+1 from two binomial trees of order k.
-// It attaches one of the root nodes as the left-most child of the other.
-//
-// It accepts two root nodes and assumes the key of the first root comes after
-// the key of the second root (greater in min heap or smaller in max heap).
-// The second root then becomes the new root.
-//
-// General tree representation:
-//
-//	     [ 3 ]                   [ 2 ]                                  [ 2 ]
-//	  ┌────┴────┐             ┌────┴────┐                     ┌───────────┼───────────┐
-//	[ 7 ]     [ 5 ]    +    [ 6 ]     [ 4 ]    --->         [ 3 ]       [ 6 ]       [ 4 ]
-//	  │                       │                          ┌────┴────┐      │
-//	[ 9 ]                   [ 8 ]                      [ 7 ]     [ 5 ]  [ 8 ]
-//	                                                     │
-//	                                                   [ 8 ]
-//
-// LCRS representation:
-//
-//	[ 3 ]                  [ 2 ]                     [ 2 ]
-//	  │                      │                         │
-//	[ 7 ]----[ 5 ]    +    [ 6 ]----[ 4 ]    --->    [ 3 ]-----------[ 6 ]----[ 4 ]
-//	  │                      │                         │               │
-//	[ 9 ]                  [ 8 ]                     [ 7 ]----[ 5 ]  [ 8 ]
-//	                                                   │
-//	                                                 [ 8 ]
-//
-// This method is defined on the binomial struct to prevent name clashes
-// with other similar implementations in this package.
-func (_ *binomial[K, V]) link(child, parent *binomialNode[K, V]) {
-	child.sibling = parent.child
-	parent.child = child
-	parent.order++
+// childrenToRootList reverses the order of a binomial tree node's children,
+// converting the child list into a reversed root list.
+func (h *binomial[K, V]) childrenToRootList(n *binomialNode[K, V]) *binomialNode[K, V] {
+	var prev, curr, next *binomialNode[K, V]
+	for prev, curr = nil, n.child; curr != nil; prev, curr = curr, next {
+		next = curr.sibling
+		curr.sibling = prev
+	}
+
+	// prev is now the head of the reversed root list.
+	return prev
+}
+
+// union merges two binomial heaps into a single binomial heap.
+func (h *binomial[K, V]) union(h1, h2 *binomialNode[K, V]) *binomialNode[K, V] {
+	head := h.merge(h1, h2)
+	head = h.consolidate(head)
+	return head
 }
 
 // merge performs a merge sort on two root lists of binomial trees.
@@ -329,49 +316,39 @@ func (h *binomial[K, V]) consolidate(head *binomialNode[K, V]) *binomialNode[K, 
 	return head
 }
 
-// union merges two binomial heaps into a single binomial heap.
-func (h *binomial[K, V]) union(h1, h2 *binomialNode[K, V]) *binomialNode[K, V] {
-	head := h.merge(h1, h2)
-	head = h.consolidate(head)
-	return head
-}
-
-// childrenToRootList reverses the order of a binomial tree node's children,
-// converting the child list into a reversed root list.
-func (h *binomial[K, V]) childrenToRootList(n *binomialNode[K, V]) *binomialNode[K, V] {
-	var prev, curr, next *binomialNode[K, V]
-	for prev, curr = nil, n.child; curr != nil; prev, curr = curr, next {
-		next = curr.sibling
-		curr.sibling = prev
-	}
-
-	// prev is now the head of the reversed root list.
-	return prev
-}
-
-// traverse performs a depth-first traversal of the binomial heap,
-// visiting each node according to the specified traversal order.
-func (h *binomial[K, V]) traverse(n *binomialNode[K, V], order TraverseOrder, visit func(*binomialNode[K, V]) bool) bool {
-	if n == nil {
-		return true
-	}
-
-	switch order {
-	case VLR:
-		return visit(n) && h.traverse(n.child, order, visit) && h.traverse(n.sibling, order, visit)
-	case VRL:
-		return visit(n) && h.traverse(n.sibling, order, visit) && h.traverse(n.child, order, visit)
-	case LVR:
-		return h.traverse(n.child, order, visit) && visit(n) && h.traverse(n.sibling, order, visit)
-	case RVL:
-		return h.traverse(n.sibling, order, visit) && visit(n) && h.traverse(n.child, order, visit)
-	case LRV:
-		return h.traverse(n.child, order, visit) && h.traverse(n.sibling, order, visit) && visit(n)
-	case RLV:
-		return h.traverse(n.sibling, order, visit) && h.traverse(n.child, order, visit) && visit(n)
-	default:
-		return false
-	}
+// link constructs a binomial tree of order k+1 from two binomial trees of order k.
+// It attaches one of the root nodes as the left-most child of the other.
+//
+// It accepts two root nodes and assumes the key of the first root comes after
+// the key of the second root (greater in min-heap or smaller in max-heap).
+// The second root then becomes the new root.
+//
+// General tree representation:
+//
+//	     [ 3 ]                   [ 2 ]                                  [ 2 ]
+//	  ┌────┴────┐             ┌────┴────┐                     ┌───────────┼───────────┐
+//	[ 7 ]     [ 5 ]    +    [ 6 ]     [ 4 ]    --->         [ 3 ]       [ 6 ]       [ 4 ]
+//	  │                       │                          ┌────┴────┐      │
+//	[ 9 ]                   [ 8 ]                      [ 7 ]     [ 5 ]  [ 8 ]
+//	                                                     │
+//	                                                   [ 8 ]
+//
+// LCRS representation:
+//
+//	[ 3 ]                  [ 2 ]                     [ 2 ]
+//	  │                      │                         │
+//	[ 7 ]----[ 5 ]    +    [ 6 ]----[ 4 ]    --->    [ 3 ]-----------[ 6 ]----[ 4 ]
+//	  │                      │                         │               │
+//	[ 9 ]                  [ 8 ]                     [ 7 ]----[ 5 ]  [ 8 ]
+//	                                                   │
+//	                                                 [ 8 ]
+//
+// This method is defined on the binomial struct to prevent name clashes
+// with other similar implementations in this package.
+func (_ *binomial[K, V]) link(child, parent *binomialNode[K, V]) {
+	child.sibling = parent.child
+	parent.child = child
+	parent.order++
 }
 
 // Size returns the number of items on the heap.
@@ -414,8 +391,8 @@ func (h *binomial[K, V]) Delete() (K, V, bool) {
 		return zeroK, zeroV, false
 	}
 
-	// Find the extremum (minimum in min heap or maximum in max heap) node in the root list.
-	prev, ext := h.findExtremum(h.head)
+	// Find the extremum (minimum in min-heap or maximum in max-heap) node in the root list.
+	prev, ext := h.findExt(h.head)
 
 	// Remove the extremum node from the root list.
 	if prev == nil { // ext == h.head
@@ -447,8 +424,8 @@ func (h *binomial[K, V]) Peek() (K, V, bool) {
 		return zeroK, zeroV, false
 	}
 
-	// Find the extremum (minimum in min heap or maximum in max heap) node in the root list.
-	_, ext := h.findExtremum(h.head)
+	// Find the extremum (minimum in min-heap or maximum in max-heap) node in the root list.
+	_, ext := h.findExt(h.head)
 
 	return ext.key, ext.val, true
 }
@@ -516,4 +493,29 @@ func (h *binomial[K, V]) DOT() string {
 	})
 
 	return graph.DOT()
+}
+
+// traverse performs a depth-first traversal of the binomial heap,
+// visiting each node according to the specified traversal order.
+func (h *binomial[K, V]) traverse(n *binomialNode[K, V], order TraverseOrder, visit func(*binomialNode[K, V]) bool) bool {
+	if n == nil {
+		return true
+	}
+
+	switch order {
+	case VLR:
+		return visit(n) && h.traverse(n.child, order, visit) && h.traverse(n.sibling, order, visit)
+	case VRL:
+		return visit(n) && h.traverse(n.sibling, order, visit) && h.traverse(n.child, order, visit)
+	case LVR:
+		return h.traverse(n.child, order, visit) && visit(n) && h.traverse(n.sibling, order, visit)
+	case RVL:
+		return h.traverse(n.sibling, order, visit) && visit(n) && h.traverse(n.child, order, visit)
+	case LRV:
+		return h.traverse(n.child, order, visit) && h.traverse(n.sibling, order, visit) && visit(n)
+	case RLV:
+		return h.traverse(n.sibling, order, visit) && h.traverse(n.child, order, visit) && visit(n)
+	default:
+		return false
+	}
 }

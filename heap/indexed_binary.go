@@ -24,9 +24,11 @@ type indexedBinary[K, V any] struct {
 // It allows changing the key (priority) of an index, deleting by index, and looking up by index.
 // The size of an indexed binary heap is fixed.
 //
-// cap is the maximum number of items on the heap.
-// cmpKey is a function for comparing two keys.
-// eqVal is a function for checking the equality of two values.
+// Parameters:
+//
+//   - cap is the maximum number of items on the heap.
+//   - cmpKey is a function for comparing two keys.
+//   - eqVal is a function for checking the equality of two values.
 func NewIndexedBinary[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) IndexedHeap[K, V] {
 	pos := make([]int, cap)
 	for i := range pos {

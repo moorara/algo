@@ -19,9 +19,11 @@ type binary[K, V any] struct {
 // NewBinary creates a new binary heap that can be used as a priority queue.
 // The heap size will be automatically increased or decreased as needed.
 //
-// size is the initial size of the heap (priority queue).
-// cmpKey is a function for comparing two keys.
-// eqVal is a function for checking the equality of two values.
+// Parameters:
+//
+//   - size is the initial size of the heap (priority queue).
+//   - cmpKey is a function for comparing two keys.
+//   - eqVal is a function for checking the equality of two values.
 func NewBinary[K, V any](size int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) Heap[K, V] {
 	return &binary[K, V]{
 		cmpKey: cmpKey,
