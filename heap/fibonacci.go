@@ -84,12 +84,7 @@ func (h *fibonacci[K, V]) verify() bool {
 		}
 	}
 
-	// Verify h.ext points to the extremum node.
-	if h.ext != ext {
-		return false
-	}
-
-	return true
+	return h.ext == ext
 }
 
 // nolint: unused
