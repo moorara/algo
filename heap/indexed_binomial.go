@@ -88,7 +88,7 @@ func (h *indexedBinomial[K, V]) verify() bool {
 // nolint: unused
 // verifyBinomialTree verifies the properties of a binomial tree rooted at the given node.
 func (h *indexedBinomial[K, V]) verifyBinomialTree(n *indexedBinomialNode[K, V]) bool {
-	// Verifry the index map for the current node.
+	// Verify the index map for the current node.
 	if h.nodes[n.index] != n {
 		return false
 	}
@@ -102,6 +102,11 @@ func (h *indexedBinomial[K, V]) verifyBinomialTree(n *indexedBinomialNode[K, V])
 
 		// A binomial node of order k has children with orders k-1, k-2, ..., 0 from left to right.
 		if child.order != n.order-i {
+			return false
+		}
+
+		// Verify the parent link.
+		if child.parent != n {
 			return false
 		}
 
@@ -346,12 +351,10 @@ func (h *indexedBinomial[K, V]) Delete() (int, K, V, bool) {
 		prev.sibling = ext.sibling
 	}
 
-	// Remove the extremum node from the index map.
-	h.nodes[ext.index] = nil
-
 	// Convert the deleted root's children into a root list and merge it with the current heap.
 	head := h.childrenToRootList(ext)
 	h.head = h.union(h.head, head)
+	h.nodes[ext.index] = nil
 	h.n--
 
 	return ext.index, ext.key, ext.val, true
@@ -388,12 +391,10 @@ func (h *indexedBinomial[K, V]) DeleteIndex(i int) (K, V, bool) {
 		prev.sibling = curr.sibling
 	}
 
-	// Remove the extremum node from the index map.
-	h.nodes[n.index] = nil
-
 	// Convert the deleted root's children into a root list and merge it with the current heap.
 	head := h.childrenToRootList(n)
 	h.head = h.union(h.head, head)
+	h.nodes[n.index] = nil
 	h.n--
 
 	return n.key, n.val, true

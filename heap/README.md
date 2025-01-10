@@ -34,7 +34,7 @@ In fact, heaps are often considered equivalent to priority queues.
 ## Quick Start
 
   - Use `generic.NewCompareFunc()` for creating a minimum heap.
-  - Use`generic.NewReverseCompareFunc()` for creating a maximum heap.
+  - Use `generic.NewReverseCompareFunc()` for creating a maximum heap.
 
 ## Binary Heap
 
