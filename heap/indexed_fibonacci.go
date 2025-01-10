@@ -9,7 +9,7 @@ import (
 )
 
 // The Left-Child-Right-Sibling (LCRS) representation, a.k.a. the Binary Representation of N-ary Tree,
-// is used for implementing the Fibonacci tree.
+// is used for implementing the indexed Fibonacci tree.
 //
 //   - The left child of a node points to its first child.
 //   - The right sibling of a node points to its next sibling.
@@ -17,56 +17,60 @@ import (
 // The siblings nodes are doubly linked in a circular manner using an additional previous pointer.
 //
 // The LCRS representation uses three pointers per node regardless of the number of children.
-type fibonacciNode[K, V any] struct {
-	key               K
-	val               V
-	degree            int // the number of direct children of this node
-	child, prev, next *fibonacciNode[K, V]
+type indexedFibonacciNode[K, V any] struct {
+	index                     int // index associated with the key
+	key                       K
+	val                       V
+	degree                    int  // the number of direct children of this node
+	mark                      bool // indicates if this node already lost a child
+	parent, child, prev, next *indexedFibonacciNode[K, V]
 }
 
-// fibonacci implements a Fibonacci heap.
-// A Fibonacci heap is implemented as a circular doubly linked list of root nodes (root list) of trees.
-type fibonacci[K, V any] struct {
+// indexedFibonacci implements an indexed Fibonacci heap.
+// A Fibonacci heap is implemented as a circular doubly linked list of root nodes (root list) of trees
+// as well as a mapping between indices and nodes.
+type indexedFibonacci[K, V any] struct {
 	cmpKey CompareFunc[K]
 	eqVal  EqualFunc[V]
 
-	n   int                  // number of items on heap
-	ext *fibonacciNode[K, V] // extremum (minimum or maximum) node of the root list
+	n     int                           // current number of items on heap
+	ext   *indexedFibonacciNode[K, V]   // extremum (minimum or maximum) node of the root list
+	nodes []*indexedFibonacciNode[K, V] // map of indices to nodes
 }
 
-// NewFibonacci creates a new Fibonacci heap that can be used as a priority queue.
+// NewIndexedFibonacci creates a new indexed Fibonacci heap that can be used as a priority queue.
 //
-// Fibonacci heap is an implementation of the mergeable heap ADT, a priority queue supporting merge operation.
-// A Fibonacci heap is implemented as a collection of heap-ordered trees.
-// It has a better amortized running time than binary and binomial heaps.
+// An indexed heap (priority queue) associates an index with each key-value pair.
+// It allows changing the key (priority) of an index, deleting by index, and looking up by index.
+// The size of an indexed binary heap is fixed.
 //
-// Fibonacci heaps are more flexible than binomial heaps, as their trees do not have a predetermined shape.
-// In the extreme case, a Fibonacci heap can have every item in a separate tree.
-// This flexibility allows some operations to be executed in a lazy manner,
-// postponing the work for later operations.
+// The indexed Fibonacci heap does not support the merge operation,
+// as doing so would cause conflicts between indices.
 //
 // Parameters:
 //
+//   - cap is the maximum number of items on the heap.
 //   - cmpKey is a function for comparing two keys.
 //   - eqVal is a function for checking the equality of two values.
-func NewFibonacci[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) MergeableHeap[K, V] {
-	return &fibonacci[K, V]{
+func NewIndexedFibonacci[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) IndexedHeap[K, V] {
+	return &indexedFibonacci[K, V]{
 		cmpKey: cmpKey,
 		eqVal:  eqVal,
 		n:      0,
 		ext:    nil,
+		nodes:  make([]*indexedFibonacciNode[K, V], cap),
 	}
 }
 
 // nolint: unused
 // This method verifies the integrity of a Fibonacci heap.
-func (h *fibonacci[K, V]) verify() bool {
+func (h *indexedFibonacci[K, V]) verify() bool {
 	if h.ext == nil {
 		return true
 	}
 
 	maxD := h.maxDegree()
-	var ext *fibonacciNode[K, V]
+	var ext *indexedFibonacciNode[K, V]
 
 	// Verify the properties of each tree in the root list.
 	for stop, curr := h.ext, h.ext; ; {
@@ -86,7 +90,12 @@ func (h *fibonacci[K, V]) verify() bool {
 
 // nolint: unused
 // verifyTree verifies the properties of a tree rooted at the given node.
-func (h *fibonacci[K, V]) verifyTree(n *fibonacciNode[K, V], maxD int) bool {
+func (h *indexedFibonacci[K, V]) verifyTree(n *indexedFibonacciNode[K, V], maxD int) bool {
+	// Verify the index map for the current node.
+	if h.nodes[n.index] != n {
+		return false
+	}
+
 	// Verify the degree of each node is at most logᵩn.
 	if n.degree > maxD {
 		return false
@@ -101,6 +110,11 @@ func (h *fibonacci[K, V]) verifyTree(n *fibonacciNode[K, V], maxD int) bool {
 
 		// Verify the child degree.
 		if child.degree > n.degree {
+			return false
+		}
+
+		// Verify the parent link.
+		if child.parent != n {
 			return false
 		}
 
@@ -120,7 +134,7 @@ func (h *fibonacci[K, V]) verifyTree(n *fibonacciNode[K, V], maxD int) bool {
 // pickExt compares the keys of two nodes and returns the node with extremum key
 // (minimum in min-heap and maximum in max-heap).
 // If one of the nodes is nil, the other node is returned.
-func (h *fibonacci[K, V]) pickExt(a, b *fibonacciNode[K, V]) *fibonacciNode[K, V] {
+func (h *indexedFibonacci[K, V]) pickExt(a, b *indexedFibonacciNode[K, V]) *indexedFibonacciNode[K, V] {
 	if a == nil {
 		return b
 	} else if b == nil {
@@ -136,7 +150,7 @@ func (h *fibonacci[K, V]) pickExt(a, b *fibonacciNode[K, V]) *fibonacciNode[K, V
 //
 // This method is defined on the fibonacci struct to prevent name clashes
 // with other similar implementations in this package.
-func (_ *fibonacci[K, V]) insert(head, n *fibonacciNode[K, V]) *fibonacciNode[K, V] {
+func (_ *indexedFibonacci[K, V]) insert(head, n *indexedFibonacciNode[K, V]) *indexedFibonacciNode[K, V] {
 	if head == nil {
 		n.prev, n.next = n, n
 	} else {
@@ -153,7 +167,7 @@ func (_ *fibonacci[K, V]) insert(head, n *fibonacciNode[K, V]) *fibonacciNode[K,
 //
 // This method is defined on the fibonacci struct to prevent name clashes
 // with other similar implementations in this package.
-func (_ *fibonacci[K, V]) cut(head, n *fibonacciNode[K, V]) *fibonacciNode[K, V] {
+func (_ *indexedFibonacci[K, V]) cut(head, n *indexedFibonacciNode[K, V]) *indexedFibonacciNode[K, V] {
 	// n is the only node in the circular root list.
 	if n.next == n && n.prev == n {
 		n.prev, n.next = nil, nil
@@ -172,11 +186,32 @@ func (_ *fibonacci[K, V]) cut(head, n *fibonacciNode[K, V]) *fibonacciNode[K, V]
 	return head
 }
 
+// cutAndCascade removes a tree from a circular doubly linked list and insert it into the root list.
+//
+// If the parent of the cut node already lost a child, the parent node itslef will be cut-and-cascaded.
+// This is crucial to ensure the logᵩn upper bound (O(logn)) on the degree of any node
+// and the amortized running times of operations in a Fibonacci heap.
+func (h *indexedFibonacci[K, V]) cutAndCascade(n *indexedFibonacciNode[K, V]) {
+	if n.parent == nil {
+		return
+	}
+
+	parent := n.parent
+	n.parent = nil
+	parent.child = h.cut(parent.child, n)
+	parent.degree--
+	h.insert(h.ext, n)
+
+	if parent.mark = !parent.mark; !parent.mark {
+		h.cutAndCascade(parent)
+	}
+}
+
 // meld merges two circular doubly linked lists.
 //
 // This method is defined on the fibonacci struct to prevent name clashes
 // with other similar implementations in this package.
-func (_ *fibonacci[K, V]) meld(h1, h2 *fibonacciNode[K, V]) *fibonacciNode[K, V] {
+func (_ *indexedFibonacci[K, V]) meld(h1, h2 *indexedFibonacciNode[K, V]) *indexedFibonacciNode[K, V] {
 	switch {
 	case h1 == nil:
 		return h2
@@ -192,12 +227,12 @@ func (_ *fibonacci[K, V]) meld(h1, h2 *fibonacciNode[K, V]) *fibonacciNode[K, V]
 }
 
 // consolidate is a lazy operation run after deleting the extremum node from the heap.
-func (h *fibonacci[K, V]) consolidate() {
+func (h *indexedFibonacci[K, V]) consolidate() {
 	// Calculate an upper bound on the maximum degree of nodes.
 	maxD := h.maxDegree()
 
 	// Create a slice for mapping node degrees to root nodes.
-	roots := make([]*fibonacciNode[K, V], maxD)
+	roots := make([]*indexedFibonacciNode[K, V], maxD)
 
 	// This loop scans the circular root list.
 	for stop, curr := h.ext, h.ext; ; {
@@ -246,7 +281,7 @@ func (h *fibonacci[K, V]) consolidate() {
 }
 
 // maxDegree calculates an upper bound on the maximum degree of nodes in a Fibonacci heap.
-func (h *fibonacci[K, V]) maxDegree() int {
+func (h *indexedFibonacci[K, V]) maxDegree() int {
 	/*
 	 * The Fibonacci sequence is defined as:
 	 *
@@ -295,24 +330,31 @@ func (h *fibonacci[K, V]) maxDegree() int {
 // It accepts two root nodes and assumes the key of the first root comes after
 // the key of the second root (greater in min-heap or smaller in max-heap).
 // The second root then becomes the new root.
-func (h *fibonacci[K, V]) link(child, parent *fibonacciNode[K, V]) {
+func (h *indexedFibonacci[K, V]) link(child, parent *indexedFibonacciNode[K, V]) {
+	child.parent = parent
 	parent.child = h.insert(parent.child, child)
 	parent.degree++
 }
 
 // Size returns the number of items on the heap.
-func (h *fibonacci[K, V]) Size() int {
+func (h *indexedFibonacci[K, V]) Size() int {
 	return h.n
 }
 
 // IsEmpty returns true if the heap is empty.
-func (h *fibonacci[K, V]) IsEmpty() bool {
+func (h *indexedFibonacci[K, V]) IsEmpty() bool {
 	return h.ext == nil
 }
 
 // Insert adds a new key-value pair to the heap.
-func (h *fibonacci[K, V]) Insert(key K, val V) {
-	n := &fibonacciNode[K, V]{
+func (h *indexedFibonacci[K, V]) Insert(i int, key K, val V) bool {
+	// ContainsIndex validates the index too.
+	if h.ContainsIndex(i) {
+		return false
+	}
+
+	n := &indexedFibonacciNode[K, V]{
+		index:  i,
 		key:    key,
 		val:    val,
 		degree: 0,
@@ -320,26 +362,44 @@ func (h *fibonacci[K, V]) Insert(key K, val V) {
 
 	h.insert(h.ext, n)
 	h.ext = h.pickExt(h.ext, n)
+	h.nodes[i] = n
 	h.n++
+
+	return true
 }
 
-// Merge merges another heap with the current heap.
-// The new heap must have the same underlying type as the current one.
-func (h *fibonacci[K, V]) Merge(H MergeableHeap[K, V]) {
-	if hh, ok := H.(*fibonacci[K, V]); ok {
-		h.meld(h.ext, hh.ext)
-		h.ext = h.pickExt(h.ext, hh.ext)
-		h.n += hh.n
+// ChangeKey changes the key associated with an index.
+func (h *indexedFibonacci[K, V]) ChangeKey(i int, key K) bool {
+	// ContainsIndex validates the index too.
+	if !h.ContainsIndex(i) {
+		return false
 	}
+
+	n := h.nodes[i]
+
+	if cmp := h.cmpKey(key, n.key); cmp < 0 {
+		// Decrease Key
+		n.key = key
+		if n.parent != nil && h.cmpKey(n.parent.key, n.key) > 0 {
+			h.cutAndCascade(n)
+		}
+		h.ext = h.pickExt(h.ext, n)
+	} else if cmp > 0 {
+		// Increase Key
+		h.DeleteIndex(i)
+		h.Insert(i, key, n.val)
+	}
+
+	return true
 }
 
 // Delete removes the extremum (minimum or maximum) key with its value on the heap.
 // If the heap is empty, the second return value will be false.
-func (h *fibonacci[K, V]) Delete() (K, V, bool) {
+func (h *indexedFibonacci[K, V]) Delete() (int, K, V, bool) {
 	if h.IsEmpty() {
 		var zeroK K
 		var zeroV V
-		return zeroK, zeroV, false
+		return -1, zeroK, zeroV, false
 	}
 
 	ext := h.ext
@@ -351,11 +411,22 @@ func (h *fibonacci[K, V]) Delete() (K, V, bool) {
 	h.ext = h.cut(h.ext, ext)
 
 	// Merge the children of the deleted node with the root list.
-	if ext.child != nil {
-		h.ext = h.meld(h.ext, ext.child) // The correct extremum node will be identified and set later.
+	if c := ext.child; c != nil {
+		// Set the parent pointers of the deleted node's children to nil,
+		// preparing them for merging with the root list.
+		for {
+			c.parent = nil
+			if c = c.next; c == ext.child {
+				break
+			}
+		}
+
+		// The correct extremum node will be identified and set later.
+		h.ext = h.meld(h.ext, ext.child)
 		ext.child = nil
 	}
 
+	h.nodes[ext.index] = nil
 	h.n--
 
 	if h.IsEmpty() {
@@ -364,59 +435,121 @@ func (h *fibonacci[K, V]) Delete() (K, V, bool) {
 		h.consolidate()
 	}
 
-	return ext.key, ext.val, true
+	return ext.index, ext.key, ext.val, true
 }
 
-// DeleteAll deletes all keys with their values on the heap, leaving it empty.
-func (h *fibonacci[K, V]) DeleteAll() {
-	h.n = 0
-	h.ext = nil
-}
-
-// Peek returns the extremum (minimum or maximum) key with its value on the heap without removing it.
-// If the heap is empty, the second return value will be false.
-func (h *fibonacci[K, V]) Peek() (K, V, bool) {
-	if h.IsEmpty() {
+// DeleteIndex removes a key-value pair and its associated index from the heap.
+// If the index is not valid or not on the heap, the second return value will be false.
+func (h *indexedFibonacci[K, V]) DeleteIndex(i int) (K, V, bool) {
+	// ContainsIndex validates the index too.
+	if !h.ContainsIndex(i) {
 		var zeroK K
 		var zeroV V
 		return zeroK, zeroV, false
 	}
 
-	return h.ext.key, h.ext.val, true
+	n := h.nodes[i]
+	h.cutAndCascade(n)
+
+	// Remove the node from the circular root list.
+	// h.ext serves as an entry point to the circular root list too.
+	// It must be updated after cutting a node in case the cut node was h.ext itself.
+	// The correct extremum node will be identified and set later.
+	h.ext = h.cut(h.ext, n)
+
+	// Merge the children of the deleted node with the root list.
+	if c := n.child; c != nil {
+		// Set the parent pointers of the deleted node's children to nil,
+		// preparing them for merging with the root list.
+		for {
+			c.parent = nil
+			if c = c.next; c == n.child {
+				break
+			}
+		}
+
+		// The correct extremum node will be identified and set later.
+		h.ext = h.meld(h.ext, n.child)
+		n.child = nil
+	}
+
+	h.nodes[n.index] = nil
+	h.n--
+
+	if h.IsEmpty() {
+		h.ext = nil
+	} else {
+		h.consolidate()
+	}
+
+	return n.key, n.val, true
+}
+
+// DeleteAll deletes all keys with their values and indices on the heap, leaving it empty.
+func (h *indexedFibonacci[K, V]) DeleteAll() {
+	h.n = 0
+	h.ext = nil
+	h.nodes = make([]*indexedFibonacciNode[K, V], len(h.nodes))
+}
+
+// Peek returns the extremum (minimum or maximum) key with its value on the heap without removing it.
+// If the heap is empty, the second return value will be false.
+func (h *indexedFibonacci[K, V]) Peek() (int, K, V, bool) {
+	if h.IsEmpty() {
+		var zeroK K
+		var zeroV V
+		return -1, zeroK, zeroV, false
+	}
+
+	return h.ext.index, h.ext.key, h.ext.val, true
+}
+
+// PeekIndex returns a key-value pair on the heap by its associated index without removing it.
+// If the index is not valid or not on the heap, the second return value will be false.
+func (h *indexedFibonacci[K, V]) PeekIndex(i int) (K, V, bool) {
+	// ContainsIndex validates the index too.
+	if !h.ContainsIndex(i) {
+		var zeroK K
+		var zeroV V
+		return zeroK, zeroV, false
+	}
+
+	return h.nodes[i].key, h.nodes[i].val, true
+}
+
+// ContainsIndex returns true if a given index is on the heap.
+func (h *indexedFibonacci[K, V]) ContainsIndex(i int) bool {
+	return 0 <= i && i < len(h.nodes) && h.nodes[i] != nil
 }
 
 // ContainsKey returns true if the given key is on the heap.
-func (h *fibonacci[K, V]) ContainsKey(key K) bool {
-	if h.IsEmpty() {
-		return false
+func (h *indexedFibonacci[K, V]) ContainsKey(key K) bool {
+	for i := 0; i < h.n; i++ {
+		if h.nodes[i] != nil && h.cmpKey(h.nodes[i].key, key) == 0 {
+			return true
+		}
 	}
 
-	// A false result indicates a match was found.
-	return !h.traverse(h.ext, VLR, func(n *fibonacciNode[K, V]) bool {
-		// If a match is found, stop the traversal by returning false.
-		return h.cmpKey(n.key, key) != 0
-	})
+	return false
 }
 
 // ContainsValue returns true if the given value is on the heap.
-func (h *fibonacci[K, V]) ContainsValue(val V) bool {
-	if h.IsEmpty() {
-		return false
+func (h *indexedFibonacci[K, V]) ContainsValue(val V) bool {
+	for i := 0; i < h.n; i++ {
+		if h.nodes[i] != nil && h.eqVal(h.nodes[i].val, val) {
+			return true
+		}
 	}
 
-	// A false result indicates a match was found.
-	return !h.traverse(h.ext, VLR, func(n *fibonacciNode[K, V]) bool {
-		// If a match is found, stop the traversal by returning false.
-		return !h.eqVal(n.val, val)
-	})
+	return false
 }
 
 // DOT generates a DOT representation of the heap.
-func (h *fibonacci[K, V]) DOT() string {
+func (h *indexedFibonacci[K, V]) DOT() string {
 	// Create a map of node --> id
 	var id int
-	nodeID := map[*fibonacciNode[K, V]]int{}
-	h.traverse(h.ext, VLR, func(n *fibonacciNode[K, V]) bool {
+	nodeID := map[*indexedFibonacciNode[K, V]]int{}
+	h.traverse(h.ext, VLR, func(n *indexedFibonacciNode[K, V]) bool {
 		id++
 		nodeID[n] = id
 		return true
@@ -424,12 +557,21 @@ func (h *fibonacci[K, V]) DOT() string {
 
 	graph := dot.NewGraph(true, true, false, "Fibonacci Heap", "", "", "", dot.ShapeMrecord)
 
-	h.traverse(h.ext, VLR, func(n *fibonacciNode[K, V]) bool {
+	h.traverse(h.ext, VLR, func(n *indexedFibonacciNode[K, V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 
 		rec := dot.NewRecord(
-			dot.NewSimpleField("", fmt.Sprintf("%v", n.key)),
-			dot.NewSimpleField("", fmt.Sprintf("%v", n.val)),
+			dot.NewComplexField(
+				dot.NewRecord(
+					dot.NewSimpleField("", fmt.Sprintf("%v", n.index)),
+					dot.NewComplexField(
+						dot.NewRecord(
+							dot.NewSimpleField("", fmt.Sprintf("%v", n.key)),
+							dot.NewSimpleField("", fmt.Sprintf("%v", n.val)),
+						),
+					),
+				),
+			),
 		)
 
 		var color dot.Color
@@ -465,15 +607,15 @@ func (h *fibonacci[K, V]) DOT() string {
 
 // traverse performs a depth-first traversal of the Fibonacci heap,
 // visiting each node according to the specified traversal order.
-func (h *fibonacci[K, V]) traverse(n *fibonacciNode[K, V], order TraverseOrder, visit func(*fibonacciNode[K, V]) bool) bool {
+func (h *indexedFibonacci[K, V]) traverse(n *indexedFibonacciNode[K, V], order TraverseOrder, visit func(*indexedFibonacciNode[K, V]) bool) bool {
 	if n == nil {
 		return true
 	}
 
-	visited := map[*fibonacciNode[K, V]]bool{}
+	visited := map[*indexedFibonacciNode[K, V]]bool{}
 
-	var traverse func(n *fibonacciNode[K, V], order TraverseOrder) bool
-	traverse = func(n *fibonacciNode[K, V], order TraverseOrder) bool {
+	var traverse func(n *indexedFibonacciNode[K, V], order TraverseOrder) bool
+	traverse = func(n *indexedFibonacciNode[K, V], order TraverseOrder) bool {
 		if n == nil || visited[n] {
 			return true
 		}
