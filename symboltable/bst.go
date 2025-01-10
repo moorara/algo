@@ -559,7 +559,7 @@ func (t *bst[K, V]) _traverse(n *bstNode[K, V], order TraverseOrder, visit func(
 	}
 }
 
-// DOT generates a DOT representation of the BST in DOT format.
+// DOT generates a representation of the BST in DOT format.
 // This format is commonly used for visualizing graphs with Graphviz tools.
 func (t *bst[K, V]) DOT() string {
 	// Create a map of node --> id
