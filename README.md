@@ -30,9 +30,9 @@ A collection of common data structures and algorithms for Go applications.
       - Queue
       - Stack
     - Heaps
-      - Binary Heap
-      - Binomial Heap
-      - Indexed Binary Heap
+      - Binary Heaps
+      - Binomial Heaps
+      - Fibonacci Heaps
     - Sets
       - Union
       - Intersection
