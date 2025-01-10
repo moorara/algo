@@ -633,7 +633,7 @@ func (t *binary[V]) _traverse(n *binaryNode[V], prefix string, order TraverseOrd
 	}
 }
 
-// DOT generates a DOT representation of the binary trie in DOT format.
+// DOT generates a representation of the binary trie in DOT format.
 // This format is commonly used for visualizing graphs with Graphviz tools.
 func (t *binary[V]) DOT() string {
 	// Create a map of node --> id

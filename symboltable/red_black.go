@@ -759,7 +759,7 @@ func (t *redBlack[K, V]) _traverse(n *rbNode[K, V], order TraverseOrder, visit f
 	}
 }
 
-// DOT generates a DOT representation of the Red-Black tree in DOT format.
+// DOT generates a representation of the Red-Black tree in DOT format.
 // This format is commonly used for visualizing graphs with Graphviz tools.
 func (t *redBlack[K, V]) DOT() string {
 	// Create a map of node --> id

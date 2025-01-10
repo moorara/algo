@@ -40,7 +40,7 @@ type (
 		// If the function returns false, the traversal is halted.
 		Traverse(TraverseOrder, VisitFunc1[T])
 
-		// DOT generates and returns a string representation of the tree in DOT format.
+		// DOT generates and returns a representation of the tree in DOT format.
 		// This format is commonly used for visualizing graphs with Graphviz tools.
 		DOT() string
 	}
@@ -52,7 +52,7 @@ type (
 		// If the function returns false, the traversal is halted.
 		Traverse(TraverseOrder, VisitFunc2[K, V])
 
-		// DOT generates and returns a string representation of the tree in DOT format.
+		// DOT generates and returns a representation of the tree in DOT format.
 		// This format is commonly used for visualizing graphs with Graphviz tools.
 		DOT() string
 	}
