@@ -1,5 +1,50 @@
 # Changelog
 
+## [v0.10.0](https://github.com/moorara/algo/tree/v0.10.0) (2025-01-10)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.9.3...v0.10.0)
+
+**New Features:**
+
+  - Add data types and algorithms for building parsers [#221](https://github.com/moorara/algo/issues/221) ([moorara](https://github.com/moorara))
+  - Add data structures and algorithms for context-free grammars [#212](https://github.com/moorara/algo/issues/212) ([moorara](https://github.com/moorara))
+
+**Fixed Bugs:**
+
+  - Binary Trie: Deletion bug [#210](https://github.com/moorara/algo/issues/210) ([moorara](https://github.com/moorara))
+  - Quadratic Probing Hash Table: possible infinite loop [#209](https://github.com/moorara/algo/issues/209) ([moorara](https://github.com/moorara))
+
+**Merged Changes:**
+
+  - Update golang.org/x/exp digest to 7588d65 [#226](https://github.com/moorara/algo/pull/226) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Refactoring comments [#237](https://github.com/moorara/algo/pull/237) ([moorara](https://github.com/moorara))
+  - Add benchmarks for newly added heaps [#236](https://github.com/moorara/algo/pull/236) ([moorara](https://github.com/moorara))
+  - Implement Indexed Fibonacci Heap [#200](https://github.com/moorara/algo/pull/200) ([moorara](https://github.com/moorara))
+  - Implement Fibonacci heap [#235](https://github.com/moorara/algo/pull/235) ([moorara](https://github.com/moorara))
+  - Add verify method to Heap interfaces [#234](https://github.com/moorara/algo/pull/234) ([moorara](https://github.com/moorara))
+  - Refactor Graphviz package and method [#233](https://github.com/moorara/algo/pull/233) ([moorara](https://github.com/moorara))
+  - Add indexed binomial heap [#232](https://github.com/moorara/algo/pull/232) ([moorara](https://github.com/moorara))
+  - breaking IndexedHeap interface: return false instead of panicing [#231](https://github.com/moorara/algo/pull/231) ([moorara](https://github.com/moorara))
+  - Refactor binomial heap implementation [#230](https://github.com/moorara/algo/pull/230) ([moorara](https://github.com/moorara))
+  - Improve binary heaps [#229](https://github.com/moorara/algo/pull/229) ([moorara](https://github.com/moorara))
+  - Remove IndexedMergeableHeap interface [#228](https://github.com/moorara/algo/pull/228) ([moorara](https://github.com/moorara))
+  - Update README.md [#227](https://github.com/moorara/algo/pull/227) ([moorara](https://github.com/moorara))
+  - Add binomial heap as an implementation of a mergeable heap [#225](https://github.com/moorara/algo/pull/225) ([moorara](https://github.com/moorara))
+  - Improve heap package [#224](https://github.com/moorara/algo/pull/224) ([moorara](https://github.com/moorara))
+  - Update README [#223](https://github.com/moorara/algo/pull/223) ([moorara](https://github.com/moorara))
+  - Add parser/input package [#222](https://github.com/moorara/algo/pull/222) ([moorara](https://github.com/moorara))
+  - Add parser/combinator package [#220](https://github.com/moorara/algo/pull/220) ([moorara](https://github.com/moorara))
+  - Allow definition of empty productions in the test grammar for EBNF [#219](https://github.com/moorara/algo/pull/219) ([moorara](https://github.com/moorara))
+  - Add IsCNF for checking Chomsky Normal Form to context-free grammars [#218](https://github.com/moorara/algo/pull/218) ([moorara](https://github.com/moorara))
+  - Update README.md [#217](https://github.com/moorara/algo/pull/217) ([moorara](https://github.com/moorara))
+  - Implement FIRST and FOLLOW functions for context-free grammars [#216](https://github.com/moorara/algo/pull/216) ([moorara](https://github.com/moorara))
+  - Update README [#215](https://github.com/moorara/algo/pull/215) ([moorara](https://github.com/moorara))
+  - Add package grammar [#213](https://github.com/moorara/algo/pull/213) ([moorara](https://github.com/moorara))
+  - Refactor automata package [#214](https://github.com/moorara/algo/pull/214) ([moorara](https://github.com/moorara))
+  - Update Collection interfaces and bug fixes [#211](https://github.com/moorara/algo/pull/211) ([moorara](https://github.com/moorara))
+  - Update package comments [#208](https://github.com/moorara/algo/pull/208) ([moorara](https://github.com/moorara))
+
+
 ## [v0.9.3](https://github.com/moorara/algo/tree/v0.9.3) (2024-12-22)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.9.2...v0.9.3)
