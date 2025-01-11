@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"iter"
 	"math/rand"
-	"slices"
 	"strings"
 	"time"
 
@@ -281,7 +280,7 @@ func Powerset[T any](s Set[T]) Set[Set[T]] {
 		return PS
 	}
 
-	members := slices.Collect(s.All())
+	members := Collect1(s.All())
 	head, tail := s.CloneEmpty(), s.CloneEmpty()
 	head.Add(members[0])
 	tail.Add(members[1:]...)
@@ -317,14 +316,14 @@ func Partitions[T any](s Set[T]) Set[Set[Set[T]]] {
 		return Ps
 	}
 
-	members := slices.Collect(s.All())
+	members := Collect1(s.All())
 	head, tail := s.CloneEmpty(), s.CloneEmpty()
 	head.Add(members[0])
 	tail.Add(members[1:]...)
 
 	// For every partition of s[1:]
 	for P := range Partitions[T](tail).All() {
-		Pmembers := slices.Collect(P.All())
+		Pmembers := Collect1(P.All())
 
 		// Prepend s[0] to the curret partition
 		Q := New[Set[T]](setEqFunc)

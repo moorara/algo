@@ -1,7 +1,6 @@
 package set
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
@@ -385,7 +384,7 @@ func TestSet_All(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			members := slices.Collect(tc.s.All())
+			members := Collect1(tc.s.All())
 
 			for _, expectedMember := range tc.expectedMembers {
 				assert.Contains(t, members, expectedMember)

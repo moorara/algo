@@ -836,7 +836,7 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 
 		t.Run("All", func(t *testing.T) {
 			// The key-values are unordered, so we need to compare the lists pair-wise.
-			all := Collect(st.All())
+			all := Collect2(st.All())
 
 			for _, kv := range test.expectedAll {
 				assert.Contains(t, all, kv)
@@ -858,7 +858,7 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 		})
 
 		t.Run("SelectMatch", func(t *testing.T) {
-			selectMatch := Collect(st.SelectMatch(test.selectMatchPredicate).All())
+			selectMatch := Collect2(st.SelectMatch(test.selectMatchPredicate).All())
 
 			for _, kv := range test.expectedSelectMatch {
 				assert.Contains(t, selectMatch, kv)
@@ -1056,7 +1056,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 
 		t.Run("All", func(t *testing.T) {
 			// The key-values are ordered, so we can directly compare the lists.
-			all := Collect(ost.All())
+			all := Collect2(ost.All())
 			assert.Equal(t, test.expectedAll, all)
 		})
 
@@ -1071,7 +1071,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 		})
 
 		t.Run("SelectMatch", func(t *testing.T) {
-			selectMatch := Collect(ost.SelectMatch(test.selectMatchPredicate).All())
+			selectMatch := Collect2(ost.SelectMatch(test.selectMatchPredicate).All())
 			assert.Equal(t, test.expectedSelectMatch, selectMatch)
 		})
 
