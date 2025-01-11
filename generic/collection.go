@@ -101,8 +101,18 @@ type KeyValue[K, V any] struct {
 	Val V
 }
 
-// Collect collects key-values in a collection from seq2 into a new slice and returns it.
-func Collect[K, V any](seq2 iter.Seq2[K, V]) []KeyValue[K, V] {
+// Collect1 collects items in a collection from seq into a new slice and returns it.
+func Collect1[T any](seq iter.Seq[T]) []T {
+	items := make([]T, 0)
+	for v := range seq {
+		items = append(items, v)
+	}
+
+	return items
+}
+
+// Collect2 collects key-values in a collection from seq2 into a new slice and returns it.
+func Collect2[K, V any](seq2 iter.Seq2[K, V]) []KeyValue[K, V] {
 	kvs := make([]KeyValue[K, V], 0)
 	for k, v := range seq2 {
 		kvs = append(kvs, KeyValue[K, V]{k, v})

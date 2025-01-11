@@ -123,7 +123,7 @@ func (p *partition) BuildGroupTrans(dfa *DFA, G group) doubleKeyMap[State, Symbo
 // if and only if, for all input symbols a, the transitions of s and t on a lead to states in the same group.
 // If no such grouping is possible, a state will be placed in a subgroup by itself.
 func (p *partition) PartitionAndAddGroups(Gtrans doubleKeyMap[State, Symbol, State]) {
-	pairs := Collect(Gtrans.All())
+	pairs := Collect2(Gtrans.All())
 
 	for i := 0; i < len(pairs); i++ {
 		s, strans := pairs[i].Key, pairs[i].Val

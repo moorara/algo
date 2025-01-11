@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"iter"
-	"slices"
 
 	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/set"
@@ -192,7 +191,7 @@ func (p *productions) Get(head NonTerminal) set.Set[Production] {
 // The goal of this function is to ensure a consistent and deterministic order for any given set of production rules.
 func (p *productions) Order(head NonTerminal) []Production {
 	// Collect all production rules into a slice from the set iterator.
-	prods := slices.Collect(p.Get(head).All())
+	prods := Collect1(p.Get(head).All())
 
 	// Sort the productions using a custom comparison function.
 	sort.Quick[Production](prods, func(lhs, rhs Production) int {

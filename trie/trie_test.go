@@ -531,7 +531,7 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 		})
 
 		t.Run("All", func(t *testing.T) {
-			kvs = Collect(trie.All())
+			kvs = Collect2(trie.All())
 			assert.Equal(t, test.expectedAll, kvs)
 		})
 
@@ -546,7 +546,7 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 		})
 
 		t.Run("SelectMatch", func(t *testing.T) {
-			selectMatch := Collect(trie.SelectMatch(test.selectMatchPredicate).All())
+			selectMatch := Collect2(trie.SelectMatch(test.selectMatchPredicate).All())
 			assert.Equal(t, test.expectedSelectMatch, selectMatch)
 		})
 
