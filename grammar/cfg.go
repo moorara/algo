@@ -212,6 +212,64 @@ func (g CFG) IsCNF() bool {
 	})
 }
 
+// IsLL1 checks if a context-free grammar (CFG) is an LL(1) grammar.
+//
+// LL(1) grammars are a subset of context-free grammars used in predictive parsing,
+// a top-down parsing technique that uses recursive descent without backtracking.
+//
+//   - The first "L" indicates that the grammar is parsed from Left to right.
+//   - The second "L" indicates that it produces a left-most derivation of the input string.
+//   - The "1" means that the parser makes its decisions based on one input symbol of lookahead at each step.
+//
+// LL(1) grammars are expressive enough to cover most programming constructs.
+// No left-recursive or ambiguous grammar can be LL(1).
+func (g CFG) IsLL1() bool {
+	/*
+	 * A grammar G is LL(1) if and only if whenever A → α | β are two distinct productions of G,
+	 * the following conditions hold:
+	 *
+	 *   1. For no terminal a do both α and β derive strings beginning with a.
+	 *   2. At most one of α and β can derive the empty string ε.
+	 *   3. If α ⇒* ε then β does not derive any string beginning with a terminal in FOLLOW(A).
+	 *      Likewise, if β ⇒* ε, then α does not derive any string beginning with a terminal in FOLLOW(A).
+	 *
+	 * The first two conditions are equivalent to FIRST(α) and FIRST(β) are disjoint sets.
+	 * The third condition is equivalent to if ε ∈ FIRST(α), then FIRST(β) and FOLLOW(A) are disjoint sets,
+	 * and likewise if ε ∈ FIRST(β), then FIRST(α) and FOLLOW(A) are disjoint sets.
+	 */
+
+	first := g.ComputeFIRST()
+	follow := g.ComputeFOLLOW(first)
+
+	for A, AProds := range g.Productions.AllByHead() {
+		prods := Collect1(AProds.All())
+
+		for i := 0; i < len(prods); i++ {
+			for j := i + 1; j < len(prods); j++ {
+				α, β := prods[i].Body, prods[j].Body
+				firstα, firstβ, followA := first(α), first(β), follow(A)
+
+				// Check FIRST(α) ∩ FIRST(β) = ∅
+				if !firstα.Terminals.Intersection(firstβ.Terminals).IsEmpty() || (firstα.IncludesEmpty && firstβ.IncludesEmpty) {
+					return false
+				}
+
+				// Check if ε ∈ FIRST(α), then FIRST(β) and FOLLOW(A) = ∅
+				if firstα.IncludesEmpty && !firstβ.Terminals.Intersection(followA.Terminals).IsEmpty() {
+					return false
+				}
+
+				// Check if ε ∈ FIRST(β), then FIRST(α) and FOLLOW(A) = ∅
+				if firstβ.IncludesEmpty && !firstα.Terminals.Intersection(followA.Terminals).IsEmpty() {
+					return false
+				}
+			}
+		}
+	}
+
+	return true
+}
+
 // NullableNonTerminals finds all non-terminals in a context-free grammar
 // that can derive the empty string ε in one or more steps (A ⇒* ε for some non-terminal A).
 func (g CFG) NullableNonTerminals() set.Set[NonTerminal] {

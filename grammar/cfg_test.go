@@ -529,7 +529,7 @@ func TestCFG_Equals(t *testing.T) {
 	}
 }
 
-func TestCFG_expectedIsCNF(t *testing.T) {
+func TestCFG_IsCNF(t *testing.T) {
 	tests := []struct {
 		name          string
 		g             CFG
@@ -577,6 +577,67 @@ func TestCFG_expectedIsCNF(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
 			assert.Equal(t, tc.expectedIsCNF, tc.g.IsCNF())
+		})
+	}
+}
+
+func TestCFG_IsLL1(t *testing.T) {
+	tests := []struct {
+		name          string
+		g             CFG
+		expectedIsLL1 bool
+	}{
+		{
+			name:          "1st",
+			g:             CFGrammars[0],
+			expectedIsLL1: false,
+		},
+		{
+			name:          "2nd",
+			g:             CFGrammars[1],
+			expectedIsLL1: false,
+		},
+		{
+			name:          "3rd",
+			g:             CFGrammars[2],
+			expectedIsLL1: false,
+		},
+		{
+			name:          "4th",
+			g:             CFGrammars[3],
+			expectedIsLL1: true,
+		},
+		{
+			name:          "5th",
+			g:             CFGrammars[4],
+			expectedIsLL1: false,
+		},
+		{
+			name:          "6th",
+			g:             CFGrammars[5],
+			expectedIsLL1: false,
+		},
+		{
+			name:          "7th",
+			g:             CFGrammars[6],
+			expectedIsLL1: false,
+		},
+		{
+			name:          "8th",
+			g:             CFGrammars[7],
+			expectedIsLL1: false,
+		},
+		{
+			name:          "8th",
+			g:             CFGrammars[7],
+			expectedIsLL1: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
+			assert.Equal(t, tc.expectedIsLL1, tc.g.IsLL1())
 		})
 	}
 }
