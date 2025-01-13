@@ -1,6 +1,6 @@
 package sort
 
-import . "github.com/moorara/algo/generic"
+import "github.com/moorara/algo/generic"
 
 func min(a, b int) int {
 	if a < b {
@@ -9,7 +9,7 @@ func min(a, b int) int {
 	return b
 }
 
-func merge[T any](a, aux []T, lo, mid, hi int, cmp CompareFunc[T]) {
+func merge[T any](a, aux []T, lo, mid, hi int, cmp generic.CompareFunc[T]) {
 	var i, j int = lo, mid + 1
 	copy(aux[lo:hi+1], a[lo:hi+1])
 	for k := lo; k <= hi; k++ {
@@ -31,7 +31,7 @@ func merge[T any](a, aux []T, lo, mid, hi int, cmp CompareFunc[T]) {
 }
 
 // Merge implements the iterative version of merge sort algorithm.
-func Merge[T any](a []T, cmp CompareFunc[T]) {
+func Merge[T any](a []T, cmp generic.CompareFunc[T]) {
 	n := len(a)
 	aux := make([]T, n)
 	for sz := 1; sz < n; sz += sz {
@@ -41,7 +41,7 @@ func Merge[T any](a []T, cmp CompareFunc[T]) {
 	}
 }
 
-func mergeRec[T any](a, aux []T, lo, hi int, cmp CompareFunc[T]) {
+func mergeRec[T any](a, aux []T, lo, hi int, cmp generic.CompareFunc[T]) {
 	if hi <= lo {
 		return
 	}
@@ -56,7 +56,7 @@ func mergeRec[T any](a, aux []T, lo, hi int, cmp CompareFunc[T]) {
 }
 
 // MergeRec implements the recursive version of merge sort algorithm.
-func MergeRec[T any](a []T, cmp CompareFunc[T]) {
+func MergeRec[T any](a []T, cmp generic.CompareFunc[T]) {
 	n := len(a)
 	aux := make([]T, n)
 

@@ -3,7 +3,7 @@ package sort
 import (
 	"testing"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 )
 
 func TestInsertion_int(t *testing.T) {
@@ -17,7 +17,7 @@ func TestInsertion_int(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := NewCompareFunc[int]()
+		cmp := generic.NewCompareFunc[int]()
 		Insertion(tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {
@@ -37,7 +37,7 @@ func TestInsertion_string(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := NewCompareFunc[string]()
+		cmp := generic.NewCompareFunc[string]()
 		Insertion(tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {
