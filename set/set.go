@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 )
 
 var r = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -17,9 +17,9 @@ var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 // Set represents a set abstract data type.
 type Set[T any] interface {
 	fmt.Stringer
-	Cloner[Set[T]]
-	Equaler[Set[T]]
-	Collection1[T]
+	generic.Cloner[Set[T]]
+	generic.Equaler[Set[T]]
+	generic.Collection1[T]
 
 	CloneEmpty() Set[T]
 	IsSubset(Set[T]) bool
@@ -31,11 +31,11 @@ type Set[T any] interface {
 
 type set[T any] struct {
 	members []T
-	equal   EqualFunc[T]
+	equal   generic.EqualFunc[T]
 }
 
 // New creates a new set.
-func New[T any](equal EqualFunc[T], vals ...T) Set[T] {
+func New[T any](equal generic.EqualFunc[T], vals ...T) Set[T] {
 	s := &set[T]{
 		members: make([]T, 0),
 		equal:   equal,
@@ -142,7 +142,7 @@ func (s *set[T]) All() iter.Seq[T] {
 	}
 }
 
-func (s *set[T]) AnyMatch(p Predicate1[T]) bool {
+func (s *set[T]) AnyMatch(p generic.Predicate1[T]) bool {
 	for _, m := range s.members {
 		if p(m) {
 			return true
@@ -152,7 +152,7 @@ func (s *set[T]) AnyMatch(p Predicate1[T]) bool {
 	return false
 }
 
-func (s *set[T]) AllMatch(p Predicate1[T]) bool {
+func (s *set[T]) AllMatch(p generic.Predicate1[T]) bool {
 	for _, m := range s.members {
 		if !p(m) {
 			return false
@@ -162,7 +162,7 @@ func (s *set[T]) AllMatch(p Predicate1[T]) bool {
 	return true
 }
 
-func (s *set[T]) SelectMatch(p Predicate1[T]) Collection1[T] {
+func (s *set[T]) SelectMatch(p generic.Predicate1[T]) generic.Collection1[T] {
 	newS := New[T](s.equal)
 
 	for _, m := range s.members {
@@ -280,7 +280,7 @@ func Powerset[T any](s Set[T]) Set[Set[T]] {
 		return PS
 	}
 
-	members := Collect1(s.All())
+	members := generic.Collect1(s.All())
 	head, tail := s.CloneEmpty(), s.CloneEmpty()
 	head.Add(members[0])
 	tail.Add(members[1:]...)
@@ -316,14 +316,14 @@ func Partitions[T any](s Set[T]) Set[Set[Set[T]]] {
 		return Ps
 	}
 
-	members := Collect1(s.All())
+	members := generic.Collect1(s.All())
 	head, tail := s.CloneEmpty(), s.CloneEmpty()
 	head.Add(members[0])
 	tail.Add(members[1:]...)
 
 	// For every partition of s[1:]
 	for P := range Partitions[T](tail).All() {
-		Pmembers := Collect1(P.All())
+		Pmembers := generic.Collect1(P.All())
 
 		// Prepend s[0] to the curret partition
 		Q := New[Set[T]](setEqFunc)

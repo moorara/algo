@@ -6,19 +6,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 )
 
 func TestNew(t *testing.T) {
 	tests := []struct {
 		name            string
-		equal           EqualFunc[string]
+		equal           generic.EqualFunc[string]
 		vals            []string
 		expectedMembers []string
 	}{
 		{
 			name:            "OK",
-			equal:           NewEqualFunc[string](),
+			equal:           generic.NewEqualFunc[string](),
 			vals:            []string{"a", "b", "c", "d"},
 			expectedMembers: []string{"a", "b", "c", "d"},
 		},
@@ -35,7 +35,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestSet_String(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name               string
@@ -71,7 +71,7 @@ func TestSet_String(t *testing.T) {
 }
 
 func TestSet_Equals(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name     string
@@ -138,7 +138,7 @@ func TestSet_Equals(t *testing.T) {
 }
 
 func TestSet_Size(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name     string
@@ -172,7 +172,7 @@ func TestSet_Size(t *testing.T) {
 }
 
 func TestSet_IsEmpty(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name     string
@@ -205,7 +205,7 @@ func TestSet_IsEmpty(t *testing.T) {
 }
 
 func TestSet_Add(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name            string
@@ -242,7 +242,7 @@ func TestSet_Add(t *testing.T) {
 }
 
 func TestSet_Remove(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name            string
@@ -279,7 +279,7 @@ func TestSet_Remove(t *testing.T) {
 }
 
 func TestSet_RemoveAll(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name string
@@ -311,7 +311,7 @@ func TestSet_RemoveAll(t *testing.T) {
 }
 
 func TestSet_Contains(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name     string
@@ -357,7 +357,7 @@ func TestSet_Contains(t *testing.T) {
 }
 
 func TestSet_All(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name            string
@@ -384,7 +384,7 @@ func TestSet_All(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			members := Collect1(tc.s.All())
+			members := generic.Collect1(tc.s.All())
 
 			for _, expectedMember := range tc.expectedMembers {
 				assert.Contains(t, members, expectedMember)
@@ -398,7 +398,7 @@ func TestSet_All(t *testing.T) {
 }
 
 func TestSet_AnyMatch(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 	predicate := func(s string) bool {
 		return strings.ToUpper(s) == s
 	}
@@ -406,7 +406,7 @@ func TestSet_AnyMatch(t *testing.T) {
 	tests := []struct {
 		name     string
 		s        *set[string]
-		p        Predicate1[string]
+		p        generic.Predicate1[string]
 		expected bool
 	}{
 		{
@@ -447,7 +447,7 @@ func TestSet_AnyMatch(t *testing.T) {
 }
 
 func TestSet_AllMatch(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 	predicate := func(s string) bool {
 		return strings.ToUpper(s) == s
 	}
@@ -455,7 +455,7 @@ func TestSet_AllMatch(t *testing.T) {
 	tests := []struct {
 		name     string
 		s        *set[string]
-		p        Predicate1[string]
+		p        generic.Predicate1[string]
 		expected bool
 	}{
 		{
@@ -496,7 +496,7 @@ func TestSet_AllMatch(t *testing.T) {
 }
 
 func TestSet_SelectMatch(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 	predicate := func(s string) bool {
 		return strings.ToUpper(s) == s
 	}
@@ -504,7 +504,7 @@ func TestSet_SelectMatch(t *testing.T) {
 	tests := []struct {
 		name     string
 		s        *set[string]
-		p        Predicate1[string]
+		p        generic.Predicate1[string]
 		expected Set[string]
 	}{
 		{
@@ -554,7 +554,7 @@ func TestSet_SelectMatch(t *testing.T) {
 }
 
 func TestSet_Clone(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name string
@@ -585,7 +585,7 @@ func TestSet_Clone(t *testing.T) {
 }
 
 func TestSet_CloneEmpty(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name     string
@@ -619,7 +619,7 @@ func TestSet_CloneEmpty(t *testing.T) {
 }
 
 func TestSet_IsSubset(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name     string
@@ -662,7 +662,7 @@ func TestSet_IsSubset(t *testing.T) {
 }
 
 func TestSet_IsSuperset(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name     string
@@ -705,7 +705,7 @@ func TestSet_IsSuperset(t *testing.T) {
 }
 
 func TestSet_Union(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name     string
@@ -766,7 +766,7 @@ func TestSet_Union(t *testing.T) {
 }
 
 func TestSet_Intersection(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name     string
@@ -827,7 +827,7 @@ func TestSet_Intersection(t *testing.T) {
 }
 
 func TestSet_Difference(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
 		name     string
@@ -888,7 +888,7 @@ func TestSet_Difference(t *testing.T) {
 }
 
 func TestSet_Powerset(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 	setEqFunc := func(a, b Set[string]) bool { return a.Equals(b) }
 
 	tests := []struct {
@@ -1015,7 +1015,7 @@ func TestSet_Powerset(t *testing.T) {
 }
 
 func TestSet_Partitions(t *testing.T) {
-	eqFunc := NewEqualFunc[string]()
+	eqFunc := generic.NewEqualFunc[string]()
 	setEqFunc := func(a, b Set[string]) bool { return a.Equals(b) }
 	partEqFunc := func(a, b Set[Set[string]]) bool { return a.Equals(b) }
 
