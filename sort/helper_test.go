@@ -3,10 +3,10 @@ package sort
 import (
 	"math/rand"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 )
 
-func isSorted[T any](items []T, cmp CompareFunc[T]) bool {
+func isSorted[T any](items []T, cmp generic.CompareFunc[T]) bool {
 	for i := 0; i < len(items)-1; i++ {
 		if cmp(items[i], items[i+1]) > 0 {
 			return false

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/moorara/algo/generic"
-	. "github.com/moorara/algo/generic"
 	"github.com/moorara/algo/internal/dot"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
@@ -380,7 +379,7 @@ func (d *DFA) DOT() string {
 	graph := dot.NewGraph(false, true, false, "DFA", dot.RankDirLR, "", "", "")
 
 	states := d.States()
-	sort.Quick(states, NewCompareFunc[State]())
+	sort.Quick(states, generic.NewCompareFunc[State]())
 
 	for _, state := range states {
 		name := fmt.Sprintf("%d", state)
@@ -428,7 +427,7 @@ func (d *DFA) DOT() string {
 			to := fmt.Sprintf("%d", key)
 			symbols := val
 
-			sort.Quick(symbols, NewCompareFunc[string]())
+			sort.Quick(symbols, generic.NewCompareFunc[string]())
 			label := strings.Join(symbols, ",")
 
 			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", label, "", "", "", ""))

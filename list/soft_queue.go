@@ -1,6 +1,6 @@
 package list
 
-import . "github.com/moorara/algo/generic"
+import "github.com/moorara/algo/generic"
 
 // SoftQueue represents the abstract data type for a queue with soft deletion.
 type SoftQueue[T any] interface {
@@ -14,7 +14,7 @@ type SoftQueue[T any] interface {
 }
 
 type softQueue[T any] struct {
-	equal EqualFunc[T]
+	equal generic.EqualFunc[T]
 
 	front int
 	rear  int
@@ -23,7 +23,7 @@ type softQueue[T any] struct {
 
 // NewSoftQueue creates a new array-list queue with soft deletion.
 // Deleted entries remain in the queue and are searchable.
-func NewSoftQueue[T any](equal EqualFunc[T]) SoftQueue[T] {
+func NewSoftQueue[T any](equal generic.EqualFunc[T]) SoftQueue[T] {
 	return &softQueue[T]{
 		equal: equal,
 

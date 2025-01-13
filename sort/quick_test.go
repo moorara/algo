@@ -3,7 +3,7 @@ package sort
 import (
 	"testing"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 )
 
 func TestSelect_int(t *testing.T) {
@@ -19,7 +19,7 @@ func TestSelect_int(t *testing.T) {
 
 	for _, tc := range tests {
 		for k := 0; k < len(tc.items); k++ {
-			cmp := NewCompareFunc[int]()
+			cmp := generic.NewCompareFunc[int]()
 			item := Select[int](tc.items, k, cmp)
 
 			if item != tc.expectedItems[k] {
@@ -40,7 +40,7 @@ func TestQuick_int(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := NewCompareFunc[int]()
+		cmp := generic.NewCompareFunc[int]()
 		Quick[int](tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {
@@ -60,7 +60,7 @@ func TestQuick_string(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := NewCompareFunc[string]()
+		cmp := generic.NewCompareFunc[string]()
 		Quick[string](tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {
@@ -80,7 +80,7 @@ func TestQuick3Way_int(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := NewCompareFunc[int]()
+		cmp := generic.NewCompareFunc[int]()
 		Quick3Way[int](tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {
@@ -100,7 +100,7 @@ func TestQuick3Way_string(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := NewCompareFunc[string]()
+		cmp := generic.NewCompareFunc[string]()
 		Quick3Way[string](tc.items, cmp)
 
 		if !isSorted(tc.items, cmp) {
