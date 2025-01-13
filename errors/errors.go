@@ -1,0 +1,2 @@
+// Package errors
+package errors
