@@ -335,9 +335,9 @@ func TestAppend(t *testing.T) {
 
 func TestMultiError_ErrorOrNil(t *testing.T) {
 	tests := []struct {
-		name        string
-		e           *MultiError
-		expectError bool
+		name               string
+		e                  *MultiError
+		expectedMultiError *MultiError
 	}{
 
 		{
@@ -345,14 +345,14 @@ func TestMultiError_ErrorOrNil(t *testing.T) {
 			e: &MultiError{
 				errs: nil,
 			},
-			expectError: false,
+			expectedMultiError: nil,
 		},
 		{
 			name: "Zero",
 			e: &MultiError{
 				errs: []error{},
 			},
-			expectError: false,
+			expectedMultiError: nil,
 		},
 		{
 			name: "One",
@@ -361,7 +361,11 @@ func TestMultiError_ErrorOrNil(t *testing.T) {
 					new(fooError),
 				},
 			},
-			expectError: true,
+			expectedMultiError: &MultiError{
+				errs: []error{
+					new(fooError),
+				},
+			},
 		},
 		{
 			name: "Multiple",
@@ -372,19 +376,20 @@ func TestMultiError_ErrorOrNil(t *testing.T) {
 					new(bazError),
 				},
 			},
-			expectError: true,
+			expectedMultiError: &MultiError{
+				errs: []error{
+					new(fooError),
+					new(barError),
+					new(bazError),
+				},
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.e.ErrorOrNil()
-
-			if tc.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
+			assert.Equal(t, tc.expectedMultiError, err)
 		})
 	}
 }
