@@ -66,6 +66,15 @@ func TestHashFuncForSymbol(t *testing.T) {
 }
 
 func TestTerminal(t *testing.T) {
+	t.Run("endmarker", func(t *testing.T) {
+		assert.Equal(t, "$", endmarker.String())
+		assert.Equal(t, "$", endmarker.Name())
+		assert.True(t, endmarker.Equals(Terminal("\uEEEE")))
+		assert.False(t, endmarker.Equals(NonTerminal("\uEEEE")))
+		assert.False(t, endmarker.Equals(Terminal("\uEEEF")))
+		assert.True(t, endmarker.IsTerminal())
+	})
+
 	tests := []struct {
 		value          string
 		expectedString string
@@ -81,6 +90,7 @@ func TestTerminal(t *testing.T) {
 		{value: "(", expectedString: `"("`},
 		{value: ")", expectedString: `")"`},
 		{value: "id", expectedString: `"id"`},
+		{value: "if", expectedString: `"if"`},
 		{value: "if", expectedString: `"if"`},
 	}
 

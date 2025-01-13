@@ -50,7 +50,7 @@ func (s TerminalsAndEndmarker) String() string {
 	}
 
 	if s.IncludesEndmarker {
-		members = append(members, "$")
+		members = append(members, endmarker.String())
 	}
 
 	sort.Quick(members, generic.NewCompareFunc[string]())
@@ -62,5 +62,10 @@ func (s TerminalsAndEndmarker) String() string {
 type followTable symboltable.SymbolTable[NonTerminal, *TerminalsAndEndmarker]
 
 func newFollowTable() followTable {
-	return symboltable.NewQuadraticHashTable(hashNonTerminal, eqNonTerminal, eqTerminalsAndEndmarker, symboltable.HashOpts{})
+	return symboltable.NewQuadraticHashTable(
+		hashNonTerminal,
+		eqNonTerminal,
+		eqTerminalsAndEndmarker,
+		symboltable.HashOpts{},
+	)
 }

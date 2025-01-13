@@ -102,7 +102,12 @@ type productions struct {
 // NewProductions creates a new instance of the Productions.
 func NewProductions() Productions {
 	return &productions{
-		table: symboltable.NewQuadraticHashTable(hashNonTerminal, eqNonTerminal, eqProductionSet, symboltable.HashOpts{}),
+		table: symboltable.NewQuadraticHashTable(
+			hashNonTerminal,
+			eqNonTerminal,
+			eqProductionSet,
+			symboltable.HashOpts{},
+		),
 	}
 }
 
