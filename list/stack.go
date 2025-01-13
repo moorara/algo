@@ -1,6 +1,6 @@
 package list
 
-import . "github.com/moorara/algo/generic"
+import "github.com/moorara/algo/generic"
 
 // Stack represents a stack abstract data type.
 type Stack[T any] interface {
@@ -14,7 +14,7 @@ type Stack[T any] interface {
 
 type arrayStack[T any] struct {
 	nodeSize int
-	equal    EqualFunc[T]
+	equal    generic.EqualFunc[T]
 
 	listSize int
 	topIndex int
@@ -22,7 +22,7 @@ type arrayStack[T any] struct {
 }
 
 // NewStack creates a new array-list stack.
-func NewStack[T any](nodeSize int, equal EqualFunc[T]) Stack[T] {
+func NewStack[T any](nodeSize int, equal generic.EqualFunc[T]) Stack[T] {
 	return &arrayStack[T]{
 		nodeSize: nodeSize,
 		equal:    equal,

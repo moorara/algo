@@ -1,6 +1,6 @@
 package list
 
-import . "github.com/moorara/algo/generic"
+import "github.com/moorara/algo/generic"
 
 // Queue represents a queue abstract data type.
 type Queue[T any] interface {
@@ -14,7 +14,7 @@ type Queue[T any] interface {
 
 type arrayQueue[T any] struct {
 	nodeSize int
-	equal    EqualFunc[T]
+	equal    generic.EqualFunc[T]
 
 	listSize   int
 	frontIndex int
@@ -24,7 +24,7 @@ type arrayQueue[T any] struct {
 }
 
 // NewQueue creates a new array-list queue.
-func NewQueue[T any](nodeSize int, equal EqualFunc[T]) Queue[T] {
+func NewQueue[T any](nodeSize int, equal generic.EqualFunc[T]) Queue[T] {
 	return &arrayQueue[T]{
 		nodeSize: nodeSize,
 		equal:    equal,

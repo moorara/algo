@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 )
 
 func TestStack(t *testing.T) {
@@ -86,7 +86,7 @@ func TestStack(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			equal := NewEqualFunc[string]()
+			equal := generic.NewEqualFunc[string]()
 			stack := NewStack[string](tc.nodeSize, equal)
 
 			t.Run("BeforePush", func(t *testing.T) {
