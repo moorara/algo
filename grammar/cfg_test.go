@@ -204,7 +204,7 @@ func TestCFG_Verify(t *testing.T) {
 				[]Production{},
 				"S",
 			),
-			expectedError: "start symbol S not in the set of non-terminal symbols\nno production rule for start symbol S",
+			expectedError: "start symbol S not in the set of non-terminal symbols\nno production rule for start symbol S\n",
 		},
 		{
 			name: "StartSymbolHasNoProduction",
@@ -214,7 +214,7 @@ func TestCFG_Verify(t *testing.T) {
 				[]Production{},
 				"S",
 			),
-			expectedError: "no production rule for start symbol S\nno production rule for non-terminal symbol S",
+			expectedError: "no production rule for start symbol S\nno production rule for non-terminal symbol S\n",
 		},
 		{
 			name: "NonTerminalHasNoProduction",
@@ -226,7 +226,7 @@ func TestCFG_Verify(t *testing.T) {
 				},
 				"S",
 			),
-			expectedError: "no production rule for non-terminal symbol A",
+			expectedError: "no production rule for non-terminal symbol A\n",
 		},
 		{
 			name: "ProductionHeadNotDeclared",
@@ -240,7 +240,7 @@ func TestCFG_Verify(t *testing.T) {
 				},
 				"S",
 			),
-			expectedError: "production head B not in the set of non-terminal symbols",
+			expectedError: "production head B not in the set of non-terminal symbols\n",
 		},
 		{
 			name: "TerminalNotDeclared",
@@ -254,7 +254,7 @@ func TestCFG_Verify(t *testing.T) {
 				},
 				"S",
 			),
-			expectedError: "terminal symbol \"a\" not in the set of terminal symbols",
+			expectedError: "terminal symbol \"a\" not in the set of terminal symbols\n",
 		},
 		{
 			name: "NonTerminalNotDeclared",
@@ -268,7 +268,7 @@ func TestCFG_Verify(t *testing.T) {
 				},
 				"S",
 			),
-			expectedError: "non-terminal symbol C not in the set of non-terminal symbols",
+			expectedError: "non-terminal symbol C not in the set of non-terminal symbols\n",
 		},
 		{
 			name: "Valid",
@@ -531,26 +531,106 @@ func TestCFG_Equals(t *testing.T) {
 
 func TestCFG_IsCNF(t *testing.T) {
 	tests := []struct {
-		name          string
-		g             CFG
-		expectedIsCNF bool
+		name                 string
+		g                    CFG
+		expectedErrorStrings []string
 	}{
 		{
-			name: "NotCNF",
-			g: NewCFG(
-				[]Terminal{"a", "b"},
-				[]NonTerminal{"S", "A", "B"},
-				[]Production{
-					{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S → AB
-					{"S", ε}, // S → ε
-					{"A", String[Symbol]{Terminal("a"), NonTerminal("A")}}, // A → aA
-					{"A", String[Symbol]{Terminal("a")}},                   // A → a
-					{"B", String[Symbol]{Terminal("b"), NonTerminal("B")}}, // B → bB
-					{"B", String[Symbol]{Terminal("b")}},                   // B → b
-				},
-				"S",
-			),
-			expectedIsCNF: false,
+			name: "1st",
+			g:    CFGrammars[0],
+			expectedErrorStrings: []string{
+				`Production S → X Y X is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production X → "0" X is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production X → ε is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production Y → "1" Y is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production Y → ε is neither a binary rule, a terminal rule, nor S → ε`,
+			},
+		},
+		{
+			name: "2nd",
+			g:    CFGrammars[1],
+			expectedErrorStrings: []string{
+				`Production S → "a" S "b" S is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production S → "b" S "a" S is neither a binary rule, a terminal rule, nor S → ε`,
+			},
+		},
+		{
+			name: "3rd",
+			g:    CFGrammars[2],
+			expectedErrorStrings: []string{
+				`Production S → "a" B "a" is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production S → A "b" is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production A → ε is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production B → A is neither a binary rule, a terminal rule, nor S → ε`,
+			},
+		},
+		{
+			name: "4th",
+			g:    CFGrammars[3],
+			expectedErrorStrings: []string{
+				`Production S → A is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production A → B is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production B → C is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production C → D is neither a binary rule, a terminal rule, nor S → ε`,
+			},
+		},
+		{
+			name: "5th",
+			g:    CFGrammars[4],
+			expectedErrorStrings: []string{
+				`Production A → "a" A is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production B → "b" B is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production C → "c" C is neither a binary rule, a terminal rule, nor S → ε`,
+			},
+		},
+		{
+			name: "6th",
+			g:    CFGrammars[5],
+			expectedErrorStrings: []string{
+				`Production S → E is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production E → E "+" E is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production E → E "-" E is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production E → E "*" E is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production E → E "/" E is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production E → "(" E ")" is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production E → "-" E is neither a binary rule, a terminal rule, nor S → ε`,
+			},
+		},
+		{
+			name: "7th",
+			g:    CFGrammars[6],
+			expectedErrorStrings: []string{
+				`Production S → E is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production E → E "+" T is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production E → E "-" T is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production E → T is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production T → T "*" F is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production T → T "/" F is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production T → F is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production F → "(" E ")" is neither a binary rule, a terminal rule, nor S → ε`,
+			},
+		},
+		{
+			name: "8th",
+			g:    CFGrammars[7],
+			expectedErrorStrings: []string{
+				`Production name → "GRAMMAR" "IDENT" is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production decls → ε is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production decl → token is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production decl → rule is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production token → "TOKEN" "=" "STRING" is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production token → "TOKEN" "=" "REGEX" is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production rule → lhs "=" rhs is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production rule → lhs "=" is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production rhs → nonterm is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production rhs → rhs "|" rhs is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production rhs → "(" rhs ")" is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production rhs → "[" rhs "]" is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production rhs → "{" rhs "}" is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production rhs → "{{" rhs "}}" is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production lhs → nonterm is neither a binary rule, a terminal rule, nor S → ε`,
+				`Production rhs → term is neither a binary rule, a terminal rule, nor S → ε`,
+			},
 		},
 		{
 			name: "CNF",
@@ -569,75 +649,125 @@ func TestCFG_IsCNF(t *testing.T) {
 				},
 				"S",
 			),
-			expectedIsCNF: true,
+			expectedErrorStrings: nil,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
-			assert.Equal(t, tc.expectedIsCNF, tc.g.IsCNF())
+			err := tc.g.IsCNF()
+
+			if len(tc.expectedErrorStrings) == 0 {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				s := err.Error()
+				for _, expectedErrorString := range tc.expectedErrorStrings {
+					assert.Contains(t, s, expectedErrorString)
+				}
+			}
 		})
 	}
 }
 
 func TestCFG_IsLL1(t *testing.T) {
 	tests := []struct {
-		name          string
-		g             CFG
-		expectedIsLL1 bool
+		name                 string
+		g                    CFG
+		expectedErrorStrings []string
 	}{
 		{
-			name:          "1st",
-			g:             CFGrammars[0],
-			expectedIsLL1: false,
+			name: "1st",
+			g:    CFGrammars[0],
+			expectedErrorStrings: []string{
+				"ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
+			},
 		},
 		{
-			name:          "2nd",
-			g:             CFGrammars[1],
-			expectedIsLL1: false,
+			name: "2nd",
+			g:    CFGrammars[1],
+			expectedErrorStrings: []string{
+				"ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
+			},
 		},
 		{
-			name:          "3rd",
-			g:             CFGrammars[2],
-			expectedIsLL1: false,
+			name: "3rd",
+			g:    CFGrammars[2],
+			expectedErrorStrings: []string{
+				"FIRST(α) and FIRST(β) are not disjoint sets",
+				"ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
+			},
 		},
 		{
-			name:          "4th",
-			g:             CFGrammars[3],
-			expectedIsLL1: true,
+			name:                 "4th",
+			g:                    CFGrammars[3],
+			expectedErrorStrings: nil,
 		},
 		{
-			name:          "5th",
-			g:             CFGrammars[4],
-			expectedIsLL1: false,
+			name: "5th",
+			g:    CFGrammars[4],
+			expectedErrorStrings: []string{
+				"FIRST(α) and FIRST(β) are not disjoint sets",
+			},
 		},
 		{
-			name:          "6th",
-			g:             CFGrammars[5],
-			expectedIsLL1: false,
+			name: "6th",
+			g:    CFGrammars[5],
+			expectedErrorStrings: []string{
+				"FIRST(α) and FIRST(β) are not disjoint sets",
+			},
 		},
 		{
-			name:          "7th",
-			g:             CFGrammars[6],
-			expectedIsLL1: false,
+			name: "7th",
+			g:    CFGrammars[6],
+			expectedErrorStrings: []string{
+				"FIRST(α) and FIRST(β) are not disjoint sets",
+			},
 		},
 		{
-			name:          "8th",
-			g:             CFGrammars[7],
-			expectedIsLL1: false,
+			name: "8th",
+			g:    CFGrammars[7],
+			expectedErrorStrings: []string{
+				"FIRST(α) and FIRST(β) are not disjoint sets",
+				"ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
+			},
 		},
 		{
-			name:          "8th",
-			g:             CFGrammars[7],
-			expectedIsLL1: false,
+			name: "LL(1)",
+			g: NewCFG(
+				[]Terminal{"+", "*", "(", ")", "id"},
+				[]NonTerminal{"E", "E′", "T", "T′", "F"},
+				[]Production{
+					{"E", String[Symbol]{NonTerminal("T"), NonTerminal("E′")}},                 // E → T E′
+					{"E′", String[Symbol]{Terminal("+"), NonTerminal("T"), NonTerminal("E′")}}, // E′ → + T E′
+					{"E′", ε}, // E′ → ε
+					{"T", String[Symbol]{NonTerminal("F"), NonTerminal("T′")}},                 // T → F T′
+					{"T′", String[Symbol]{Terminal("*"), NonTerminal("F"), NonTerminal("T′")}}, // T′ → * F T′
+					{"T′", ε}, // T′ → ε
+					{"F", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}}, // F → ( E )
+					{"F", String[Symbol]{Terminal("id")}},                                 // F → id
+				},
+				"E",
+			),
+			expectedErrorStrings: nil,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
-			assert.Equal(t, tc.expectedIsLL1, tc.g.IsLL1())
+			err := tc.g.IsLL1()
+
+			if len(tc.expectedErrorStrings) == 0 {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				s := err.Error()
+				for _, expectedErrorString := range tc.expectedErrorStrings {
+					assert.Contains(t, s, expectedErrorString)
+				}
+			}
 		})
 	}
 }

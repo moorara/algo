@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 )
 
 func TestString(t *testing.T) {
@@ -22,7 +22,7 @@ func TestString(t *testing.T) {
 		expectedHasPrefix      bool
 		suffix                 String[Symbol]
 		expectedHasSuffix      bool
-		anyMatch               Predicate1[Symbol]
+		anyMatch               generic.Predicate1[Symbol]
 		expectedAnyMatch       bool
 		append                 []Symbol
 		expectedAppend         String[Symbol]

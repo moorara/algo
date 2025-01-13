@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"iter"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
-	. "github.com/moorara/algo/symboltable"
+	"github.com/moorara/algo/symboltable"
 )
 
 var (
@@ -80,8 +80,8 @@ func (p Production) IsCNF() (bool, bool) {
 // Productions is the interface for the set of production rules of a context-free grammar.
 type Productions interface {
 	fmt.Stringer
-	Cloner[Productions]
-	Equaler[Productions]
+	generic.Cloner[Productions]
+	generic.Equaler[Productions]
 
 	Add(...Production)
 	Remove(...Production)
@@ -90,19 +90,19 @@ type Productions interface {
 	Order(NonTerminal) []Production
 	All() iter.Seq[Production]
 	AllByHead() iter.Seq2[NonTerminal, set.Set[Production]]
-	AnyMatch(Predicate1[Production]) bool
-	AllMatch(Predicate1[Production]) bool
+	AnyMatch(generic.Predicate1[Production]) bool
+	AllMatch(generic.Predicate1[Production]) bool
 }
 
 // productions implements the Productions interface.
 type productions struct {
-	table SymbolTable[NonTerminal, set.Set[Production]]
+	table symboltable.SymbolTable[NonTerminal, set.Set[Production]]
 }
 
 // NewProductions creates a new instance of the Productions.
 func NewProductions() Productions {
 	return &productions{
-		table: NewQuadraticHashTable(hashNonTerminal, eqNonTerminal, eqProductionSet, HashOpts{}),
+		table: symboltable.NewQuadraticHashTable(hashNonTerminal, eqNonTerminal, eqProductionSet, symboltable.HashOpts{}),
 	}
 }
 
@@ -191,7 +191,7 @@ func (p *productions) Get(head NonTerminal) set.Set[Production] {
 // The goal of this function is to ensure a consistent and deterministic order for any given set of production rules.
 func (p *productions) Order(head NonTerminal) []Production {
 	// Collect all production rules into a slice from the set iterator.
-	prods := Collect1(p.Get(head).All())
+	prods := generic.Collect1(p.Get(head).All())
 
 	// Sort the productions using a custom comparison function.
 	sort.Quick[Production](prods, func(lhs, rhs Production) int {
@@ -247,7 +247,7 @@ func (p *productions) AllByHead() iter.Seq2[NonTerminal, set.Set[Production]] {
 }
 
 // AnyMatch returns true if at least one production rule satisfies the provided predicate.
-func (p *productions) AnyMatch(pred Predicate1[Production]) bool {
+func (p *productions) AnyMatch(pred generic.Predicate1[Production]) bool {
 	for q := range p.All() {
 		if pred(q) {
 			return true
@@ -259,7 +259,7 @@ func (p *productions) AnyMatch(pred Predicate1[Production]) bool {
 
 // AllMatch returns true if all production rules satisfy the provided predicate.
 // If the set of production rules is empty, it returns true.
-func (p *productions) AllMatch(pred Predicate1[Production]) bool {
+func (p *productions) AllMatch(pred generic.Predicate1[Production]) bool {
 	for q := range p.All() {
 		if !pred(q) {
 			return false
@@ -271,7 +271,7 @@ func (p *productions) AllMatch(pred Predicate1[Production]) bool {
 
 // SelectMatch selects a subset of production rules that satisfy the given predicate.
 // It returns a new set of production rules containing the matching productions, of the same type as the original set of production rules.
-func (p *productions) SelectMatch(pred Predicate1[Production]) Productions {
+func (p *productions) SelectMatch(pred generic.Predicate1[Production]) Productions {
 	newP := NewProductions()
 
 	for q := range p.All() {

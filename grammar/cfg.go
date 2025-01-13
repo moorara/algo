@@ -2,14 +2,14 @@ package grammar
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"strings"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/errors"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
-	. "github.com/moorara/algo/symboltable"
+	"github.com/moorara/algo/symboltable"
 )
 
 var (
@@ -99,7 +99,7 @@ func NewCFG(terms []Terminal, nonTerms []NonTerminal, prods []Production, start 
 func (g CFG) Verify() error {
 	var err error
 
-	getPredicate := func(n NonTerminal) Predicate1[Production] {
+	getPredicate := func(n NonTerminal) generic.Predicate1[Production] {
 		return func(p Production) bool {
 			return p.Head.Equals(n)
 		}
@@ -107,35 +107,35 @@ func (g CFG) Verify() error {
 
 	// Check if the start symbol is in the set of non-terminal symbols.
 	if !g.NonTerminals.Contains(g.Start) {
-		err = errors.Join(err, fmt.Errorf("start symbol %s not in the set of non-terminal symbols", g.Start))
+		err = errors.Append(err, fmt.Errorf("start symbol %s not in the set of non-terminal symbols", g.Start))
 	}
 
 	// Check if there is at least one production rule for the start symbol.
 	if !g.Productions.AnyMatch(getPredicate(g.Start)) {
-		err = errors.Join(err, fmt.Errorf("no production rule for start symbol %s", g.Start))
+		err = errors.Append(err, fmt.Errorf("no production rule for start symbol %s", g.Start))
 	}
 
 	// Check if there is at least one prodcution rule for every non-terminal symbol.
 	for n := range g.NonTerminals.All() {
 		if !g.Productions.AnyMatch(getPredicate(n)) {
-			err = errors.Join(err, fmt.Errorf("no production rule for non-terminal symbol %s", n))
+			err = errors.Append(err, fmt.Errorf("no production rule for non-terminal symbol %s", n))
 		}
 	}
 
 	for p := range g.Productions.All() {
 		// Check if the head of production rule is in the set of non-terminal symbols.
 		if !g.NonTerminals.Contains(p.Head) {
-			err = errors.Join(err, fmt.Errorf("production head %s not in the set of non-terminal symbols", p.Head))
+			err = errors.Append(err, fmt.Errorf("production head %s not in the set of non-terminal symbols", p.Head))
 		}
 
 		// Check if every symbol in the body of production rule is either in the set of terminal or non-terminal symbols.
 		for _, s := range p.Body {
 			if v, ok := s.(Terminal); ok && !g.Terminals.Contains(v) {
-				err = errors.Join(err, fmt.Errorf("terminal symbol %s not in the set of terminal symbols", v))
+				err = errors.Append(err, fmt.Errorf("terminal symbol %s not in the set of terminal symbols", v))
 			}
 
 			if v, ok := s.(NonTerminal); ok && !g.NonTerminals.Contains(v) {
-				err = errors.Join(err, fmt.Errorf("non-terminal symbol %s not in the set of non-terminal symbols", v))
+				err = errors.Append(err, fmt.Errorf("non-terminal symbol %s not in the set of non-terminal symbols", v))
 			}
 		}
 	}
@@ -204,12 +204,29 @@ func (g CFG) Equals(rhs CFG) bool {
 //
 // where A, B, and C are non-terminal symbols, a is a terminal symbol, and S is the start symbol.
 // Also, neither B nor C may be the start symbol, and the third production rule can only appear if ε is in L(G).
-func (g CFG) IsCNF() bool {
-	return g.Productions.AllMatch(func(p Production) bool {
+//
+// The method returns nil if the grammar is in CNF,
+// or an error detailing which production rules do not conform to CNF.
+//
+// The returned error is always an instance of errors.MultiError,
+// which contains instances of CNFError, if the CFG is not in Chomsky Normal Form (CNF).
+func (g CFG) IsCNF() error {
+	var err = &errors.MultiError{
+		Format: errors.BulletErrorFormat,
+	}
+
+	g.Productions.AllMatch(func(p Production) bool {
 		isBinary, isTerminal := p.IsCNF()
 		isStartEmpty := p.IsEmpty() && p.Head.Equals(g.Start)
-		return isBinary || isTerminal || isStartEmpty
+
+		if !isBinary && !isTerminal && !isStartEmpty {
+			err = errors.Append(err, &CNFError{P: p})
+		}
+
+		return true
 	})
+
+	return err.ErrorOrNil()
 }
 
 // IsLL1 checks if a context-free grammar (CFG) is an LL(1) grammar.
@@ -223,7 +240,13 @@ func (g CFG) IsCNF() bool {
 //
 // LL(1) grammars are expressive enough to cover most programming constructs.
 // No left-recursive or ambiguous grammar can be LL(1).
-func (g CFG) IsLL1() bool {
+//
+// The method returns nil if the grammar is LL(1).
+// It returns an error otherwise, providing details about what violates the LL(1) constraints.
+//
+// The returned error is always an instance of errors.MultiError,
+// which contains instances of LL1Error, if the CFG is not LL(1).
+func (g CFG) IsLL1() error {
 	/*
 	 * A grammar G is LL(1) if and only if whenever A → α | β are two distinct productions of G,
 	 * the following conditions hold:
@@ -238,36 +261,67 @@ func (g CFG) IsLL1() bool {
 	 * and likewise if ε ∈ FIRST(β), then FIRST(α) and FOLLOW(A) are disjoint sets.
 	 */
 
+	var err = &errors.MultiError{
+		Format: errors.BulletErrorFormat,
+	}
+
 	first := g.ComputeFIRST()
 	follow := g.ComputeFOLLOW(first)
 
-	for A, AProds := range g.Productions.AllByHead() {
-		prods := Collect1(AProds.All())
+	for A := range g.Productions.AllByHead() {
+
+		// The order in which production bodies are processed does not affect the outcome.
+		// Sorting is only done to make error messages deterministic and easier to understand.
+		prods := g.Productions.Order(A)
 
 		for i := 0; i < len(prods); i++ {
 			for j := i + 1; j < len(prods); j++ {
 				α, β := prods[i].Body, prods[j].Body
 				firstα, firstβ, followA := first(α), first(β), follow(A)
 
-				// Check FIRST(α) ∩ FIRST(β) = ∅
-				if !firstα.Terminals.Intersection(firstβ.Terminals).IsEmpty() || (firstα.IncludesEmpty && firstβ.IncludesEmpty) {
-					return false
+				/* Check FIRST(α) ∩ FIRST(β) = ∅ */
+
+				if !firstα.Terminals.Intersection(firstβ.Terminals).IsEmpty() || firstα.IncludesEmpty && firstβ.IncludesEmpty {
+					err = errors.Append(err, &LL1Error{
+						Description: "FIRST(α) and FIRST(β) are not disjoint sets",
+						A:           A,
+						Alpha:       α,
+						Beta:        β,
+						FIRSTα:      &firstα,
+						FIRSTβ:      &firstβ,
+					})
 				}
 
-				// Check if ε ∈ FIRST(α), then FIRST(β) and FOLLOW(A) = ∅
+				// Check if ε ∈ FIRST(α), then FIRST(β) ∩ FOLLOW(A) = ∅
 				if firstα.IncludesEmpty && !firstβ.Terminals.Intersection(followA.Terminals).IsEmpty() {
-					return false
+					err = errors.Append(err, &LL1Error{
+						Description: "ε is in FIRST(α), but FOLLOW(A) and FIRST(β) are not disjoint sets",
+						A:           A,
+						Alpha:       α,
+						Beta:        β,
+						FOLLOWA:     &followA,
+						FIRSTα:      &firstα,
+						FIRSTβ:      &firstβ,
+					})
 				}
 
-				// Check if ε ∈ FIRST(β), then FIRST(α) and FOLLOW(A) = ∅
+				// Check if ε ∈ FIRST(β), then FIRST(α) ∩ FOLLOW(A) = ∅
 				if firstβ.IncludesEmpty && !firstα.Terminals.Intersection(followA.Terminals).IsEmpty() {
-					return false
+					err = errors.Append(err, &LL1Error{
+						Description: "ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
+						A:           A,
+						Alpha:       α,
+						Beta:        β,
+						FOLLOWA:     &followA,
+						FIRSTα:      &firstα,
+						FIRSTβ:      &firstβ,
+					})
 				}
 			}
 		}
 	}
 
-	return true
+	return err.ErrorOrNil()
 }
 
 // NullableNonTerminals finds all non-terminals in a context-free grammar
@@ -678,9 +732,9 @@ func (g CFG) LeftFactor() CFG {
 // groupByCommonPrefix groups production bodies by their common prefixes.
 // It prioritizes shorter prefixes that encompass more suffixes and production bodies
 // over longer prefixes that encompass fewer suffixes or production bodies.
-func groupByCommonPrefix(prods set.Set[Production]) SymbolTable[String[Symbol], set.Set[String[Symbol]]] {
+func groupByCommonPrefix(prods set.Set[Production]) symboltable.SymbolTable[String[Symbol], set.Set[String[Symbol]]] {
 	// Define a map of prefixes to their corresponding suffixes.
-	groups := NewQuadraticHashTable(hashString, eqString, eqStringSet, HashOpts{})
+	groups := symboltable.NewQuadraticHashTable(hashString, eqString, eqStringSet, symboltable.HashOpts{})
 
 	for prod := range prods.All() {
 		prefixFound := false

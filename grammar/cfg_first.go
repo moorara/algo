@@ -1,8 +1,13 @@
 package grammar
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/set"
-	. "github.com/moorara/algo/symboltable"
+	"github.com/moorara/algo/sort"
+	"github.com/moorara/algo/symboltable"
 )
 
 var eqTerminalsAndEmpty = func(lhs, rhs *TerminalsAndEmpty) bool {
@@ -27,6 +32,7 @@ type TerminalsAndEmpty struct {
 	IncludesEmpty bool
 }
 
+// newTerminalsAndEmpty creates a new TerminalsAndEmpty instance with the given set of terminals.
 func newTerminalsAndEmpty(terms ...Terminal) *TerminalsAndEmpty {
 	return &TerminalsAndEmpty{
 		Terminals:     set.New(eqTerminal, terms...),
@@ -34,16 +40,33 @@ func newTerminalsAndEmpty(terms ...Terminal) *TerminalsAndEmpty {
 	}
 }
 
+// String returns a string representation of the FIRST set.
+func (s TerminalsAndEmpty) String() string {
+	members := []string{}
+
+	for term := range s.Terminals.All() {
+		members = append(members, term.String())
+	}
+
+	if s.IncludesEmpty {
+		members = append(members, "ε")
+	}
+
+	sort.Quick(members, generic.NewCompareFunc[string]())
+
+	return fmt.Sprintf("{%s}", strings.Join(members, ", "))
+}
+
 // firstBySymbolTable is the type for a table that stores the FIRST set for each grammar symbol.
-type firstBySymbolTable SymbolTable[Symbol, *TerminalsAndEmpty]
+type firstBySymbolTable symboltable.SymbolTable[Symbol, *TerminalsAndEmpty]
 
 func newFirstBySymbolTable() firstBySymbolTable {
-	return NewQuadraticHashTable(hashSymbol, eqSymbol, eqTerminalsAndEmpty, HashOpts{})
+	return symboltable.NewQuadraticHashTable(hashSymbol, eqSymbol, eqTerminalsAndEmpty, symboltable.HashOpts{})
 }
 
 // firstByStringTable is the type for a table that stores the FIRST set for strings of grammar symbols.
-type firstByStringTable SymbolTable[String[Symbol], *TerminalsAndEmpty]
+type firstByStringTable symboltable.SymbolTable[String[Symbol], *TerminalsAndEmpty]
 
 func newFirstByStringTable() firstByStringTable {
-	return NewQuadraticHashTable(hashString, eqString, eqTerminalsAndEmpty, HashOpts{})
+	return symboltable.NewQuadraticHashTable(hashString, eqString, eqTerminalsAndEmpty, symboltable.HashOpts{})
 }
