@@ -1,9 +1,9 @@
 package automata
 
-import . "github.com/moorara/algo/generic"
+import "github.com/moorara/algo/generic"
 
 var (
-	cmpSymbol = NewCompareFunc[Symbol]()
+	cmpSymbol = generic.NewCompareFunc[Symbol]()
 )
 
 // Symbol represents an input symbol in a finite automaton.

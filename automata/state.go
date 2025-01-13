@@ -1,13 +1,13 @@
 package automata
 
 import (
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/symboltable"
 )
 
 var (
-	eqState  = NewEqualFunc[State]()
-	cmpState = NewCompareFunc[State]()
+	eqState  = generic.NewEqualFunc[State]()
+	cmpState = generic.NewCompareFunc[State]()
 
 	eqStates = func(a, b States) bool {
 		return a.Equals(b)
