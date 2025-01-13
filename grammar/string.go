@@ -5,8 +5,8 @@ import (
 	"io"
 	"strings"
 
-	. "github.com/moorara/algo/generic"
-	. "github.com/moorara/algo/hash"
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/set"
 )
 
@@ -81,7 +81,7 @@ func (s String[T]) HasSuffix(prefix String[T]) bool {
 }
 
 // AnyMatch returns true if at least one symbol satisfies the provided predicate.
-func (s String[T]) AnyMatch(pred Predicate1[T]) bool {
+func (s String[T]) AnyMatch(pred generic.Predicate1[T]) bool {
 	for _, sym := range s {
 		if pred(sym) {
 			return true
@@ -180,7 +180,7 @@ func WriteString(w io.Writer, s String[Symbol]) (n int, err error) {
 }
 
 // hashFuncForString creates a HashFunc for hashing strings of symbols.
-func hashFuncForString() HashFunc[String[Symbol]] {
+func hashFuncForString() hash.HashFunc[String[Symbol]] {
 	h := fnv.New64()
 
 	return func(s String[Symbol]) uint64 {

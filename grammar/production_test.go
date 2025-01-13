@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/set"
 )
 
@@ -656,7 +656,7 @@ func TestProductions_AnyMatch(t *testing.T) {
 	tests := []struct {
 		name             string
 		p                *productions
-		pred             Predicate1[Production]
+		pred             generic.Predicate1[Production]
 		expectedAnyMatch bool
 	}{
 		{
@@ -687,7 +687,7 @@ func TestProductions_AllMatch(t *testing.T) {
 	tests := []struct {
 		name             string
 		p                *productions
-		pred             Predicate1[Production]
+		pred             generic.Predicate1[Production]
 		expectedAllMatch bool
 	}{
 		{
@@ -723,7 +723,7 @@ func TestProductions_SelectMatch(t *testing.T) {
 	tests := []struct {
 		name                string
 		p                   *productions
-		pred                Predicate1[Production]
+		pred                generic.Predicate1[Production]
 		expectedSelectMatch *productions
 	}{
 		{

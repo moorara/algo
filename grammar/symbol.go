@@ -5,8 +5,8 @@ import (
 	"hash/fnv"
 	"io"
 
-	. "github.com/moorara/algo/generic"
-	. "github.com/moorara/algo/hash"
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/hash"
 )
 
 // The endmarker is a special symbol that is used to indicate the end of a string.
@@ -25,12 +25,12 @@ var (
 		return lhs.Equals(rhs)
 	}
 
-	eqTerminal  = NewEqualFunc[Terminal]()
-	cmpTerminal = NewCompareFunc[Terminal]()
+	eqTerminal  = generic.NewEqualFunc[Terminal]()
+	cmpTerminal = generic.NewCompareFunc[Terminal]()
 
-	eqNonTerminal   = NewEqualFunc[NonTerminal]()
-	cmpNonTerminal  = NewCompareFunc[NonTerminal]()
-	hashNonTerminal = HashFuncForString[NonTerminal](nil)
+	eqNonTerminal   = generic.NewEqualFunc[NonTerminal]()
+	cmpNonTerminal  = generic.NewCompareFunc[NonTerminal]()
+	hashNonTerminal = hash.HashFuncForString[NonTerminal](nil)
 )
 
 // Symbol represents a grammar symbol (terminal or non-terminal).
@@ -49,7 +49,7 @@ func WriteSymbol(w io.Writer, s Symbol) (n int, err error) {
 }
 
 // hashFuncForSymbol creates a HashFunc for hashing symbols.
-func hashFuncForSymbol() HashFunc[Symbol] {
+func hashFuncForSymbol() hash.HashFunc[Symbol] {
 	h := fnv.New64()
 
 	return func(s Symbol) uint64 {

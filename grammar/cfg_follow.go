@@ -1,8 +1,13 @@
 package grammar
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/set"
-	. "github.com/moorara/algo/symboltable"
+	"github.com/moorara/algo/sort"
+	"github.com/moorara/algo/symboltable"
 )
 
 var eqTerminalsAndEndmarker = func(lhs, rhs *TerminalsAndEndmarker) bool {
@@ -28,6 +33,7 @@ type TerminalsAndEndmarker struct {
 	IncludesEndmarker bool
 }
 
+// newTerminalsAndEndmarker creates a new TerminalsAndEndmarker instance with the given set of terminals.
 func newTerminalsAndEndmarker(terms ...Terminal) *TerminalsAndEndmarker {
 	return &TerminalsAndEndmarker{
 		Terminals:         set.New(eqTerminal, terms...),
@@ -35,9 +41,26 @@ func newTerminalsAndEndmarker(terms ...Terminal) *TerminalsAndEndmarker {
 	}
 }
 
+// String returns a string representation of the FOLLOW set.
+func (s TerminalsAndEndmarker) String() string {
+	members := []string{}
+
+	for term := range s.Terminals.All() {
+		members = append(members, term.String())
+	}
+
+	if s.IncludesEndmarker {
+		members = append(members, "$")
+	}
+
+	sort.Quick(members, generic.NewCompareFunc[string]())
+
+	return fmt.Sprintf("{%s}", strings.Join(members, ", "))
+}
+
 // followTable is the type for a table that stores the FOLLOW set for each non-terminal.
-type followTable SymbolTable[NonTerminal, *TerminalsAndEndmarker]
+type followTable symboltable.SymbolTable[NonTerminal, *TerminalsAndEndmarker]
 
 func newFollowTable() followTable {
-	return NewQuadraticHashTable(hashNonTerminal, eqNonTerminal, eqTerminalsAndEndmarker, HashOpts{})
+	return symboltable.NewQuadraticHashTable(hashNonTerminal, eqNonTerminal, eqTerminalsAndEndmarker, symboltable.HashOpts{})
 }

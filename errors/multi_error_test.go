@@ -337,7 +337,7 @@ func TestMultiError_ErrorOrNil(t *testing.T) {
 	tests := []struct {
 		name               string
 		e                  *MultiError
-		expectedMultiError *MultiError
+		expectedMultiError error
 	}{
 
 		{
