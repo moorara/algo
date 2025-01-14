@@ -61,12 +61,22 @@ func (s TerminalsAndEmpty) String() string {
 type firstBySymbolTable symboltable.SymbolTable[Symbol, *TerminalsAndEmpty]
 
 func newFirstBySymbolTable() firstBySymbolTable {
-	return symboltable.NewQuadraticHashTable(hashSymbol, eqSymbol, eqTerminalsAndEmpty, symboltable.HashOpts{})
+	return symboltable.NewQuadraticHashTable(
+		hashSymbol,
+		eqSymbol,
+		eqTerminalsAndEmpty,
+		symboltable.HashOpts{},
+	)
 }
 
 // firstByStringTable is the type for a table that stores the FIRST set for strings of grammar symbols.
 type firstByStringTable symboltable.SymbolTable[String[Symbol], *TerminalsAndEmpty]
 
 func newFirstByStringTable() firstByStringTable {
-	return symboltable.NewQuadraticHashTable(hashString, eqString, eqTerminalsAndEmpty, symboltable.HashOpts{})
+	return symboltable.NewQuadraticHashTable(
+		hashString,
+		eqString,
+		eqTerminalsAndEmpty,
+		symboltable.HashOpts{},
+	)
 }

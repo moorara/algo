@@ -14,7 +14,7 @@ import (
 
 var (
 	primeSuffixes = []string{
-		"′", // Prime U+2032
+		"′", // Prime (U+2032)
 		"″", // Double Prime (U+2033)
 		"‴", // Triple Prime (U+2034)
 		"⁗", // Quadruple Prime (U+2057)
@@ -157,7 +157,7 @@ func (g CFG) String() string {
 
 	for _, head := range visited {
 		fmt.Fprintf(&b, "  %s → ", head)
-		for _, p := range g.Productions.Order(head) {
+		for _, p := range orderProductionSet(g.Productions.Get(head)) {
 			fmt.Fprintf(&b, "%s | ", p.Body.String())
 		}
 		b.Truncate(b.Len() - 3)
@@ -166,7 +166,7 @@ func (g CFG) String() string {
 
 	for _, head := range unvisited {
 		fmt.Fprintf(&b, "  %s → ", head)
-		for _, p := range g.Productions.Order(head) {
+		for _, p := range orderProductionSet(g.Productions.Get(head)) {
 			fmt.Fprintf(&b, "%s | ", p.Body.String())
 		}
 		b.Truncate(b.Len() - 3)
@@ -272,7 +272,7 @@ func (g CFG) IsLL1() error {
 
 		// The order in which production bodies are processed does not affect the outcome.
 		// Sorting is only done to make error messages deterministic and easier to understand.
-		prods := g.Productions.Order(A)
+		prods := orderProductionSet(g.Productions.Get(A))
 
 		for i := 0; i < len(prods); i++ {
 			for j := i + 1; j < len(prods); j++ {
@@ -875,7 +875,7 @@ func (g CFG) eliminateNonBinaryProductions() CFG {
 	}
 
 	for A := range g.Productions.AllByHead() {
-		for _, p := range g.Productions.Order(A) {
+		for _, p := range orderProductionSet(g.Productions.Get(A)) {
 			// Skip ε-production, single productions and productions already in CNF (A → BC or A → a).
 			if isBinary, isTerminal := p.IsCNF(); isTerminal || isBinary || p.IsEmpty() || p.IsSingle() {
 				newG.Productions.Add(p)
@@ -1101,6 +1101,67 @@ func (g CFG) ComputeFOLLOW(first FIRST) FOLLOW {
 	}
 }
 
+// ParsingTable constructs a predictive parsing table for an LL(1) grammar.
+//
+// Predictive parsers are recursive-descent parsers that do not require backtracking.
+// They can be constructed for a specific class of grammars called LL(1).
+// An LL(1) grammar must not be left-recursive or ambiguous.
+//
+// If a grammar is left-recursive or ambiguous,
+// the resulting parsing table will contain one or more multiply defined entries.
+//
+// This method constructs a parsing table for any context-free grammar.
+// To identify errors in the table, use the CheckErrors method.
+// Some errors may be resolved by eliminating left recursion and applying left factoring to the grammar.
+// However, certain grammars cannot be transformed into LL(1) even after these transformations.
+// Some languages may have no LL(1) grammar at all.
+func (g CFG) ParsingTable() ParsingTable {
+	/*
+	 * For each production A → α of the grammar:
+	 *
+	 *   1. For each terminal a in FIRST(α), add A → α to M[A,a].
+	 *   2. If ε is in FIRST(α), then for each terminal b in FOLLOW(A), add A → α to M[A,b].
+	 *      If ε is in FIRST(α) and $ is in FOLLOW(A), add A → α to M[A,$] as well.
+	 *   3. If, after performing the above, there is no production at all in M[A,a],
+	 *      then set M[A,a] to error (can be represented by an empty entry in the table).
+	 */
+
+	terminals := g.orderTerminals()
+	_, _, nonTerminals := g.orderNonTerminals()
+	table := NewParsingTable(terminals, nonTerminals)
+
+	first := g.ComputeFIRST()
+	follow := g.ComputeFOLLOW(first)
+
+	// For each production A → α
+	for p := range g.Productions.All() {
+		A := p.Head
+		FIRSTα := first(p.Body)
+
+		// For each terminal a ∈ FIRST(α), add A → α to M[A,a].
+		for a := range FIRSTα.Terminals.All() {
+			table.Add(A, a, p)
+		}
+
+		// If ε ∈ FIRST(α)
+		if FIRSTα.IncludesEmpty {
+			FOLLOWA := follow(A)
+
+			// For each terminal b ∈ FOLLOW(A), add A → α to M[A,b].
+			for b := range FOLLOWA.Terminals.All() {
+				table.Add(A, b, p)
+			}
+
+			// If ε ∈ FIRST(α) and $ ∈ FOLLOW(A), add A → α to M[A,$] as well.
+			if FOLLOWA.IncludesEndmarker {
+				table.Add(A, endmarker, p)
+			}
+		}
+	}
+
+	return table
+}
+
 // addNewNonTerminal generates and adds a new non-terminal symbol to the grammar.
 // It does so by appending each of the provided suffixes to the given prefix, in order,
 // until it finds a non-terminal that does not already exist in the set of non-terminals.
@@ -1142,31 +1203,31 @@ func (g CFG) orderTerminals() String[Terminal] {
 //
 // The goal of this function is to ensure a consistent and deterministic order for any given set of non-terminals.
 func (g CFG) orderNonTerminals() (String[NonTerminal], String[NonTerminal], String[NonTerminal]) {
+	prods := generic.Collect1(g.Productions.All())
+	orderProductionSlice(prods)
+
 	visited := make(String[NonTerminal], 0)
 	isVisited := func(n NonTerminal) bool {
 		for _, v := range visited {
-			if v == n {
+			if v.Equals(n) {
 				return true
 			}
 		}
 		return false
 	}
 
-	visited = append(visited, g.Start)
-
 	// Reppeat until no new non-terminal is added to visited:
 	//   For each production rule of the form A → α:
 	//     If A is in visited, add all non-terminal in α to visited.
+	visited = append(visited, g.Start)
 	for updated := true; updated; {
 		updated = false
-		for head := range g.Productions.AllByHead() {
-			for _, p := range g.Productions.Order(head) {
-				if isVisited(p.Head) {
-					for _, n := range p.Body.NonTerminals() {
-						if !isVisited(n) {
-							visited = append(visited, n)
-							updated = true
-						}
+		for _, p := range prods {
+			if isVisited(p.Head) {
+				for _, n := range p.Body.NonTerminals() {
+					if !isVisited(n) {
+						visited = append(visited, n)
+						updated = true
 					}
 				}
 			}

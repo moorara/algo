@@ -87,7 +87,6 @@ type Productions interface {
 	Remove(...Production)
 	RemoveAll(...NonTerminal)
 	Get(NonTerminal) set.Set[Production]
-	Order(NonTerminal) []Production
 	All() iter.Seq[Production]
 	AllByHead() iter.Seq2[NonTerminal, set.Set[Production]]
 	AnyMatch(generic.Predicate1[Production]) bool
@@ -102,7 +101,12 @@ type productions struct {
 // NewProductions creates a new instance of the Productions.
 func NewProductions() Productions {
 	return &productions{
-		table: symboltable.NewQuadraticHashTable(hashNonTerminal, eqNonTerminal, eqProductionSet, symboltable.HashOpts{}),
+		table: symboltable.NewQuadraticHashTable(
+			hashNonTerminal,
+			eqNonTerminal,
+			eqProductionSet,
+			symboltable.HashOpts{},
+		),
 	}
 }
 
@@ -110,9 +114,9 @@ func NewProductions() Productions {
 func (p *productions) String() string {
 	var b bytes.Buffer
 
-	for head := range p.table.All() {
+	for head, prods := range p.table.All() {
 		fmt.Fprintf(&b, "%s → ", head)
-		for _, q := range p.Order(head) {
+		for _, q := range orderProductionSet(prods) {
 			fmt.Fprintf(&b, "%s | ", q.Body.String())
 		}
 		b.Truncate(b.Len() - 3)
@@ -180,53 +184,6 @@ func (p *productions) Get(head NonTerminal) set.Set[Production] {
 	return list
 }
 
-// Order orders an unordered set of production rules with the same head non-terminal in a deterministic way.
-//
-// The ordering criteria are as follows:
-//
-//  1. Productions whose bodies contain more non-terminal symbols are prioritized first.
-//  2. If two productions have the same number of non-terminals, those with more terminal symbols in the body come first.
-//  3. If two productions have the same number of non-terminals and terminals, they are ordered alphabetically based on the symbols in their bodies.
-//
-// The goal of this function is to ensure a consistent and deterministic order for any given set of production rules.
-func (p *productions) Order(head NonTerminal) []Production {
-	// Collect all production rules into a slice from the set iterator.
-	prods := generic.Collect1(p.Get(head).All())
-
-	// Sort the productions using a custom comparison function.
-	sort.Quick[Production](prods, func(lhs, rhs Production) int {
-		// First, compare based on the number of non-terminal symbols in the body.
-		lhsNonTermsLen, rhsNonTermsLen := len(lhs.Body.NonTerminals()), len(rhs.Body.NonTerminals())
-		if lhsNonTermsLen > rhsNonTermsLen {
-			return -1
-		} else if rhsNonTermsLen > lhsNonTermsLen {
-			return 1
-		}
-
-		// Next, if the number of non-terminals is the same,
-		//   compare based on the number of terminal symbols.
-		lhsTermsLen, rhsTermsLen := len(lhs.Body.Terminals()), len(rhs.Body.Terminals())
-		if lhsTermsLen > rhsTermsLen {
-			return -1
-		} else if rhsTermsLen > lhsTermsLen {
-			return 1
-		}
-
-		// Then, if the number of terminals is also the same,
-		//   compare alphabetically based on the string representation of the bodies.
-		lhsString, rhsString := lhs.String(), rhs.String()
-		if lhsString < rhsString {
-			return -1
-		} else if rhsString < lhsString {
-			return 1
-		}
-
-		return 0
-	})
-
-	return prods
-}
-
 // All returns an iterator sequence containing all production rules.
 func (p *productions) All() iter.Seq[Production] {
 	return func(yield func(Production) bool) {
@@ -281,4 +238,64 @@ func (p *productions) SelectMatch(pred generic.Predicate1[Production]) Productio
 	}
 
 	return newP
+}
+
+// OrderProductions orders an unordered set of production rules in a deterministic way.
+//
+// The ordering criteria are as follows:
+//
+//  1. Production heads are compared alphabetically.
+//  2. If two productions have the same heads,
+//     productions whose bodies contain more non-terminal symbols are prioritized first.
+//  3. If two productions have the same number of non-terminals,
+//     those with more terminal symbols in the body come first.
+//  4. If two productions have the same number of non-terminals and terminals,
+//     they are ordered alphabetically based on the symbols in their bodies.
+//
+// The goal of this function is to ensure a consistent and deterministic order for any given set of production rules.
+func orderProductionSet(set set.Set[Production]) []Production {
+	prods := generic.Collect1(set.All())
+	orderProductionSlice(prods)
+	return prods
+}
+
+func orderProductionSlice(prods []Production) {
+	// Sort the productions using a custom comparison function.
+	sort.Quick[Production](prods, func(lhs, rhs Production) int {
+		// First, compare the heads of productions.
+		if cmp := cmpNonTerminal(lhs.Head, rhs.Head); cmp < 0 {
+			return -1
+		} else if cmp > 0 {
+			return 1
+		}
+
+		// Second, if the heads of two productions are the same,
+		//   compare based on the number of non-terminal symbols in the body.
+		lhsNonTermsLen, rhsNonTermsLen := len(lhs.Body.NonTerminals()), len(rhs.Body.NonTerminals())
+		if lhsNonTermsLen > rhsNonTermsLen {
+			return -1
+		} else if rhsNonTermsLen > lhsNonTermsLen {
+			return 1
+		}
+
+		// Next, if the number of non-terminals is the same,
+		//   compare based on the number of terminal symbols.
+		lhsTermsLen, rhsTermsLen := len(lhs.Body.Terminals()), len(rhs.Body.Terminals())
+		if lhsTermsLen > rhsTermsLen {
+			return -1
+		} else if rhsTermsLen > lhsTermsLen {
+			return 1
+		}
+
+		// Then, if the number of terminals is also the same,
+		//   compare alphabetically based on the string representation of the bodies.
+		lhsString, rhsString := lhs.String(), rhs.String()
+		if lhsString < rhsString {
+			return -1
+		} else if rhsString < lhsString {
+			return 1
+		}
+
+		return 0
+	})
 }

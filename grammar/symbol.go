@@ -17,7 +17,7 @@ import (
 // to simplify the handling of end-of-input scenarios, especially in parsing algorithms like LL(1) or LR(1).
 //
 // For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
-// const endmarker rune = 0xEEEE
+var endmarker = Terminal("\uEEEE")
 
 var (
 	hashSymbol = hashFuncForSymbol()
@@ -25,8 +25,9 @@ var (
 		return lhs.Equals(rhs)
 	}
 
-	eqTerminal  = generic.NewEqualFunc[Terminal]()
-	cmpTerminal = generic.NewCompareFunc[Terminal]()
+	eqTerminal   = generic.NewEqualFunc[Terminal]()
+	cmpTerminal  = generic.NewCompareFunc[Terminal]()
+	hashTerminal = hash.HashFuncForString[Terminal](nil)
 
 	eqNonTerminal   = generic.NewEqualFunc[NonTerminal]()
 	cmpNonTerminal  = generic.NewCompareFunc[NonTerminal]()
@@ -66,11 +67,23 @@ type Terminal string
 
 // String returns a string representation of a terminal symbol.
 func (t Terminal) String() string {
+	// The special endmarker symbol is taken from a Private Use Area (PUA) in Unicode,
+	// and it is rendered as $.
+	if t.Equals(endmarker) {
+		return "$"
+	}
+
 	return fmt.Sprintf("%q", t.Name())
 }
 
 // Name returns the name of terminal symbol.
 func (t Terminal) Name() string {
+	// The special endmarker symbol is taken from a Private Use Area (PUA) in Unicode,
+	// and it is named as $.
+	if t.Equals(endmarker) {
+		return "$"
+	}
+
 	return string(t)
 }
 

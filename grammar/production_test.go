@@ -480,59 +480,6 @@ func TestProductions_Get(t *testing.T) {
 	}
 }
 
-func TestProductions_Order(t *testing.T) {
-	p := getTestProductions()
-
-	tests := []struct {
-		name                string
-		p                   *productions
-		head                NonTerminal
-		expectedProductions []Production
-	}{
-		{
-			name: "1st",
-			p:    p[1],
-			head: NonTerminal("S"),
-			expectedProductions: []Production{
-				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
-				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
-				{"S", ε}, // S → ε
-			},
-		},
-		{
-			name: "2nd",
-			p:    p[2],
-			head: NonTerminal("T"),
-			expectedProductions: []Production{
-				{"T", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}}, // T → T * F
-				{"T", String[Symbol]{NonTerminal("T"), Terminal("/"), NonTerminal("F")}}, // T → T / F
-				{"T", String[Symbol]{NonTerminal("F")}},                                  // T → F
-			},
-		},
-		{
-			name: "3rd",
-			p:    p[3],
-			head: NonTerminal("E"),
-			expectedProductions: []Production{
-				{"E", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}}, // E → E * E
-				{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
-				{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
-				{"E", String[Symbol]{NonTerminal("E"), Terminal("/"), NonTerminal("E")}}, // E → E / E
-				{"E", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}},    // E → ( E )
-				{"E", String[Symbol]{Terminal("-"), NonTerminal("E")}},                   // E → - E
-				{"E", String[Symbol]{Terminal("id")}},                                    // E → id
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			prods := tc.p.Order(tc.head)
-			assert.Equal(t, tc.expectedProductions, prods)
-		})
-	}
-}
-
 func TestProductions_All(t *testing.T) {
 	p := getTestProductions()
 
@@ -738,6 +685,55 @@ func TestProductions_SelectMatch(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			selectMatch := tc.p.SelectMatch(tc.pred)
 			assert.True(t, selectMatch.Equals(tc.expectedSelectMatch))
+		})
+	}
+}
+
+func TestOrderProductionSet(t *testing.T) {
+	p := getTestProductions()
+
+	tests := []struct {
+		name                string
+		set                 set.Set[Production]
+		expectedProductions []Production
+	}{
+		{
+			name: "1st",
+			set:  p[1].Get("S"),
+			expectedProductions: []Production{
+				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
+				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
+				{"S", ε}, // S → ε
+			},
+		},
+		{
+			name: "2nd",
+			set:  p[2].Get("T"),
+			expectedProductions: []Production{
+				{"T", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}}, // T → T * F
+				{"T", String[Symbol]{NonTerminal("T"), Terminal("/"), NonTerminal("F")}}, // T → T / F
+				{"T", String[Symbol]{NonTerminal("F")}},                                  // T → F
+			},
+		},
+		{
+			name: "3rd",
+			set:  p[3].Get("E"),
+			expectedProductions: []Production{
+				{"E", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}}, // E → E * E
+				{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
+				{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
+				{"E", String[Symbol]{NonTerminal("E"), Terminal("/"), NonTerminal("E")}}, // E → E / E
+				{"E", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}},    // E → ( E )
+				{"E", String[Symbol]{Terminal("-"), NonTerminal("E")}},                   // E → - E
+				{"E", String[Symbol]{Terminal("id")}},                                    // E → id
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			prods := orderProductionSet(tc.set)
+			assert.Equal(t, tc.expectedProductions, prods)
 		})
 	}
 }

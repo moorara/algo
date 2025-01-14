@@ -19,7 +19,7 @@ func TestCNFError(t *testing.T) {
 			e: &CNFError{
 				P: Production{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}},
 			},
-			expectedError: `Production rule → lhs "=" rhs is neither a binary rule, a terminal rule, nor S → ε`,
+			expectedError: `production rule → lhs "=" rhs is neither a binary rule, a terminal rule, nor S → ε`,
 		},
 	}
 
@@ -54,6 +54,31 @@ func TestLL1Error(t *testing.T) {
 				},
 			},
 			expectedError: "ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets:\n  decls → decls decl | ε\n    FOLLOW(decls): {\"IDENT\", \"TOKEN\", $}\n    FIRST(decls decl): {\"IDENT\", \"TOKEN\"}\n    FIRST(ε): {ε}\n",
+		},
+	}
+
+	for _, tc := range tests {
+		assert.EqualError(t, tc.e, tc.expectedError)
+	}
+}
+
+func TestParsingTableError(t *testing.T) {
+	tests := []struct {
+		name          string
+		e             *ParsingTableError
+		expectedError string
+	}{
+		{
+			name: "OK",
+			e: &ParsingTableError{
+				NonTerminal: NonTerminal("decls"),
+				Terminal:    Terminal("IDENT"),
+				Productions: set.New(eqProduction,
+					Production{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},
+					Production{"decls", ε},
+				),
+			},
+			expectedError: "multiple productions in parsing table at M[decls, \"IDENT\"]:\n  decls → decls decl\n  decls → ε\n",
 		},
 	}
 
