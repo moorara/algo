@@ -16,9 +16,9 @@ var CFGrammars = []CFG{
 		[]Production{
 			{"S", String[Symbol]{NonTerminal("X"), NonTerminal("Y"), NonTerminal("X")}}, // S → XYX
 			{"X", String[Symbol]{Terminal("0"), NonTerminal("X")}},                      // X → 0X
-			{"X", ε}, // X → ε
+			{"X", E}, // X → ε
 			{"Y", String[Symbol]{Terminal("1"), NonTerminal("Y")}}, // Y → 1Y
-			{"Y", ε}, // Y → ε
+			{"Y", E}, // Y → ε
 		},
 		"S",
 	),
@@ -28,7 +28,7 @@ var CFGrammars = []CFG{
 		[]Production{
 			{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 			{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
-			{"S", ε}, // S → ε
+			{"S", E}, // S → ε
 		},
 		"S",
 	),
@@ -40,7 +40,7 @@ var CFGrammars = []CFG{
 			{"S", String[Symbol]{NonTerminal("A"), Terminal("b")}},                // S → Ab
 			{"S", String[Symbol]{Terminal("a")}},                                  // S → a
 			{"A", String[Symbol]{Terminal("b")}},                                  // A → b
-			{"A", ε},                                                              // A → ε
+			{"A", E},                                                              // A → ε
 			{"B", String[Symbol]{NonTerminal("A")}},                               // B → A
 			{"B", String[Symbol]{Terminal("b")}},                                  // B → b
 		},
@@ -80,7 +80,7 @@ var CFGrammars = []CFG{
 		[]NonTerminal{"S", "A", "A₁", "B", "B₁"},
 		[]Production{
 			{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S → AB
-			{"S", ε}, // S → ε
+			{"S", E}, // S → ε
 			{"A", String[Symbol]{NonTerminal("A₁"), NonTerminal("A")}}, // A → A₁A
 			{"A", String[Symbol]{Terminal("a")}},                       // A → a
 			{"A₁", String[Symbol]{Terminal("a")}},                      // A₁ → a
@@ -127,10 +127,10 @@ var CFGrammars = []CFG{
 		[]Production{
 			{"E", String[Symbol]{NonTerminal("T"), NonTerminal("E′")}},                 // E → T E′
 			{"E′", String[Symbol]{Terminal("+"), NonTerminal("T"), NonTerminal("E′")}}, // E′ → + T E′
-			{"E′", ε}, // E′ → ε
+			{"E′", E}, // E′ → ε
 			{"T", String[Symbol]{NonTerminal("F"), NonTerminal("T′")}},                 // T → F T′
 			{"T′", String[Symbol]{Terminal("*"), NonTerminal("F"), NonTerminal("T′")}}, // T′ → * F T′
-			{"T′", ε}, // T′ → ε
+			{"T′", E}, // T′ → ε
 			{"F", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}}, // F → ( E )
 			{"F", String[Symbol]{Terminal("id")}},                                 // F → id
 		},
@@ -143,7 +143,7 @@ var CFGrammars = []CFG{
 			{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
 			{"name", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},       // name → GRAMMAR IDENT
 			{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
-			{"decls", ε}, // decls → ε
+			{"decls", E}, // decls → ε
 			{"decl", String[Symbol]{NonTerminal("token")}},                                  // decl → token
 			{"decl", String[Symbol]{NonTerminal("rule")}},                                   // decl → rule
 			{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}}, // token → TOKEN "=" STRING
@@ -181,7 +181,7 @@ func TestNewCFG(t *testing.T) {
 			nonTerms: []NonTerminal{"S"},
 			prods: []Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b")}}, //  S → aSb
-				{"S", ε}, //  S → ε
+				{"S", E}, //  S → ε
 			},
 			start: "S",
 		},
@@ -252,7 +252,7 @@ func TestCFG_Verify(t *testing.T) {
 				[]Terminal{},
 				[]NonTerminal{"A", "S"},
 				[]Production{
-					{"S", ε}, // S → ε
+					{"S", E}, // S → ε
 				},
 				"S",
 			),
@@ -265,8 +265,8 @@ func TestCFG_Verify(t *testing.T) {
 				[]NonTerminal{"A", "S"},
 				[]Production{
 					{"S", String[Symbol]{NonTerminal("A")}}, // S → A
-					{"A", ε},                                // A → ε
-					{"B", ε},                                // B → ε
+					{"A", E},                                // A → ε
+					{"B", E},                                // B → ε
 				},
 				"S",
 			),
@@ -280,7 +280,7 @@ func TestCFG_Verify(t *testing.T) {
 				[]Production{
 					{"S", String[Symbol]{NonTerminal("A")}}, // S → A
 					{"A", String[Symbol]{Terminal("a")}},    // A → a
-					{"B", ε},                                // B → ε
+					{"B", E},                                // B → ε
 				},
 				"S",
 			),
@@ -467,10 +467,10 @@ func TestCFG_Equals(t *testing.T) {
 					{"S", String[Symbol]{Terminal("b"), NonTerminal("B")}}, // S → bB
 					{"A", String[Symbol]{Terminal("a"), NonTerminal("S")}}, // A → aS
 					{"A", String[Symbol]{Terminal("b"), NonTerminal("A")}}, // A → bA
-					{"A", ε}, // A → ε
+					{"A", E}, // A → ε
 					{"B", String[Symbol]{Terminal("b"), NonTerminal("S")}}, // B → bS
 					{"B", String[Symbol]{Terminal("a"), NonTerminal("B")}}, // B → aB
-					{"B", ε}, // B → ε
+					{"B", E}, // B → ε
 				},
 				"S",
 			),
@@ -484,7 +484,7 @@ func TestCFG_Equals(t *testing.T) {
 					{"A", String[Symbol]{Terminal("b"), NonTerminal("A")}}, // A → bA
 					{"B", String[Symbol]{Terminal("b"), NonTerminal("S")}}, // B → bS
 					{"B", String[Symbol]{Terminal("a"), NonTerminal("B")}}, // B → aB
-					{"B", ε}, // B → ε
+					{"B", E}, // B → ε
 				},
 				"S",
 			),
@@ -500,10 +500,10 @@ func TestCFG_Equals(t *testing.T) {
 					{"S", String[Symbol]{Terminal("b"), NonTerminal("B")}}, // S → bB
 					{"A", String[Symbol]{Terminal("a"), NonTerminal("S")}}, // A → aS
 					{"A", String[Symbol]{Terminal("b"), NonTerminal("A")}}, // A → bA
-					{"A", ε}, // A → ε
+					{"A", E}, // A → ε
 					{"B", String[Symbol]{Terminal("b"), NonTerminal("S")}}, // B → bS
 					{"B", String[Symbol]{Terminal("a"), NonTerminal("B")}}, // B → aB
-					{"B", ε}, // B → ε
+					{"B", E}, // B → ε
 				},
 				"S",
 			),
@@ -515,10 +515,10 @@ func TestCFG_Equals(t *testing.T) {
 					{"S", String[Symbol]{Terminal("b"), NonTerminal("B")}}, // S → bB
 					{"A", String[Symbol]{Terminal("a"), NonTerminal("S")}}, // A → aS
 					{"A", String[Symbol]{Terminal("b"), NonTerminal("A")}}, // A → bA
-					{"A", ε}, // A → ε
+					{"A", E}, // A → ε
 					{"B", String[Symbol]{Terminal("b"), NonTerminal("S")}}, // B → bS
 					{"B", String[Symbol]{Terminal("a"), NonTerminal("B")}}, // B → aB
-					{"B", ε}, // B → ε
+					{"B", E}, // B → ε
 				},
 				"A",
 			),
@@ -890,7 +890,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 				[]NonTerminal{"S′", "S", "X", "Y"},
 				[]Production{
 					{"S′", String[Symbol]{NonTerminal("S")}}, // S′ → S
-					{"S′", ε}, // S′ → ε
+					{"S′", E}, // S′ → ε
 					{"S", String[Symbol]{NonTerminal("X"), NonTerminal("Y"), NonTerminal("X")}}, // S → XYX
 					{"S", String[Symbol]{NonTerminal("X"), NonTerminal("X")}},                   // S → XX
 					{"S", String[Symbol]{NonTerminal("X"), NonTerminal("Y")}},                   // S → XY
@@ -913,7 +913,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 				[]NonTerminal{"S′", "S"},
 				[]Production{
 					{"S′", String[Symbol]{NonTerminal("S")}}, // S′ → S
-					{"S′", ε}, // S′ → ε
+					{"S′", E}, // S′ → ε
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 					{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b")}},                   // S → aSb
@@ -963,7 +963,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 				[]NonTerminal{"S", "S′", "A", "A₁", "B", "B₁"},
 				[]Production{
 					{"S′", String[Symbol]{NonTerminal("S")}}, // S′ → S
-					{"S′", ε}, // S′ → ε
+					{"S′", E}, // S′ → ε
 					{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}},  // S → AB
 					{"A", String[Symbol]{NonTerminal("A₁"), NonTerminal("A")}}, // A → A₁A
 					{"A", String[Symbol]{Terminal("a")}},                       // A → a
@@ -1079,9 +1079,9 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 					{"S", String[Symbol]{NonTerminal("A"), Terminal("b")}},                // S → Ab
 					{"S", String[Symbol]{Terminal("a")}},                                  // S → a
 					{"A", String[Symbol]{Terminal("b")}},                                  // A → b
-					{"A", ε},                                                              // A → ε
+					{"A", E},                                                              // A → ε
 					{"B", String[Symbol]{Terminal("b")}},                                  // B → b
-					{"B", ε},                                                              // B → ε
+					{"B", E},                                                              // B → ε
 				},
 				"S",
 			),
@@ -1185,7 +1185,7 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
 					{"name", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},       // name → GRAMMAR IDENT
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
-					{"decls", ε}, // decls → ε
+					{"decls", E}, // decls → ε
 					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // decl → lhs "=" rhs
 					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // decl → lhs "="
 					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},  // decl → TOKEN "=" STRING
@@ -1336,7 +1336,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 					{"S′", String[Symbol]{Terminal("1"), NonTerminal("Y")}},                      // S′ → 1Y
 					{"S′", String[Symbol]{Terminal("0")}},                                        // S′ → 0
 					{"S′", String[Symbol]{Terminal("1")}},                                        // S′ → 1
-					{"S′", ε},                                                                    // S′ → ε
+					{"S′", E},                                                                    // S′ → ε
 					{"X", String[Symbol]{Terminal("0"), NonTerminal("X")}},                       // X → 0X
 					{"X", String[Symbol]{Terminal("0")}},                                         // X → 0
 					{"Y", String[Symbol]{Terminal("1"), NonTerminal("Y")}},                       // Y → 1Y
@@ -1360,7 +1360,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 					{"S′", String[Symbol]{Terminal("b"), Terminal("a"), NonTerminal("S")}},                   // S′ → baS
 					{"S′", String[Symbol]{Terminal("a"), Terminal("b")}},                                     // S′ → ab
 					{"S′", String[Symbol]{Terminal("b"), Terminal("a")}},                                     // S′ → ba
-					{"S′", ε}, // S′ → ε
+					{"S′", E}, // S′ → ε
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 					{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b")}},                   // S → aSb
@@ -1429,7 +1429,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 				[]NonTerminal{"S′", "A", "A₁", "B", "B₁"},
 				[]Production{
 					{"S′", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S′ → AB
-					{"S′", ε}, // S′ → ε
+					{"S′", E}, // S′ → ε
 					{"A", String[Symbol]{NonTerminal("A₁"), NonTerminal("A")}}, // A → A₁A
 					{"A", String[Symbol]{Terminal("a")}},                       // A → a
 					{"A₁", String[Symbol]{Terminal("a")}},                      // A₁ → a
@@ -1584,7 +1584,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 					{"S′", String[Symbol]{Terminal("1"), NonTerminal("Y")}},                      // S′ → 1Y
 					{"S′", String[Symbol]{Terminal("0")}},                                        // S′ → 0
 					{"S′", String[Symbol]{Terminal("1")}},                                        // S′ → 1
-					{"S′", ε},                                                                    // S′ → ε
+					{"S′", E},                                                                    // S′ → ε
 					{"X", String[Symbol]{Terminal("0"), NonTerminal("X")}},                       // X → 0X
 					{"X", String[Symbol]{Terminal("0")}},                                         // X → 0
 					{"Y", String[Symbol]{Terminal("1"), NonTerminal("Y")}},                       // Y → 1Y
@@ -1608,7 +1608,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 					{"S′", String[Symbol]{Terminal("b"), Terminal("a"), NonTerminal("S")}},                   // S′ → baS
 					{"S′", String[Symbol]{Terminal("a"), Terminal("b")}},                                     // S′ → ab
 					{"S′", String[Symbol]{Terminal("b"), Terminal("a")}},                                     // S′ → ba
-					{"S′", ε}, // S′ → ε
+					{"S′", E}, // S′ → ε
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 					{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b")}},                   // S → aSb
@@ -1677,7 +1677,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 				[]NonTerminal{"S′", "A", "A₁", "B", "B₁"},
 				[]Production{
 					{"S′", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S′ → AB
-					{"S′", ε}, // S′ → ε
+					{"S′", E}, // S′ → ε
 					{"A", String[Symbol]{NonTerminal("A₁"), NonTerminal("A")}}, // A → A₁A
 					{"A", String[Symbol]{Terminal("a")}},                       // A → a
 					{"A₁", String[Symbol]{Terminal("a")}},                      // A₁ → a
@@ -1709,7 +1709,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 					{"E′", String[Symbol]{Terminal("-"), NonTerminal("E"), NonTerminal("E′")}},               // E′ → - E E′
 					{"E′", String[Symbol]{Terminal("*"), NonTerminal("E"), NonTerminal("E′")}},               // E′ → * E E′
 					{"E′", String[Symbol]{Terminal("/"), NonTerminal("E"), NonTerminal("E′")}},               // E′ → / E E′
-					{"E′", ε}, // E′ → ε
+					{"E′", E}, // E′ → ε
 				},
 				"S",
 			),
@@ -1733,12 +1733,12 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 					{"E", String[Symbol]{Terminal("id"), NonTerminal("E′")}},                                    // E → id E′
 					{"E′", String[Symbol]{Terminal("+"), NonTerminal("T"), NonTerminal("E′")}},                  // E′ → + T E′
 					{"E′", String[Symbol]{Terminal("-"), NonTerminal("T"), NonTerminal("E′")}},                  // E′ → - T E′
-					{"E′", ε}, // E′ → ε
+					{"E′", E}, // E′ → ε
 					{"T", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")"), NonTerminal("T′")}}, // T → ( E ) T′
 					{"T", String[Symbol]{Terminal("id"), NonTerminal("T′")}},                                 // T → id T′
 					{"T′", String[Symbol]{Terminal("*"), NonTerminal("F"), NonTerminal("T′")}},               // T′ → * F T′
 					{"T′", String[Symbol]{Terminal("/"), NonTerminal("F"), NonTerminal("T′")}},               // T′ → / F T′
-					{"T′", ε}, // T′ → ε
+					{"T′", E}, // T′ → ε
 					{"F", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}}, // F → ( E )
 					{"F", String[Symbol]{Terminal("id")}},                                 // F → id
 				},
@@ -1785,7 +1785,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX"), NonTerminal("decls′")}},   // decls → TOKEN "=" REGEX decls′
 					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING"), NonTerminal("decls′")}},  // decls → TOKEN "=" STRING decls′
 					{"decls′", String[Symbol]{NonTerminal("decl"), NonTerminal("decls′")}},                                  // decls′ → decl decls′
-					{"decls′", ε}, // decls′ → ε
+					{"decls′", E}, // decls′ → ε
 					{"decl", String[Symbol]{Terminal("IDENT"), Terminal("="), NonTerminal("rhs")}},                   // decl → IDENT "=" rhs
 					{"decl", String[Symbol]{Terminal("IDENT"), Terminal("=")}},                                       // decl → IDENT "="
 					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},                    // decl → TOKEN "=" REGEX
@@ -1800,7 +1800,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 					{"rhs", String[Symbol]{Terminal("STRING"), NonTerminal("rhs′")}},                                 // rhs → STRING rhs′
 					{"rhs′", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs′")}},                                // rhs′ → rhs rhs′
 					{"rhs′", String[Symbol]{Terminal("|"), NonTerminal("rhs"), NonTerminal("rhs′")}},                 // rhs′ → "|" rhs rhs′
-					{"rhs′", ε}, // rhs′ → ε
+					{"rhs′", E}, // rhs′ → ε
 				},
 				"grammar",
 			),
@@ -1843,9 +1843,9 @@ func TestCFG_LeftFactor(t *testing.T) {
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("S′")}}, // S → aS′
 					{"S", String[Symbol]{NonTerminal("A"), Terminal("b")}},  // S → Ab
 					{"S′", String[Symbol]{NonTerminal("B"), Terminal("a")}}, // S′ → Ba
-					{"S′", ε},                               // S′ → ε
+					{"S′", E},                               // S′ → ε
 					{"A", String[Symbol]{Terminal("b")}},    // A → b
-					{"A", ε},                                // A → ε
+					{"A", E},                                // A → ε
 					{"B", String[Symbol]{NonTerminal("A")}}, // B → A
 					{"B", String[Symbol]{Terminal("b")}},    // B → b
 				},
@@ -1924,7 +1924,7 @@ func TestCFG_LeftFactor(t *testing.T) {
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
 					{"name", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},       // name → GRAMMAR IDENT
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
-					{"decls", ε}, // decls → ε
+					{"decls", E}, // decls → ε
 					{"decl", String[Symbol]{NonTerminal("token")}},                                  // decl → token
 					{"decl", String[Symbol]{NonTerminal("rule")}},                                   // decl → rule
 					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}}, // token → TOKEN "=" STRING
@@ -1968,9 +1968,9 @@ func TestGroupByCommonPrefix(t *testing.T) {
 	}{
 		{
 			name: "1st",
-			prods: set.New(eqProduction,
+			prods: set.New(EqProduction,
 				Production{"A", String[Symbol]{Terminal("a")}},
-				Production{"A", ε},
+				Production{"A", E},
 			),
 			expectedGroups: map[string][]string{
 				`"a"`: {`ε`},
@@ -1979,7 +1979,7 @@ func TestGroupByCommonPrefix(t *testing.T) {
 		},
 		{
 			name: "2nd",
-			prods: set.New(eqProduction,
+			prods: set.New(EqProduction,
 				Production{"stmt", String[Symbol]{NonTerminal("expr")}},
 				Production{"stmt", String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt")}},
 				Production{"stmt", String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt"), Terminal("else"), NonTerminal("stmt")}},
@@ -1991,7 +1991,7 @@ func TestGroupByCommonPrefix(t *testing.T) {
 		},
 		{
 			name: "3rd",
-			prods: set.New(eqProduction,
+			prods: set.New(EqProduction,
 				Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d"), NonTerminal("A"), NonTerminal("B")}},
 				Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d"), NonTerminal("C"), NonTerminal("D")}},
 				Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), NonTerminal("E"), NonTerminal("F")}},
@@ -2055,7 +2055,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					{"S′", String[Symbol]{NonTerminal("Y"), NonTerminal("X")}},  // S′ → YX
 					{"S′", String[Symbol]{Terminal("0")}},                       // S′ → 0
 					{"S′", String[Symbol]{Terminal("1")}},                       // S′ → 1
-					{"S′", ε},                                                   // S′ → ε
+					{"S′", E},                                                   // S′ → ε
 					{"S₁", String[Symbol]{NonTerminal("0ₙ"), NonTerminal("X")}}, // S₁ → 0ₙX
 					{"S₁", String[Symbol]{NonTerminal("1ₙ"), NonTerminal("Y")}}, // S₁ → 1ₙY
 					{"S₁", String[Symbol]{NonTerminal("Y"), NonTerminal("X")}},  // S₁ → YX
@@ -2085,7 +2085,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 				[]Production{
 					{"S″", String[Symbol]{NonTerminal("aₙ"), NonTerminal("S₁")}}, // S″ → aₙS₁
 					{"S″", String[Symbol]{NonTerminal("bₙ"), NonTerminal("S₃")}}, // S″ → bₙS₃
-					{"S″", ε}, // S″ → ε
+					{"S″", E}, // S″ → ε
 					{"S", String[Symbol]{NonTerminal("aₙ"), NonTerminal("S₁")}}, // S → aₙS₁
 					{"S", String[Symbol]{NonTerminal("bₙ"), NonTerminal("S₃")}}, // S → bₙS₃
 					{"S₁", String[Symbol]{NonTerminal("S"), NonTerminal("S₂")}}, // S₁ → SS₂
@@ -2172,7 +2172,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 				[]NonTerminal{"S′", "A", "A₁", "B", "B₁"},
 				[]Production{
 					{"S′", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S′ → AB
-					{"S′", ε}, // S′ → ε
+					{"S′", E}, // S′ → ε
 					{"A", String[Symbol]{NonTerminal("A₁"), NonTerminal("A")}}, // A → A₁A
 					{"A", String[Symbol]{Terminal("a")}},                       // A → a
 					{"A₁", String[Symbol]{Terminal("a")}},                      // A₁ → a
@@ -2388,7 +2388,7 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 			name: "1st",
 			g:    CFGrammars[0],
 			firsts: []String[Symbol]{
-				ε,                                    // ε
+				E,                                    // ε
 				{Terminal("0")},                      // 0
 				{Terminal("1")},                      // 1
 				{NonTerminal("S")},                   // S
@@ -2402,25 +2402,25 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("Y"), NonTerminal("X"), NonTerminal("Y")}, // YXY
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(eqTerminal), IncludesEmpty: true},           // FIRST(ε)
-				{Terminals: set.New(eqTerminal, "0"), IncludesEmpty: false},     // FIRST(0)
-				{Terminals: set.New(eqTerminal, "1"), IncludesEmpty: false},     // FIRST(1)
-				{Terminals: set.New(eqTerminal, "0", "1"), IncludesEmpty: true}, // FIRST(S)
-				{Terminals: set.New(eqTerminal, "0"), IncludesEmpty: true},      // FIRST(X)
-				{Terminals: set.New(eqTerminal, "1"), IncludesEmpty: true},      // FIRST(Y)
-				{Terminals: set.New(eqTerminal, "0"), IncludesEmpty: false},     // FIRST(01)
-				{Terminals: set.New(eqTerminal, "1"), IncludesEmpty: false},     // FIRST(10)
-				{Terminals: set.New(eqTerminal, "0", "1"), IncludesEmpty: true}, // FIRST(XY)
-				{Terminals: set.New(eqTerminal, "1", "0"), IncludesEmpty: true}, // FIRST(YX)
-				{Terminals: set.New(eqTerminal, "0", "1"), IncludesEmpty: true}, // FIRST(XYX)
-				{Terminals: set.New(eqTerminal, "1", "0"), IncludesEmpty: true}, // FIRST(YXY)
+				{Terminals: set.New(EqTerminal), IncludesEmpty: true},           // FIRST(ε)
+				{Terminals: set.New(EqTerminal, "0"), IncludesEmpty: false},     // FIRST(0)
+				{Terminals: set.New(EqTerminal, "1"), IncludesEmpty: false},     // FIRST(1)
+				{Terminals: set.New(EqTerminal, "0", "1"), IncludesEmpty: true}, // FIRST(S)
+				{Terminals: set.New(EqTerminal, "0"), IncludesEmpty: true},      // FIRST(X)
+				{Terminals: set.New(EqTerminal, "1"), IncludesEmpty: true},      // FIRST(Y)
+				{Terminals: set.New(EqTerminal, "0"), IncludesEmpty: false},     // FIRST(01)
+				{Terminals: set.New(EqTerminal, "1"), IncludesEmpty: false},     // FIRST(10)
+				{Terminals: set.New(EqTerminal, "0", "1"), IncludesEmpty: true}, // FIRST(XY)
+				{Terminals: set.New(EqTerminal, "1", "0"), IncludesEmpty: true}, // FIRST(YX)
+				{Terminals: set.New(EqTerminal, "0", "1"), IncludesEmpty: true}, // FIRST(XYX)
+				{Terminals: set.New(EqTerminal, "1", "0"), IncludesEmpty: true}, // FIRST(YXY)
 			},
 		},
 		{
 			name: "2nd",
 			g:    CFGrammars[1],
 			firsts: []String[Symbol]{
-				ε,                              // ε
+				E,                              // ε
 				{Terminal("a")},                // a
 				{Terminal("b")},                // b
 				{NonTerminal("S")},             // S
@@ -2430,21 +2430,21 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("S"), Terminal("b"), Terminal("a")}, // Sba
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(eqTerminal), IncludesEmpty: true},            // FIRST(ε)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false},      // FIRST(a)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false},      // FIRST(b)
-				{Terminals: set.New(eqTerminal, "a", "b"), IncludesEmpty: true},  // FIRST(S)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false},      // FIRST(ab)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false},      // FIRST(ba)
-				{Terminals: set.New(eqTerminal, "a", "b"), IncludesEmpty: false}, // FIRST(Sab)
-				{Terminals: set.New(eqTerminal, "b", "a"), IncludesEmpty: false}, // FIRST(Sba)
+				{Terminals: set.New(EqTerminal), IncludesEmpty: true},            // FIRST(ε)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false},      // FIRST(a)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false},      // FIRST(b)
+				{Terminals: set.New(EqTerminal, "a", "b"), IncludesEmpty: true},  // FIRST(S)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false},      // FIRST(ab)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false},      // FIRST(ba)
+				{Terminals: set.New(EqTerminal, "a", "b"), IncludesEmpty: false}, // FIRST(Sab)
+				{Terminals: set.New(EqTerminal, "b", "a"), IncludesEmpty: false}, // FIRST(Sba)
 			},
 		},
 		{
 			name: "3rd",
 			g:    CFGrammars[2],
 			firsts: []String[Symbol]{
-				ε,                                    // ε
+				E,                                    // ε
 				{Terminal("a")},                      // a
 				{Terminal("b")},                      // b
 				{NonTerminal("S")},                   // S
@@ -2458,25 +2458,25 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("B"), NonTerminal("A"), NonTerminal("B")}, // BAB
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(eqTerminal), IncludesEmpty: true},            // FIRST(ε)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false},      // FIRST(a)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false},      // FIRST(b)
-				{Terminals: set.New(eqTerminal, "a", "b"), IncludesEmpty: false}, // FIRST(S)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: true},       // FIRST(A)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: true},       // FIRST(B)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false},      // FIRST(ab)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false},      // FIRST(ba)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: true},       // FIRST(AB)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: true},       // FIRST(BA)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: true},       // FIRST(ABA)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: true},       // FIRST(BAB)
+				{Terminals: set.New(EqTerminal), IncludesEmpty: true},            // FIRST(ε)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false},      // FIRST(a)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false},      // FIRST(b)
+				{Terminals: set.New(EqTerminal, "a", "b"), IncludesEmpty: false}, // FIRST(S)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(A)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(B)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false},      // FIRST(ab)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false},      // FIRST(ba)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(AB)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(BA)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(ABA)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(BAB)
 			},
 		},
 		{
 			name: "4th",
 			g:    CFGrammars[3],
 			firsts: []String[Symbol]{
-				ε,                                    // ε
+				E,                                    // ε
 				{Terminal("b")},                      // b
 				{Terminal("c")},                      // c
 				{Terminal("d")},                      // d
@@ -2494,29 +2494,29 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("A"), NonTerminal("B"), NonTerminal("C"), NonTerminal("D")}, // ABCD
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(eqTerminal), IncludesEmpty: true},                 // FIRST(ε)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false},           // FIRST(b)
-				{Terminals: set.New(eqTerminal, "c"), IncludesEmpty: false},           // FIRST(c)
-				{Terminals: set.New(eqTerminal, "d"), IncludesEmpty: false},           // FIRST(d)
-				{Terminals: set.New(eqTerminal, "s"), IncludesEmpty: false},           // FIRST(s)
-				{Terminals: set.New(eqTerminal, "b", "d", "s"), IncludesEmpty: false}, // FIRST(S)
-				{Terminals: set.New(eqTerminal, "d", "b"), IncludesEmpty: false},      // FIRST(A)
-				{Terminals: set.New(eqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(B)
-				{Terminals: set.New(eqTerminal, "d"), IncludesEmpty: false},           // FIRST(C)
-				{Terminals: set.New(eqTerminal, "d"), IncludesEmpty: false},           // FIRST(D)
-				{Terminals: set.New(eqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(AB)
-				{Terminals: set.New(eqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(BC)
-				{Terminals: set.New(eqTerminal, "d"), IncludesEmpty: false},           // FIRST(CD)
-				{Terminals: set.New(eqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(ABC)
-				{Terminals: set.New(eqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(BCD)
-				{Terminals: set.New(eqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(ABCD)
+				{Terminals: set.New(EqTerminal), IncludesEmpty: true},                 // FIRST(ε)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false},           // FIRST(b)
+				{Terminals: set.New(EqTerminal, "c"), IncludesEmpty: false},           // FIRST(c)
+				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false},           // FIRST(d)
+				{Terminals: set.New(EqTerminal, "s"), IncludesEmpty: false},           // FIRST(s)
+				{Terminals: set.New(EqTerminal, "b", "d", "s"), IncludesEmpty: false}, // FIRST(S)
+				{Terminals: set.New(EqTerminal, "d", "b"), IncludesEmpty: false},      // FIRST(A)
+				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(B)
+				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false},           // FIRST(C)
+				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false},           // FIRST(D)
+				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(AB)
+				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(BC)
+				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false},           // FIRST(CD)
+				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(ABC)
+				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(BCD)
+				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(ABCD)
 			},
 		},
 		{
 			name: "5th",
 			g:    CFGrammars[4],
 			firsts: []String[Symbol]{
-				ε,                                    // ε
+				E,                                    // ε
 				{Terminal("a")},                      // a
 				{Terminal("b")},                      // b
 				{Terminal("c")},                      // c
@@ -2534,29 +2534,29 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("A"), NonTerminal("B"), NonTerminal("C"), NonTerminal("D")}, // ABCD
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(eqTerminal), IncludesEmpty: true},       // FIRST(ε)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(a)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false}, // FIRST(b)
-				{Terminals: set.New(eqTerminal, "c"), IncludesEmpty: false}, // FIRST(c)
-				{Terminals: set.New(eqTerminal, "d"), IncludesEmpty: false}, // FIRST(d)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(S)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(A)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false}, // FIRST(B)
-				{Terminals: set.New(eqTerminal, "c"), IncludesEmpty: false}, // FIRST(C)
-				{Terminals: set.New(eqTerminal, "d"), IncludesEmpty: false}, // FIRST(D)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(AB)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false}, // FIRST(BC)
-				{Terminals: set.New(eqTerminal, "c"), IncludesEmpty: false}, // FIRST(CD)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(ABC)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false}, // FIRST(BCD)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(ABCD)
+				{Terminals: set.New(EqTerminal), IncludesEmpty: true},       // FIRST(ε)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(a)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(b)
+				{Terminals: set.New(EqTerminal, "c"), IncludesEmpty: false}, // FIRST(c)
+				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false}, // FIRST(d)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(S)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(A)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(B)
+				{Terminals: set.New(EqTerminal, "c"), IncludesEmpty: false}, // FIRST(C)
+				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false}, // FIRST(D)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(AB)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(BC)
+				{Terminals: set.New(EqTerminal, "c"), IncludesEmpty: false}, // FIRST(CD)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(ABC)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(BCD)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(ABCD)
 			},
 		},
 		{
 			name: "6th",
 			g:    CFGrammars[5],
 			firsts: []String[Symbol]{
-				ε,                                      // ε
+				E,                                      // ε
 				{Terminal("a")},                        // a
 				{Terminal("b")},                        // b
 				{NonTerminal("S")},                     // S
@@ -2574,29 +2574,29 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("B"), NonTerminal("B₁"), NonTerminal("A₁"), NonTerminal("A")}, // BB₁A₁A
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(eqTerminal), IncludesEmpty: true},       // FIRST(ε)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(a)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false}, // FIRST(b)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: true},  // FIRST(S)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(A)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(A₁)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false}, // FIRST(B)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false}, // FIRST(B₁)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(AA₁)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false}, // FIRST(BB₁)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(AB)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(A₁B₁)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(AA₁B₁)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(ABB₁)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEmpty: false}, // FIRST(AA₁BB₁)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEmpty: false}, // FIRST(BB₁A₁A)
+				{Terminals: set.New(EqTerminal), IncludesEmpty: true},       // FIRST(ε)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(a)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(b)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: true},  // FIRST(S)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(A)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(A₁)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(B)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(B₁)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(AA₁)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(BB₁)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(AB)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(A₁B₁)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(AA₁B₁)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(ABB₁)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(AA₁BB₁)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(BB₁A₁A)
 			},
 		},
 		{
 			name: "7th",
 			g:    CFGrammars[6],
 			firsts: []String[Symbol]{
-				ε,                                    // ε
+				E,                                    // ε
 				{Terminal("+")},                      // +
 				{Terminal("-")},                      // -
 				{Terminal("*")},                      // *
@@ -2610,25 +2610,25 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("E"), NonTerminal("E")}, // EE
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(eqTerminal), IncludesEmpty: true},                  // FIRST(ε)
-				{Terminals: set.New(eqTerminal, "+"), IncludesEmpty: false},            // FIRST(+)
-				{Terminals: set.New(eqTerminal, "-"), IncludesEmpty: false},            // FIRST(-)
-				{Terminals: set.New(eqTerminal, "*"), IncludesEmpty: false},            // FIRST(*)
-				{Terminals: set.New(eqTerminal, "/"), IncludesEmpty: false},            // FIRST(/)
-				{Terminals: set.New(eqTerminal, "("), IncludesEmpty: false},            // FIRST(()
-				{Terminals: set.New(eqTerminal, ")"), IncludesEmpty: false},            // FIRST())
-				{Terminals: set.New(eqTerminal, "id"), IncludesEmpty: false},           // FIRST(id)
-				{Terminals: set.New(eqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(S)
-				{Terminals: set.New(eqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(E)
-				{Terminals: set.New(eqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(SE)
-				{Terminals: set.New(eqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(EE)
+				{Terminals: set.New(EqTerminal), IncludesEmpty: true},                  // FIRST(ε)
+				{Terminals: set.New(EqTerminal, "+"), IncludesEmpty: false},            // FIRST(+)
+				{Terminals: set.New(EqTerminal, "-"), IncludesEmpty: false},            // FIRST(-)
+				{Terminals: set.New(EqTerminal, "*"), IncludesEmpty: false},            // FIRST(*)
+				{Terminals: set.New(EqTerminal, "/"), IncludesEmpty: false},            // FIRST(/)
+				{Terminals: set.New(EqTerminal, "("), IncludesEmpty: false},            // FIRST(()
+				{Terminals: set.New(EqTerminal, ")"), IncludesEmpty: false},            // FIRST())
+				{Terminals: set.New(EqTerminal, "id"), IncludesEmpty: false},           // FIRST(id)
+				{Terminals: set.New(EqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(S)
+				{Terminals: set.New(EqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(E)
+				{Terminals: set.New(EqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(SE)
+				{Terminals: set.New(EqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(EE)
 			},
 		},
 		{
 			name: "8th",
 			g:    CFGrammars[7],
 			firsts: []String[Symbol]{
-				ε,                                    // ε
+				E,                                    // ε
 				{Terminal("+")},                      // +
 				{Terminal("-")},                      // -
 				{Terminal("*")},                      // *
@@ -2646,29 +2646,29 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("E"), NonTerminal("T"), NonTerminal("F")}, // ETF
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(eqTerminal), IncludesEmpty: true},             // FIRST(ε)
-				{Terminals: set.New(eqTerminal, "+"), IncludesEmpty: false},       // FIRST(+)
-				{Terminals: set.New(eqTerminal, "-"), IncludesEmpty: false},       // FIRST(-)
-				{Terminals: set.New(eqTerminal, "*"), IncludesEmpty: false},       // FIRST(*)
-				{Terminals: set.New(eqTerminal, "/"), IncludesEmpty: false},       // FIRST(/)
-				{Terminals: set.New(eqTerminal, "("), IncludesEmpty: false},       // FIRST(()
-				{Terminals: set.New(eqTerminal, ")"), IncludesEmpty: false},       // FIRST())
-				{Terminals: set.New(eqTerminal, "id"), IncludesEmpty: false},      // FIRST(id)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(S)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(E)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(T)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(F)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(ET)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(EF)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(TF)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(ETF)
+				{Terminals: set.New(EqTerminal), IncludesEmpty: true},             // FIRST(ε)
+				{Terminals: set.New(EqTerminal, "+"), IncludesEmpty: false},       // FIRST(+)
+				{Terminals: set.New(EqTerminal, "-"), IncludesEmpty: false},       // FIRST(-)
+				{Terminals: set.New(EqTerminal, "*"), IncludesEmpty: false},       // FIRST(*)
+				{Terminals: set.New(EqTerminal, "/"), IncludesEmpty: false},       // FIRST(/)
+				{Terminals: set.New(EqTerminal, "("), IncludesEmpty: false},       // FIRST(()
+				{Terminals: set.New(EqTerminal, ")"), IncludesEmpty: false},       // FIRST())
+				{Terminals: set.New(EqTerminal, "id"), IncludesEmpty: false},      // FIRST(id)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(S)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(E)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(T)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(F)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(ET)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(EF)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(TF)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(ETF)
 			},
 		},
 		{
 			name: "9th",
 			g:    CFGrammars[8],
 			firsts: []String[Symbol]{
-				ε,                                     // ε
+				E,                                     // ε
 				{Terminal("+")},                       // +
 				{Terminal("*")},                       // *
 				{Terminal("(")},                       // (
@@ -2686,29 +2686,29 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("E"), NonTerminal("E′"), NonTerminal("T"), NonTerminal("T′"), NonTerminal("F")}, // EE′TT′F
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(eqTerminal), IncludesEmpty: true},             // FIRST(ε)
-				{Terminals: set.New(eqTerminal, "+"), IncludesEmpty: false},       // FIRST(+)
-				{Terminals: set.New(eqTerminal, "*"), IncludesEmpty: false},       // FIRST(*)
-				{Terminals: set.New(eqTerminal, "("), IncludesEmpty: false},       // FIRST(()
-				{Terminals: set.New(eqTerminal, ")"), IncludesEmpty: false},       // FIRST())
-				{Terminals: set.New(eqTerminal, "id"), IncludesEmpty: false},      // FIRST(id)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(E)
-				{Terminals: set.New(eqTerminal, "+"), IncludesEmpty: true},        // FIRST(E′)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(T)
-				{Terminals: set.New(eqTerminal, "*"), IncludesEmpty: true},        // FIRST(T′)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(F)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(EE′)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(TT′)
-				{Terminals: set.New(eqTerminal, "*", "+"), IncludesEmpty: true},   // FIRST(E′T′)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(ETF)
-				{Terminals: set.New(eqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(EE′TT′F)
+				{Terminals: set.New(EqTerminal), IncludesEmpty: true},             // FIRST(ε)
+				{Terminals: set.New(EqTerminal, "+"), IncludesEmpty: false},       // FIRST(+)
+				{Terminals: set.New(EqTerminal, "*"), IncludesEmpty: false},       // FIRST(*)
+				{Terminals: set.New(EqTerminal, "("), IncludesEmpty: false},       // FIRST(()
+				{Terminals: set.New(EqTerminal, ")"), IncludesEmpty: false},       // FIRST())
+				{Terminals: set.New(EqTerminal, "id"), IncludesEmpty: false},      // FIRST(id)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(E)
+				{Terminals: set.New(EqTerminal, "+"), IncludesEmpty: true},        // FIRST(E′)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(T)
+				{Terminals: set.New(EqTerminal, "*"), IncludesEmpty: true},        // FIRST(T′)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(F)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(EE′)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(TT′)
+				{Terminals: set.New(EqTerminal, "*", "+"), IncludesEmpty: true},   // FIRST(E′T′)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(ETF)
+				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(EE′TT′F)
 			},
 		},
 		{
 			name: "10th",
 			g:    CFGrammars[9],
 			firsts: []String[Symbol]{
-				ε,                        // ε
+				E,                        // ε
 				{Terminal("=")},          // =
 				{Terminal("|")},          // |
 				{Terminal("(")},          // (
@@ -2740,36 +2740,36 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("nonterm"), Terminal("="), Terminal("{{"), Terminal("}}"), NonTerminal("nonterm")}, // nonterm "=" "{{" nonterm "}}"
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(eqTerminal), IncludesEmpty: true},                                                   // FIRST(ε)
-				{Terminals: set.New(eqTerminal, "="), IncludesEmpty: false},                                             // FIRST(=)
-				{Terminals: set.New(eqTerminal, "|"), IncludesEmpty: false},                                             // FIRST(|)
-				{Terminals: set.New(eqTerminal, "("), IncludesEmpty: false},                                             // FIRST(()
-				{Terminals: set.New(eqTerminal, ")"), IncludesEmpty: false},                                             // FIRST())
-				{Terminals: set.New(eqTerminal, "["), IncludesEmpty: false},                                             // FIRST([)
-				{Terminals: set.New(eqTerminal, "]"), IncludesEmpty: false},                                             // FIRST(])
-				{Terminals: set.New(eqTerminal, "{"), IncludesEmpty: false},                                             // FIRST({)
-				{Terminals: set.New(eqTerminal, "}"), IncludesEmpty: false},                                             // FIRST(})
-				{Terminals: set.New(eqTerminal, "{{"), IncludesEmpty: false},                                            // FIRST({{)
-				{Terminals: set.New(eqTerminal, "}}"), IncludesEmpty: false},                                            // FIRST(}})
-				{Terminals: set.New(eqTerminal, "GRAMMAR"), IncludesEmpty: false},                                       // FIRST(GRAMMAR)
-				{Terminals: set.New(eqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(IDENT)
-				{Terminals: set.New(eqTerminal, "TOKEN"), IncludesEmpty: false},                                         // FIRST(TOKEN)
-				{Terminals: set.New(eqTerminal, "STRING"), IncludesEmpty: false},                                        // FIRST(STRING)
-				{Terminals: set.New(eqTerminal, "REGEX"), IncludesEmpty: false},                                         // FIRST(REGEX)
-				{Terminals: set.New(eqTerminal, "GRAMMAR"), IncludesEmpty: false},                                       // FIRST(grammar)
-				{Terminals: set.New(eqTerminal, "GRAMMAR"), IncludesEmpty: false},                                       // FIRST(name)
-				{Terminals: set.New(eqTerminal, "TOKEN", "IDENT"), IncludesEmpty: true},                                 // FIRST(decls)
-				{Terminals: set.New(eqTerminal, "TOKEN", "IDENT"), IncludesEmpty: false},                                // FIRST(decl)
-				{Terminals: set.New(eqTerminal, "TOKEN"), IncludesEmpty: false},                                         // FIRST(token)
-				{Terminals: set.New(eqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(rule)
-				{Terminals: set.New(eqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(lhs)
-				{Terminals: set.New(eqTerminal, "(", "[", "{", "{{", "IDENT", "TOKEN", "STRING"), IncludesEmpty: false}, // FIRST(rhs)
-				{Terminals: set.New(eqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(nonterm)
-				{Terminals: set.New(eqTerminal, "TOKEN", "STRING"), IncludesEmpty: false},                               // FIRST(term)
-				{Terminals: set.New(eqTerminal, "TOKEN"), IncludesEmpty: false},                                         // FIRST(TOKEN "=" REGEX)
-				{Terminals: set.New(eqTerminal, "(", "[", "{", "{{", "IDENT", "TOKEN", "STRING"), IncludesEmpty: false}, // FIRST(rhs rhs rhs)
-				{Terminals: set.New(eqTerminal, "(", "[", "{", "{{", "IDENT", "TOKEN", "STRING"), IncludesEmpty: false}, // FIRST(rhs "|" rhs "|" rhs)
-				{Terminals: set.New(eqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(nonterm "=" "{{" nonterm "}}")
+				{Terminals: set.New(EqTerminal), IncludesEmpty: true},                                                   // FIRST(ε)
+				{Terminals: set.New(EqTerminal, "="), IncludesEmpty: false},                                             // FIRST(=)
+				{Terminals: set.New(EqTerminal, "|"), IncludesEmpty: false},                                             // FIRST(|)
+				{Terminals: set.New(EqTerminal, "("), IncludesEmpty: false},                                             // FIRST(()
+				{Terminals: set.New(EqTerminal, ")"), IncludesEmpty: false},                                             // FIRST())
+				{Terminals: set.New(EqTerminal, "["), IncludesEmpty: false},                                             // FIRST([)
+				{Terminals: set.New(EqTerminal, "]"), IncludesEmpty: false},                                             // FIRST(])
+				{Terminals: set.New(EqTerminal, "{"), IncludesEmpty: false},                                             // FIRST({)
+				{Terminals: set.New(EqTerminal, "}"), IncludesEmpty: false},                                             // FIRST(})
+				{Terminals: set.New(EqTerminal, "{{"), IncludesEmpty: false},                                            // FIRST({{)
+				{Terminals: set.New(EqTerminal, "}}"), IncludesEmpty: false},                                            // FIRST(}})
+				{Terminals: set.New(EqTerminal, "GRAMMAR"), IncludesEmpty: false},                                       // FIRST(GRAMMAR)
+				{Terminals: set.New(EqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(IDENT)
+				{Terminals: set.New(EqTerminal, "TOKEN"), IncludesEmpty: false},                                         // FIRST(TOKEN)
+				{Terminals: set.New(EqTerminal, "STRING"), IncludesEmpty: false},                                        // FIRST(STRING)
+				{Terminals: set.New(EqTerminal, "REGEX"), IncludesEmpty: false},                                         // FIRST(REGEX)
+				{Terminals: set.New(EqTerminal, "GRAMMAR"), IncludesEmpty: false},                                       // FIRST(grammar)
+				{Terminals: set.New(EqTerminal, "GRAMMAR"), IncludesEmpty: false},                                       // FIRST(name)
+				{Terminals: set.New(EqTerminal, "TOKEN", "IDENT"), IncludesEmpty: true},                                 // FIRST(decls)
+				{Terminals: set.New(EqTerminal, "TOKEN", "IDENT"), IncludesEmpty: false},                                // FIRST(decl)
+				{Terminals: set.New(EqTerminal, "TOKEN"), IncludesEmpty: false},                                         // FIRST(token)
+				{Terminals: set.New(EqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(rule)
+				{Terminals: set.New(EqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(lhs)
+				{Terminals: set.New(EqTerminal, "(", "[", "{", "{{", "IDENT", "TOKEN", "STRING"), IncludesEmpty: false}, // FIRST(rhs)
+				{Terminals: set.New(EqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(nonterm)
+				{Terminals: set.New(EqTerminal, "TOKEN", "STRING"), IncludesEmpty: false},                               // FIRST(term)
+				{Terminals: set.New(EqTerminal, "TOKEN"), IncludesEmpty: false},                                         // FIRST(TOKEN "=" REGEX)
+				{Terminals: set.New(EqTerminal, "(", "[", "{", "{{", "IDENT", "TOKEN", "STRING"), IncludesEmpty: false}, // FIRST(rhs rhs rhs)
+				{Terminals: set.New(EqTerminal, "(", "[", "{", "{{", "IDENT", "TOKEN", "STRING"), IncludesEmpty: false}, // FIRST(rhs "|" rhs "|" rhs)
+				{Terminals: set.New(EqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(nonterm "=" "{{" nonterm "}}")
 			},
 		},
 	}
@@ -2806,9 +2806,9 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("Y"), // Y
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true},           // FOLLOW(S)
-				{Terminals: set.New(eqTerminal, "0", "1"), IncludesEndmarker: true}, // FOLLOW(X)
-				{Terminals: set.New(eqTerminal, "0"), IncludesEndmarker: true},      // FOLLOW(Y)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},           // FOLLOW(S)
+				{Terminals: set.New(EqTerminal, "0", "1"), IncludesEndmarker: true}, // FOLLOW(X)
+				{Terminals: set.New(EqTerminal, "0"), IncludesEndmarker: true},      // FOLLOW(Y)
 			},
 		},
 		{
@@ -2818,7 +2818,7 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("S"), // S
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(eqTerminal, "a", "b"), IncludesEndmarker: true}, // FOLLOW(S)
+				{Terminals: set.New(EqTerminal, "a", "b"), IncludesEndmarker: true}, // FOLLOW(S)
 			},
 		},
 		{
@@ -2830,9 +2830,9 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("B"), // B
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true},            // FOLLOW(S)
-				{Terminals: set.New(eqTerminal, "a", "b"), IncludesEndmarker: false}, // FOLLOW(A)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEndmarker: false},      // FOLLOW(B)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},            // FOLLOW(S)
+				{Terminals: set.New(EqTerminal, "a", "b"), IncludesEndmarker: false}, // FOLLOW(A)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEndmarker: false},      // FOLLOW(B)
 			},
 		},
 		{
@@ -2846,11 +2846,11 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("D"), // D
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true}, // FOLLOW(S)
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true}, // FOLLOW(A)
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true}, // FOLLOW(B)
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true}, // FOLLOW(C)
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true}, // FOLLOW(D)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true}, // FOLLOW(S)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true}, // FOLLOW(A)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true}, // FOLLOW(B)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true}, // FOLLOW(C)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true}, // FOLLOW(D)
 			},
 		},
 		{
@@ -2864,11 +2864,11 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("D"), // D
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true},       // FOLLOW(S)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEndmarker: false}, // FOLLOW(A)
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true},       // FOLLOW(B)
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: false},      // FOLLOW(C)
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: false},      // FOLLOW(D)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},       // FOLLOW(S)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEndmarker: false}, // FOLLOW(A)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},       // FOLLOW(B)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: false},      // FOLLOW(C)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: false},      // FOLLOW(D)
 			},
 		},
 		{
@@ -2882,11 +2882,11 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("B₁"), // B₁
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true},       // FOLLOW(S)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEndmarker: false}, // FOLLOW(A)
-				{Terminals: set.New(eqTerminal, "a"), IncludesEndmarker: false}, // FOLLOW(A₁)
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true},       // FOLLOW(B)
-				{Terminals: set.New(eqTerminal, "b"), IncludesEndmarker: false}, // FOLLOW(B₁)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},       // FOLLOW(S)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEndmarker: false}, // FOLLOW(A)
+				{Terminals: set.New(EqTerminal, "a"), IncludesEndmarker: false}, // FOLLOW(A₁)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},       // FOLLOW(B)
+				{Terminals: set.New(EqTerminal, "b"), IncludesEndmarker: false}, // FOLLOW(B₁)
 			},
 		},
 		{
@@ -2897,8 +2897,8 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("E"), // E
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true},                          // FOLLOW(S)
-				{Terminals: set.New(eqTerminal, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(E)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},                          // FOLLOW(S)
+				{Terminals: set.New(EqTerminal, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(E)
 			},
 		},
 		{
@@ -2911,10 +2911,10 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("F"), // F
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true},                          // FOLLOW(S)
-				{Terminals: set.New(eqTerminal, "+", "-", ")"), IncludesEndmarker: true},           // FOLLOW(E)
-				{Terminals: set.New(eqTerminal, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(T)
-				{Terminals: set.New(eqTerminal, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(F)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},                          // FOLLOW(S)
+				{Terminals: set.New(EqTerminal, "+", "-", ")"), IncludesEndmarker: true},           // FOLLOW(E)
+				{Terminals: set.New(EqTerminal, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(T)
+				{Terminals: set.New(EqTerminal, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(F)
 			},
 		},
 		{
@@ -2928,11 +2928,11 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("F"),  // F
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(eqTerminal, ")"), IncludesEndmarker: true},           // FOLLOW(E)
-				{Terminals: set.New(eqTerminal, ")"), IncludesEndmarker: true},           // FOLLOW(E′)
-				{Terminals: set.New(eqTerminal, ")", "+"), IncludesEndmarker: true},      // FOLLOW(T)
-				{Terminals: set.New(eqTerminal, ")", "+"), IncludesEndmarker: true},      // FOLLOW(T′)
-				{Terminals: set.New(eqTerminal, ")", "*", "+"), IncludesEndmarker: true}, // FOLLOW(F)
+				{Terminals: set.New(EqTerminal, ")"), IncludesEndmarker: true},           // FOLLOW(E)
+				{Terminals: set.New(EqTerminal, ")"), IncludesEndmarker: true},           // FOLLOW(E′)
+				{Terminals: set.New(EqTerminal, ")", "+"), IncludesEndmarker: true},      // FOLLOW(T)
+				{Terminals: set.New(EqTerminal, ")", "+"), IncludesEndmarker: true},      // FOLLOW(T′)
+				{Terminals: set.New(EqTerminal, ")", "*", "+"), IncludesEndmarker: true}, // FOLLOW(F)
 			},
 		},
 		{
@@ -2951,16 +2951,16 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("term"),    // term
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(eqTerminal), IncludesEndmarker: true},                                                                                 // FOLLOW(grammar)
-				{Terminals: set.New(eqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(name)
-				{Terminals: set.New(eqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(decls)
-				{Terminals: set.New(eqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(decl)
-				{Terminals: set.New(eqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(token)
-				{Terminals: set.New(eqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(rule)
-				{Terminals: set.New(eqTerminal, "="), IncludesEndmarker: false},                                                                           // FOLLOW(lhs)
-				{Terminals: set.New(eqTerminal, "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true},      // FOLLOW(rhs)
-				{Terminals: set.New(eqTerminal, "=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true}, // FOLLOW(nonterm)
-				{Terminals: set.New(eqTerminal, "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true},      // FOLLOW(term)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},                                                                                 // FOLLOW(grammar)
+				{Terminals: set.New(EqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(name)
+				{Terminals: set.New(EqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(decls)
+				{Terminals: set.New(EqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(decl)
+				{Terminals: set.New(EqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(token)
+				{Terminals: set.New(EqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(rule)
+				{Terminals: set.New(EqTerminal, "="), IncludesEndmarker: false},                                                                           // FOLLOW(lhs)
+				{Terminals: set.New(EqTerminal, "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true},      // FOLLOW(rhs)
+				{Terminals: set.New(EqTerminal, "=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true}, // FOLLOW(nonterm)
+				{Terminals: set.New(EqTerminal, "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true},      // FOLLOW(term)
 			},
 		},
 	}
@@ -2982,147 +2982,7 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 	}
 }
 
-func TestCFG_ParsingTable(t *testing.T) {
-	tests := []struct {
-		name                 string
-		g                    CFG
-		expectedErrorStrings []string
-	}{
-		{
-			name: "1st",
-			g:    CFGrammars[0],
-			expectedErrorStrings: []string{
-				`multiple productions in parsing table at M[X, "0"]`,
-			},
-		},
-		{
-			name: "2nd",
-			g:    CFGrammars[1],
-			expectedErrorStrings: []string{
-				`multiple productions in parsing table at M[S, "a"]`,
-				`multiple productions in parsing table at M[S, "b"]`,
-			},
-		},
-		{
-			name: "3rd",
-			g:    CFGrammars[2],
-			expectedErrorStrings: []string{
-				`multiple productions in parsing table at M[S, "a"]`,
-				`multiple productions in parsing table at M[A, "b"]`,
-				`multiple productions in parsing table at M[B, "b"]`,
-			},
-		},
-		{
-			name:                 "4th",
-			g:                    CFGrammars[3],
-			expectedErrorStrings: nil,
-		},
-		{
-			name: "5th",
-			g:    CFGrammars[4],
-			expectedErrorStrings: []string{
-				`multiple productions in parsing table at M[A, "a"]`,
-				`multiple productions in parsing table at M[B, "b"]`,
-				`multiple productions in parsing table at M[C, "c"]`,
-			},
-		},
-		{
-			name: "6th",
-			g:    CFGrammars[5],
-			expectedErrorStrings: []string{
-				`multiple productions in parsing table at M[A, "a"]`,
-				`multiple productions in parsing table at M[B, "b"]`,
-			},
-		},
-		{
-			name: "7th",
-			g:    CFGrammars[6],
-			expectedErrorStrings: []string{
-				`multiple productions in parsing table at M[E, "("]`,
-				`multiple productions in parsing table at M[E, "-"]`,
-				`multiple productions in parsing table at M[E, "id"]`,
-			},
-		},
-		{
-			name: "8th",
-			g:    CFGrammars[7],
-			expectedErrorStrings: []string{
-				`multiple productions in parsing table at M[E, "("]`,
-				`multiple productions in parsing table at M[E, "id"]`,
-				`multiple productions in parsing table at M[T, "("]`,
-				`multiple productions in parsing table at M[T, "id"]`,
-			},
-		},
-		{
-			name:                 "9th",
-			g:                    CFGrammars[8],
-			expectedErrorStrings: nil,
-		},
-		{
-			name: "10th",
-			g:    CFGrammars[9],
-			expectedErrorStrings: []string{
-				`multiple productions in parsing table at M[decls, "IDENT"]`,
-				`multiple productions in parsing table at M[decls, "TOKEN"]`,
-				`multiple productions in parsing table at M[rule, "IDENT"]`,
-				`multiple productions in parsing table at M[token, "TOKEN"]`,
-				`multiple productions in parsing table at M[rhs, "("]`,
-				`multiple productions in parsing table at M[rhs, "IDENT"]`,
-				`multiple productions in parsing table at M[rhs, "STRING"]`,
-				`multiple productions in parsing table at M[rhs, "TOKEN"]`,
-				`multiple productions in parsing table at M[rhs, "["]`,
-				`multiple productions in parsing table at M[rhs, "{"]`,
-				`multiple productions in parsing table at M[rhs, "{{"]`,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.g.Verify())
-			table := tc.g.ParsingTable()
-			err := table.CheckErrors()
-
-			if len(tc.expectedErrorStrings) == 0 {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				s := err.Error()
-				for _, expectedErrorString := range tc.expectedErrorStrings {
-					assert.Contains(t, s, expectedErrorString)
-				}
-			}
-		})
-	}
-}
-
-func TestCFG_addNewNonTerminal(t *testing.T) {
-	tests := []struct {
-		name                string
-		g                   CFG
-		prefix              NonTerminal
-		suffixes            []string
-		expectedNonTerminal NonTerminal
-	}{
-		{
-			name:                "OK",
-			g:                   CFGrammars[0],
-			prefix:              NonTerminal("S"),
-			suffixes:            []string{"_new"},
-			expectedNonTerminal: NonTerminal("S_new"),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.g.Verify())
-			nonTerm := tc.g.addNewNonTerminal(tc.prefix, tc.suffixes...)
-			assert.Equal(t, tc.expectedNonTerminal, nonTerm)
-		})
-	}
-}
-
-func TestCFG_orderTerminals(t *testing.T) {
+func TestCFG_OrderTerminals(t *testing.T) {
 	tests := []struct {
 		name              string
 		g                 CFG
@@ -3138,13 +2998,13 @@ func TestCFG_orderTerminals(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
-			terms := tc.g.orderTerminals()
+			terms := tc.g.OrderTerminals()
 			assert.Equal(t, tc.expectedTerminals, terms)
 		})
 	}
 }
 
-func TestCFG_orderNonTerminals(t *testing.T) {
+func TestCFG_OrderNonTerminals(t *testing.T) {
 	tests := []struct {
 		name                 string
 		g                    CFG
@@ -3164,10 +3024,36 @@ func TestCFG_orderNonTerminals(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
-			visited, unvisited, nonTerms := tc.g.orderNonTerminals()
+			visited, unvisited, nonTerms := tc.g.OrderNonTerminals()
 			assert.Equal(t, tc.expectedVisited, visited)
 			assert.Equal(t, tc.expectedUnvisited, unvisited)
 			assert.Equal(t, tc.expectedNonTerminals, nonTerms)
+		})
+	}
+}
+
+func TestCFG_AddNewNonTerminal(t *testing.T) {
+	tests := []struct {
+		name                string
+		g                   CFG
+		prefix              NonTerminal
+		suffixes            []string
+		expectedNonTerminal NonTerminal
+	}{
+		{
+			name:                "OK",
+			g:                   CFGrammars[0],
+			prefix:              NonTerminal("S"),
+			suffixes:            []string{"_new"},
+			expectedNonTerminal: NonTerminal("S_new"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
+			nonTerm := tc.g.AddNewNonTerminal(tc.prefix, tc.suffixes...)
+			assert.Equal(t, tc.expectedNonTerminal, nonTerm)
 		})
 	}
 }

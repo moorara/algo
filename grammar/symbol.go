@@ -9,7 +9,7 @@ import (
 	"github.com/moorara/algo/hash"
 )
 
-// The endmarker is a special symbol that is used to indicate the end of a string.
+// Endmarker is a special symbol that is used to indicate the end of a string.
 // This special symbol assumed not to be a symbol of any grammar and
 // it is taken from a Private Use Area (PUA) in Unicode.
 //
@@ -17,21 +17,21 @@ import (
 // to simplify the handling of end-of-input scenarios, especially in parsing algorithms like LL(1) or LR(1).
 //
 // For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
-var endmarker = Terminal("\uEEEE")
+var Endmarker = Terminal("\uEEEE")
 
 var (
-	hashSymbol = hashFuncForSymbol()
-	eqSymbol   = func(lhs, rhs Symbol) bool {
+	HashSymbol = hashFuncForSymbol()
+	EqSymbol   = func(lhs, rhs Symbol) bool {
 		return lhs.Equals(rhs)
 	}
 
-	eqTerminal   = generic.NewEqualFunc[Terminal]()
-	cmpTerminal  = generic.NewCompareFunc[Terminal]()
-	hashTerminal = hash.HashFuncForString[Terminal](nil)
+	EqTerminal   = generic.NewEqualFunc[Terminal]()
+	CmpTerminal  = generic.NewCompareFunc[Terminal]()
+	HashTerminal = hash.HashFuncForString[Terminal](nil)
 
-	eqNonTerminal   = generic.NewEqualFunc[NonTerminal]()
-	cmpNonTerminal  = generic.NewCompareFunc[NonTerminal]()
-	hashNonTerminal = hash.HashFuncForString[NonTerminal](nil)
+	EqNonTerminal   = generic.NewEqualFunc[NonTerminal]()
+	CmpNonTerminal  = generic.NewCompareFunc[NonTerminal]()
+	HashNonTerminal = hash.HashFuncForString[NonTerminal](nil)
 )
 
 // Symbol represents a grammar symbol (terminal or non-terminal).
@@ -69,7 +69,7 @@ type Terminal string
 func (t Terminal) String() string {
 	// The special endmarker symbol is taken from a Private Use Area (PUA) in Unicode,
 	// and it is rendered as $.
-	if t.Equals(endmarker) {
+	if t.Equals(Endmarker) {
 		return "$"
 	}
 
@@ -80,7 +80,7 @@ func (t Terminal) String() string {
 func (t Terminal) Name() string {
 	// The special endmarker symbol is taken from a Private Use Area (PUA) in Unicode,
 	// and it is named as $.
-	if t.Equals(endmarker) {
+	if t.Equals(Endmarker) {
 		return "$"
 	}
 

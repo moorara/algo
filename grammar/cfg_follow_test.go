@@ -38,7 +38,7 @@ func TestTerminalsAndEndmarker(t *testing.T) {
 		{
 			name: "OK",
 			set: TerminalsAndEndmarker{
-				Terminals:         set.New(eqTerminal, "a", "b", "c", "d", "e", "f"),
+				Terminals:         set.New(EqTerminal, "a", "b", "c", "d", "e", "f"),
 				IncludesEndmarker: true,
 			},
 			expectedString: `{"a", "b", "c", "d", "e", "f", $}`,

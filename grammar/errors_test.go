@@ -40,45 +40,20 @@ func TestLL1Error(t *testing.T) {
 				Description: "ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
 				A:           NonTerminal("decls"),
 				Alpha:       String[Symbol]{NonTerminal("decls"), NonTerminal("decl")},
-				Beta:        ε,
+				Beta:        E,
 				FOLLOWA: &TerminalsAndEndmarker{
-					Terminals:         set.New(eqTerminal, "IDENT", "TOKEN"),
+					Terminals:         set.New(EqTerminal, "IDENT", "TOKEN"),
 					IncludesEndmarker: true,
 				},
 				FIRSTα: &TerminalsAndEmpty{
-					Terminals: set.New(eqTerminal, "IDENT", "TOKEN"),
+					Terminals: set.New(EqTerminal, "IDENT", "TOKEN"),
 				},
 				FIRSTβ: &TerminalsAndEmpty{
-					Terminals:     set.New(eqTerminal),
+					Terminals:     set.New(EqTerminal),
 					IncludesEmpty: true,
 				},
 			},
 			expectedError: "ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets:\n  decls → decls decl | ε\n    FOLLOW(decls): {\"IDENT\", \"TOKEN\", $}\n    FIRST(decls decl): {\"IDENT\", \"TOKEN\"}\n    FIRST(ε): {ε}\n",
-		},
-	}
-
-	for _, tc := range tests {
-		assert.EqualError(t, tc.e, tc.expectedError)
-	}
-}
-
-func TestParsingTableError(t *testing.T) {
-	tests := []struct {
-		name          string
-		e             *ParsingTableError
-		expectedError string
-	}{
-		{
-			name: "OK",
-			e: &ParsingTableError{
-				NonTerminal: NonTerminal("decls"),
-				Terminal:    Terminal("IDENT"),
-				Productions: set.New(eqProduction,
-					Production{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},
-					Production{"decls", ε},
-				),
-			},
-			expectedError: "multiple productions in parsing table at M[decls, \"IDENT\"]:\n  decls → decls decl\n  decls → ε\n",
 		},
 	}
 

@@ -10,17 +10,17 @@ import (
 	"github.com/moorara/algo/set"
 )
 
-// The empty string ε (unexported).
-var ε = String[Symbol]{}
+// E is the empty string ε.
+var E = String[Symbol]{}
 
 var (
-	hashString = hashFuncForString()
+	HashString = hashFuncForString()
 
-	eqString = func(lhs, rhs String[Symbol]) bool {
+	EqString = func(lhs, rhs String[Symbol]) bool {
 		return lhs.Equals(rhs)
 	}
 
-	eqStringSet = func(lhs, rhs set.Set[String[Symbol]]) bool {
+	EqStringSet = func(lhs, rhs set.Set[String[Symbol]]) bool {
 		return lhs.Equals(rhs)
 	}
 )
@@ -146,7 +146,7 @@ func (s String[Symbol]) NonTerminals() String[NonTerminal] {
 // If the input is empty or there is no common prefix, it returns the empty string ε.
 func LongestCommonPrefixOf(ss ...String[Symbol]) String[Symbol] {
 	if len(ss) == 0 {
-		return ε
+		return E
 	}
 
 	lcp := ss[0]
@@ -155,7 +155,7 @@ func LongestCommonPrefixOf(ss ...String[Symbol]) String[Symbol] {
 		for !ss[i].HasPrefix(lcp) {
 			lcp = lcp[:len(lcp)-1]
 			if len(lcp) == 0 {
-				return ε
+				return E
 			}
 		}
 	}

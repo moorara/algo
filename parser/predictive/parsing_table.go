@@ -1,4 +1,4 @@
-package grammar
+package predictive
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/moorara/algo/errors"
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/symboltable"
 )
@@ -16,27 +17,94 @@ type ParsingTable interface {
 	fmt.Stringer
 	generic.Equaler[ParsingTable]
 
-	Add(NonTerminal, Terminal, Production)
-	Get(NonTerminal, Terminal) set.Set[Production]
+	Add(grammar.NonTerminal, grammar.Terminal, grammar.Production)
+	Get(grammar.NonTerminal, grammar.Terminal) set.Set[grammar.Production]
 	CheckErrors() error
+}
+
+// NewParsingTable constructs a predictive parsing table for a context-free grammar.
+//
+// Predictive parsers are recursive-descent parsers that do not require backtracking.
+// They can be constructed for a specific class of grammars called LL(1).
+// An LL(1) grammar must not be left-recursive or ambiguous.
+//
+// If a grammar is left-recursive or ambiguous,
+// the resulting parsing table will contain one or more multiply defined entries.
+//
+// This method constructs a parsing table for any context-free grammar.
+// To identify errors in the table, use the CheckErrors method.
+// Some errors may be resolved by eliminating left recursion and applying left factoring to the grammar.
+// However, certain grammars cannot be transformed into LL(1) even after these transformations.
+// Some languages may have no LL(1) grammar at all.
+func NewParsingTable(g grammar.CFG) ParsingTable {
+	/*
+	 * For each production A → α of the grammar:
+	 *
+	 *   1. For each terminal a in FIRST(α), add A → α to M[A,a].
+	 *   2. If ε is in FIRST(α), then for each terminal b in FOLLOW(A), add A → α to M[A,b].
+	 *      If ε is in FIRST(α) and $ is in FOLLOW(A), add A → α to M[A,$] as well.
+	 *   3. If, after performing the above, there is no production at all in M[A,a],
+	 *      then set M[A,a] to error (can be represented by an empty entry in the table).
+	 */
+
+	terminals := g.OrderTerminals()
+	_, _, nonTerminals := g.OrderNonTerminals()
+	table := newParsingTable(terminals, nonTerminals)
+
+	first := g.ComputeFIRST()
+	follow := g.ComputeFOLLOW(first)
+
+	// For each production A → α
+	for p := range g.Productions.All() {
+		A := p.Head
+		FIRSTα := first(p.Body)
+
+		// For each terminal a ∈ FIRST(α), add A → α to M[A,a].
+		for a := range FIRSTα.Terminals.All() {
+			table.Add(A, a, p)
+		}
+
+		// If ε ∈ FIRST(α)
+		if FIRSTα.IncludesEmpty {
+			FOLLOWA := follow(A)
+
+			// For each terminal b ∈ FOLLOW(A), add A → α to M[A,b].
+			for b := range FOLLOWA.Terminals.All() {
+				table.Add(A, b, p)
+			}
+
+			// If ε ∈ FIRST(α) and $ ∈ FOLLOW(A), add A → α to M[A,$] as well.
+			if FOLLOWA.IncludesEndmarker {
+				table.Add(A, grammar.Endmarker, p)
+			}
+		}
+	}
+
+	return table
 }
 
 // parsingTable implements the ParsingTable interface.
 type parsingTable struct {
-	nonTerminals []NonTerminal
-	terminals    []Terminal
-	table        symboltable.SymbolTable[NonTerminal, symboltable.SymbolTable[Terminal, set.Set[Production]]]
+	nonTerminals []grammar.NonTerminal
+	terminals    []grammar.Terminal
+	table        symboltable.SymbolTable[
+		grammar.NonTerminal,
+		symboltable.SymbolTable[
+			grammar.Terminal,
+			set.Set[grammar.Production],
+		],
+	]
 }
 
-// NewParsingTable creates a new instance of the ParsingTable.
-func NewParsingTable(terminals []Terminal, nonTerminals []NonTerminal) ParsingTable {
+// newParsingTable creates a new instance of the ParsingTable.
+func newParsingTable(terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal) *parsingTable {
 	t := &parsingTable{
 		nonTerminals: nonTerminals,
-		terminals:    append(terminals, endmarker),
+		terminals:    append(terminals, grammar.Endmarker),
 		table: symboltable.NewQuadraticHashTable(
-			hashNonTerminal,
-			eqNonTerminal,
-			func(lhs, rhs symboltable.SymbolTable[Terminal, set.Set[Production]]) bool {
+			grammar.HashNonTerminal,
+			grammar.EqNonTerminal,
+			func(lhs, rhs symboltable.SymbolTable[grammar.Terminal, set.Set[grammar.Production]]) bool {
 				return lhs.Equals(rhs)
 			},
 			symboltable.HashOpts{},
@@ -46,14 +114,14 @@ func NewParsingTable(terminals []Terminal, nonTerminals []NonTerminal) ParsingTa
 	// Populate the parsing table with empty sets.
 	for _, A := range t.nonTerminals {
 		ARow := symboltable.NewQuadraticHashTable(
-			hashTerminal,
-			eqTerminal,
-			eqProductionSet,
+			grammar.HashTerminal,
+			grammar.EqTerminal,
+			grammar.EqProductionSet,
 			symboltable.HashOpts{},
 		)
 
 		for _, a := range t.terminals {
-			ARow.Put(a, set.New(eqProduction))
+			ARow.Put(a, set.New(grammar.EqProduction))
 		}
 
 		t.table.Put(A, ARow)
@@ -75,7 +143,7 @@ func (t *parsingTable) Equals(rhs ParsingTable) bool {
 
 // Add adds a new entry to the parsing table.
 // Multiple productions can be added for the same non-terminal A and terminal a.
-func (t *parsingTable) Add(A NonTerminal, a Terminal, prod Production) {
+func (t *parsingTable) Add(A grammar.NonTerminal, a grammar.Terminal, prod grammar.Production) {
 	// The parsing table is pre-populated with empty sets.
 	ARow, _ := t.table.Get(A)
 	prods, _ := ARow.Get(a)
@@ -83,7 +151,7 @@ func (t *parsingTable) Add(A NonTerminal, a Terminal, prod Production) {
 }
 
 // Get looks up an entry in the parsing table.
-func (t *parsingTable) Get(A NonTerminal, a Terminal) set.Set[Production] {
+func (t *parsingTable) Get(A grammar.NonTerminal, a grammar.Terminal) set.Set[grammar.Production] {
 	// The parsing table is pre-populated with empty sets.
 	ARow, _ := t.table.Get(A)
 	prods, _ := ARow.Get(a)
@@ -168,8 +236,8 @@ func (p *parsingTablePrinter) String() string {
 	return p.b.String()
 }
 
-func (p *parsingTablePrinter) flattenProductions(A NonTerminal, a Terminal) string {
-	prods := orderProductionSet(p.t.Get(A, a))
+func (p *parsingTablePrinter) flattenProductions(A grammar.NonTerminal, a grammar.Terminal) string {
+	prods := grammar.OrderProductionSet(p.t.Get(A, a))
 	if len(prods) == 0 {
 		return ""
 	}
