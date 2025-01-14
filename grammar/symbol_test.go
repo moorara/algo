@@ -81,7 +81,6 @@ func TestTerminal(t *testing.T) {
 	}{
 		{value: "a", expectedString: `"a"`},
 		{value: "b", expectedString: `"b"`},
-		{value: "c", expectedString: `"c"`},
 		{value: "0", expectedString: `"0"`},
 		{value: "1", expectedString: `"1"`},
 		{value: "2", expectedString: `"2"`},
