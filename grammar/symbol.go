@@ -17,7 +17,7 @@ import (
 // to simplify the handling of end-of-input scenarios, especially in parsing algorithms like LL(1) or LR(1).
 //
 // For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
-var Endmarker = Terminal("\uEEEE")
+const Endmarker = Terminal("\uEEEE")
 
 var (
 	HashSymbol = hashFuncForSymbol()
