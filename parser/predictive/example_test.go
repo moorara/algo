@@ -201,7 +201,11 @@ func Example() {
 	)
 
 	parser := predictive.New(G, l)
-	parser.Parse(func(P grammar.Production, token lexer.Token) {
+	err = parser.Parse(func(P grammar.Production, token lexer.Token) {
 		fmt.Printf("%s\n%s\n\n", P, token)
 	})
+
+	if err != nil {
+		panic(err)
+	}
 }
