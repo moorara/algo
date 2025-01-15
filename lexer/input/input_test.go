@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/list"
 )
 
@@ -25,27 +26,30 @@ func newStack(n int, vs ...int) list.Stack[int] {
 func TestNew(t *testing.T) {
 	tests := []struct {
 		name          string
-		n             int
+		filename      string
 		src           io.Reader
+		n             int
 		expectedError string
 	}{
 		{
 			name:          "Success",
-			n:             4096,
+			filename:      "lorem_ipsum",
 			src:           strings.NewReader("Lorem ipsum"),
+			n:             4096,
 			expectedError: "",
 		},
 		{
 			name:          "Failure",
-			n:             4096,
+			filename:      "lorem_ipsum",
 			src:           iotest.ErrReader(errors.New("io error")),
+			n:             4096,
 			expectedError: "io error",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			in, err := New(tc.n, tc.src)
+			in, err := New(tc.filename, tc.src, tc.n)
 
 			if tc.expectedError == "" {
 				assert.NotNil(t, in)
@@ -153,7 +157,7 @@ func TestInput_next(t *testing.T) {
 			assert.NoError(t, err)
 			defer f.Close()
 
-			in, err := New(tc.n, f)
+			in, err := New(tc.file, f, tc.n)
 			assert.NoError(t, err)
 
 			var b byte
@@ -184,12 +188,17 @@ func TestInput_Next(t *testing.T) {
 		{
 			name: "FirstByte_EOF",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x00, 0x00, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         io.EOF,
 			},
 			expectedError: "EOF",
@@ -199,27 +208,37 @@ func TestInput_Next(t *testing.T) {
 		{
 			name: "FirstByte_Invalid",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x80, 0x00, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedError: "invalid utf-8 character at 0",
+			expectedError: "test:1:1: invalid utf-8 character",
 			expectedRune:  0,
 			expectedSize:  0,
 		},
 		{
 			name: "FirstByte_Success",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x69, 0x00, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
 			expectedError: "",
@@ -229,12 +248,17 @@ func TestInput_Next(t *testing.T) {
 		{
 			name: "SecondByte_EOF",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0xC6, 0x00, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
 			expectedError: "EOF",
@@ -244,27 +268,37 @@ func TestInput_Next(t *testing.T) {
 		{
 			name: "SecondByte_Invalid",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0xC6, 0x40, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedError: "invalid utf-8 character at 0",
+			expectedError: "test:1:1: invalid utf-8 character",
 			expectedRune:  0,
 			expectedSize:  0,
 		},
 		{
 			name: "SecondByte_Success",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0xC6, 0xA9, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
 			expectedError: "",
@@ -274,12 +308,17 @@ func TestInput_Next(t *testing.T) {
 		{
 			name: "ThirdByte_EOF",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0xEA, 0xA9, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
 			expectedError: "EOF",
@@ -289,27 +328,37 @@ func TestInput_Next(t *testing.T) {
 		{
 			name: "ThirdByte_Invalid",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0xEA, 0xA9, 0x40, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedError: "invalid utf-8 character at 0",
+			expectedError: "test:1:1: invalid utf-8 character",
 			expectedRune:  0,
 			expectedSize:  0,
 		},
 		{
 			name: "ThirdByte_Success",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0xEA, 0xA9, 0x80, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
 			expectedError: "",
@@ -319,12 +368,17 @@ func TestInput_Next(t *testing.T) {
 		{
 			name: "FourthByte_EOF",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0xF0, 0x90, 0x80, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
 			expectedError: "EOF",
@@ -334,32 +388,62 @@ func TestInput_Next(t *testing.T) {
 		{
 			name: "FourthByte_Invalid",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0xF0, 0x90, 0x80, 0x40, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedError: "invalid utf-8 character at 0",
+			expectedError: "test:1:1: invalid utf-8 character",
 			expectedRune:  0,
 			expectedSize:  0,
 		},
 		{
 			name: "FourthByte_Success",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0xF0, 0x90, 0x80, 0x80, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
 			expectedError: "",
 			expectedRune:  '𐀀',
 			expectedSize:  4,
+		},
+		{
+			name: "Newline_Success",
+			in: &Input{
+				filename:    "test",
+				src:         nil,
+				buff:        []byte{0x4C, 0x6F, 0x72, 0x65, 0x6D, 0x0A /*newline*/, 0x69, 0x70, 0x73, 0x75, 0x6D},
+				lexemeBegin: 5,
+				forward:     5,
+				offset:      5,
+				line:        1,
+				column:      6,
+				nextColumn:  6,
+				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
+				err:         nil,
+			},
+			expectedError: "",
+			expectedRune:  '\n',
+			expectedSize:  1,
 		},
 	}
 
@@ -384,185 +468,225 @@ func TestInput_Next(t *testing.T) {
 
 func TestInput_Retract(t *testing.T) {
 	tests := []struct {
-		name            string
-		in              *Input
-		retractCount    int
-		expectedForward int
+		name               string
+		in                 *Input
+		retractCount       int
+		expectedForward    int
+		expectedNextColumn int
 	}{
 		{
 			name: "Success",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 1,
 				forward:     4,
-				runeCount:   1,
+				offset:      1,
+				line:        1,
+				column:      2,
+				nextColumn:  4,
 				runeSizes:   newStack(4, 1, 2),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			retractCount:    2,
-			expectedForward: 1,
+			retractCount:       2,
+			expectedForward:    1,
+			expectedNextColumn: 2,
 		},
 		{
 			name: "Success_SecondHalfToFirstHalf",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 4,
 				forward:     8,
-				runeCount:   2,
+				offset:      2,
+				line:        1,
+				column:      3,
+				nextColumn:  5,
 				runeSizes:   newStack(4, 2, 2),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			retractCount:    2,
-			expectedForward: 4,
+			retractCount:       2,
+			expectedForward:    4,
+			expectedNextColumn: 3,
 		},
 		{
 			name: "Success_FirstHalfToSecondHalf",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 8,
 				forward:     2,
-				runeCount:   2,
+				offset:      2,
+				line:        1,
+				column:      3,
+				nextColumn:  5,
 				runeSizes:   newStack(4, 4, 2),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			retractCount:    2,
-			expectedForward: 8,
+			retractCount:       2,
+			expectedForward:    8,
+			expectedNextColumn: 3,
+		},
+		{
+			name: "Success_Newline",
+			in: &Input{
+				filename:    "test",
+				src:         nil,
+				buff:        []byte{0x4C, 0x6F, 0x72, 0x65, 0x6D, 0x0A /*newline*/, 0x69, 0x70, 0x73, 0x75, 0x6D},
+				lexemeBegin: 5,
+				forward:     7,
+				offset:      5,
+				line:        1,
+				column:      6,
+				nextColumn:  2,
+				runeSizes:   newStack(4, 1, 1),
+				lastColumns: newStack(4, 6),
+				err:         nil,
+			},
+			retractCount:       2,
+			expectedForward:    5,
+			expectedNextColumn: 6,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			for i := 0; i < tc.retractCount; i++ {
+			for range tc.retractCount {
 				tc.in.Retract()
 			}
 
 			assert.Equal(t, tc.expectedForward, tc.in.forward)
-		})
-	}
-}
-
-func TestInput_Peek(t *testing.T) {
-	tests := []struct {
-		name          string
-		in            *Input
-		expectedRune  rune
-		expectedError string
-	}{
-		{
-			name: "EOF",
-			in: &Input{
-				src:         nil,
-				buff:        []byte{0x00, 0x00, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
-				lexemeBegin: 0,
-				forward:     0,
-				runeCount:   0,
-				runeSizes:   newStack(4),
-				err:         io.EOF,
-			},
-			expectedRune:  0,
-			expectedError: "EOF",
-		},
-		{
-			name: "Success",
-			in: &Input{
-				src:         nil,
-				buff:        []byte{0x69, 0x00, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00},
-				lexemeBegin: 0,
-				forward:     0,
-				runeCount:   0,
-				runeSizes:   newStack(4),
-				err:         nil,
-			},
-			expectedRune:  'i',
-			expectedError: "",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			r, err := tc.in.Peek()
-
-			if tc.expectedError == "" {
-				assert.Equal(t, tc.expectedRune, r)
-				assert.NoError(t, err)
-			} else {
-				assert.Equal(t, tc.expectedRune, r)
-				assert.EqualError(t, err, tc.expectedError)
-			}
+			assert.Equal(t, tc.expectedNextColumn, tc.in.nextColumn)
 		})
 	}
 }
 
 func TestInput_Lexeme(t *testing.T) {
 	tests := []struct {
-		name              string
-		in                *Input
-		expectedLexeme    string
-		expectedPos       int
-		expectedRuneCount int
+		name           string
+		in             *Input
+		expectedLexeme string
+		expectedPos    lexer.Position
+		expectedOffset int
+		expectedLine   int
+		expectedColumn int
 	}{
 		{
 			name: "Empty",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedLexeme:    "",
-			expectedPos:       0,
-			expectedRuneCount: 0,
+			expectedLexeme: "",
+			expectedPos:    lexer.Position{Filename: "test", Offset: 0, Line: 1, Column: 1},
+			expectedOffset: 0,
+			expectedLine:   1,
+			expectedColumn: 1,
 		},
 		{
 			name: "Success",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x40, 0x68, 0x65, 0x72, 0x65, 0x20 /**/, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 1,
 				forward:     5,
-				runeCount:   1,
+				offset:      1,
+				line:        1,
+				column:      2,
+				nextColumn:  6,
 				runeSizes:   newStack(4, 1, 1, 1, 1),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedLexeme:    "here",
-			expectedPos:       1,
-			expectedRuneCount: 5,
+			expectedLexeme: "here",
+			expectedPos:    lexer.Position{Filename: "test", Offset: 1, Line: 1, Column: 2},
+			expectedOffset: 5,
+			expectedLine:   1,
+			expectedColumn: 6,
 		},
 		{
 			name: "Success_FirstHalfToSecondHalf",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x00, 0x00, 0x00, 0x40, 0x68, 0x65 /**/, 0x72, 0x65, 0x20, 0x00, 0x00, 0x00},
 				lexemeBegin: 4,
 				forward:     8,
-				runeCount:   4,
+				offset:      4,
+				line:        1,
+				column:      5,
+				nextColumn:  9,
 				runeSizes:   newStack(4, 1, 1, 1, 1),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedLexeme:    "here",
-			expectedPos:       4,
-			expectedRuneCount: 8,
+			expectedLexeme: "here",
+			expectedPos:    lexer.Position{Filename: "test", Offset: 4, Line: 1, Column: 5},
+			expectedOffset: 8,
+			expectedLine:   1,
+			expectedColumn: 9,
 		},
 		{
 			name: "Success_SecondHalfToFirstHalf",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x72, 0x65, 0x20, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x40, 0x68, 0x65},
 				lexemeBegin: 10,
 				forward:     2,
-				runeCount:   10,
+				offset:      10,
+				line:        1,
+				column:      11,
+				nextColumn:  15,
 				runeSizes:   newStack(4, 1, 1, 1, 1),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedLexeme:    "here",
-			expectedPos:       10,
-			expectedRuneCount: 14,
+			expectedLexeme: "here",
+			expectedPos:    lexer.Position{Filename: "test", Offset: 10, Line: 1, Column: 11},
+			expectedOffset: 14,
+			expectedLine:   1,
+			expectedColumn: 15,
+		},
+		{
+			name: "Success_Newline",
+			in: &Input{
+				filename:    "test",
+				src:         nil,
+				buff:        []byte{0x4C, 0x6F, 0x72, 0x65, 0x6D, 0x0A /*newline*/, 0x69, 0x70, 0x73, 0x75, 0x6D, 0x20 /*space*/, 0x64, 0x6F, 0x6C, 0x6F, 0x72},
+				lexemeBegin: 0,
+				forward:     11,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  12,
+				runeSizes:   newStack(4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+				lastColumns: newStack(4, 6),
+				err:         nil,
+			},
+			expectedLexeme: "Lorem\nipsum",
+			expectedPos:    lexer.Position{Filename: "test", Offset: 0, Line: 1, Column: 1},
+			expectedOffset: 11,
+			expectedLine:   2,
+			expectedColumn: 12,
 		},
 	}
 
@@ -572,7 +696,9 @@ func TestInput_Lexeme(t *testing.T) {
 
 			assert.Equal(t, tc.expectedLexeme, lexeme)
 			assert.Equal(t, tc.expectedPos, pos)
-			assert.Equal(t, tc.expectedRuneCount, tc.in.runeCount)
+			assert.Equal(t, tc.expectedOffset, tc.in.offset)
+			assert.Equal(t, tc.expectedLine, tc.in.line)
+			assert.Equal(t, tc.expectedColumn, tc.in.column)
 		})
 	}
 }
@@ -581,69 +707,121 @@ func TestInput_Skip(t *testing.T) {
 	tests := []struct {
 		name                string
 		in                  *Input
-		expectedPos         int
+		expectedPos         lexer.Position
 		expectedLexemeBegin int
-		expectedRuneCount   int
+		expectedOffset      int
+		expectedLine        int
+		expectedColumn      int
 	}{
 		{
 			name: "Empty",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 0,
 				forward:     0,
-				runeCount:   0,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  1,
 				runeSizes:   newStack(4),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedPos:         0,
+			expectedPos:         lexer.Position{Filename: "test", Offset: 0, Line: 1, Column: 1},
 			expectedLexemeBegin: 0,
-			expectedRuneCount:   0,
+			expectedOffset:      0,
+			expectedLine:        1,
+			expectedColumn:      1,
 		},
 		{
 			name: "Success",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x40, 0x68, 0x65, 0x72, 0x65, 0x20 /**/, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 				lexemeBegin: 1,
 				forward:     5,
-				runeCount:   1,
+				offset:      1,
+				line:        1,
+				column:      2,
+				nextColumn:  6,
 				runeSizes:   newStack(4, 1, 1, 1, 1),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedPos:         1,
+			expectedPos:         lexer.Position{Filename: "test", Offset: 1, Line: 1, Column: 2},
 			expectedLexemeBegin: 5,
-			expectedRuneCount:   5,
+			expectedOffset:      5,
+			expectedLine:        1,
+			expectedColumn:      6,
 		},
 		{
 			name: "Success_FirstHalfToSecondHalf",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x00, 0x00, 0x00, 0x40, 0x68, 0x65 /**/, 0x72, 0x65, 0x20, 0x00, 0x00, 0x00},
 				lexemeBegin: 4,
 				forward:     8,
-				runeCount:   4,
+				offset:      4,
+				line:        1,
+				column:      5,
+				nextColumn:  9,
 				runeSizes:   newStack(4, 1, 1, 1, 1),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedPos:         4,
+			expectedPos:         lexer.Position{Filename: "test", Offset: 4, Line: 1, Column: 5},
 			expectedLexemeBegin: 8,
-			expectedRuneCount:   8,
+			expectedOffset:      8,
+			expectedLine:        1,
+			expectedColumn:      9,
 		},
 		{
 			name: "Success_SecondHalfToFirstHalf",
 			in: &Input{
+				filename:    "test",
 				src:         nil,
 				buff:        []byte{0x72, 0x65, 0x20, 0x00, 0x00, 0x00 /**/, 0x00, 0x00, 0x00, 0x40, 0x68, 0x65},
 				lexemeBegin: 10,
 				forward:     2,
-				runeCount:   10,
+				offset:      10,
+				line:        1,
+				column:      11,
+				nextColumn:  15,
 				runeSizes:   newStack(4, 1, 1, 1, 1),
+				lastColumns: newStack(4),
 				err:         nil,
 			},
-			expectedPos:         10,
+			expectedPos:         lexer.Position{Filename: "test", Offset: 10, Line: 1, Column: 11},
 			expectedLexemeBegin: 2,
-			expectedRuneCount:   14,
+			expectedOffset:      14,
+			expectedLine:        1,
+			expectedColumn:      15,
+		},
+		{
+			name: "Success_Newline",
+			in: &Input{
+				filename:    "test",
+				src:         nil,
+				buff:        []byte{0x4C, 0x6F, 0x72, 0x65, 0x6D, 0x0A /*newline*/, 0x69, 0x70, 0x73, 0x75, 0x6D, 0x20 /*space*/, 0x64, 0x6F, 0x6C, 0x6F, 0x72},
+				lexemeBegin: 0,
+				forward:     11,
+				offset:      0,
+				line:        1,
+				column:      1,
+				nextColumn:  12,
+				runeSizes:   newStack(4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+				lastColumns: newStack(4, 6),
+				err:         nil,
+			},
+			expectedPos:         lexer.Position{Filename: "test", Offset: 0, Line: 1, Column: 1},
+			expectedLexemeBegin: 11,
+			expectedOffset:      11,
+			expectedLine:        2,
+			expectedColumn:      12,
 		},
 	}
 
@@ -653,7 +831,9 @@ func TestInput_Skip(t *testing.T) {
 
 			assert.Equal(t, tc.expectedPos, pos)
 			assert.Equal(t, tc.expectedLexemeBegin, tc.in.lexemeBegin)
-			assert.Equal(t, tc.expectedRuneCount, tc.in.runeCount)
+			assert.Equal(t, tc.expectedOffset, tc.in.offset)
+			assert.Equal(t, tc.expectedLine, tc.in.line)
+			assert.Equal(t, tc.expectedColumn, tc.in.column)
 		})
 	}
 }

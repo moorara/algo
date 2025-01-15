@@ -10,10 +10,10 @@
 package input
 
 import (
-	"fmt"
 	"io"
 	"strings"
 
+	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/list"
 )
 
@@ -23,7 +23,8 @@ const eof byte = 0x00
 //
 // For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 type Input struct {
-	src io.Reader
+	filename string
+	src      io.Reader
 
 	// The first and second halves of the buff are alternatively reloaded.
 	// Each half is of the same size N. Usually, N should be the size of a disk block.
@@ -32,26 +33,35 @@ type Input struct {
 	lexemeBegin int // Pointer lexemeBegin marks the beginning of the current lexeme.
 	forward     int // Pointer forward scans ahead until a pattern match is found.
 
-	runeCount int             // Counter runeCount tracks the total number of runes read before lexemeBegin.
-	runeSizes list.Stack[int] // Stack runeSizes tracks the size of runes read between lexemeBegin and forward.
+	offset     int // Tracks the offset (0-based), total number of runes, before lexemeBegin.
+	line       int // Tracks the line number (1-based) before lexemeBegin.
+	column     int // Tracks the column number (1-based) before lexemeBegin.
+	nextColumn int // Tracks the column number (1-based) of the next rune to be read by forward.
 
-	err error // Last error encountered
+	runeSizes   list.Stack[int] // Tracks the size of runes read between lexemeBegin and forward.
+	lastColumns list.Stack[int] // Tracks the last column numbers for each line between lexemeBegin and forward.
+
+	err error // Last error encountered.
 }
 
 // New creates a new input buffer of size N.
 // N usually should be the size of a disk block.
-func New(n int, src io.Reader) (*Input, error) {
+func New(filename string, src io.Reader, n int) (*Input, error) {
 	// buff is divided into two sub-buffers (first half and second half).
-	l := 2 * n
-	buff := make([]byte, l)
+	buff := make([]byte, 2*n)
 
 	in := &Input{
+		filename:    filename,
 		src:         src,
 		buff:        buff,
 		lexemeBegin: 0,
 		forward:     0,
-		runeCount:   0,
+		offset:      0,
+		line:        1,
+		column:      1,
+		nextColumn:  1,
 		runeSizes:   list.NewStack[int](n, nil),
+		lastColumns: list.NewStack[int](n, nil),
 	}
 
 	if err := in.loadFirst(); err != nil {
@@ -64,6 +74,7 @@ func New(n int, src io.Reader) (*Input, error) {
 // loadFirst reads the input and loads the first sub-buffer.
 func (i *Input) loadFirst() error {
 	high := len(i.buff) / 2
+
 	n, err := i.src.Read(i.buff[:high])
 	if err != nil {
 		return err
@@ -79,6 +90,7 @@ func (i *Input) loadFirst() error {
 // loadSecond reads the input and loads the second sub-buffer.
 func (i *Input) loadSecond() error {
 	low, high := len(i.buff)/2, len(i.buff)
+
 	n, err := i.src.Read(i.buff[low:high])
 	if err != nil {
 		return err
@@ -98,7 +110,6 @@ func (i *Input) next() (byte, error) {
 	}
 
 	b := i.buff[i.forward]
-
 	i.forward++
 
 	// Determine whether or not the forward pointer has reached the end of any halves.
@@ -118,6 +129,26 @@ func (i *Input) next() (byte, error) {
 	return b, nil
 }
 
+// pos returns the position before lexemeBegin.
+func (i *Input) pos() lexer.Position {
+	return lexer.Position{
+		Filename: i.filename,
+		Offset:   i.offset,
+		Line:     i.line,
+		Column:   i.column,
+	}
+}
+
+// forwardPos returns the position of forward.
+func (i *Input) forwardPos() lexer.Position {
+	return lexer.Position{
+		Filename: i.filename,
+		Offset:   i.offset + i.runeSizes.Size(),
+		Line:     i.line + i.lastColumns.Size(),
+		Column:   i.nextColumn,
+	}
+}
+
 // Next advances to the next rune in the input and returns it.
 func (i *Input) Next() (rune, error) {
 	// First byte
@@ -130,8 +161,18 @@ func (i *Input) Next() (rune, error) {
 
 	if x >= as {
 		if x == xx {
-			pos := i.runeCount + i.runeSizes.Size()
-			return 0, fmt.Errorf("invalid utf-8 character at %d", pos)
+			return 0, &InputError{
+				Description: "invalid utf-8 character",
+				Pos:         i.forwardPos(),
+			}
+		}
+
+		// Check for new line
+		if b0 == '\n' {
+			i.lastColumns.Push(i.nextColumn)
+			i.nextColumn = 1
+		} else {
+			i.nextColumn++
 		}
 
 		i.runeSizes.Push(1)
@@ -148,12 +189,15 @@ func (i *Input) Next() (rune, error) {
 
 	accept := acceptRanges[x>>4]
 	if b1 < accept.lo || accept.hi < b1 {
-		pos := i.runeCount + i.runeSizes.Size()
-		return 0, fmt.Errorf("invalid utf-8 character at %d", pos)
+		return 0, &InputError{
+			Description: "invalid utf-8 character",
+			Pos:         i.forwardPos(),
+		}
 	}
 
 	if size == 2 {
 		i.runeSizes.Push(size)
+		i.nextColumn++
 		return rune(b0&mask2)<<6 | rune(b1&maskx), nil
 	}
 
@@ -164,12 +208,15 @@ func (i *Input) Next() (rune, error) {
 	}
 
 	if b2 < locb || hicb < b2 {
-		pos := i.runeCount + i.runeSizes.Size()
-		return 0, fmt.Errorf("invalid utf-8 character at %d", pos)
+		return 0, &InputError{
+			Description: "invalid utf-8 character",
+			Pos:         i.forwardPos(),
+		}
 	}
 
 	if size == 3 {
 		i.runeSizes.Push(size)
+		i.nextColumn++
 		return rune(b0&mask3)<<12 | rune(b1&maskx)<<6 | rune(b2&maskx), nil
 	}
 
@@ -180,12 +227,14 @@ func (i *Input) Next() (rune, error) {
 	}
 
 	if b3 < locb || hicb < b3 {
-		pos := i.runeCount + i.runeSizes.Size()
-		return 0, fmt.Errorf("invalid utf-8 character at %d", pos)
+		return 0, &InputError{
+			Description: "invalid utf-8 character",
+			Pos:         i.forwardPos(),
+		}
 	}
 
 	i.runeSizes.Push(size)
-
+	i.nextColumn++
 	return rune(b0&mask4)<<18 | rune(b1&maskx)<<12 | rune(b2&maskx)<<6 | rune(b3&maskx), nil
 }
 
@@ -196,26 +245,23 @@ func (i *Input) Retract() {
 		if i.forward < 0 { // adjust the forward pointer if needed
 			i.forward += len(i.buff)
 		}
+
+		// Check for new line
+		if i.buff[i.forward] == '\n' {
+			if lastColumn, ok := i.lastColumns.Pop(); ok {
+				i.nextColumn = lastColumn
+			}
+		} else {
+			i.nextColumn--
+		}
 	}
-}
-
-// Peek returns the next rune in the input without consuming it.
-func (i *Input) Peek() (rune, error) {
-	r, err := i.Next()
-	if err != nil {
-		return 0, err
-	}
-
-	i.Retract()
-
-	return r, nil
 }
 
 // Lexeme returns the current lexeme alongside its position.
-func (i *Input) Lexeme() (string, int) {
-	var lexeme strings.Builder
-	pos := i.runeCount
+func (i *Input) Lexeme() (string, lexer.Position) {
+	pos := i.pos()
 
+	var lexeme strings.Builder
 	for i.lexemeBegin != i.forward {
 		lexeme.WriteByte(i.buff[i.lexemeBegin])
 		i.lexemeBegin++
@@ -226,22 +272,36 @@ func (i *Input) Lexeme() (string, int) {
 
 	for !i.runeSizes.IsEmpty() {
 		i.runeSizes.Pop()
-		i.runeCount++
+		i.offset++
 	}
+
+	for !i.lastColumns.IsEmpty() {
+		i.lastColumns.Pop()
+		i.line++
+	}
+
+	i.column = i.nextColumn
 
 	return lexeme.String(), pos
 }
 
 // Skip skips over the pending lexeme in the input.
-func (i *Input) Skip() int {
-	pos := i.runeCount
+func (i *Input) Skip() lexer.Position {
+	pos := i.pos()
 
 	i.lexemeBegin = i.forward
 
 	for !i.runeSizes.IsEmpty() {
 		i.runeSizes.Pop()
-		i.runeCount++
+		i.offset++
 	}
+
+	for !i.lastColumns.IsEmpty() {
+		i.lastColumns.Pop()
+		i.line++
+	}
+
+	i.column = i.nextColumn
 
 	return pos
 }

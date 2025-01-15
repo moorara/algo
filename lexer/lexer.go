@@ -64,7 +64,7 @@ func (p Position) String() string {
 	b := new(strings.Builder)
 
 	if len(p.Filename) > 0 {
-		fmt.Fprintf(b, "%s: ", p.Filename)
+		fmt.Fprintf(b, "%s:", p.Filename)
 	}
 
 	if p.Line > 0 && p.Column > 0 {

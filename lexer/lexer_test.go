@@ -25,7 +25,7 @@ func TestToken(t *testing.T) {
 					Column:   27,
 				},
 			},
-			expectedString: `"ID" <name, test_file: 8:27>`,
+			expectedString: `"ID" <name, test_file:8:27>`,
 		},
 	}
 
@@ -43,12 +43,12 @@ func TestPosition(t *testing.T) {
 		expectedString string
 	}{
 		{
-			name: "WithOffset",
+			name: "WithoutLineAndColumn",
 			p: Position{
 				Filename: "test_file",
 				Offset:   69,
 			},
-			expectedString: `test_file: 69`,
+			expectedString: `test_file:69`,
 		},
 		{
 			name: "WithLineAndColumn",
@@ -58,7 +58,7 @@ func TestPosition(t *testing.T) {
 				Line:     8,
 				Column:   27,
 			},
-			expectedString: `test_file: 8:27`,
+			expectedString: `test_file:8:27`,
 		},
 	}
 
