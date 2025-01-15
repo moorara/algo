@@ -61,9 +61,9 @@ func ExampleInput() {
 		}
 	}
 
-	// Reading the runes.
+	// Reads runes from the input and feeds them into the DFA.
+	var state int
 	var r rune
-	state := 0
 	for r, err = in.Next(); err == nil; r, err = in.Next() {
 		state = advanceDFA(state, r)
 		switch state {

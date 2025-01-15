@@ -41,7 +41,14 @@ func TestPosition(t *testing.T) {
 		name           string
 		p              Position
 		expectedString string
+		expectedIsZero bool
 	}{
+		{
+			name:           "Zero",
+			p:              Position{},
+			expectedString: `0`,
+			expectedIsZero: true,
+		},
 		{
 			name: "WithoutLineAndColumn",
 			p: Position{
@@ -49,6 +56,7 @@ func TestPosition(t *testing.T) {
 				Offset:   69,
 			},
 			expectedString: `test_file:69`,
+			expectedIsZero: false,
 		},
 		{
 			name: "WithLineAndColumn",
@@ -59,12 +67,14 @@ func TestPosition(t *testing.T) {
 				Column:   27,
 			},
 			expectedString: `test_file:8:27`,
+			expectedIsZero: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedString, tc.p.String())
+			assert.Equal(t, tc.expectedIsZero, tc.p.IsZero())
 		})
 	}
 }

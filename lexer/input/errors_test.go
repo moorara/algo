@@ -17,7 +17,7 @@ func TestInputError(t *testing.T) {
 		{
 			name: "WithoutLineAndColumn",
 			e: &InputError{
-				Description: "invalid utf-8 rune",
+				description: "invalid utf-8 rune",
 				Pos: lexer.Position{
 					Filename: "test_file",
 					Offset:   69,
@@ -28,7 +28,7 @@ func TestInputError(t *testing.T) {
 		{
 			name: "WithLineAndColumn",
 			e: &InputError{
-				Description: "invalid utf-8 rune",
+				description: "invalid utf-8 rune",
 				Pos: lexer.Position{
 					Filename: "test_file",
 					Offset:   69,

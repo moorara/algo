@@ -75,3 +75,9 @@ func (p Position) String() string {
 
 	return b.String()
 }
+
+// IsZero checks if a position is a zero (empty) value.
+func (p Position) IsZero() bool {
+	var zero Position
+	return p == zero
+}

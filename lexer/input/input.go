@@ -150,6 +150,7 @@ func (i *Input) forwardPos() lexer.Position {
 }
 
 // Next advances to the next rune in the input and returns it.
+// If the end of the input is reached, it returns the io.EOF error.
 func (i *Input) Next() (rune, error) {
 	// First byte
 	b0, err := i.next()
@@ -162,7 +163,7 @@ func (i *Input) Next() (rune, error) {
 	if x >= as {
 		if x == xx {
 			return 0, &InputError{
-				Description: "invalid utf-8 character",
+				description: "invalid utf-8 character",
 				Pos:         i.forwardPos(),
 			}
 		}
@@ -190,7 +191,7 @@ func (i *Input) Next() (rune, error) {
 	accept := acceptRanges[x>>4]
 	if b1 < accept.lo || accept.hi < b1 {
 		return 0, &InputError{
-			Description: "invalid utf-8 character",
+			description: "invalid utf-8 character",
 			Pos:         i.forwardPos(),
 		}
 	}
@@ -209,7 +210,7 @@ func (i *Input) Next() (rune, error) {
 
 	if b2 < locb || hicb < b2 {
 		return 0, &InputError{
-			Description: "invalid utf-8 character",
+			description: "invalid utf-8 character",
 			Pos:         i.forwardPos(),
 		}
 	}
@@ -228,7 +229,7 @@ func (i *Input) Next() (rune, error) {
 
 	if b3 < locb || hicb < b3 {
 		return 0, &InputError{
-			Description: "invalid utf-8 character",
+			description: "invalid utf-8 character",
 			Pos:         i.forwardPos(),
 		}
 	}
