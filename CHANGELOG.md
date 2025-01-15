@@ -1,5 +1,30 @@
 # Changelog
 
+## [v0.10.1](https://github.com/moorara/algo/tree/v0.10.1) (2025-01-15)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.10.0...v0.10.1)
+
+**Breaking Changes:**
+
+  - Refactor Collect method(s) in the generic package [#239](https://github.com/moorara/algo/issues/239) ([moorara](https://github.com/moorara))
+
+**New Features:**
+
+  - Support data types and algorithms for building predictive parsers [#248](https://github.com/moorara/algo/issues/248) ([moorara](https://github.com/moorara))
+  - Add custom type errors [#242](https://github.com/moorara/algo/issues/242) ([moorara](https://github.com/moorara))
+
+**Merged Changes:**
+
+  - Implement the first iteration of predictive parsing [#247](https://github.com/moorara/algo/pull/247) ([moorara](https://github.com/moorara))
+  - Predictive parsing table [#246](https://github.com/moorara/algo/pull/246) ([moorara](https://github.com/moorara))
+  - Refactoring [#245](https://github.com/moorara/algo/pull/245) ([moorara](https://github.com/moorara))
+  - Add IsLL1 method to check LL(1) context-free grammars [#244](https://github.com/moorara/algo/pull/244) ([moorara](https://github.com/moorara))
+  - Add examples for the errors package [#243](https://github.com/moorara/algo/pull/243) ([moorara](https://github.com/moorara))
+  - Add errors package [#241](https://github.com/moorara/algo/pull/241) ([moorara](https://github.com/moorara))
+  - Add IsLL1 method to context-free grammars to check for LL(1) grammars [#240](https://github.com/moorara/algo/pull/240) ([moorara](https://github.com/moorara))
+  - Add Collect1 and Collect2 functions to generic package [#238](https://github.com/moorara/algo/pull/238) ([moorara](https://github.com/moorara))
+
+
 ## [v0.10.0](https://github.com/moorara/algo/tree/v0.10.0) (2025-01-10)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.9.3...v0.10.0)
