@@ -81,8 +81,8 @@ type CFG struct {
 // NewCFG creates a new context-free grammar.
 func NewCFG(terms []Terminal, nonTerms []NonTerminal, prods []Production, start NonTerminal) CFG {
 	g := CFG{
-		Terminals:    set.New(eqTerminal),
-		NonTerminals: set.New(eqNonTerminal),
+		Terminals:    set.New(EqTerminal),
+		NonTerminals: set.New(EqNonTerminal),
 		Productions:  NewProductions(),
 		Start:        start,
 	}
@@ -147,8 +147,8 @@ func (g CFG) Verify() error {
 func (g CFG) String() string {
 	var b bytes.Buffer
 
-	terms := g.orderTerminals()
-	visited, unvisited, nonTerms := g.orderNonTerminals()
+	terms := g.OrderTerminals()
+	visited, unvisited, nonTerms := g.OrderNonTerminals()
 
 	fmt.Fprintf(&b, "Terminal Symbols: %s\n", terms)
 	fmt.Fprintf(&b, "Non-Terminal Symbols: %s\n", nonTerms)
@@ -157,7 +157,7 @@ func (g CFG) String() string {
 
 	for _, head := range visited {
 		fmt.Fprintf(&b, "  %s → ", head)
-		for _, p := range orderProductionSet(g.Productions.Get(head)) {
+		for _, p := range OrderProductionSet(g.Productions.Get(head)) {
 			fmt.Fprintf(&b, "%s | ", p.Body.String())
 		}
 		b.Truncate(b.Len() - 3)
@@ -166,7 +166,7 @@ func (g CFG) String() string {
 
 	for _, head := range unvisited {
 		fmt.Fprintf(&b, "  %s → ", head)
-		for _, p := range orderProductionSet(g.Productions.Get(head)) {
+		for _, p := range OrderProductionSet(g.Productions.Get(head)) {
 			fmt.Fprintf(&b, "%s | ", p.Body.String())
 		}
 		b.Truncate(b.Len() - 3)
@@ -272,7 +272,7 @@ func (g CFG) IsLL1() error {
 
 		// The order in which production bodies are processed does not affect the outcome.
 		// Sorting is only done to make error messages deterministic and easier to understand.
-		prods := orderProductionSet(g.Productions.Get(A))
+		prods := OrderProductionSet(g.Productions.Get(A))
 
 		for i := 0; i < len(prods); i++ {
 			for j := i + 1; j < len(prods); j++ {
@@ -283,7 +283,7 @@ func (g CFG) IsLL1() error {
 
 				if !firstα.Terminals.Intersection(firstβ.Terminals).IsEmpty() || firstα.IncludesEmpty && firstβ.IncludesEmpty {
 					err = errors.Append(err, &LL1Error{
-						Description: "FIRST(α) and FIRST(β) are not disjoint sets",
+						description: "FIRST(α) and FIRST(β) are not disjoint sets",
 						A:           A,
 						Alpha:       α,
 						Beta:        β,
@@ -295,7 +295,7 @@ func (g CFG) IsLL1() error {
 				// Check if ε ∈ FIRST(α), then FIRST(β) ∩ FOLLOW(A) = ∅
 				if firstα.IncludesEmpty && !firstβ.Terminals.Intersection(followA.Terminals).IsEmpty() {
 					err = errors.Append(err, &LL1Error{
-						Description: "ε is in FIRST(α), but FOLLOW(A) and FIRST(β) are not disjoint sets",
+						description: "ε is in FIRST(α), but FOLLOW(A) and FIRST(β) are not disjoint sets",
 						A:           A,
 						Alpha:       α,
 						Beta:        β,
@@ -308,7 +308,7 @@ func (g CFG) IsLL1() error {
 				// Check if ε ∈ FIRST(β), then FIRST(α) ∩ FOLLOW(A) = ∅
 				if firstβ.IncludesEmpty && !firstα.Terminals.Intersection(followA.Terminals).IsEmpty() {
 					err = errors.Append(err, &LL1Error{
-						Description: "ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
+						description: "ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
 						A:           A,
 						Alpha:       α,
 						Beta:        β,
@@ -328,7 +328,7 @@ func (g CFG) IsLL1() error {
 // that can derive the empty string ε in one or more steps (A ⇒* ε for some non-terminal A).
 func (g CFG) NullableNonTerminals() set.Set[NonTerminal] {
 	// Define a set for all non-terminals that can derive the empty string ε
-	nullable := set.New(eqNonTerminal)
+	nullable := set.New(EqNonTerminal)
 
 	for updated := true; updated; {
 		updated = false
@@ -382,7 +382,7 @@ func (g CFG) EliminateEmptyProductions() CFG {
 		}
 
 		// bodies holds all possible combinations of the right-hand side of a production rule.
-		bodies, aux := []String[Symbol]{ε}, []String[Symbol]{}
+		bodies, aux := []String[Symbol]{E}, []String[Symbol]{}
 
 		// Every nullable non-terminal symbol creates two possibilities, once by including and once by excluding it.
 		for _, sym := range p.Body {
@@ -414,10 +414,10 @@ func (g CFG) EliminateEmptyProductions() CFG {
 	//   a new start symbol with an ε-production rule must be introduced (S′ → S | ε).
 	// This guarantees that the resulting grammar generates the same language as the original grammar.
 	if start := newG.Start; nullable.Contains(start) {
-		newStart := newG.addNewNonTerminal(start, primeSuffixes...)
+		newStart := newG.AddNewNonTerminal(start, primeSuffixes...)
 		newG.Start = newStart
 		newG.Productions.Add(Production{newStart, String[Symbol]{start}}) // S′ → S
-		newG.Productions.Add(Production{newStart, ε})                     // S′ → ε
+		newG.Productions.Add(Production{newStart, E})                     // S′ → ε
 	}
 
 	return newG
@@ -501,8 +501,8 @@ func (g CFG) EliminateSingleProductions() CFG {
 // The function also removes unreachable terminals,
 // which are terminals that do not appear in any reachable production.
 func (g CFG) EliminateUnreachableProductions() CFG {
-	reachableT := set.New(eqTerminal)
-	reachableN := set.New(eqNonTerminal, g.Start)
+	reachableT := set.New(EqTerminal)
+	reachableN := set.New(EqNonTerminal, g.Start)
 	reachableP := NewProductions()
 
 	// Reppeat until no new non-terminal is added to reachable non-terminals:
@@ -577,7 +577,7 @@ func (g CFG) EliminateLeftRecursion() CFG {
 	// Arrange the non-terminals in some order.
 	// The exact order does not affect the eliminition of left recursions (immediate or indirect),
 	//   but the resulting grammar can depend on the order in which non-terminals are processed.
-	_, _, nonTerms := newG.orderNonTerminals()
+	_, _, nonTerms := newG.OrderNonTerminals()
 
 	for i := 0; i < len(nonTerms); i++ {
 		for j := 0; j < i-1; j++ {
@@ -621,7 +621,7 @@ func (g CFG) EliminateLeftRecursion() CFG {
 		hasLR := AProds.AnyMatch(isLeftRecursivePredicate)
 
 		if hasLR {
-			Anew := newG.addNewNonTerminal(A, primeSuffixes...)
+			Anew := newG.AddNewNonTerminal(A, primeSuffixes...)
 
 			LRProds := AProds.SelectMatch(isLeftRecursivePredicate)       // Immediately Left-Recursive A-productions
 			nonLRProds := AProds.SelectMatch(isNotLeftRecursivePredicate) // Not Immediately Left-Recursive A-productions
@@ -641,7 +641,7 @@ func (g CFG) EliminateLeftRecursion() CFG {
 			}
 
 			// Add A′ → ε
-			newG.Productions.Add(Production{Anew, ε})
+			newG.Productions.Add(Production{Anew, E})
 		}
 	}
 
@@ -705,7 +705,7 @@ func (g CFG) LeftFactor() CFG {
 				AProds.RemoveAll()
 
 				for prefix, suffixes := range prefixGroups.All() {
-					Anew := newG.addNewNonTerminal(A, primeSuffixes...)
+					Anew := newG.AddNewNonTerminal(A, primeSuffixes...)
 
 					// Add A-production A → αA′
 					newG.Productions.Add(Production{A, prefix.Append(Anew)})
@@ -734,7 +734,7 @@ func (g CFG) LeftFactor() CFG {
 // over longer prefixes that encompass fewer suffixes or production bodies.
 func groupByCommonPrefix(prods set.Set[Production]) symboltable.SymbolTable[String[Symbol], set.Set[String[Symbol]]] {
 	// Define a map of prefixes to their corresponding suffixes.
-	groups := symboltable.NewQuadraticHashTable(hashString, eqString, eqStringSet, symboltable.HashOpts{})
+	groups := symboltable.NewQuadraticHashTable(HashString, EqString, EqStringSet, symboltable.HashOpts{})
 
 	for prod := range prods.All() {
 		prefixFound := false
@@ -763,12 +763,12 @@ func groupByCommonPrefix(prods set.Set[Production]) symboltable.SymbolTable[Stri
 		if !prefixFound {
 			var prefix, suffix String[Symbol]
 			if prod.IsEmpty() {
-				prefix, suffix = ε, ε
+				prefix, suffix = E, E
 			} else {
 				prefix, suffix = prod.Body[:1], prod.Body[1:]
 			}
 
-			suffixes := set.New(eqString, suffix)
+			suffixes := set.New(EqString, suffix)
 			groups.Put(prefix, suffixes)
 		}
 	}
@@ -815,7 +815,7 @@ func (g CFG) eliminateStartSymbolFromRight() CFG {
 	if S := newG.Start; newG.Productions.AnyMatch(func(p Production) bool {
 		return p.Body.ContainsSymbol(S)
 	}) {
-		Snew := newG.addNewNonTerminal(S, primeSuffixes...)
+		Snew := newG.AddNewNonTerminal(S, primeSuffixes...)
 		newG.Start = Snew
 		newG.Productions.Add(Production{Snew, String[Symbol]{S}})
 	}
@@ -847,7 +847,7 @@ func (g CFG) eliminateNonSolitaryTerminals() CFG {
 			if t, ok := sym.(Terminal); ok {
 				newN, exist := store[t]
 				if !exist {
-					newN = newG.addNewNonTerminal(NonTerminal(t), alphabeticSuffixes...)
+					newN = newG.AddNewNonTerminal(NonTerminal(t), alphabeticSuffixes...)
 					store[t] = newN
 				}
 
@@ -875,7 +875,7 @@ func (g CFG) eliminateNonBinaryProductions() CFG {
 	}
 
 	for A := range g.Productions.AllByHead() {
-		for _, p := range orderProductionSet(g.Productions.Get(A)) {
+		for _, p := range OrderProductionSet(g.Productions.Get(A)) {
 			// Skip ε-production, single productions and productions already in CNF (A → BC or A → a).
 			if isBinary, isTerminal := p.IsCNF(); isTerminal || isBinary || p.IsEmpty() || p.IsSingle() {
 				newG.Productions.Add(p)
@@ -899,7 +899,7 @@ func (g CFG) eliminateNonBinaryProductions() CFG {
 				if i == len(p.Body)-2 {
 					newG.Productions.Add(Production{head, p.Body[i:]})
 				} else {
-					headN := newG.addNewNonTerminal(A, numericSuffixes...)
+					headN := newG.AddNewNonTerminal(A, numericSuffixes...)
 					newG.Productions.Add(Production{head, p.Body[i : i+1].Append(headN)})
 					head = headN
 				}
@@ -1101,110 +1101,27 @@ func (g CFG) ComputeFOLLOW(first FIRST) FOLLOW {
 	}
 }
 
-// ParsingTable constructs a predictive parsing table for an LL(1) grammar.
-//
-// Predictive parsers are recursive-descent parsers that do not require backtracking.
-// They can be constructed for a specific class of grammars called LL(1).
-// An LL(1) grammar must not be left-recursive or ambiguous.
-//
-// If a grammar is left-recursive or ambiguous,
-// the resulting parsing table will contain one or more multiply defined entries.
-//
-// This method constructs a parsing table for any context-free grammar.
-// To identify errors in the table, use the CheckErrors method.
-// Some errors may be resolved by eliminating left recursion and applying left factoring to the grammar.
-// However, certain grammars cannot be transformed into LL(1) even after these transformations.
-// Some languages may have no LL(1) grammar at all.
-func (g CFG) ParsingTable() ParsingTable {
-	/*
-	 * For each production A → α of the grammar:
-	 *
-	 *   1. For each terminal a in FIRST(α), add A → α to M[A,a].
-	 *   2. If ε is in FIRST(α), then for each terminal b in FOLLOW(A), add A → α to M[A,b].
-	 *      If ε is in FIRST(α) and $ is in FOLLOW(A), add A → α to M[A,$] as well.
-	 *   3. If, after performing the above, there is no production at all in M[A,a],
-	 *      then set M[A,a] to error (can be represented by an empty entry in the table).
-	 */
-
-	terminals := g.orderTerminals()
-	_, _, nonTerminals := g.orderNonTerminals()
-	table := NewParsingTable(terminals, nonTerminals)
-
-	first := g.ComputeFIRST()
-	follow := g.ComputeFOLLOW(first)
-
-	// For each production A → α
-	for p := range g.Productions.All() {
-		A := p.Head
-		FIRSTα := first(p.Body)
-
-		// For each terminal a ∈ FIRST(α), add A → α to M[A,a].
-		for a := range FIRSTα.Terminals.All() {
-			table.Add(A, a, p)
-		}
-
-		// If ε ∈ FIRST(α)
-		if FIRSTα.IncludesEmpty {
-			FOLLOWA := follow(A)
-
-			// For each terminal b ∈ FOLLOW(A), add A → α to M[A,b].
-			for b := range FOLLOWA.Terminals.All() {
-				table.Add(A, b, p)
-			}
-
-			// If ε ∈ FIRST(α) and $ ∈ FOLLOW(A), add A → α to M[A,$] as well.
-			if FOLLOWA.IncludesEndmarker {
-				table.Add(A, endmarker, p)
-			}
-		}
-	}
-
-	return table
-}
-
-// addNewNonTerminal generates and adds a new non-terminal symbol to the grammar.
-// It does so by appending each of the provided suffixes to the given prefix, in order,
-// until it finds a non-terminal that does not already exist in the set of non-terminals.
-//
-// If all generated non-terminals already exist, the function panics.
-func (g CFG) addNewNonTerminal(prefix NonTerminal, suffixes ...string) NonTerminal {
-	// Use the base prefix without any previosuly applied suffix.
-	for _, suffix := range suffixes {
-		prefix = NonTerminal(strings.TrimSuffix(string(prefix), suffix))
-	}
-
-	for _, suffix := range suffixes {
-		nonTerm := NonTerminal(string(prefix) + suffix)
-		if !g.NonTerminals.Contains(nonTerm) {
-			g.NonTerminals.Add(nonTerm)
-			return nonTerm
-		}
-	}
-
-	panic(fmt.Sprintf("Failed to generate a new non-terminal for %s", prefix))
-}
-
-// orderTerminals orders the unordered set of grammar terminals in a deterministic way.
+// OrderTerminals orders the unordered set of grammar terminals in a deterministic way.
 //
 // The goal of this function is to ensure a consistent and deterministic order for any given set of terminals.
-func (g CFG) orderTerminals() String[Terminal] {
+func (g CFG) OrderTerminals() String[Terminal] {
 	terms := make(String[Terminal], 0)
 	for t := range g.Terminals.All() {
 		terms = append(terms, t)
 	}
 
 	// Sort terminals alphabetically based on the string representation of them.
-	sort.Quick[Terminal](terms, cmpTerminal)
+	sort.Quick[Terminal](terms, CmpTerminal)
 
 	return terms
 }
 
-// orderTerminals orders the unordered set of grammar non-terminals in a deterministic way.
+// OrderNonTerminals orders the unordered set of grammar non-terminals in a deterministic way.
 //
 // The goal of this function is to ensure a consistent and deterministic order for any given set of non-terminals.
-func (g CFG) orderNonTerminals() (String[NonTerminal], String[NonTerminal], String[NonTerminal]) {
+func (g CFG) OrderNonTerminals() (String[NonTerminal], String[NonTerminal], String[NonTerminal]) {
 	prods := generic.Collect1(g.Productions.All())
-	orderProductionSlice(prods)
+	OrderProductionSlice(prods)
 
 	visited := make(String[NonTerminal], 0)
 	isVisited := func(n NonTerminal) bool {
@@ -1243,11 +1160,33 @@ func (g CFG) orderNonTerminals() (String[NonTerminal], String[NonTerminal], Stri
 	}
 
 	// Sort unvisited non-terminals alphabetically based on the string representation of them.
-	sort.Quick[NonTerminal](unvisited, cmpNonTerminal)
+	sort.Quick[NonTerminal](unvisited, CmpNonTerminal)
 
 	allNonTerms := make(String[NonTerminal], 0)
 	allNonTerms = append(allNonTerms, visited...)
 	allNonTerms = append(allNonTerms, unvisited...)
 
 	return visited, unvisited, allNonTerms
+}
+
+// AddNewNonTerminal generates and adds a new non-terminal symbol to the grammar.
+// It does so by appending each of the provided suffixes to the given prefix, in order,
+// until it finds a non-terminal that does not already exist in the set of non-terminals.
+//
+// If all generated non-terminals already exist, the function panics.
+func (g CFG) AddNewNonTerminal(prefix NonTerminal, suffixes ...string) NonTerminal {
+	// Use the base prefix without any previosuly applied suffix.
+	for _, suffix := range suffixes {
+		prefix = NonTerminal(strings.TrimSuffix(string(prefix), suffix))
+	}
+
+	for _, suffix := range suffixes {
+		nonTerm := NonTerminal(string(prefix) + suffix)
+		if !g.NonTerminals.Contains(nonTerm) {
+			g.NonTerminals.Add(nonTerm)
+			return nonTerm
+		}
+	}
+
+	panic(fmt.Sprintf("Failed to generate a new non-terminal for %s", prefix))
 }

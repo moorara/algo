@@ -99,7 +99,7 @@ func (e *MultiError) As(target any) bool {
 	return false
 }
 
-// Unwrap implements the unwrapping interface for MultiError.
+// Unwrap implements the unwrap interface for MultiError.
 // It returns the slice of accumulated errors wrapped in the MultiError instance.
 // If there are no errors, it returns nil, indicating that e does not wrap any error.
 func (e *MultiError) Unwrap() []error {

@@ -15,7 +15,7 @@ func getTestProductions() []*productions {
 	p1 := NewProductions().(*productions)
 	p1.Add(Production{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}) // S → aSbS
 	p1.Add(Production{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}) // S → bSaS
-	p1.Add(Production{"S", ε})                                                                                // S → ε
+	p1.Add(Production{"S", E})                                                                                // S → ε
 
 	p2 := NewProductions().(*productions)
 	p2.Add(Production{"S", String[Symbol]{NonTerminal("E")}})                                  // S → E
@@ -54,7 +54,7 @@ func TestProduction(t *testing.T) {
 	}{
 		{
 			name:                    "1st",
-			p:                       Production{"S", ε},
+			p:                       Production{"S", E},
 			expectedString:          `S → ε`,
 			expectedIsEmpty:         true,
 			expectedIsSingle:        false,
@@ -268,7 +268,7 @@ func TestProductions_Add(t *testing.T) {
 			ps: []Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
-				{"S", ε}, // S → ε
+				{"S", E}, // S → ε
 			},
 			expectedProductions: p[1],
 		},
@@ -328,7 +328,7 @@ func TestProductions_Remove(t *testing.T) {
 			ps: []Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
-				{"S", ε}, // S → ε
+				{"S", E}, // S → ε
 			},
 			expectedProductions: p[0],
 		},
@@ -413,19 +413,19 @@ func TestProductions_RemoveAll(t *testing.T) {
 func TestProductions_Get(t *testing.T) {
 	p := getTestProductions()
 
-	s1 := set.New(eqProduction,
+	s1 := set.New(EqProduction,
 		Production{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 		Production{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
-		Production{"S", ε}, // S → ε
+		Production{"S", E}, // S → ε
 	)
 
-	s2 := set.New(eqProduction,
+	s2 := set.New(EqProduction,
 		Production{"T", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}}, // T → T * F
 		Production{"T", String[Symbol]{NonTerminal("T"), Terminal("/"), NonTerminal("F")}}, // T → T / F
 		Production{"T", String[Symbol]{NonTerminal("F")}},                                  // T → F
 	)
 
-	s3 := set.New(eqProduction,
+	s3 := set.New(EqProduction,
 		Production{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
 		Production{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
 		Production{"E", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}}, // E → E * E
@@ -494,7 +494,7 @@ func TestProductions_All(t *testing.T) {
 			expectedProductions: []Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
-				{"S", ε}, // S → ε
+				{"S", E}, // S → ε
 			},
 		},
 		{
@@ -551,7 +551,7 @@ func TestProductions_AllByHead(t *testing.T) {
 			expectedProductions: []Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
-				{"S", ε}, // S → ε
+				{"S", E}, // S → ε
 			},
 		},
 		{
@@ -703,7 +703,7 @@ func TestOrderProductionSet(t *testing.T) {
 			expectedProductions: []Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 				{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
-				{"S", ε}, // S → ε
+				{"S", E}, // S → ε
 			},
 		},
 		{
@@ -732,7 +732,7 @@ func TestOrderProductionSet(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			prods := orderProductionSet(tc.set)
+			prods := OrderProductionSet(tc.set)
 			assert.Equal(t, tc.expectedProductions, prods)
 		})
 	}

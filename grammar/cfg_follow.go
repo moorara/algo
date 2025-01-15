@@ -10,7 +10,7 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
-var eqTerminalsAndEndmarker = func(lhs, rhs *TerminalsAndEndmarker) bool {
+var EqTerminalsAndEndmarker = func(lhs, rhs *TerminalsAndEndmarker) bool {
 	return lhs.Terminals.Equals(rhs.Terminals) && lhs.IncludesEndmarker == rhs.IncludesEndmarker
 }
 
@@ -36,7 +36,7 @@ type TerminalsAndEndmarker struct {
 // newTerminalsAndEndmarker creates a new TerminalsAndEndmarker instance with the given set of terminals.
 func newTerminalsAndEndmarker(terms ...Terminal) *TerminalsAndEndmarker {
 	return &TerminalsAndEndmarker{
-		Terminals:         set.New(eqTerminal, terms...),
+		Terminals:         set.New(EqTerminal, terms...),
 		IncludesEndmarker: false,
 	}
 }
@@ -50,7 +50,7 @@ func (s TerminalsAndEndmarker) String() string {
 	}
 
 	if s.IncludesEndmarker {
-		members = append(members, endmarker.String())
+		members = append(members, Endmarker.String())
 	}
 
 	sort.Quick(members, generic.NewCompareFunc[string]())
@@ -63,9 +63,9 @@ type followTable symboltable.SymbolTable[NonTerminal, *TerminalsAndEndmarker]
 
 func newFollowTable() followTable {
 	return symboltable.NewQuadraticHashTable(
-		hashNonTerminal,
-		eqNonTerminal,
-		eqTerminalsAndEndmarker,
+		HashNonTerminal,
+		EqNonTerminal,
+		EqTerminalsAndEndmarker,
 		symboltable.HashOpts{},
 	)
 }

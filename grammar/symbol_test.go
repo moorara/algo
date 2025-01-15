@@ -66,13 +66,13 @@ func TestHashFuncForSymbol(t *testing.T) {
 }
 
 func TestTerminal(t *testing.T) {
-	t.Run("endmarker", func(t *testing.T) {
-		assert.Equal(t, "$", endmarker.String())
-		assert.Equal(t, "$", endmarker.Name())
-		assert.True(t, endmarker.Equals(Terminal("\uEEEE")))
-		assert.False(t, endmarker.Equals(NonTerminal("\uEEEE")))
-		assert.False(t, endmarker.Equals(Terminal("\uEEEF")))
-		assert.True(t, endmarker.IsTerminal())
+	t.Run("Endmarker", func(t *testing.T) {
+		assert.Equal(t, "$", Endmarker.String())
+		assert.Equal(t, "$", Endmarker.Name())
+		assert.True(t, Endmarker.Equals(Terminal("\uEEEE")))
+		assert.False(t, Endmarker.Equals(NonTerminal("\uEEEE")))
+		assert.False(t, Endmarker.Equals(Terminal("\uEEEF")))
+		assert.True(t, Endmarker.IsTerminal())
 	})
 
 	tests := []struct {

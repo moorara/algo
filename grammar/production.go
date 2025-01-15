@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	eqProduction = func(lhs, rhs Production) bool {
+	EqProduction = func(lhs, rhs Production) bool {
 		return lhs.Equals(rhs)
 	}
 
-	eqProductionSet = func(lhs, rhs set.Set[Production]) bool {
+	EqProductionSet = func(lhs, rhs set.Set[Production]) bool {
 		return lhs.Equals(rhs)
 	}
 )
@@ -102,9 +102,9 @@ type productions struct {
 func NewProductions() Productions {
 	return &productions{
 		table: symboltable.NewQuadraticHashTable(
-			hashNonTerminal,
-			eqNonTerminal,
-			eqProductionSet,
+			HashNonTerminal,
+			EqNonTerminal,
+			EqProductionSet,
 			symboltable.HashOpts{},
 		),
 	}
@@ -116,7 +116,7 @@ func (p *productions) String() string {
 
 	for head, prods := range p.table.All() {
 		fmt.Fprintf(&b, "%s → ", head)
-		for _, q := range orderProductionSet(prods) {
+		for _, q := range OrderProductionSet(prods) {
 			fmt.Fprintf(&b, "%s | ", q.Body.String())
 		}
 		b.Truncate(b.Len() - 3)
@@ -146,7 +146,7 @@ func (p *productions) Equals(rhs Productions) bool {
 func (p *productions) Add(ps ...Production) {
 	for _, q := range ps {
 		if _, ok := p.table.Get(q.Head); !ok {
-			p.table.Put(q.Head, set.New(eqProduction))
+			p.table.Put(q.Head, set.New(EqProduction))
 		}
 
 		list, _ := p.table.Get(q.Head)
@@ -240,7 +240,7 @@ func (p *productions) SelectMatch(pred generic.Predicate1[Production]) Productio
 	return newP
 }
 
-// OrderProductions orders an unordered set of production rules in a deterministic way.
+// OrderProductionSet orders an unordered set of production rules in a deterministic way.
 //
 // The ordering criteria are as follows:
 //
@@ -253,17 +253,30 @@ func (p *productions) SelectMatch(pred generic.Predicate1[Production]) Productio
 //     they are ordered alphabetically based on the symbols in their bodies.
 //
 // The goal of this function is to ensure a consistent and deterministic order for any given set of production rules.
-func orderProductionSet(set set.Set[Production]) []Production {
+func OrderProductionSet(set set.Set[Production]) []Production {
 	prods := generic.Collect1(set.All())
-	orderProductionSlice(prods)
+	OrderProductionSlice(prods)
 	return prods
 }
 
-func orderProductionSlice(prods []Production) {
+// OrderProductionSlice orders a slice of production rules in a deterministic way.
+//
+// The ordering criteria are as follows:
+//
+//  1. Production heads are compared alphabetically.
+//  2. If two productions have the same heads,
+//     productions whose bodies contain more non-terminal symbols are prioritized first.
+//  3. If two productions have the same number of non-terminals,
+//     those with more terminal symbols in the body come first.
+//  4. If two productions have the same number of non-terminals and terminals,
+//     they are ordered alphabetically based on the symbols in their bodies.
+//
+// The goal of this function is to ensure a consistent and deterministic order for any given set of production rules.
+func OrderProductionSlice(prods []Production) {
 	// Sort the productions using a custom comparison function.
 	sort.Quick[Production](prods, func(lhs, rhs Production) int {
 		// First, compare the heads of productions.
-		if cmp := cmpNonTerminal(lhs.Head, rhs.Head); cmp < 0 {
+		if cmp := CmpNonTerminal(lhs.Head, rhs.Head); cmp < 0 {
 			return -1
 		} else if cmp > 0 {
 			return 1

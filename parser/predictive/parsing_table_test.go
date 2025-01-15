@@ -1,76 +1,117 @@
-package grammar
+package predictive
 
 import (
 	"testing"
 
+	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/set"
 	"github.com/stretchr/testify/assert"
 )
 
 func getTestParsingTables() []*parsingTable {
-	pt0 := NewParsingTable(
-		[]Terminal{"+", "*", "(", ")", "id"},
-		[]NonTerminal{"E", "E′", "T", "T′", "F"},
-	).(*parsingTable)
+	pt0 := newParsingTable(
+		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
+	)
 
-	pt0.Add("E", "id", Production{"E", String[Symbol]{NonTerminal("T"), NonTerminal("E′")}})
-	pt0.Add("E", "(", Production{"E", String[Symbol]{NonTerminal("T"), NonTerminal("E′")}})
-	pt0.Add("E′", "+", Production{"E′", String[Symbol]{Terminal("+"), NonTerminal("T"), NonTerminal("E′")}})
-	pt0.Add("E′", ")", Production{"E′", ε})
-	pt0.Add("E′", endmarker, Production{"E′", ε})
-	pt0.Add("T", "id", Production{"T", String[Symbol]{NonTerminal("F"), NonTerminal("T′")}})
-	pt0.Add("T", "(", Production{"T", String[Symbol]{NonTerminal("F"), NonTerminal("T′")}})
-	pt0.Add("T′", "+", Production{"T′", ε})
-	pt0.Add("T′", "*", Production{"T′", String[Symbol]{Terminal("*"), NonTerminal("F"), NonTerminal("T′")}})
-	pt0.Add("T′", ")", Production{"T′", ε})
-	pt0.Add("T′", endmarker, Production{"T′", ε})
-	pt0.Add("F", "id", Production{"F", String[Symbol]{Terminal("id")}})
-	pt0.Add("F", "(", Production{"F", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}})
+	pt0.Add("E", "id", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
+	pt0.Add("E", "(", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
+	pt0.Add("E′", "+", grammar.Production{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
+	pt0.Add("E′", ")", grammar.Production{Head: "E′", Body: grammar.E})
+	pt0.Add("E′", grammar.Endmarker, grammar.Production{Head: "E′", Body: grammar.E})
+	pt0.Add("T", "id", grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
+	pt0.Add("T", "(", grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
+	pt0.Add("T′", "+", grammar.Production{Head: "T′", Body: grammar.E})
+	pt0.Add("T′", "*", grammar.Production{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
+	pt0.Add("T′", ")", grammar.Production{Head: "T′", Body: grammar.E})
+	pt0.Add("T′", grammar.Endmarker, grammar.Production{Head: "T′", Body: grammar.E})
+	pt0.Add("F", "id", grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}})
+	pt0.Add("F", "(", grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}})
 
-	pt1 := NewParsingTable(
-		[]Terminal{"a", "b", "e", "i", "t"},
-		[]NonTerminal{"S", "S′", "E"},
-	).(*parsingTable)
+	pt1 := newParsingTable(
+		[]grammar.Terminal{"a", "b", "e", "i", "t"},
+		[]grammar.NonTerminal{"S", "S′", "E"},
+	)
 
-	pt1.Add("S", "a", Production{"S", String[Symbol]{Terminal("a")}})
-	pt1.Add("S", "i", Production{"S", String[Symbol]{Terminal("i"), NonTerminal("E"), Terminal("t"), NonTerminal("S"), NonTerminal("S′")}})
-	pt1.Add("S′", "e", Production{"S′", ε})
-	pt1.Add("S′", "e", Production{"S′", String[Symbol]{Terminal("e"), NonTerminal("S")}})
-	pt1.Add("S′", endmarker, Production{"S′", ε})
-	pt1.Add("E", "b", Production{"E", String[Symbol]{Terminal("b")}})
+	pt1.Add("S", "a", grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("a")}})
+	pt1.Add("S", "i", grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("i"), grammar.NonTerminal("E"), grammar.Terminal("t"), grammar.NonTerminal("S"), grammar.NonTerminal("S′")}})
+	pt1.Add("S′", "e", grammar.Production{Head: "S′", Body: grammar.E})
+	pt1.Add("S′", "e", grammar.Production{Head: "S′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("e"), grammar.NonTerminal("S")}})
+	pt1.Add("S′", grammar.Endmarker, grammar.Production{Head: "S′", Body: grammar.E})
+	pt1.Add("E", "b", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("b")}})
 
-	pt2 := NewParsingTable(
-		[]Terminal{"+", "*", "(", ")", "id"},
-		[]NonTerminal{"E", "T", "F"},
-	).(*parsingTable)
+	pt2 := newParsingTable(
+		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.NonTerminal{"E", "T", "F"},
+	)
 
 	return []*parsingTable{pt0, pt1, pt2}
 }
 
-func TestNewParsingTable(t *testing.T) {
+func TestBuildParsingTable(t *testing.T) {
 	tests := []struct {
 		name                 string
-		terminals            []Terminal
-		nonTerminals         []NonTerminal
-		expectedTerminals    []Terminal
-		expectedNonTerminals []NonTerminal
+		G                    grammar.CFG
+		expectedErrorStrings []string
 	}{
 		{
-			name:                 "OK",
-			terminals:            []Terminal{"+", "*", "(", ")", "id"},
-			nonTerminals:         []NonTerminal{"E", "E′", "T", "T′", "F"},
-			expectedTerminals:    []Terminal{"+", "*", "(", ")", "id", endmarker},
-			expectedNonTerminals: []NonTerminal{"E", "E′", "T", "T′", "F"},
+			name: "1st",
+			G:    CFGrammars[0],
+			expectedErrorStrings: []string{
+				`multiple productions in parsing table at M[E, "("]`,
+				`multiple productions in parsing table at M[E, "-"]`,
+				`multiple productions in parsing table at M[E, "id"]`,
+			},
+		},
+		{
+			name: "2nd",
+			G:    CFGrammars[1],
+			expectedErrorStrings: []string{
+				`multiple productions in parsing table at M[E, "("]`,
+				`multiple productions in parsing table at M[E, "id"]`,
+				`multiple productions in parsing table at M[T, "("]`,
+				`multiple productions in parsing table at M[T, "id"]`,
+			},
+		},
+		{
+			name:                 "3rd",
+			G:                    CFGrammars[2],
+			expectedErrorStrings: nil,
+		},
+		{
+			name: "4th",
+			G:    CFGrammars[3],
+			expectedErrorStrings: []string{
+				`multiple productions in parsing table at M[decls, "IDENT"]`,
+				`multiple productions in parsing table at M[decls, "TOKEN"]`,
+				`multiple productions in parsing table at M[rule, "IDENT"]`,
+				`multiple productions in parsing table at M[token, "TOKEN"]`,
+				`multiple productions in parsing table at M[rhs, "("]`,
+				`multiple productions in parsing table at M[rhs, "IDENT"]`,
+				`multiple productions in parsing table at M[rhs, "STRING"]`,
+				`multiple productions in parsing table at M[rhs, "TOKEN"]`,
+				`multiple productions in parsing table at M[rhs, "["]`,
+				`multiple productions in parsing table at M[rhs, "{"]`,
+				`multiple productions in parsing table at M[rhs, "{{"]`,
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			pt := NewParsingTable(tc.terminals, tc.nonTerminals).(*parsingTable)
+			assert.NoError(t, tc.G.Verify())
+			table := BuildParsingTable(tc.G)
+			err := table.Error()
 
-			assert.NotNil(t, pt)
-			assert.Equal(t, tc.expectedTerminals, pt.terminals)
-			assert.Equal(t, tc.expectedNonTerminals, pt.nonTerminals)
+			if len(tc.expectedErrorStrings) == 0 {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				s := err.Error()
+				for _, expectedErrorString := range tc.expectedErrorStrings {
+					assert.Contains(t, s, expectedErrorString)
+				}
+			}
 		})
 	}
 }
@@ -153,17 +194,17 @@ func TestParsingTable_Add(t *testing.T) {
 	tests := []struct {
 		name       string
 		pt         *parsingTable
-		A          NonTerminal
-		a          Terminal
-		prod       Production
+		A          grammar.NonTerminal
+		a          grammar.Terminal
+		prod       grammar.Production
 		expectedOK bool
 	}{
 		{
 			name: "OK",
 			pt:   pt[2],
-			A:    NonTerminal("F"),
-			a:    Terminal("("),
-			prod: Production{"F", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}},
+			A:    grammar.NonTerminal("F"),
+			a:    grammar.Terminal("("),
+			prod: grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}},
 		},
 	}
 
@@ -180,17 +221,17 @@ func TestParsingTable_Get(t *testing.T) {
 	tests := []struct {
 		name                string
 		pt                  *parsingTable
-		A                   NonTerminal
-		a                   Terminal
-		expectedProductions set.Set[Production]
+		A                   grammar.NonTerminal
+		a                   grammar.Terminal
+		expectedProductions set.Set[grammar.Production]
 	}{
 		{
 			name: "OK",
 			pt:   pt[0],
-			A:    NonTerminal("E′"),
-			a:    Terminal("+"),
-			expectedProductions: set.New(eqProduction,
-				Production{"E′", String[Symbol]{Terminal("+"), NonTerminal("T"), NonTerminal("E′")}},
+			A:    grammar.NonTerminal("E′"),
+			a:    grammar.Terminal("+"),
+			expectedProductions: set.New(grammar.EqProduction,
+				grammar.Production{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}},
 			),
 		},
 	}
@@ -203,7 +244,7 @@ func TestParsingTable_Get(t *testing.T) {
 	}
 }
 
-func TestParsingTable_CheckErrors(t *testing.T) {
+func TestParsingTable_Error(t *testing.T) {
 	pt := getTestParsingTables()
 
 	tests := []struct {
@@ -229,7 +270,7 @@ func TestParsingTable_CheckErrors(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.pt.CheckErrors()
+			err := tc.pt.Error()
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)

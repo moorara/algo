@@ -10,7 +10,7 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
-var eqTerminalsAndEmpty = func(lhs, rhs *TerminalsAndEmpty) bool {
+var EqTerminalsAndEmpty = func(lhs, rhs *TerminalsAndEmpty) bool {
 	return lhs.Terminals.Equals(rhs.Terminals) && lhs.IncludesEmpty == rhs.IncludesEmpty
 }
 
@@ -35,7 +35,7 @@ type TerminalsAndEmpty struct {
 // newTerminalsAndEmpty creates a new TerminalsAndEmpty instance with the given set of terminals.
 func newTerminalsAndEmpty(terms ...Terminal) *TerminalsAndEmpty {
 	return &TerminalsAndEmpty{
-		Terminals:     set.New(eqTerminal, terms...),
+		Terminals:     set.New(EqTerminal, terms...),
 		IncludesEmpty: false,
 	}
 }
@@ -62,9 +62,9 @@ type firstBySymbolTable symboltable.SymbolTable[Symbol, *TerminalsAndEmpty]
 
 func newFirstBySymbolTable() firstBySymbolTable {
 	return symboltable.NewQuadraticHashTable(
-		hashSymbol,
-		eqSymbol,
-		eqTerminalsAndEmpty,
+		HashSymbol,
+		EqSymbol,
+		EqTerminalsAndEmpty,
 		symboltable.HashOpts{},
 	)
 }
@@ -74,9 +74,9 @@ type firstByStringTable symboltable.SymbolTable[String[Symbol], *TerminalsAndEmp
 
 func newFirstByStringTable() firstByStringTable {
 	return symboltable.NewQuadraticHashTable(
-		hashString,
-		eqString,
-		eqTerminalsAndEmpty,
+		HashString,
+		EqString,
+		EqTerminalsAndEmpty,
 		symboltable.HashOpts{},
 	)
 }

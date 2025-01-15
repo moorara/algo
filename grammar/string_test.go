@@ -33,7 +33,7 @@ func TestString(t *testing.T) {
 	}{
 		{
 			name:                   "Empty",
-			s:                      ε,
+			s:                      E,
 			expectedString:         `ε`,
 			containsSymbol:         Terminal(""),
 			expectedContainsSymbol: false,
@@ -44,9 +44,9 @@ func TestString(t *testing.T) {
 			anyMatch:               func(s Symbol) bool { return true },
 			expectedAnyMatch:       false,
 			append:                 []Symbol{},
-			expectedAppend:         ε,
-			concat:                 []String[Symbol]{ε},
-			expectedConcat:         ε,
+			expectedAppend:         E,
+			concat:                 []String[Symbol]{E},
+			expectedConcat:         E,
 			expectedTerminals:      String[Terminal]{},
 			expectedNonTerminals:   String[NonTerminal]{},
 		},
@@ -137,7 +137,7 @@ func TestLongestCommonPrefixOf(t *testing.T) {
 		{
 			name:                        "Empty",
 			ss:                          []String[Symbol]{},
-			expectedLongestCommonPrefix: ε,
+			expectedLongestCommonPrefix: E,
 		},
 		{
 			name: "NoCommonPrefix",
@@ -145,7 +145,7 @@ func TestLongestCommonPrefixOf(t *testing.T) {
 				{NonTerminal("expr"), Terminal("?"), NonTerminal("stmt"), Terminal(":"), NonTerminal("stmt")},
 				{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt"), Terminal("else"), NonTerminal("stmt")},
 			},
-			expectedLongestCommonPrefix: ε,
+			expectedLongestCommonPrefix: E,
 		},
 		{
 			name: "CommonPrefix",
