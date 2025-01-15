@@ -61,7 +61,7 @@ func ExampleInput() {
 		}
 	}
 
-	// Reading the next rune.
+	// Reading the runes.
 	var r rune
 	state := 0
 	for r, err = in.Next(); err == nil; r, err = in.Next() {
