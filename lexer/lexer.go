@@ -6,8 +6,8 @@
 // These tokens are subsequently passed to a parser for syntax analysis and the construction of parse trees.
 //
 // Lexical analysis (scanning) belongs to a different domain than syntax analysis (parsing).
-// Lexical analysis deals with regular languages and grammars (Type 0),
-// while syntax analysis deals with context-free languages and grammars (Type 1).
+// Lexical analysis deals with regular languages and grammars (Type 3),
+// while syntax analysis deals with context-free languages and grammars (Type 2).
 // A lexical analyzer is, in principle, a deterministic finite automaton (DFA)
 // with additional functionality built on top of it.
 // Lexers can be implemented either by hand or auto-generated.
