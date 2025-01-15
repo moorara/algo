@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/set"
 )
 
@@ -27,4 +28,43 @@ func (e *ParsingTableError) Error() string {
 	}
 
 	return b.String()
+}
+
+// ParseError represents an error encountered when parsing an input string.
+type ParseError struct {
+	description string
+	cause       error
+	Pos         lexer.Position
+	Table       ParsingTable
+}
+
+// Error implements the error interface.
+// It returns a formatted string describing the error in detail.
+func (e *ParseError) Error() string {
+	b := new(strings.Builder)
+
+	if !e.Pos.IsZero() {
+		fmt.Fprintf(b, "%s", e.Pos)
+	}
+
+	if len(e.description) != 0 {
+		if b.Len() > 0 {
+			fmt.Fprint(b, ": ")
+		}
+		fmt.Fprintf(b, "%s", e.description)
+	}
+
+	if e.cause != nil {
+		if b.Len() > 0 {
+			fmt.Fprint(b, ": ")
+		}
+		fmt.Fprintf(b, "%s", e.cause)
+	}
+
+	return b.String()
+}
+
+// Error implements the unwrap interface.
+func (e *ParseError) Unwrap() error {
+	return e.cause
 }

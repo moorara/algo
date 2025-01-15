@@ -19,10 +19,10 @@ type ParsingTable interface {
 
 	Add(grammar.NonTerminal, grammar.Terminal, grammar.Production)
 	Get(grammar.NonTerminal, grammar.Terminal) set.Set[grammar.Production]
-	CheckErrors() error
+	Error() error
 }
 
-// NewParsingTable constructs a predictive parsing table for a context-free grammar.
+// BuildParsingTable constructs a predictive parsing table for a context-free grammar.
 //
 // Predictive parsers are recursive-descent parsers that do not require backtracking.
 // They can be constructed for a specific class of grammars called LL(1).
@@ -36,7 +36,7 @@ type ParsingTable interface {
 // Some errors may be resolved by eliminating left recursion and applying left factoring to the grammar.
 // However, certain grammars cannot be transformed into LL(1) even after these transformations.
 // Some languages may have no LL(1) grammar at all.
-func NewParsingTable(g grammar.CFG) ParsingTable {
+func BuildParsingTable(G grammar.CFG) ParsingTable {
 	/*
 	 * For each production A → α of the grammar:
 	 *
@@ -47,15 +47,15 @@ func NewParsingTable(g grammar.CFG) ParsingTable {
 	 *      then set M[A,a] to error (can be represented by an empty entry in the table).
 	 */
 
-	terminals := g.OrderTerminals()
-	_, _, nonTerminals := g.OrderNonTerminals()
+	terminals := G.OrderTerminals()
+	_, _, nonTerminals := G.OrderNonTerminals()
 	table := newParsingTable(terminals, nonTerminals)
 
-	first := g.ComputeFIRST()
-	follow := g.ComputeFOLLOW(first)
+	first := G.ComputeFIRST()
+	follow := G.ComputeFOLLOW(first)
 
 	// For each production A → α
-	for p := range g.Productions.All() {
+	for p := range G.Productions.All() {
 		A := p.Head
 		FIRSTα := first(p.Body)
 
@@ -158,11 +158,11 @@ func (t *parsingTable) Get(A grammar.NonTerminal, a grammar.Terminal) set.Set[gr
 	return prods
 }
 
-// CheckErrors checks for conflicts in the parsing table.
+// Error checks for conflicts in the parsing table.
 // If there are multiple productions for at least one combination of non-terminal A and terminal a,
 // the method returns an error containing details about the conflicting productions.
 // If no conflicts are found, it returns nil.
-func (t *parsingTable) CheckErrors() error {
+func (t *parsingTable) Error() error {
 	var err = &errors.MultiError{
 		Format: errors.BulletErrorFormat,
 	}
