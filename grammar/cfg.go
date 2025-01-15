@@ -283,7 +283,7 @@ func (g CFG) IsLL1() error {
 
 				if !firstα.Terminals.Intersection(firstβ.Terminals).IsEmpty() || firstα.IncludesEmpty && firstβ.IncludesEmpty {
 					err = errors.Append(err, &LL1Error{
-						Description: "FIRST(α) and FIRST(β) are not disjoint sets",
+						description: "FIRST(α) and FIRST(β) are not disjoint sets",
 						A:           A,
 						Alpha:       α,
 						Beta:        β,
@@ -295,7 +295,7 @@ func (g CFG) IsLL1() error {
 				// Check if ε ∈ FIRST(α), then FIRST(β) ∩ FOLLOW(A) = ∅
 				if firstα.IncludesEmpty && !firstβ.Terminals.Intersection(followA.Terminals).IsEmpty() {
 					err = errors.Append(err, &LL1Error{
-						Description: "ε is in FIRST(α), but FOLLOW(A) and FIRST(β) are not disjoint sets",
+						description: "ε is in FIRST(α), but FOLLOW(A) and FIRST(β) are not disjoint sets",
 						A:           A,
 						Alpha:       α,
 						Beta:        β,
@@ -308,7 +308,7 @@ func (g CFG) IsLL1() error {
 				// Check if ε ∈ FIRST(β), then FIRST(α) ∩ FOLLOW(A) = ∅
 				if firstβ.IncludesEmpty && !firstα.Terminals.Intersection(followA.Terminals).IsEmpty() {
 					err = errors.Append(err, &LL1Error{
-						Description: "ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
+						description: "ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
 						A:           A,
 						Alpha:       α,
 						Beta:        β,

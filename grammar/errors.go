@@ -22,7 +22,7 @@ func (e *CNFError) Error() string {
 // LL1Error represents an error where two distinct production rules in the form
 // A → α | β violate LL(1) parsing requirements for a context-free grammar.
 type LL1Error struct {
-	Description    string
+	description    string
 	A              NonTerminal
 	Alpha, Beta    String[Symbol]
 	FOLLOWA        *TerminalsAndEndmarker
@@ -34,7 +34,7 @@ type LL1Error struct {
 func (e *LL1Error) Error() string {
 	b := new(strings.Builder)
 
-	fmt.Fprintf(b, "%s:\n", e.Description)
+	fmt.Fprintf(b, "%s:\n", e.description)
 	fmt.Fprintf(b, "  %s → %s | %s\n", e.A, e.Alpha, e.Beta)
 
 	if e.FOLLOWA != nil {

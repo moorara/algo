@@ -37,7 +37,7 @@ func TestLL1Error(t *testing.T) {
 		{
 			name: "OK",
 			e: &LL1Error{
-				Description: "ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
+				description: "ε is in FIRST(β), but FOLLOW(A) and FIRST(α) are not disjoint sets",
 				A:           NonTerminal("decls"),
 				Alpha:       String[Symbol]{NonTerminal("decls"), NonTerminal("decl")},
 				Beta:        E,
