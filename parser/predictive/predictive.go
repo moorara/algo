@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/list"
@@ -119,9 +118,8 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 		}
 
 		A := X.(grammar.NonTerminal)
-		prods := M.Get(A, token.Terminal)
 
-		if prods.Size() == 0 {
+		if M.IsEmpty(A, token.Terminal) {
 			return &ParseError{
 				description: fmt.Sprintf("unacceptable input <%s, %s> for non-terminal %s", token.Terminal, token.Lexeme, A),
 				Pos:         token.Pos,
@@ -129,7 +127,8 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 			}
 		}
 
-		P := generic.Collect1(prods.All())[0]
+		// At this point, it is guaranteed that M[A,a] contains exactly one production.
+		P, _ := M.GetProduction(A, token.Terminal)
 
 		// Pop X from the stack.
 		stack.Pop()

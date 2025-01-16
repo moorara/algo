@@ -12,14 +12,49 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
+var (
+	eqParsingTableRow = func(lhs, rhs symboltable.SymbolTable[grammar.Terminal, *parsingTableEntry]) bool {
+		return lhs.Equals(rhs)
+	}
+
+	eqParsingTableEntry = func(lhs, rhs *parsingTableEntry) bool {
+		return lhs.Equals(rhs)
+	}
+)
+
 // ParsingTable represents the interface for a predictive parsing table used for LL(1) context-free grammars.
 type ParsingTable interface {
 	fmt.Stringer
 	generic.Equaler[ParsingTable]
 
-	Add(grammar.NonTerminal, grammar.Terminal, grammar.Production)
-	Get(grammar.NonTerminal, grammar.Terminal) set.Set[grammar.Production]
+	// Error checks for conflicts in the parsing table.
+	// If there are multiple productions for at least one combination of non-terminal A and terminal a,
+	// the method returns an error containing details about the conflicting productions.
+	// If no conflicts are found, it returns nil.
 	Error() error
+
+	// AddProduction adds a new production to the parsing table.
+	// Multiple productions can be added for the same non-terminal A and terminal a.
+	// It returns false if the M[A,a] entry is marked as a synchronization token.
+	AddProduction(grammar.NonTerminal, grammar.Terminal, grammar.Production) bool
+
+	// SetSync updates the parsing table to mark or unmark
+	// terminal a as a synchronization symbol for non-terminal A.
+	// It returns false if the M[A,a] entry contains any productions.
+	SetSync(grammar.NonTerminal, grammar.Terminal, bool) bool
+
+	// IsEmpty returns true if there are no productions in the M[A,a] entry.
+	IsEmpty(grammar.NonTerminal, grammar.Terminal) bool
+
+	// IsSync returns true if the M[A,a] entry is marked as a synchronization symbol for non-terminal A.
+	IsSync(grammar.NonTerminal, grammar.Terminal) bool
+
+	// GetProduction returns the single production from the M[A,a] entry if exactly one production exists.
+	// It returns the production and true if successful, or a default value and false otherwise.
+	GetProduction(grammar.NonTerminal, grammar.Terminal) (grammar.Production, bool)
+
+	// GetProductions returns the set of all productions in the M[A,a] entry.
+	GetProductions(grammar.NonTerminal, grammar.Terminal) (set.Set[grammar.Production], bool)
 }
 
 // BuildParsingTable constructs a predictive parsing table for a context-free grammar.
@@ -61,7 +96,7 @@ func BuildParsingTable(G grammar.CFG) ParsingTable {
 
 		// For each terminal a ∈ FIRST(α), add A → α to M[A,a].
 		for a := range FIRSTα.Terminals.All() {
-			table.Add(A, a, p)
+			table.AddProduction(A, a, p)
 		}
 
 		// If ε ∈ FIRST(α)
@@ -70,17 +105,67 @@ func BuildParsingTable(G grammar.CFG) ParsingTable {
 
 			// For each terminal b ∈ FOLLOW(A), add A → α to M[A,b].
 			for b := range FOLLOWA.Terminals.All() {
-				table.Add(A, b, p)
+				table.AddProduction(A, b, p)
 			}
 
 			// If ε ∈ FIRST(α) and $ ∈ FOLLOW(A), add A → α to M[A,$] as well.
 			if FOLLOWA.IncludesEndmarker {
-				table.Add(A, grammar.Endmarker, p)
+				table.AddProduction(A, grammar.Endmarker, p)
 			}
 		}
 	}
 
+	/*
+	 * Panic-mode error recovery is based on the idea of skipping over symbols on the input
+	 * until a token in a selected set of synchronizing tokens appears.
+	 * Its effectiveness depends on the choice of synchronizing set.
+	 * The sets should be chosen so that the parser recovers quickly from errors that are likely to occur.
+	 */
+
+	// As a starting point, add all terminals in FOLLOW(A) to the synchronization set for non-terminal A.
+	for _, A := range nonTerminals {
+		FOLLOWA := follow(A)
+
+		for a := range FOLLOWA.Terminals.All() {
+			// If M[A,a] has any productions, the sync flag will not be set.
+			table.SetSync(A, a, true)
+		}
+
+		if FOLLOWA.IncludesEndmarker {
+			// If M[A,$] has any productions, the sync flag will not be set.
+			table.SetSync(A, grammar.Endmarker, true)
+		}
+	}
+
 	return table
+}
+
+// parsingTableEntry defines the type of each entry in the parsing table.
+type parsingTableEntry struct {
+	Productions set.Set[grammar.Production]
+	Sync        bool
+}
+
+func (e *parsingTableEntry) String() string {
+	if e.Sync {
+		return "sync"
+	}
+
+	if e.Productions.Size() == 0 {
+		return ""
+	}
+
+	prods := grammar.OrderProductionSet(e.Productions)
+	ss := make([]string, len(prods))
+	for i, p := range prods {
+		ss[i] = p.String()
+	}
+
+	return strings.Join(ss, " ┆ ")
+}
+
+func (e *parsingTableEntry) Equals(rhs *parsingTableEntry) bool {
+	return e.Productions.Equals(rhs.Productions) && e.Sync == rhs.Sync
 }
 
 // parsingTable implements the ParsingTable interface.
@@ -91,77 +176,67 @@ type parsingTable struct {
 		grammar.NonTerminal,
 		symboltable.SymbolTable[
 			grammar.Terminal,
-			set.Set[grammar.Production],
+			*parsingTableEntry,
 		],
 	]
 }
 
-// newParsingTable creates a new instance of the ParsingTable.
 func newParsingTable(terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal) *parsingTable {
-	t := &parsingTable{
+	return &parsingTable{
 		nonTerminals: nonTerminals,
 		terminals:    append(terminals, grammar.Endmarker),
 		table: symboltable.NewQuadraticHashTable(
 			grammar.HashNonTerminal,
 			grammar.EqNonTerminal,
-			func(lhs, rhs symboltable.SymbolTable[grammar.Terminal, set.Set[grammar.Production]]) bool {
-				return lhs.Equals(rhs)
-			},
+			eqParsingTableRow,
 			symboltable.HashOpts{},
 		),
 	}
-
-	// Populate the parsing table with empty sets.
-	for _, A := range t.nonTerminals {
-		ARow := symboltable.NewQuadraticHashTable(
-			grammar.HashTerminal,
-			grammar.EqTerminal,
-			grammar.EqProductionSet,
-			symboltable.HashOpts{},
-		)
-
-		for _, a := range t.terminals {
-			ARow.Put(a, set.New(grammar.EqProduction))
-		}
-
-		t.table.Put(A, ARow)
-	}
-
-	return t
 }
 
-// String returns a string representation of the parsing table.
+func (t *parsingTable) getEntry(A grammar.NonTerminal, a grammar.Terminal) (*parsingTableEntry, bool) {
+	if row, ok := t.table.Get(A); ok {
+		if entry, ok := row.Get(a); ok {
+			return entry, true
+		}
+	}
+
+	return nil, false
+}
+
+func (t *parsingTable) ensureEntry(A grammar.NonTerminal, a grammar.Terminal) *parsingTableEntry {
+	if _, ok := t.table.Get(A); !ok {
+		t.table.Put(A, symboltable.NewQuadraticHashTable(
+			grammar.HashTerminal,
+			grammar.EqTerminal,
+			eqParsingTableEntry,
+			symboltable.HashOpts{},
+		))
+	}
+
+	row, _ := t.table.Get(A)
+
+	if _, ok := row.Get(a); !ok {
+		row.Put(a, &parsingTableEntry{
+			Productions: set.New(grammar.EqProduction),
+			Sync:        false,
+		})
+	}
+
+	entry, _ := row.Get(a)
+
+	return entry
+}
+
 func (t *parsingTable) String() string {
 	return newParsingTablePrinter(t).String()
 }
 
-// Equals determines whether or not two parsing tables are the same.
 func (t *parsingTable) Equals(rhs ParsingTable) bool {
 	u, ok := rhs.(*parsingTable)
 	return ok && t.table.Equals(u.table)
 }
 
-// Add adds a new entry to the parsing table.
-// Multiple productions can be added for the same non-terminal A and terminal a.
-func (t *parsingTable) Add(A grammar.NonTerminal, a grammar.Terminal, prod grammar.Production) {
-	// The parsing table is pre-populated with empty sets.
-	ARow, _ := t.table.Get(A)
-	prods, _ := ARow.Get(a)
-	prods.Add(prod)
-}
-
-// Get looks up an entry in the parsing table.
-func (t *parsingTable) Get(A grammar.NonTerminal, a grammar.Terminal) set.Set[grammar.Production] {
-	// The parsing table is pre-populated with empty sets.
-	ARow, _ := t.table.Get(A)
-	prods, _ := ARow.Get(a)
-	return prods
-}
-
-// Error checks for conflicts in the parsing table.
-// If there are multiple productions for at least one combination of non-terminal A and terminal a,
-// the method returns an error containing details about the conflicting productions.
-// If no conflicts are found, it returns nil.
 func (t *parsingTable) Error() error {
 	var err = &errors.MultiError{
 		Format: errors.BulletErrorFormat,
@@ -169,17 +244,75 @@ func (t *parsingTable) Error() error {
 
 	for _, A := range t.nonTerminals {
 		for _, a := range t.terminals {
-			if prods := t.Get(A, a); prods.Size() > 1 {
-				err = errors.Append(err, &ParsingTableError{
-					NonTerminal: A,
-					Terminal:    a,
-					Productions: prods,
-				})
+			if e, ok := t.getEntry(A, a); ok {
+				if e.Productions.Size() > 1 {
+					err = errors.Append(err, &ParsingTableError{
+						NonTerminal: A,
+						Terminal:    a,
+						Productions: e.Productions,
+					})
+				}
 			}
 		}
 	}
 
 	return err.ErrorOrNil()
+}
+
+func (t *parsingTable) AddProduction(A grammar.NonTerminal, a grammar.Terminal, prod grammar.Production) bool {
+	e := t.ensureEntry(A, a)
+	if !e.Sync {
+		e.Productions.Add(prod)
+		return true
+	}
+
+	return false
+}
+
+func (t *parsingTable) SetSync(A grammar.NonTerminal, a grammar.Terminal, sync bool) bool {
+	e := t.ensureEntry(A, a)
+	if e.Productions.Size() == 0 {
+		e.Sync = sync
+		return true
+	}
+
+	return false
+}
+
+func (t *parsingTable) IsEmpty(A grammar.NonTerminal, a grammar.Terminal) bool {
+	if e, ok := t.getEntry(A, a); ok {
+		return e.Productions.Size() == 0
+	}
+
+	return true
+}
+
+func (t *parsingTable) IsSync(A grammar.NonTerminal, a grammar.Terminal) bool {
+	if e, ok := t.getEntry(A, a); ok {
+		return e.Productions.Size() == 0 && e.Sync
+	}
+
+	return false
+}
+
+func (t *parsingTable) GetProduction(A grammar.NonTerminal, a grammar.Terminal) (grammar.Production, bool) {
+	if e, ok := t.getEntry(A, a); ok {
+		if prods := e.Productions; prods.Size() == 1 {
+			for p := range prods.All() {
+				return p, true
+			}
+		}
+	}
+
+	return grammar.Production{}, false
+}
+
+func (t *parsingTable) GetProductions(A grammar.NonTerminal, a grammar.Terminal) (set.Set[grammar.Production], bool) {
+	if e, ok := t.getEntry(A, a); ok {
+		return e.Productions, true
+	}
+
+	return nil, false
 }
 
 // parsingTablePrinter is used for building a string representation of a parsing table.
@@ -224,7 +357,7 @@ func (p *parsingTablePrinter) String() string {
 		//  ... P1 │ P2 │ P3 │ P4 │
 		for i := 1; i < len(p.cLens); i++ {
 			a := p.t.terminals[i-1]
-			s := p.flattenProductions(A, a)
+			s := p.buildEntryString(A, a)
 			p.printCell(i, s, false)
 		}
 
@@ -236,18 +369,12 @@ func (p *parsingTablePrinter) String() string {
 	return p.b.String()
 }
 
-func (p *parsingTablePrinter) flattenProductions(A grammar.NonTerminal, a grammar.Terminal) string {
-	prods := grammar.OrderProductionSet(p.t.Get(A, a))
-	if len(prods) == 0 {
-		return ""
+func (p *parsingTablePrinter) buildEntryString(A grammar.NonTerminal, a grammar.Terminal) string {
+	if e, ok := p.t.getEntry(A, a); ok {
+		return e.String()
 	}
 
-	ss := make([]string, len(prods))
-	for i, p := range prods {
-		ss[i] = p.String()
-	}
-
-	return strings.Join(ss, " ┆ ")
+	return ""
 }
 
 func (p *parsingTablePrinter) calculateColumnLengths(header0 string) {
@@ -265,7 +392,7 @@ func (p *parsingTablePrinter) calculateColumnLengths(header0 string) {
 	for i, a := range p.t.terminals {
 		p.cLens[i+1] = utf8.RuneCountInString(a.String())
 		for _, A := range p.t.nonTerminals {
-			s := p.flattenProductions(A, a)
+			s := p.buildEntryString(A, a)
 			if l := utf8.RuneCountInString(s); l > p.cLens[i+1] {
 				p.cLens[i+1] = l
 			}

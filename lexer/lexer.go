@@ -49,7 +49,7 @@ func (t Token) String() string {
 	return fmt.Sprintf("%s <%s, %s>", t.Terminal, t.Lexeme, t.Pos)
 }
 
-// Position represents the specific location in an input source.
+// Position represents a specific location in an input source.
 type Position struct {
 	Filename string // The name of the input source file (optional).
 	Offset   int    // The byte offset from the beginning of the file.
