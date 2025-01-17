@@ -5,13 +5,14 @@ import (
 	"io"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/parser"
-	"github.com/stretchr/testify/assert"
 )
 
-var CFGrammars = []grammar.CFG{
+var grammars = []grammar.CFG{
 	grammar.NewCFG(
 		[]grammar.Terminal{"+", "-", "*", "/", "(", ")", "id"},
 		[]grammar.NonTerminal{"S", "E"},
@@ -97,7 +98,7 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			name:  "OK",
-			G:     CFGrammars[2],
+			G:     grammars[2],
 			lexer: new(MockLexer),
 		},
 	}
@@ -121,7 +122,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "None_LL(1)_Grammar",
 			p: &predictiveParser{
-				G:     CFGrammars[0],
+				G:     grammars[0],
 				lexer: new(MockLexer),
 			},
 			yield: func(grammar.Production, lexer.Token) {},
@@ -134,7 +135,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "Input_Empty",
 			p: &predictiveParser{
-				G: CFGrammars[2],
+				G: grammars[2],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
 						{OutError: io.EOF},
@@ -147,7 +148,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "First_NextToken_Fails",
 			p: &predictiveParser{
-				G: CFGrammars[2],
+				G: grammars[2],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
 						{OutError: errors.New("cannot read rune")},
@@ -162,7 +163,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "Second_NextToken_Fails",
 			p: &predictiveParser{
-				G: CFGrammars[2],
+				G: grammars[2],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
 						// First token
@@ -191,7 +192,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "Invalid_Input",
 			p: &predictiveParser{
-				G: CFGrammars[2],
+				G: grammars[2],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
 						// First token
@@ -218,7 +219,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "Success",
 			p: &predictiveParser{
-				G: CFGrammars[2],
+				G: grammars[2],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
 						// First token

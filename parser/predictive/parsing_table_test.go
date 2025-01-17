@@ -3,9 +3,10 @@ package predictive
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/set"
-	"github.com/stretchr/testify/assert"
 )
 
 func getTestParsingTables() []*parsingTable {
@@ -69,7 +70,7 @@ func TestBuildParsingTable(t *testing.T) {
 	}{
 		{
 			name: "1st",
-			G:    CFGrammars[0],
+			G:    grammars[0],
 			expectedErrorStrings: []string{
 				`multiple productions in parsing table at M[E, "("]`,
 				`multiple productions in parsing table at M[E, "-"]`,
@@ -78,7 +79,7 @@ func TestBuildParsingTable(t *testing.T) {
 		},
 		{
 			name: "2nd",
-			G:    CFGrammars[1],
+			G:    grammars[1],
 			expectedErrorStrings: []string{
 				`multiple productions in parsing table at M[E, "("]`,
 				`multiple productions in parsing table at M[E, "id"]`,
@@ -89,12 +90,12 @@ func TestBuildParsingTable(t *testing.T) {
 		{
 			name:                 "3rd",
 			expectedTable:        pt[0],
-			G:                    CFGrammars[2],
+			G:                    grammars[2],
 			expectedErrorStrings: nil,
 		},
 		{
 			name: "4th",
-			G:    CFGrammars[3],
+			G:    grammars[3],
 			expectedErrorStrings: []string{
 				`multiple productions in parsing table at M[decls, "IDENT"]`,
 				`multiple productions in parsing table at M[decls, "TOKEN"]`,
