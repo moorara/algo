@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
-	"github.com/moorara/algo/set"
 )
 
 func TestCFG_AugmentCFG(t *testing.T) {
@@ -82,8 +81,8 @@ func TestAugmentedCFG_CLOSURE(t *testing.T) {
 	tests := []struct {
 		name            string
 		g               AugmentedCFG
-		I               set.Set[Item]
-		expectedCLOSURE set.Set[Item]
+		I               ItemSet
+		expectedCLOSURE ItemSet
 	}{
 		{
 			name: "OK",
@@ -110,9 +109,9 @@ func TestAugmentedCFG_GOTO(t *testing.T) {
 	tests := []struct {
 		name         string
 		g            AugmentedCFG
-		I            set.Set[Item]
+		I            ItemSet
 		X            grammar.Symbol
-		expectedGOTO set.Set[Item]
+		expectedGOTO ItemSet
 	}{
 		{
 			name:         `GOTO(I₀,E)`,
@@ -166,12 +165,12 @@ func TestAugmentedCFG_CanonicalLR0Collection(t *testing.T) {
 	tests := []struct {
 		name               string
 		g                  AugmentedCFG
-		expectedCollection set.Set[set.Set[Item]]
+		expectedCollection ItemSetCollection
 	}{
 		{
 			name:               "OK",
 			g:                  g,
-			expectedCollection: set.New(eqItemSet, s...),
+			expectedCollection: NewItemSetCollection(s...),
 		},
 	}
 

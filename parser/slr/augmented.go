@@ -2,7 +2,6 @@ package slr
 
 import (
 	"github.com/moorara/algo/grammar"
-	"github.com/moorara/algo/set"
 )
 
 var primeSuffixes = []string{
@@ -53,7 +52,7 @@ func (g AugmentedCFG) Equals(rhs AugmentedCFG) bool {
 // we anticipate seeing a substring derivable from Bβ as input.
 // The substring derivable from Bβ will have a prefix derivable from B.
 // Thus, for every production B → γ, we include the item B → •γ in CLOSURE(I).
-func (g AugmentedCFG) CLOSURE(I set.Set[Item]) set.Set[Item] {
+func (g AugmentedCFG) CLOSURE(I ItemSet) ItemSet {
 	/*
 	 * If I is a set of items for a grammar G,
 	 * then CLOSURE(I) is the set of items constructed from I by the two rules:
@@ -96,7 +95,7 @@ func (g AugmentedCFG) CLOSURE(I set.Set[Item]) set.Set[Item] {
 // Intuitively, the GOTO function defines transitions in the LR(0) automaton for a grammar.
 // The states of the automaton correspond to sets of items, and GOTO(I, X) specifies
 // the transition from the state represented by I when the grammar symbol X is encountered.
-func (g AugmentedCFG) GOTO(I set.Set[Item], X grammar.Symbol) set.Set[Item] {
+func (g AugmentedCFG) GOTO(I ItemSet, X grammar.Symbol) ItemSet {
 	J := NewItemSet()
 
 	for i := range I.All() {
@@ -117,12 +116,12 @@ func (g AugmentedCFG) GOTO(I set.Set[Item], X grammar.Symbol) set.Set[Item] {
 // The canonical LR(0) collection forms the basis for constructing
 // a deterministic finite automaton (LR(0) automaton), used for parsing decisions.
 // Each state of the LR(0) automaton corresponds to a set of items in the canonical LR(0) collection.
-func (g AugmentedCFG) CanonicalLR0Collection() set.Set[set.Set[Item]] {
-	C := set.New(eqItemSet,
+func (g AugmentedCFG) CanonicalLR0Collection() ItemSetCollection {
+	C := NewItemSetCollection(
 		g.CLOSURE(NewItemSet(g.Initial)),
 	)
 
-	for newItemSets := []set.Set[Item]{}; newItemSets != nil; {
+	for newItemSets := []ItemSet{}; newItemSets != nil; {
 		newItemSets = nil
 
 		// For each set of items I in C
