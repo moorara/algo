@@ -65,7 +65,7 @@ func TestBuildParsingTable(t *testing.T) {
 	tests := []struct {
 		name                 string
 		G                    grammar.CFG
-		expectedTable        ParsingTable
+		expectedTable        *parsingTable
 		expectedErrorStrings []string
 	}{
 		{
@@ -115,7 +115,7 @@ func TestBuildParsingTable(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.G.Verify())
-			table := BuildParsingTable(tc.G)
+			table := buildParsingTable(tc.G)
 			err := table.Error()
 
 			if len(tc.expectedErrorStrings) == 0 {
@@ -180,7 +180,7 @@ func TestParsingTable_Equals(t *testing.T) {
 	tests := []struct {
 		name           string
 		pt             *parsingTable
-		rhs            ParsingTable
+		rhs            *parsingTable
 		expectedEquals bool
 	}{
 		{

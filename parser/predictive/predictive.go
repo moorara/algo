@@ -82,12 +82,11 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 
 	stack := list.NewStack[grammar.Symbol](1024, grammar.EqSymbol)
 
-	M := BuildParsingTable(p.G)
+	M := buildParsingTable(p.G)
 	if err := M.Error(); err != nil {
 		return &ParseError{
 			description: "failed to construct the parsing table",
 			cause:       err,
-			Table:       M,
 		}
 	}
 
@@ -123,7 +122,6 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 		if X.IsTerminal() {
 			return &ParseError{
 				description: fmt.Sprintf("unexpected terminal %s on stack", X),
-				Table:       M,
 			}
 		}
 
@@ -133,7 +131,6 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 			return &ParseError{
 				description: fmt.Sprintf("unacceptable input <%s, %s> for non-terminal %s", token.Terminal, token.Lexeme, A),
 				Pos:         token.Pos,
-				Table:       M,
 			}
 		}
 
