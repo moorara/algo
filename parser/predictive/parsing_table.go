@@ -3,11 +3,11 @@ package predictive
 import (
 	"fmt"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/moorara/algo/errors"
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/parser"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/symboltable"
 )
@@ -201,7 +201,21 @@ func (t *parsingTable) ensureEntry(A grammar.NonTerminal, a grammar.Terminal) *p
 }
 
 func (t *parsingTable) String() string {
-	return newParsingTablePrinter(t).String()
+	ts := &parser.TableStringer[grammar.NonTerminal, grammar.Terminal]{
+		K1Title:  "Non-Terminal",
+		K1Values: t.nonTerminals,
+		K2Title:  "Terminal",
+		K2Values: t.terminals,
+		GetEntry: func(A grammar.NonTerminal, a grammar.Terminal) string {
+			if e, ok := t.getEntry(A, a); ok {
+				return e.String()
+			}
+
+			return ""
+		},
+	}
+
+	return ts.String()
 }
 
 func (t *parsingTable) Equals(rhs ParsingTable) bool {
@@ -332,173 +346,4 @@ func (e *parsingTableError) Error() string {
 	}
 
 	return b.String()
-}
-
-// parsingTablePrinter is used for building a string representation of a parsing table.
-type parsingTablePrinter struct {
-	t     *parsingTable
-	b     *strings.Builder
-	cLens []int
-	tLen  int
-}
-
-func newParsingTablePrinter(t *parsingTable) *parsingTablePrinter {
-	return &parsingTablePrinter{
-		t: t,
-		b: new(strings.Builder),
-	}
-}
-
-func (p *parsingTablePrinter) String() string {
-	p.b = new(strings.Builder)
-	rowTitle, colTitle := "Non-Terminal", "Terminal"
-
-	// Calculate the maximum length of each column and the total length of the table.
-	p.calculateColumnLengths(rowTitle)
-
-	p.printTopLine()               // ┌──────────────┬───────────────┐
-	p.printCell01(colTitle)        // │              │   Terminal    │
-	p.printSecondLine()            // ├──────────────┼───┬────┬───┬──┤
-	p.printCell(0, rowTitle, true) // │ Non-Terminal │ ...
-
-	//  ... a │ b │ c │ d │
-	for i := 1; i < len(p.cLens); i++ {
-		a := p.t.terminals[i-1]
-		p.printCell(i, a.String(), false)
-	}
-
-	p.b.WriteRune('\n')
-
-	for _, A := range p.t.nonTerminals {
-		p.printMiddleLine()              // ├──────────────┼───────────────┤
-		p.printCell(0, A.String(), true) // │      A       │ ...
-
-		//  ... P1 │ P2 │ P3 │ P4 │
-		for i := 1; i < len(p.cLens); i++ {
-			a := p.t.terminals[i-1]
-			s := p.buildEntryString(A, a)
-			p.printCell(i, s, false)
-		}
-
-		p.b.WriteRune('\n')
-	}
-
-	p.printBottomLine() // └──────────────┴───────────────┘
-
-	return p.b.String()
-}
-
-func (p *parsingTablePrinter) buildEntryString(A grammar.NonTerminal, a grammar.Terminal) string {
-	if e, ok := p.t.getEntry(A, a); ok {
-		return e.String()
-	}
-
-	return ""
-}
-
-func (p *parsingTablePrinter) calculateColumnLengths(header0 string) {
-	p.cLens = make([]int, len(p.t.terminals)+1)
-
-	// Find the maximum length of the first column, which belongs to non-terminals.
-	p.cLens[0] = utf8.RuneCountInString(header0)
-	for _, A := range p.t.nonTerminals {
-		if l := utf8.RuneCountInString(A.String()); l > p.cLens[0] {
-			p.cLens[0] = l
-		}
-	}
-
-	// Find the maximum length of each terminal column.
-	for i, a := range p.t.terminals {
-		p.cLens[i+1] = utf8.RuneCountInString(a.String())
-		for _, A := range p.t.nonTerminals {
-			s := p.buildEntryString(A, a)
-			if l := utf8.RuneCountInString(s); l > p.cLens[i+1] {
-				p.cLens[i+1] = l
-			}
-		}
-	}
-
-	// Add padding to each column.
-	for i := range p.cLens {
-		p.cLens[i] += 2
-	}
-
-	// Calculate the total length of the table.
-	p.tLen = len(p.cLens) + 1
-	for _, l := range p.cLens {
-		p.tLen += l
-	}
-}
-
-func (p *parsingTablePrinter) printCell01(header1 string) {
-	len1 := p.tLen - p.cLens[0] - 3
-	pad1 := len1 - len(header1)
-	lpad1 := pad1 / 2
-	rpad1 := pad1 - lpad1
-	p.b.WriteRune('│')
-	p.b.WriteString(strings.Repeat(" ", p.cLens[0]))
-	p.b.WriteRune('│')
-	p.b.WriteString(strings.Repeat(" ", lpad1))
-	p.b.WriteString(header1)
-	p.b.WriteString(strings.Repeat(" ", rpad1))
-	p.b.WriteRune('│')
-	p.b.WriteRune('\n')
-}
-
-func (p *parsingTablePrinter) printCell(col int, s string, isFirstCell bool) {
-	if isFirstCell {
-		p.b.WriteRune('│')
-	}
-
-	pad0 := p.cLens[col] - utf8.RuneCountInString(s)
-	lpad0 := pad0 / 2
-	rpad0 := pad0 - lpad0
-	p.b.WriteString(strings.Repeat(" ", lpad0))
-	p.b.WriteString(s)
-	p.b.WriteString(strings.Repeat(" ", rpad0))
-	p.b.WriteRune('│')
-}
-
-func (p *parsingTablePrinter) printTopLine() {
-	p.b.WriteRune('┌')
-	p.b.WriteString(strings.Repeat("─", p.cLens[0]))
-	p.b.WriteRune('┬')
-	p.b.WriteString(strings.Repeat("─", p.tLen-p.cLens[0]-3))
-	p.b.WriteRune('┐')
-	p.b.WriteRune('\n')
-}
-
-func (p *parsingTablePrinter) printSecondLine() {
-	p.b.WriteRune('├')
-	p.b.WriteString(strings.Repeat("─", p.cLens[0]))
-	p.b.WriteRune('┼')
-	p.b.WriteString(strings.Repeat("─", p.cLens[1]))
-	for i := 2; i < len(p.cLens); i++ {
-		p.b.WriteRune('┬')
-		p.b.WriteString(strings.Repeat("─", p.cLens[i]))
-	}
-	p.b.WriteRune('┤')
-	p.b.WriteRune('\n')
-}
-
-func (p *parsingTablePrinter) printMiddleLine() {
-	p.b.WriteRune('├')
-	p.b.WriteString(strings.Repeat("─", p.cLens[0]))
-	for i := 1; i < len(p.cLens); i++ {
-		p.b.WriteRune('┼')
-		p.b.WriteString(strings.Repeat("─", p.cLens[i]))
-	}
-	p.b.WriteRune('┤')
-	p.b.WriteRune('\n')
-}
-
-func (p *parsingTablePrinter) printBottomLine() {
-	p.b.WriteRune('└')
-	p.b.WriteString(strings.Repeat("─", p.cLens[0]))
-	for i := 1; i < len(p.cLens); i++ {
-		p.b.WriteRune('┴')
-		p.b.WriteString(strings.Repeat("─", p.cLens[i]))
-	}
-	p.b.WriteRune('┘')
-	p.b.WriteRune('\n')
 }
