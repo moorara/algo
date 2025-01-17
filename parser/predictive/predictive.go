@@ -48,7 +48,7 @@ func New(G grammar.CFG, lexer lexer.Lexer) parser.Parser {
 }
 
 // Parse analyzes input tokens (terminal symbols) provided by the lexical analyzer
-// and attempts to construct a syntactic representation (parse tree).
+// and attempts to construct a syntactic representation (i.e., a parse tree) of the input.
 //
 // The Parse method invokes the given function for each production and token during parsing.
 // It returns an error if the input fails to conform to the grammar rules.
