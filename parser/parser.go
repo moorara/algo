@@ -8,6 +8,9 @@
 package parser
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/lexer"
 )
@@ -26,4 +29,42 @@ type Parser interface {
 	// The Parse method invokes the given function for each production and token during parsing.
 	// It returns an error if the input fails to conform to the grammar rules.
 	Parse(Action) error
+}
+
+// ParseError represents an error encountered when parsing an input string.
+type ParseError struct {
+	Description string
+	Cause       error
+	Pos         lexer.Position
+}
+
+// Error implements the error interface.
+// It returns a formatted string describing the error in detail.
+func (e *ParseError) Error() string {
+	b := new(strings.Builder)
+
+	if !e.Pos.IsZero() {
+		fmt.Fprintf(b, "%s", e.Pos)
+	}
+
+	if len(e.Description) != 0 {
+		if b.Len() > 0 {
+			fmt.Fprint(b, ": ")
+		}
+		fmt.Fprintf(b, "%s", e.Description)
+	}
+
+	if e.Cause != nil {
+		if b.Len() > 0 {
+			fmt.Fprint(b, ": ")
+		}
+		fmt.Fprintf(b, "%s", e.Cause)
+	}
+
+	return b.String()
+}
+
+// Error implements the unwrap interface.
+func (e *ParseError) Unwrap() error {
+	return e.Cause
 }
