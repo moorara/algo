@@ -1,4 +1,4 @@
-package predictive
+package slr
 
 import "github.com/moorara/algo/lexer"
 

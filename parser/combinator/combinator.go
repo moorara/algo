@@ -1,7 +1,6 @@
 // Package combinator provides data types and primitive constructs for building parser combinators.
-//
-// A parser combinator is a higher-order function that takes one or more parsers as input
-// and produces a new, composite parser as output.
+// A parser combinator is a higher-order function that takes
+// one or more parsers as input and produces a new composite parser as output.
 //
 // A parser itself is a function that processes an input stream of characters and returns an output structure,
 // such as an abstract syntax tree (AST), a finite automaton, or another representation of the parsed data.
@@ -9,6 +8,17 @@
 // Parser combinators enable a modular, top-down recursive descent parsing strategy.
 // They allow complex parsers to be constructed from smaller, reusable components,
 // making the parsing process easier to build, maintain, and test.
+//
+// Top-down parsing involves constructing a parse tree for the input string,
+// starting from the root node (representing the start symbol) and expanding the nodes in preorder.
+// Equivalently, top-down parsing can be viewed as finding a leftmost derivation for an input string.
+//
+// A recursive descent parser is a top-down parser constructed from mutually recursive procedures
+// (or their non-recursive equivalents), where each procedure corresponds to a nonterminal in the grammar.
+// This structure closely mirrors the grammar, making it intuitive and directly aligned with the rules it recognizes.
+//
+// For more details on parsing theory,
+// refer to "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 package combinator
 
 type (
