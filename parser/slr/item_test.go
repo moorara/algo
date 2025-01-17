@@ -221,7 +221,7 @@ func TestItem_IsKernel(t *testing.T) {
 	tests := []struct {
 		name             string
 		i                Item
-		init             Item
+		initial          Item
 		expectedIsKernel bool
 	}{
 		{
@@ -230,7 +230,7 @@ func TestItem_IsKernel(t *testing.T) {
 				Production: &prods[0][0],
 				Dot:        0,
 			},
-			init: Item{
+			initial: Item{
 				Production: &prods[0][0],
 				Dot:        0,
 			},
@@ -242,7 +242,7 @@ func TestItem_IsKernel(t *testing.T) {
 				Production: &prods[0][1],
 				Dot:        2,
 			},
-			init: Item{
+			initial: Item{
 				Production: &prods[0][0],
 				Dot:        0,
 			},
@@ -254,7 +254,7 @@ func TestItem_IsKernel(t *testing.T) {
 				Production: &prods[0][1],
 				Dot:        0,
 			},
-			init: Item{
+			initial: Item{
 				Production: &prods[0][0],
 				Dot:        0,
 			},
@@ -264,7 +264,7 @@ func TestItem_IsKernel(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedIsKernel, tc.i.IsKernel(tc.init))
+			assert.Equal(t, tc.expectedIsKernel, tc.i.IsKernel(tc.initial))
 		})
 	}
 }

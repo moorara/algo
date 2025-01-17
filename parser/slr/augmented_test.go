@@ -25,6 +25,10 @@ func TestCFG_AugmentCFG(t *testing.T) {
 					prods[0],
 					"E′",
 				),
+				Initial: Item{
+					Production: &prods[0][0],
+					Dot:        0,
+				},
 			},
 		},
 	}
@@ -151,6 +155,30 @@ func TestAugmentedCFG_GOTO(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			J := tc.g.GOTO(tc.I, tc.X)
 			assert.True(t, J.Equals(tc.expectedGOTO))
+		})
+	}
+}
+
+func TestAugmentedCFG_CanonicalLR0Collection(t *testing.T) {
+	s := getTestItemSets()
+	g := AugmentCFG(grammars[0])
+
+	tests := []struct {
+		name               string
+		g                  AugmentedCFG
+		expectedCollection set.Set[set.Set[Item]]
+	}{
+		{
+			name:               "OK",
+			g:                  g,
+			expectedCollection: set.New(eqItemSet, s...),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			C := tc.g.CanonicalLR0Collection()
+			assert.True(t, C.Equals(tc.expectedCollection))
 		})
 	}
 }

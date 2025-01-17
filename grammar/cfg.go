@@ -194,6 +194,21 @@ func (g CFG) Equals(rhs CFG) bool {
 		g.Start.Equals(rhs.Start)
 }
 
+// Symbols returns the set of all symbols in the grammar, including both terminal and non-terminal symbols.
+func (g CFG) Symbols() set.Set[Symbol] {
+	symbols := set.New[Symbol](EqSymbol)
+
+	for t := range g.Terminals.All() {
+		symbols.Add(t)
+	}
+
+	for n := range g.NonTerminals.All() {
+		symbols.Add(n)
+	}
+
+	return symbols
+}
+
 // IsCNF checks if a context-free grammar is in Chomsky Normal Form (CNF).
 //
 // A context-free grammar G is in Chomsky Normal Form (CNF) if all of its production rules are of the form

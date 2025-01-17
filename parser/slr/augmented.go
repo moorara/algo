@@ -17,6 +17,7 @@ var primeSuffixes = []string{
 // the parser should stop and confirm that the input has been successfully parsed.
 type AugmentedCFG struct {
 	grammar.CFG
+	Initial Item
 }
 
 // AugmentCFG creates and returns an augmented grammar G′ from a give grammar G.
@@ -26,19 +27,24 @@ func AugmentCFG(G grammar.CFG) AugmentedCFG {
 
 	newStart := newG.AddNewNonTerminal(start, primeSuffixes...)
 	newG.Start = newStart
-	newG.Productions.Add(grammar.Production{
+	newP := grammar.Production{
 		Head: newStart,
-		Body: grammar.String[grammar.Symbol]{start}},
-	)
+		Body: grammar.String[grammar.Symbol]{start},
+	}
+	newG.Productions.Add(newP)
 
 	return AugmentedCFG{
 		CFG: newG,
+		Initial: Item{
+			Production: &newP,
+			Dot:        0,
+		},
 	}
 }
 
 // Equals determines whether or not two augmented context-free grammars are the same.
 func (g AugmentedCFG) Equals(rhs AugmentedCFG) bool {
-	return g.CFG.Equals(rhs.CFG)
+	return g.CFG.Equals(rhs.CFG) && g.Initial.Equals(rhs.Initial)
 }
 
 // Closure computes the closure of an item set.
@@ -104,4 +110,34 @@ func (g AugmentedCFG) GOTO(I set.Set[Item], X grammar.Symbol) set.Set[Item] {
 	}
 
 	return J
+}
+
+// CanonicalLR0Collection constructs C, the canonical collection of sets of LR(0) items for the augmented grammar G′.
+//
+// The canonical LR(0) collection forms the basis for constructing
+// a deterministic finite automaton (LR(0) automaton), used for parsing decisions.
+// Each state of the LR(0) automaton corresponds to a set of items in the canonical LR(0) collection.
+func (g AugmentedCFG) CanonicalLR0Collection() set.Set[set.Set[Item]] {
+	C := set.New(eqItemSet,
+		g.CLOSURE(NewItemSet(g.Initial)),
+	)
+
+	for newItemSets := []set.Set[Item]{}; newItemSets != nil; {
+		newItemSets = nil
+
+		// For each set of items I in C
+		for I := range C.All() {
+			// For each grammar symbol X
+			for X := range g.Symbols().All() {
+				// If GOTO(I,X) is not empty and not in C, add GOTO(I,X) to C
+				if J := g.GOTO(I, X); !J.IsEmpty() && !C.Contains(J) {
+					newItemSets = append(newItemSets, J)
+				}
+			}
+		}
+
+		C.Add(newItemSets...)
+	}
+
+	return C
 }

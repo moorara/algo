@@ -12,6 +12,10 @@ var (
 	eqItem = func(lhs, rhs Item) bool {
 		return lhs.Equals(rhs)
 	}
+
+	eqItemSet = func(lhs, rhs set.Set[Item]) bool {
+		return lhs.Equals(rhs)
+	}
 )
 
 // NewItemSet creates a new set of items.
@@ -71,8 +75,8 @@ func (i Item) Equals(rhs Item) bool {
 //   - All items where the dot is not at the beginning (left end) of the item's body.
 //
 // Non-kernel items are items where the dot is at the beginning, except for the initial item.
-func (i Item) IsKernel(init Item) bool {
-	return i.Equals(init) || i.Dot > 0
+func (i Item) IsKernel(initial Item) bool {
+	return i.Equals(initial) || i.Dot > 0
 }
 
 // IsComplete checks if the dot has reached the end of the body of the production.
