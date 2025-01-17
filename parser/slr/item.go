@@ -13,14 +13,25 @@ var (
 		return lhs.Equals(rhs)
 	}
 
-	eqItemSet = func(lhs, rhs set.Set[Item]) bool {
+	eqItemSet = func(lhs, rhs ItemSet) bool {
 		return lhs.Equals(rhs)
 	}
 )
 
+// ItemSet represents a set of items for a context-free grammar.
+type ItemSet set.Set[Item]
+
 // NewItemSet creates a new set of items.
-func NewItemSet(items ...Item) set.Set[Item] {
+func NewItemSet(items ...Item) ItemSet {
 	return set.New(eqItem, items...)
+}
+
+// ItemSet represents a collection of item sets for a context-free grammar.
+type ItemSetCollection set.Set[ItemSet]
+
+// NewItemSetCollection creates a new collection of item sets.
+func NewItemSetCollection(sets ...ItemSet) ItemSetCollection {
+	return set.New(eqItemSet, sets...)
 }
 
 // Item is a production with a dot at some position of the body.

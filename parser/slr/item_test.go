@@ -6,10 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
-	"github.com/moorara/algo/set"
 )
 
-func getTestItemSets() []set.Set[Item] {
+func getTestItemSets() []ItemSet {
 	I0 := NewItemSet(
 		// Kernels
 		Item{Production: &prods[0][0], Dot: 0}, // E′ → •E
@@ -96,14 +95,14 @@ func getTestItemSets() []set.Set[Item] {
 		Item{Production: &prods[0][5], Dot: 3}, // F → ( E )•
 	)
 
-	return []set.Set[Item]{I0, I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11}
+	return []ItemSet{I0, I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11}
 }
 
 func TestNewItemSet(t *testing.T) {
 	tests := []struct {
 		name            string
 		items           []Item
-		expectedItemSet set.Set[Item]
+		expectedItemSet ItemSet
 	}{
 		{
 			name: "OK",
