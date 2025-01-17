@@ -1,10 +1,12 @@
 package predictive
 
 import (
+	"fmt"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/moorara/algo/errors"
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/symboltable"
@@ -20,7 +22,42 @@ var (
 	}
 )
 
-// buildParsingTable constructs a predictive parsing table for a context-free grammar.
+// ParsingTable represents the interface for a parsing table of a predictive parser.
+type ParsingTable interface {
+	fmt.Stringer
+	generic.Equaler[ParsingTable]
+
+	// Error checks for conflicts in the parsing table.
+	// If there are multiple productions for at least one combination of non-terminal A and terminal a,
+	// the method returns an error containing details about the conflicting productions.
+	// If no conflicts are found, it returns nil.
+	Error() error
+
+	// AddProduction adds a new production to the parsing table.
+	// Multiple productions can be added for the same non-terminal A and terminal a.
+	// It returns false if the M[A,a] entry is marked as a synchronization token.
+	AddProduction(grammar.NonTerminal, grammar.Terminal, grammar.Production) bool
+
+	// SetSync updates the parsing table to mark or unmark
+	// terminal a as a synchronization symbol for non-terminal A.
+	// It returns false if the M[A,a] entry contains any productions.
+	SetSync(grammar.NonTerminal, grammar.Terminal, bool) bool
+
+	// IsEmpty returns true if there are no productions in the M[A,a] entry.
+	IsEmpty(grammar.NonTerminal, grammar.Terminal) bool
+
+	// IsSync returns true if the M[A,a] entry is marked as a synchronization symbol for non-terminal A.
+	IsSync(grammar.NonTerminal, grammar.Terminal) bool
+
+	// GetProduction returns the single production from the M[A,a] entry if exactly one production exists.
+	// It returns the production and true if successful, or a default value and false otherwise.
+	GetProduction(grammar.NonTerminal, grammar.Terminal) (grammar.Production, bool)
+
+	// GetProductions returns the set of all productions in the M[A,a] entry.
+	GetProductions(grammar.NonTerminal, grammar.Terminal) (set.Set[grammar.Production], bool)
+}
+
+// BuildParsingTable constructs a parsing table for a predictive parser.
 //
 // Predictive parsers are recursive-descent parsers that do not require backtracking.
 // They can be constructed for a specific class of grammars called LL(1).
@@ -34,7 +71,7 @@ var (
 // Some errors may be resolved by eliminating left recursion and applying left factoring to the grammar.
 // However, certain grammars cannot be transformed into LL(1) even after these transformations.
 // Some languages may have no LL(1) grammar at all.
-func buildParsingTable(G grammar.CFG) *parsingTable {
+func BuildParsingTable(G grammar.CFG) ParsingTable {
 	/*
 	 * For each production A → α of the grammar:
 	 *
@@ -103,7 +140,7 @@ func buildParsingTable(G grammar.CFG) *parsingTable {
 	return table
 }
 
-// parsingTable represents a predictive parsing table used for LL(1) context-free grammars.
+// parsingTable represents a parsing table for a predictive parser.
 type parsingTable struct {
 	nonTerminals []grammar.NonTerminal
 	terminals    []grammar.Terminal
@@ -163,20 +200,15 @@ func (t *parsingTable) ensureEntry(A grammar.NonTerminal, a grammar.Terminal) *p
 	return entry
 }
 
-// String returns a string representation of a parsing table.
 func (t *parsingTable) String() string {
 	return newParsingTablePrinter(t).String()
 }
 
-// Equals determines whether or not two parsing tables are the same.
-func (t *parsingTable) Equals(rhs *parsingTable) bool {
-	return t.table.Equals(rhs.table)
+func (t *parsingTable) Equals(rhs ParsingTable) bool {
+	u, ok := rhs.(*parsingTable)
+	return ok && t.table.Equals(u.table)
 }
 
-// Error checks for conflicts in the parsing table.
-// If there are multiple productions for at least one combination of non-terminal A and terminal a,
-// the method returns an error containing details about the conflicting productions.
-// If no conflicts are found, it returns nil.
 func (t *parsingTable) Error() error {
 	var err = &errors.MultiError{
 		Format: errors.BulletErrorFormat,
@@ -199,9 +231,6 @@ func (t *parsingTable) Error() error {
 	return err.ErrorOrNil()
 }
 
-// AddProduction adds a new production to the parsing table.
-// Multiple productions can be added for the same non-terminal A and terminal a.
-// It returns false if the M[A,a] entry is marked as a synchronization token.
 func (t *parsingTable) AddProduction(A grammar.NonTerminal, a grammar.Terminal, prod grammar.Production) bool {
 	e := t.ensureEntry(A, a)
 	if !e.Sync {
@@ -212,9 +241,6 @@ func (t *parsingTable) AddProduction(A grammar.NonTerminal, a grammar.Terminal, 
 	return false
 }
 
-// SetSync updates the parsing table to mark or unmark
-// terminal a as a synchronization symbol for non-terminal A.
-// It returns false if the M[A,a] entry contains any productions.
 func (t *parsingTable) SetSync(A grammar.NonTerminal, a grammar.Terminal, sync bool) bool {
 	e := t.ensureEntry(A, a)
 	if e.Productions.Size() == 0 {
@@ -225,7 +251,6 @@ func (t *parsingTable) SetSync(A grammar.NonTerminal, a grammar.Terminal, sync b
 	return false
 }
 
-// IsEmpty returns true if there are no productions in the M[A,a] entry.
 func (t *parsingTable) IsEmpty(A grammar.NonTerminal, a grammar.Terminal) bool {
 	if e, ok := t.getEntry(A, a); ok {
 		return e.Productions.Size() == 0
@@ -234,7 +259,6 @@ func (t *parsingTable) IsEmpty(A grammar.NonTerminal, a grammar.Terminal) bool {
 	return true
 }
 
-// IsSync returns true if the M[A,a] entry is marked as a synchronization symbol for non-terminal A.
 func (t *parsingTable) IsSync(A grammar.NonTerminal, a grammar.Terminal) bool {
 	if e, ok := t.getEntry(A, a); ok {
 		return e.Productions.Size() == 0 && e.Sync
@@ -243,8 +267,6 @@ func (t *parsingTable) IsSync(A grammar.NonTerminal, a grammar.Terminal) bool {
 	return false
 }
 
-// GetProduction returns the single production from the M[A,a] entry if exactly one production exists.
-// It returns the production and true if successful, or a default value and false otherwise.
 func (t *parsingTable) GetProduction(A grammar.NonTerminal, a grammar.Terminal) (grammar.Production, bool) {
 	if e, ok := t.getEntry(A, a); ok {
 		if prods := e.Productions; prods.Size() == 1 {
@@ -257,7 +279,6 @@ func (t *parsingTable) GetProduction(A grammar.NonTerminal, a grammar.Terminal) 
 	return grammar.Production{}, false
 }
 
-// GetProductions returns the set of all productions in the M[A,a] entry.
 func (t *parsingTable) GetProductions(A grammar.NonTerminal, a grammar.Terminal) (set.Set[grammar.Production], bool) {
 	if e, ok := t.getEntry(A, a); ok {
 		return e.Productions, true
@@ -272,7 +293,6 @@ type parsingTableEntry struct {
 	Sync        bool
 }
 
-// String returns a string representation of a parsing table entry.
 func (e *parsingTableEntry) String() string {
 	if e.Sync {
 		return "sync"
@@ -291,9 +311,27 @@ func (e *parsingTableEntry) String() string {
 	return strings.Join(ss, " ┆ ")
 }
 
-// Equals determines whether or not two parsing table entries are the same.
 func (e *parsingTableEntry) Equals(rhs *parsingTableEntry) bool {
 	return e.Productions.Equals(rhs.Productions) && e.Sync == rhs.Sync
+}
+
+// parsingTableError represents an error for a parsing table of a predictive parser.
+// This error occurs due to the presence of left recursion or ambiguity in the grammar.
+type parsingTableError struct {
+	NonTerminal grammar.NonTerminal
+	Terminal    grammar.Terminal
+	Productions set.Set[grammar.Production]
+}
+
+func (e *parsingTableError) Error() string {
+	b := new(strings.Builder)
+
+	fmt.Fprintf(b, "multiple productions in parsing table at M[%s, %s]:\n", e.NonTerminal, e.Terminal)
+	for _, p := range grammar.OrderProductionSet(e.Productions) {
+		fmt.Fprintf(b, "  %s\n", p)
+	}
+
+	return b.String()
 }
 
 // parsingTablePrinter is used for building a string representation of a parsing table.

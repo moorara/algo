@@ -82,11 +82,11 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 
 	stack := list.NewStack[grammar.Symbol](1024, grammar.EqSymbol)
 
-	M := buildParsingTable(p.G)
+	M := BuildParsingTable(p.G)
 	if err := M.Error(); err != nil {
-		return &ParseError{
-			description: "failed to construct the parsing table",
-			cause:       err,
+		return &parser.ParseError{
+			Description: "failed to construct the parsing table",
+			Cause:       err,
 		}
 	}
 
@@ -99,7 +99,7 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 		if errors.Is(err, io.EOF) {
 			return nil
 		}
-		return &ParseError{cause: err}
+		return &parser.ParseError{Cause: err}
 	}
 
 	for X, _ := stack.Peek(); !X.Equals(grammar.Endmarker); X, _ = stack.Peek() {
@@ -113,23 +113,23 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 				if errors.Is(err, io.EOF) {
 					break
 				}
-				return &ParseError{cause: err}
+				return &parser.ParseError{Cause: err}
 			}
 
 			continue
 		}
 
 		if X.IsTerminal() {
-			return &ParseError{
-				description: fmt.Sprintf("unexpected terminal %s on stack", X),
+			return &parser.ParseError{
+				Description: fmt.Sprintf("unexpected terminal %s on stack", X),
 			}
 		}
 
 		A := X.(grammar.NonTerminal)
 
 		if M.IsEmpty(A, token.Terminal) {
-			return &ParseError{
-				description: fmt.Sprintf("unacceptable input <%s, %s> for non-terminal %s", token.Terminal, token.Lexeme, A),
+			return &parser.ParseError{
+				Description: fmt.Sprintf("unacceptable input <%s, %s> for non-terminal %s", token.Terminal, token.Lexeme, A),
 				Pos:         token.Pos,
 			}
 		}

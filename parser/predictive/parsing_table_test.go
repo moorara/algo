@@ -65,7 +65,7 @@ func TestBuildParsingTable(t *testing.T) {
 	tests := []struct {
 		name                 string
 		G                    grammar.CFG
-		expectedTable        *parsingTable
+		expectedTable        ParsingTable
 		expectedErrorStrings []string
 	}{
 		{
@@ -115,7 +115,7 @@ func TestBuildParsingTable(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.G.Verify())
-			table := buildParsingTable(tc.G)
+			table := BuildParsingTable(tc.G)
 			err := table.Error()
 
 			if len(tc.expectedErrorStrings) == 0 {
@@ -491,5 +491,36 @@ func TestParsingTable_GetProductions(t *testing.T) {
 				assert.Nil(t, prods)
 			}
 		})
+	}
+}
+
+func TestParsingTableError(t *testing.T) {
+	tests := []struct {
+		name          string
+		e             *parsingTableError
+		expectedError string
+	}{
+		{
+			name: "OK",
+			e: &parsingTableError{
+				NonTerminal: grammar.NonTerminal("decls"),
+				Terminal:    grammar.Terminal("IDENT"),
+				Productions: set.New(grammar.EqProduction,
+					grammar.Production{
+						Head: "decls",
+						Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("decls"), grammar.NonTerminal("decl")},
+					},
+					grammar.Production{
+						Head: "decls",
+						Body: grammar.E,
+					},
+				),
+			},
+			expectedError: "multiple productions in parsing table at M[decls, \"IDENT\"]:\n  decls → decls decl\n  decls → ε\n",
+		},
+	}
+
+	for _, tc := range tests {
+		assert.EqualError(t, tc.e, tc.expectedError)
 	}
 }
