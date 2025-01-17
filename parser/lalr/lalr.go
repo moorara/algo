@@ -1,5 +1,5 @@
-// Package slr provides data structures and algorithms for building Simple LR (SLR) parsers.
-// An SLR parser is a bottom-up parser for the class of LR(0) grammars.
+// Package lalr provides data structures and algorithms for building Look-Ahead LR (LALR) parsers.
+// An LALR parser is a bottom-up parser for LR(1) grammars.
 //
 // Bottom-up parsing constructs a parse tree for an input string
 // starting at the leaves (bottom) and working towards the root (top).
@@ -45,4 +45,4 @@
 //
 // For more details on parsing theory,
 // refer to "Compilers: Principles, Techniques, and Tools (2nd Edition)".
-package slr
+package lalr
