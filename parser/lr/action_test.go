@@ -69,7 +69,7 @@ func TestEqAction(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc.expectedEquals, eqAction(tc.lhs, tc.rhs))
+		assert.Equal(t, tc.expectedEquals, EqAction(tc.lhs, tc.rhs))
 	}
 }
 
