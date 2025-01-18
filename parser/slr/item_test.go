@@ -5,13 +5,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/sort"
 )
 
 func getTestItemSets() []ItemSet {
 	I0 := NewItemSet(
 		// Kernels
-		Item{Production: &prods[0][0], Dot: 0}, // E′ → •E
+		Item{Production: &prods[0][0], Initial: true, Dot: 0}, // E′ → •E
 		// Non-Kernels
 		Item{Production: &prods[0][1], Dot: 0}, // E → •E + T
 		Item{Production: &prods[0][2], Dot: 0}, // E → •T
@@ -23,8 +25,8 @@ func getTestItemSets() []ItemSet {
 
 	I1 := NewItemSet(
 		// Kernels
-		Item{Production: &prods[0][0], Dot: 1}, // E′ → E•
-		Item{Production: &prods[0][1], Dot: 1}, // E → E•+ T
+		Item{Production: &prods[0][0], Initial: true, Dot: 1}, // E′ → E•
+		Item{Production: &prods[0][1], Dot: 1},                // E → E•+ T
 	)
 
 	I2 := NewItemSet(
@@ -131,12 +133,12 @@ func TestNewItemSet(t *testing.T) {
 		{
 			name: "OK",
 			items: []Item{
-				{Production: &prods[0][0], Dot: 1}, // E′ → E•
-				{Production: &prods[0][1], Dot: 1}, // E → E•+ T
+				{Production: &prods[0][0], Initial: true, Dot: 1}, // E′ → E•
+				{Production: &prods[0][1], Dot: 1},                // E → E•+ T
 			},
 			expectedItemSet: NewItemSet(
-				Item{Production: &prods[0][0], Dot: 1}, // E′ → E•
-				Item{Production: &prods[0][1], Dot: 1}, // E → E•+ T
+				Item{Production: &prods[0][0], Initial: true, Dot: 1}, // E′ → E•
+				Item{Production: &prods[0][1], Dot: 1},                // E → E•+ T
 			),
 		},
 	}
@@ -168,27 +170,23 @@ func TestItem_String(t *testing.T) {
 			expectedString: `A → •`,
 		},
 		{
-			name: "DotAtLeft",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        0,
-			},
+			name:           "Initial",
+			i:              Item{Production: &prods[0][0], Initial: true, Dot: 0},
+			expectedString: `E′ → •E`,
+		},
+		{
+			name:           "DotAtLeft",
+			i:              Item{Production: &prods[0][1], Dot: 0},
 			expectedString: `E → •E "+" T`,
 		},
 		{
-			name: "DotInMiddle",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        2,
-			},
+			name:           "DotInMiddle",
+			i:              Item{Production: &prods[0][1], Dot: 2},
 			expectedString: `E → E "+"•T`,
 		},
 		{
-			name: "DotAtRight",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        3,
-			},
+			name:           "DotAtRight",
+			i:              Item{Production: &prods[0][1], Dot: 3},
 			expectedString: `E → E "+" T•`,
 		},
 	}
@@ -208,27 +206,15 @@ func TestItem_Equals(t *testing.T) {
 		expectedEquals bool
 	}{
 		{
-			name: "Equal",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        1,
-			},
-			rhs: Item{
-				Production: &prods[0][1],
-				Dot:        1,
-			},
+			name:           "Equal",
+			i:              Item{Production: &prods[0][1], Dot: 1}, // E → E•+ T
+			rhs:            Item{Production: &prods[0][1], Dot: 1}, // E → E•+ T
 			expectedEquals: true,
 		},
 		{
-			name: "NotEqual",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        1,
-			},
-			rhs: Item{
-				Production: &prods[0][1],
-				Dot:        2,
-			},
+			name:           "NotEqual",
+			i:              Item{Production: &prods[0][1], Dot: 1}, // E → E•+ T
+			rhs:            Item{Production: &prods[0][1], Dot: 2}, // E → E +•T
 			expectedEquals: false,
 		},
 	}
@@ -244,50 +230,28 @@ func TestItem_IsKernel(t *testing.T) {
 	tests := []struct {
 		name             string
 		i                Item
-		initial          Item
 		expectedIsKernel bool
 	}{
 		{
-			name: "InitialItem",
-			i: Item{
-				Production: &prods[0][0],
-				Dot:        0,
-			},
-			initial: Item{
-				Production: &prods[0][0],
-				Dot:        0,
-			},
+			name:             "Initial",
+			i:                Item{Production: &prods[0][0], Initial: true, Dot: 0}, // E′ → •E
 			expectedIsKernel: true,
 		},
 		{
-			name: "Kernel",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        2,
-			},
-			initial: Item{
-				Production: &prods[0][0],
-				Dot:        0,
-			},
+			name:             "Kernel",
+			i:                Item{Production: &prods[0][1], Dot: 2}, // E → E +•T
 			expectedIsKernel: true,
 		},
 		{
-			name: "NonKernel",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        0,
-			},
-			initial: Item{
-				Production: &prods[0][0],
-				Dot:        0,
-			},
+			name:             "NonKernel",
+			i:                Item{Production: &prods[0][1], Dot: 0}, // E → •E + T
 			expectedIsKernel: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedIsKernel, tc.i.IsKernel(tc.initial))
+			assert.Equal(t, tc.expectedIsKernel, tc.i.IsKernel())
 		})
 	}
 }
@@ -299,19 +263,13 @@ func TestItem_IsComplete(t *testing.T) {
 		expectedIsComplete bool
 	}{
 		{
-			name: "Complete",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        3,
-			},
+			name:               "Complete",
+			i:                  Item{Production: &prods[0][1], Dot: 3}, // E → E + T•
 			expectedIsComplete: true,
 		},
 		{
-			name: "NotComplete",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        2,
-			},
+			name:               "NotComplete",
+			i:                  Item{Production: &prods[0][1], Dot: 2}, // E → E +•T
 			expectedIsComplete: false,
 		},
 	}
@@ -331,20 +289,14 @@ func TestItem_DotSymbol(t *testing.T) {
 		expectedOK        bool
 	}{
 		{
-			name: "OK",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        2,
-			},
-			expectedDotSymbol: grammar.NonTerminal("T"),
+			name:              "Initial",
+			i:                 Item{Production: &prods[0][0], Initial: true, Dot: 0}, // E′ → •E
+			expectedDotSymbol: grammar.NonTerminal("E"),
 			expectedOK:        true,
 		},
 		{
-			name: "Complete",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        3,
-			},
+			name:              "Complete",
+			i:                 Item{Production: &prods[0][1], Dot: 3}, // E → E + T•
 			expectedDotSymbol: nil,
 			expectedOK:        false,
 		},
@@ -373,23 +325,14 @@ func TestItem_NextItem(t *testing.T) {
 		expectedOK       bool
 	}{
 		{
-			name: "OK",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        2,
-			},
-			expectedNextItem: Item{
-				Production: &prods[0][1],
-				Dot:        3,
-			},
-			expectedOK: true,
+			name:             "Initial",
+			i:                Item{Production: &prods[0][0], Initial: true, Dot: 0}, // E′ → •E
+			expectedNextItem: Item{Production: &prods[0][0], Initial: true, Dot: 1}, // E′ → E•
+			expectedOK:       true,
 		},
 		{
-			name: "Complete",
-			i: Item{
-				Production: &prods[0][1],
-				Dot:        3,
-			},
+			name:             "Complete",
+			i:                Item{Production: &prods[0][1], Dot: 3}, // E → E + T•
 			expectedNextItem: Item{},
 			expectedOK:       false,
 		},
@@ -401,6 +344,70 @@ func TestItem_NextItem(t *testing.T) {
 
 			assert.Equal(t, tc.expectedNextItem, item)
 			assert.Equal(t, tc.expectedOK, ok)
+		})
+	}
+}
+
+func TestCmpItem(t *testing.T) {
+	s := getTestItemSets()
+
+	tests := []struct {
+		name          string
+		items         []Item
+		expectedItems []Item
+	}{
+		{
+			name:  "I₀",
+			items: generic.Collect1(s[0].All()),
+			expectedItems: []Item{
+				// Kernels
+				{Production: &prods[0][0], Initial: true, Dot: 0}, // E′ → •E
+				// Non-Kernels
+				{Production: &prods[0][1], Dot: 0}, // E → •E + T
+				{Production: &prods[0][2], Dot: 0}, // E → •T
+				{Production: &prods[0][5], Dot: 0}, // F → •( E )
+				{Production: &prods[0][6], Dot: 0}, // F → •id
+				{Production: &prods[0][3], Dot: 0}, // T → •T * F
+				{Production: &prods[0][4], Dot: 0}, // T → •F
+			},
+		},
+		{
+			name:  "I₈",
+			items: generic.Collect1(s[8].All()),
+			expectedItems: []Item{
+				{Production: &prods[0][1], Dot: 1}, // E → E• + T
+				{Production: &prods[0][5], Dot: 2}, // F → ( E•)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			sort.Quick(tc.items, cmpItem)
+			assert.Equal(t, tc.expectedItems, tc.items)
+		})
+	}
+}
+
+func TestCmpItemSet(t *testing.T) {
+	s := getTestItemSets()
+
+	tests := []struct {
+		name         string
+		sets         []ItemSet
+		expectedSets []ItemSet
+	}{
+		{
+			name:         "OK",
+			sets:         []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+			expectedSets: []ItemSet{s[0], s[1], s[8], s[2], s[4], s[5], s[9], s[3], s[6], s[7], s[11], s[10]},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			sort.Quick(tc.sets, cmpItemSet)
+			assert.Equal(t, tc.expectedSets, tc.sets)
 		})
 	}
 }

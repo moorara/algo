@@ -26,6 +26,7 @@ func TestCFG_AugmentCFG(t *testing.T) {
 				),
 				Initial: Item{
 					Production: &prods[0][0],
+					Initial:    true,
 					Dot:        0,
 				},
 			},
@@ -88,7 +89,7 @@ func TestAugmentedCFG_CLOSURE(t *testing.T) {
 			name: "OK",
 			g:    g,
 			I: NewItemSet(
-				Item{Production: &prods[0][0], Dot: 0}, // E′ → •E
+				Item{Production: &prods[0][0], Initial: true, Dot: 0}, // E′ → •E
 			),
 			expectedCLOSURE: s[0],
 		},

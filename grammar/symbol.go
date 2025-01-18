@@ -20,10 +20,11 @@ import (
 const Endmarker = Terminal("\uEEEE")
 
 var (
+	cmpString = generic.NewCompareFunc[string]()
+
 	HashSymbol = hashFuncForSymbol()
-	EqSymbol   = func(lhs, rhs Symbol) bool {
-		return lhs.Equals(rhs)
-	}
+	CmpSymbol  = func(lhs, rhs Symbol) int { return cmpString(lhs.String(), rhs.String()) }
+	EqSymbol   = func(lhs, rhs Symbol) bool { return lhs.Equals(rhs) }
 
 	EqTerminal   = generic.NewEqualFunc[Terminal]()
 	CmpTerminal  = generic.NewCompareFunc[Terminal]()

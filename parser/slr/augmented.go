@@ -1,17 +1,17 @@
 package slr
 
-import (
-	"github.com/moorara/algo/grammar"
+import "github.com/moorara/algo/grammar"
+
+var (
+	primeSuffixes = []string{
+		"′", // Prime (U+2032)
+		"″", // Double Prime (U+2033)
+		"‴", // Triple Prime (U+2034)
+		"⁗", // Quadruple Prime (U+2057)
+	}
 )
 
-var primeSuffixes = []string{
-	"′", // Prime (U+2032)
-	"″", // Double Prime (U+2033)
-	"‴", // Triple Prime (U+2034)
-	"⁗", // Quadruple Prime (U+2057)
-}
-
-// AugmentedCFG is a context-free grammar with a new start symbol S′ and production S′ → S.
+// AugmentedCFG is a context-free grammar augmented with a new start symbol S′ and production S′ → S.
 // An augmented grammar is used in LR parsing to signal when
 // the parser should stop and confirm that the input has been successfully parsed.
 type AugmentedCFG struct {
@@ -36,6 +36,7 @@ func AugmentCFG(G grammar.CFG) AugmentedCFG {
 		CFG: newG,
 		Initial: Item{
 			Production: &newP,
+			Initial:    true,
 			Dot:        0,
 		},
 	}
@@ -75,7 +76,7 @@ func (g AugmentedCFG) CLOSURE(I ItemSet) ItemSet {
 					// For each production B → γ of G
 					for BProd := range g.Productions.Get(B).All() {
 						// If B → •γ is not in J
-						if j := (Item{&BProd, 0}); !J.Contains(j) {
+						if j := (Item{Production: &BProd}); !J.Contains(j) {
 							newItems = append(newItems, j)
 						}
 					}

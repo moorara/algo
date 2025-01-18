@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/set"
+	"github.com/moorara/algo/sort"
 )
 
 var (
@@ -49,9 +51,8 @@ func NewItemSet(items ...Item) ItemSet {
 // and the parser expects a string derivable from YZ next.
 type Item struct {
 	*grammar.Production
-
-	// The position of dot in the body of a production.
-	Dot int
+	Initial bool // True if this is the initial S′ → S production in the augmented grammar.
+	Dot     int  // Position of the dot in the production body.
 }
 
 // String returns a string representation of an item.
@@ -75,7 +76,9 @@ func (i Item) String() string {
 
 // Equals determines whether or not two items are the same.
 func (i Item) Equals(rhs Item) bool {
-	return i.Production.Equals(*rhs.Production) && i.Dot == rhs.Dot
+	return i.Production.Equals(*rhs.Production) &&
+		i.Initial == rhs.Initial &&
+		i.Dot == rhs.Dot
 }
 
 // IsKernel determines whether an item is a kernel item.
@@ -86,8 +89,8 @@ func (i Item) Equals(rhs Item) bool {
 //   - All items where the dot is not at the beginning (left end) of the item's body.
 //
 // Non-kernel items are items where the dot is at the beginning, except for the initial item.
-func (i Item) IsKernel(initial Item) bool {
-	return i.Equals(initial) || i.Dot > 0
+func (i Item) IsKernel() bool {
+	return i.Initial || i.Dot > 0
 }
 
 // IsComplete checks if the dot has reached the end of the body of the production.
@@ -116,6 +119,56 @@ func (i Item) NextItem() (Item, bool) {
 
 	return Item{
 		Production: i.Production,
+		Initial:    i.Initial,
 		Dot:        i.Dot + 1,
 	}, true
+}
+
+// cmpItem compares two items to establish a consistent and deterministic order.
+// The comparison follows these rules:
+//
+//  1. Kernel items are prioritized over non-kernel items.
+//  2. If both items are kernel or both are non-kernel, they are compared by their dot positions.
+//  3. If the dot positions are identical, the items are compared based on their productions.
+//
+// This function is useful for sorting items, ensuring stability and predictability in their ordering.
+func cmpItem(lhs, rhs Item) int {
+	if lhs.IsKernel() && !rhs.IsKernel() {
+		return -1
+	} else if !lhs.IsKernel() && rhs.IsKernel() {
+		return 1
+	}
+
+	if lhs.Dot < rhs.Dot {
+		return -1
+	} else if lhs.Dot > rhs.Dot {
+		return 1
+	}
+
+	return grammar.CmpProduction(*lhs.Production, *rhs.Production)
+}
+
+// cmpItemSet compares two collections of item sets to establish a consistent and deterministic order.
+// The comparison process is as follows:
+//
+//  1. Each item set is sorted using cmpItem first.
+//  2. The items in the two lists are compared one by one in order.
+//  3. If one list is shorter and all compared items are equal, the shorter list comes first.
+//
+// This function is useful for sorting collections of item sets,
+// ensuring stability and predictability in their ordering.
+func cmpItemSet(lhs, rhs ItemSet) int {
+	ls := generic.Collect1(lhs.All())
+	sort.Quick(ls, cmpItem)
+
+	rs := generic.Collect1(rhs.All())
+	sort.Quick(rs, cmpItem)
+
+	for i := 0; i < len(ls) && i < len(rs); i++ {
+		if cmp := cmpItem(ls[i], rs[i]); cmp != 0 {
+			return cmp
+		}
+	}
+
+	return len(ls) - len(rs)
 }
