@@ -445,55 +445,6 @@ func TestParsingTable_GetProduction(t *testing.T) {
 	}
 }
 
-func TestParsingTable_GetProductions(t *testing.T) {
-	pt := getTestParsingTables()
-
-	tests := []struct {
-		name                string
-		pt                  *parsingTable
-		A                   grammar.NonTerminal
-		a                   grammar.Terminal
-		expectedOK          bool
-		expectedProductions set.Set[grammar.Production]
-	}{
-		{
-			name:                "Empty",
-			pt:                  pt[0],
-			A:                   grammar.NonTerminal("E"),
-			a:                   grammar.Terminal("+"),
-			expectedOK:          false,
-			expectedProductions: nil,
-		},
-		{
-			name:       "OK",
-			pt:         pt[0],
-			A:          grammar.NonTerminal("E′"),
-			a:          grammar.Terminal("+"),
-			expectedOK: true,
-			expectedProductions: set.New(grammar.EqProduction,
-				grammar.Production{
-					Head: "E′",
-					Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")},
-				},
-			),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			prods, ok := tc.pt.GetProductions(tc.A, tc.a)
-
-			if tc.expectedOK {
-				assert.True(t, ok)
-				assert.True(t, prods.Equals(tc.expectedProductions))
-			} else {
-				assert.False(t, ok)
-				assert.Nil(t, prods)
-			}
-		})
-	}
-}
-
 func TestParsingTableError(t *testing.T) {
 	tests := []struct {
 		name          string

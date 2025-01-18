@@ -52,9 +52,6 @@ type ParsingTable interface {
 	// GetProduction returns the single production from the M[A,a] entry if exactly one production exists.
 	// It returns the production and true if successful, or a default value and false otherwise.
 	GetProduction(grammar.NonTerminal, grammar.Terminal) (grammar.Production, bool)
-
-	// GetProductions returns the set of all productions in the M[A,a] entry.
-	GetProductions(grammar.NonTerminal, grammar.Terminal) (set.Set[grammar.Production], bool)
 }
 
 // BuildParsingTable constructs a parsing table for a predictive parser.
@@ -291,14 +288,6 @@ func (t *parsingTable) GetProduction(A grammar.NonTerminal, a grammar.Terminal) 
 	}
 
 	return grammar.Production{}, false
-}
-
-func (t *parsingTable) GetProductions(A grammar.NonTerminal, a grammar.Terminal) (set.Set[grammar.Production], bool) {
-	if e, ok := t.getEntry(A, a); ok {
-		return e.Productions, true
-	}
-
-	return nil, false
 }
 
 // parsingTableEntry defines the type of each entry in the parsing table.
