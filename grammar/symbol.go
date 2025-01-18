@@ -20,11 +20,12 @@ import (
 const Endmarker = Terminal("\uEEEE")
 
 var (
-	cmpString = generic.NewCompareFunc[string]()
+	EqSymbol = func(lhs, rhs Symbol) bool {
+		return lhs.Equals(rhs)
+	}
 
+	CmpSymbol  = compareFuncForSymbol()
 	HashSymbol = hashFuncForSymbol()
-	CmpSymbol  = func(lhs, rhs Symbol) int { return cmpString(lhs.String(), rhs.String()) }
-	EqSymbol   = func(lhs, rhs Symbol) bool { return lhs.Equals(rhs) }
 
 	EqTerminal   = generic.NewEqualFunc[Terminal]()
 	CmpTerminal  = generic.NewCompareFunc[Terminal]()
@@ -48,6 +49,21 @@ type Symbol interface {
 // It returns the number of bytes written and any error encountered.
 func WriteSymbol(w io.Writer, s Symbol) (n int, err error) {
 	return w.Write([]byte(s.String()))
+}
+
+// compareFuncForSymbol creates a CompareFunc for comparing symbols.
+func compareFuncForSymbol() generic.CompareFunc[Symbol] {
+	cmpString := generic.NewCompareFunc[string]()
+
+	return func(lhs, rhs Symbol) int {
+		if lhs.IsTerminal() && !rhs.IsTerminal() {
+			return -1
+		} else if !lhs.IsTerminal() && rhs.IsTerminal() {
+			return 1
+		}
+
+		return cmpString(lhs.String(), rhs.String())
+	}
 }
 
 // hashFuncForSymbol creates a HashFunc for hashing symbols.

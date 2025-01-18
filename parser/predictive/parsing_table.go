@@ -226,8 +226,8 @@ func (t *parsingTable) String() string {
 }
 
 func (t *parsingTable) Equals(rhs ParsingTable) bool {
-	u, ok := rhs.(*parsingTable)
-	return ok && t.table.Equals(u.table)
+	tt, ok := rhs.(*parsingTable)
+	return ok && t.table.Equals(tt.table)
 }
 
 func (t *parsingTable) Error() error {

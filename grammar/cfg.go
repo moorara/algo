@@ -749,7 +749,7 @@ func (g CFG) LeftFactor() CFG {
 // over longer prefixes that encompass fewer suffixes or production bodies.
 func groupByCommonPrefix(prods set.Set[Production]) symboltable.SymbolTable[String[Symbol], set.Set[String[Symbol]]] {
 	// Define a map of prefixes to their corresponding suffixes.
-	groups := symboltable.NewQuadraticHashTable(HashString, EqString, EqStringSet, symboltable.HashOpts{})
+	groups := symboltable.NewQuadraticHashTable(HashString, EqString, eqStringSet, symboltable.HashOpts{})
 
 	for prod := range prods.All() {
 		prefixFound := false
