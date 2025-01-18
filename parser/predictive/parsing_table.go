@@ -308,7 +308,7 @@ func (e *parsingTableEntry) Equals(rhs *parsingTableEntry) bool {
 	return e.Productions.Equals(rhs.Productions) && e.Sync == rhs.Sync
 }
 
-// parsingTableError represents an error for a parsing table of a predictive parser.
+// parsingTableError represents an error for a predictive parser parsing table.
 // This error occurs due to the presence of left recursion or ambiguity in the grammar.
 type parsingTableError struct {
 	NonTerminal grammar.NonTerminal

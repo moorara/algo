@@ -209,3 +209,28 @@ func Example() {
 		panic(err)
 	}
 }
+
+func ExampleParsingTable() {
+	G := grammar.NewCFG(
+		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
+		[]grammar.Production{
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}},                         // E → T E′
+			{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}}, // E′ → + T E′
+			{Head: "E′", Body: grammar.E}, // E′ → ε
+			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}},                         // T → F T′
+			{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}}, // T′ → * F T′
+			{Head: "T′", Body: grammar.E}, // T′ → ε
+			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}}, // F → ( E )
+			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                 // F → id
+		},
+		"E",
+	)
+
+	table := predictive.BuildParsingTable(G)
+	if err := table.Error(); err != nil {
+		panic(err)
+	}
+
+	fmt.Println(table)
+}

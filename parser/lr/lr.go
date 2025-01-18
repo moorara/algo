@@ -1,5 +1,5 @@
-// Package lalr provides data structures and algorithms for building Look-Ahead LR (LALR) parsers.
-// An LALR parser is a bottom-up parser for the class of LR(1) grammars.
+// Package lr provides common data structures and algorithms for building LR parsers.
+// LR parsers are bottom-up parsers that analyse deterministic context-free languages in linear time.
 //
 // Bottom-up parsing constructs a parse tree for an input string
 // starting at the leaves (bottom) and working towards the root (top).
@@ -38,15 +38,7 @@
 // The next state is determined by the current state, the next input, and the top of the stack.
 // LR(0) parsers do not rely on any lookahead to make parsing decisions.
 // An LR(0) parser bases its decisions entirely on the current state and the parsing stack.
-//
 // LR(1) parsers determine the next state based on the current state, one lookahead symbol, and the top of the stack.
-// An LALR parser, similar to SLR, uses the canonical LR(0) items to construct the state machine (DFA),
-// but refines the states by incorporating lookahead symbols explicitly.
-// LALR merges states with identical core LR(0) items but handles lookahead symbols for each merged state separately,
-// making it more precise than SLR and avoids many conflicts that SLR might encounter.
-// LALR is more powerful than SLR as it can handle a wider range of grammars, including most programming languages.
-// However, it is less powerful than canonical LR(1) because state merging
-// can lose distinctions in lookahead contexts, potentially leading to conflicts for some grammars.
 //
 // Shift-reduce parsing is a bottom-up parsing technique that uses
 // a stack for grammar symbols and an input buffer for the remaining string.
@@ -61,4 +53,78 @@
 //
 // For more details on parsing theory,
 // refer to "Compilers: Principles, Techniques, and Tools (2nd Edition)".
-package lalr
+package lr
+
+import (
+	"fmt"
+
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/hash"
+)
+
+var (
+	eqState   = generic.NewEqualFunc[State]()
+	hashState = hash.HashFuncForInt[State](nil)
+
+	eqAction = func(lhs, rhs Action) bool {
+		return lhs.Equals(rhs)
+	}
+)
+
+// State represents a state in the LR parsing table or automaton.
+type State int
+
+// ActionType enumerates the possible types of actions in an LR parser.
+type ActionType int
+
+const (
+	SHIFT  ActionType = 1 + iota // Advance to the next state by consuming input.
+	REDUCE                       // Apply a production to reduce symbols on the stack.
+	ACCEPT                       // Accept the input as successfully parsed.
+	ERROR                        // Signal an error in parsing.
+)
+
+// Action represents an action in the LR parsing table or automaton.
+type Action struct {
+	Type       ActionType
+	State      *State              // Only set for SHIFT actions
+	Production *grammar.Production // Only set for REDUCE actions
+}
+
+// String returns a string representation of an action.
+func (a Action) String() string {
+	switch a.Type {
+	case SHIFT:
+		return fmt.Sprintf("SHIFT %d", *a.State)
+	case REDUCE:
+		return fmt.Sprintf("REDUCE %s", *a.Production)
+	case ACCEPT:
+		return "ACCEPT"
+	case ERROR:
+		return "ERROR"
+	}
+
+	return fmt.Sprintf("INVALID ACTION(%d)", a.Type)
+}
+
+// Equals determines whether or not two actions are the same.
+func (a Action) Equals(rhs Action) bool {
+	return a.Type == rhs.Type &&
+		equalStates(a.State, rhs.State) &&
+		equalProductions(a.Production, rhs.Production)
+}
+
+func equalStates(lhs, rhs *State) bool {
+	if lhs == nil || rhs == nil {
+		return lhs == rhs
+	}
+	return *lhs == *rhs
+}
+
+func equalProductions(lhs, rhs *grammar.Production) bool {
+	if lhs == nil || rhs == nil {
+		return lhs == rhs
+	}
+	return lhs.Equals(*rhs)
+}
