@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"unicode/utf8"
@@ -15,13 +16,13 @@ type TableStringer[K1, K2 any] struct {
 	K2Values []K2
 	GetEntry func(K1, K2) string
 
-	b     *strings.Builder
+	b     bytes.Buffer
 	cLens []int
 	tLen  int
 }
 
 func (t *TableStringer[K1, K2]) String() string {
-	t.b = new(strings.Builder)
+	t.b.Reset()
 
 	// Calculate the maximum length of each column and the total length of the table.
 	t.calculateColumnLengths()

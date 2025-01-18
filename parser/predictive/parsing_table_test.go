@@ -15,41 +15,41 @@ func getTestParsingTables() []*parsingTable {
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
 	)
 
-	pt0.AddProduction("E", "id", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
-	pt0.AddProduction("E", "(", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
-	pt0.AddProduction("E′", "+", grammar.Production{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
-	pt0.AddProduction("E′", ")", grammar.Production{Head: "E′", Body: grammar.E})
-	pt0.AddProduction("E′", grammar.Endmarker, grammar.Production{Head: "E′", Body: grammar.E})
-	pt0.AddProduction("T", "id", grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
-	pt0.AddProduction("T", "(", grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
-	pt0.AddProduction("T′", "+", grammar.Production{Head: "T′", Body: grammar.E})
-	pt0.AddProduction("T′", "*", grammar.Production{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
-	pt0.AddProduction("T′", ")", grammar.Production{Head: "T′", Body: grammar.E})
-	pt0.AddProduction("T′", grammar.Endmarker, grammar.Production{Head: "T′", Body: grammar.E})
-	pt0.AddProduction("F", "id", grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}})
-	pt0.AddProduction("F", "(", grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}})
+	pt0.addProduction("E", "id", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
+	pt0.addProduction("E", "(", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
+	pt0.addProduction("E′", "+", grammar.Production{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
+	pt0.addProduction("E′", ")", grammar.Production{Head: "E′", Body: grammar.E})
+	pt0.addProduction("E′", grammar.Endmarker, grammar.Production{Head: "E′", Body: grammar.E})
+	pt0.addProduction("T", "id", grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
+	pt0.addProduction("T", "(", grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
+	pt0.addProduction("T′", "+", grammar.Production{Head: "T′", Body: grammar.E})
+	pt0.addProduction("T′", "*", grammar.Production{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
+	pt0.addProduction("T′", ")", grammar.Production{Head: "T′", Body: grammar.E})
+	pt0.addProduction("T′", grammar.Endmarker, grammar.Production{Head: "T′", Body: grammar.E})
+	pt0.addProduction("F", "id", grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}})
+	pt0.addProduction("F", "(", grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}})
 
-	pt0.SetSync("E", ")", true)
-	pt0.SetSync("E", grammar.Endmarker, true)
-	pt0.SetSync("T", "+", true)
-	pt0.SetSync("T", ")", true)
-	pt0.SetSync("T", grammar.Endmarker, true)
-	pt0.SetSync("F", "+", true)
-	pt0.SetSync("F", "*", true)
-	pt0.SetSync("F", ")", true)
-	pt0.SetSync("F", grammar.Endmarker, true)
+	pt0.setSync("E", ")", true)
+	pt0.setSync("E", grammar.Endmarker, true)
+	pt0.setSync("T", "+", true)
+	pt0.setSync("T", ")", true)
+	pt0.setSync("T", grammar.Endmarker, true)
+	pt0.setSync("F", "+", true)
+	pt0.setSync("F", "*", true)
+	pt0.setSync("F", ")", true)
+	pt0.setSync("F", grammar.Endmarker, true)
 
 	pt1 := newParsingTable(
 		[]grammar.Terminal{"a", "b", "e", "i", "t"},
 		[]grammar.NonTerminal{"S", "S′", "E"},
 	)
 
-	pt1.AddProduction("S", "a", grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("a")}})
-	pt1.AddProduction("S", "i", grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("i"), grammar.NonTerminal("E"), grammar.Terminal("t"), grammar.NonTerminal("S"), grammar.NonTerminal("S′")}})
-	pt1.AddProduction("S′", "e", grammar.Production{Head: "S′", Body: grammar.E})
-	pt1.AddProduction("S′", "e", grammar.Production{Head: "S′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("e"), grammar.NonTerminal("S")}})
-	pt1.AddProduction("S′", grammar.Endmarker, grammar.Production{Head: "S′", Body: grammar.E})
-	pt1.AddProduction("E", "b", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("b")}})
+	pt1.addProduction("S", "a", grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("a")}})
+	pt1.addProduction("S", "i", grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("i"), grammar.NonTerminal("E"), grammar.Terminal("t"), grammar.NonTerminal("S"), grammar.NonTerminal("S′")}})
+	pt1.addProduction("S′", "e", grammar.Production{Head: "S′", Body: grammar.E})
+	pt1.addProduction("S′", "e", grammar.Production{Head: "S′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("e"), grammar.NonTerminal("S")}})
+	pt1.addProduction("S′", grammar.Endmarker, grammar.Production{Head: "S′", Body: grammar.E})
+	pt1.addProduction("E", "b", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("b")}})
 
 	pt2 := newParsingTable(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
@@ -127,6 +127,98 @@ func TestBuildParsingTable(t *testing.T) {
 				for _, expectedErrorString := range tc.expectedErrorStrings {
 					assert.Contains(t, s, expectedErrorString)
 				}
+			}
+		})
+	}
+}
+
+func TestParsingTable_addProduction(t *testing.T) {
+	pt := getTestParsingTables()
+
+	tests := []struct {
+		name       string
+		pt         *parsingTable
+		A          grammar.NonTerminal
+		a          grammar.Terminal
+		prod       grammar.Production
+		expectedOK bool
+	}{
+		{
+			name: "OK",
+			pt:   pt[2],
+			A:    grammar.NonTerminal("F"),
+			a:    grammar.Terminal("("),
+			prod: grammar.Production{
+				Head: "F",
+				Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")},
+			},
+			expectedOK: true,
+		},
+		{
+			name: "IsSync",
+			pt:   pt[0],
+			A:    grammar.NonTerminal("F"),
+			a:    grammar.Terminal(")"),
+			prod: grammar.Production{
+				Head: "F",
+				Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")},
+			},
+			expectedOK: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ok := tc.pt.addProduction(tc.A, tc.a, tc.prod)
+			assert.Equal(t, tc.expectedOK, ok)
+
+			if tc.expectedOK {
+				e, ok := tc.pt.getEntry(tc.A, tc.a)
+				assert.True(t, ok)
+				assert.True(t, e.Productions.Contains(tc.prod))
+			}
+		})
+	}
+}
+
+func TestParsingTable_setSync(t *testing.T) {
+	pt := getTestParsingTables()
+
+	tests := []struct {
+		name       string
+		pt         *parsingTable
+		A          grammar.NonTerminal
+		a          grammar.Terminal
+		sync       bool
+		expectedOK bool
+	}{
+		{
+			name:       "OK",
+			pt:         pt[0],
+			A:          grammar.NonTerminal("F"),
+			a:          grammar.Terminal(")"),
+			sync:       true,
+			expectedOK: true,
+		},
+		{
+			name:       "HasProduction",
+			pt:         pt[0],
+			A:          grammar.NonTerminal("F"),
+			a:          grammar.Terminal("("),
+			sync:       false,
+			expectedOK: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ok := tc.pt.setSync(tc.A, tc.a, tc.sync)
+			assert.Equal(t, tc.expectedOK, ok)
+
+			if tc.expectedOK {
+				e, ok := tc.pt.getEntry(tc.A, tc.a)
+				assert.True(t, ok)
+				assert.Equal(t, tc.sync, e.Sync)
 			}
 		})
 	}
@@ -240,98 +332,6 @@ func TestParsingTable_Error(t *testing.T) {
 				for _, expectedErrorString := range tc.expectedErrorStrings {
 					assert.Contains(t, s, expectedErrorString)
 				}
-			}
-		})
-	}
-}
-
-func TestParsingTable_AddProduction(t *testing.T) {
-	pt := getTestParsingTables()
-
-	tests := []struct {
-		name       string
-		pt         *parsingTable
-		A          grammar.NonTerminal
-		a          grammar.Terminal
-		prod       grammar.Production
-		expectedOK bool
-	}{
-		{
-			name: "OK",
-			pt:   pt[2],
-			A:    grammar.NonTerminal("F"),
-			a:    grammar.Terminal("("),
-			prod: grammar.Production{
-				Head: "F",
-				Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")},
-			},
-			expectedOK: true,
-		},
-		{
-			name: "IsSync",
-			pt:   pt[0],
-			A:    grammar.NonTerminal("F"),
-			a:    grammar.Terminal(")"),
-			prod: grammar.Production{
-				Head: "F",
-				Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")},
-			},
-			expectedOK: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			ok := tc.pt.AddProduction(tc.A, tc.a, tc.prod)
-			assert.Equal(t, tc.expectedOK, ok)
-
-			if tc.expectedOK {
-				e, ok := tc.pt.getEntry(tc.A, tc.a)
-				assert.True(t, ok)
-				assert.True(t, e.Productions.Contains(tc.prod))
-			}
-		})
-	}
-}
-
-func TestParsingTable_SetSync(t *testing.T) {
-	pt := getTestParsingTables()
-
-	tests := []struct {
-		name       string
-		pt         *parsingTable
-		A          grammar.NonTerminal
-		a          grammar.Terminal
-		sync       bool
-		expectedOK bool
-	}{
-		{
-			name:       "OK",
-			pt:         pt[0],
-			A:          grammar.NonTerminal("F"),
-			a:          grammar.Terminal(")"),
-			sync:       true,
-			expectedOK: true,
-		},
-		{
-			name:       "HasProduction",
-			pt:         pt[0],
-			A:          grammar.NonTerminal("F"),
-			a:          grammar.Terminal("("),
-			sync:       false,
-			expectedOK: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			ok := tc.pt.SetSync(tc.A, tc.a, tc.sync)
-			assert.Equal(t, tc.expectedOK, ok)
-
-			if tc.expectedOK {
-				e, ok := tc.pt.getEntry(tc.A, tc.a)
-				assert.True(t, ok)
-				assert.Equal(t, tc.sync, e.Sync)
 			}
 		})
 	}

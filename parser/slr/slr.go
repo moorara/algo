@@ -1,5 +1,5 @@
 // Package slr provides data structures and algorithms for building Simple LR (SLR) parsers.
-// An SLR parser is a bottom-up parser for the class of LR(0) grammars.
+// An SLR parser is a bottom-up parser for the class of LR(1) grammars.
 //
 // Bottom-up parsing constructs a parse tree for an input string
 // starting at the leaves (bottom) and working towards the root (top).
@@ -19,7 +19,6 @@
 // The most common type of bottom-up parser is LR(k) parsing.
 // The L is for left-to-right scanning of the input, the R for constructing a rightmost derivation in reverse,
 // and the k for the number of input symbols of lookahead that are used in making parsing decisions.
-// The cases k = 0 or k = 1 are of practical interest.
 //
 // Advantages of LR parsing:
 //
@@ -31,6 +30,19 @@
 //     a production in a right-sentential form, with k input symbols of lookahead.
 //     This requirement is far less stringent than that for LL(k) grammars where we must be able
 //     to recognize the use of a production seeing only the first k symbols of what its right side derives.
+//
+// In LR(k) parsing, the cases k = 0 or k = 1 are most commonly used in practical applications.
+// LR parsing methods use pushdown automata (PDA) to parse an input string.
+// A pushdown automaton is a type of automaton used for Type 2 languages (context-free languages) in the Chomsky hierarchy.
+// A PDA uses a state machine with a stack.
+// The next state is determined by the current state, the next input, and the top of the stack.
+// LR(0) parsers do not rely on any lookahead to make parsing decisions.
+// An LR(0) parser bases its decisions entirely on the current state and the parsing stack.
+//
+// LR(1) parsers determine the next state based on the current state, one lookahead symbol, and the top of the stack.
+// An SLR parser uses the canonical LR(0) items to construct the state machine (DFA).
+// An SLR parser is less powerful than a canonical LR(1) parser.
+// SLR simplifies the construction process but sacrifices some parsing power compared to canonical LR(1).
 //
 // Shift-reduce parsing is a bottom-up parsing technique that uses
 // a stack for grammar symbols and an input buffer for the remaining string.

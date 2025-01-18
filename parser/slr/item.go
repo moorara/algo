@@ -1,8 +1,8 @@
 package slr
 
 import (
+	"bytes"
 	"fmt"
-	"strings"
 
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/set"
@@ -18,20 +18,20 @@ var (
 	}
 )
 
-// ItemSet represents a set of items for a context-free grammar.
-type ItemSet set.Set[Item]
-
-// NewItemSet creates a new set of items.
-func NewItemSet(items ...Item) ItemSet {
-	return set.New(eqItem, items...)
-}
-
 // ItemSet represents a collection of item sets for a context-free grammar.
 type ItemSetCollection set.Set[ItemSet]
 
 // NewItemSetCollection creates a new collection of item sets.
 func NewItemSetCollection(sets ...ItemSet) ItemSetCollection {
 	return set.New(eqItemSet, sets...)
+}
+
+// ItemSet represents a set of items for a context-free grammar.
+type ItemSet set.Set[Item]
+
+// NewItemSet creates a new set of items.
+func NewItemSet(items ...Item) ItemSet {
+	return set.New(eqItem, items...)
 }
 
 // Item is a production with a dot at some position of the body.
@@ -56,15 +56,15 @@ type Item struct {
 
 // String returns a string representation of an item.
 func (i Item) String() string {
-	b := new(strings.Builder)
+	var b bytes.Buffer
 
-	fmt.Fprintf(b, "%s → ", i.Head)
+	fmt.Fprintf(&b, "%s → ", i.Head)
 
 	if α := i.Body[:i.Dot]; len(α) > 0 {
 		b.WriteString(α.String())
 	}
 
-	fmt.Fprintf(b, "•")
+	b.WriteRune('•')
 
 	if β := i.Body[i.Dot:]; len(β) > 0 {
 		b.WriteString(β.String())

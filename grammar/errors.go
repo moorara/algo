@@ -1,8 +1,8 @@
 package grammar
 
 import (
+	"bytes"
 	"fmt"
-	"strings"
 )
 
 // CNFError represents an error for a production rule in the form
@@ -14,8 +14,8 @@ type CNFError struct {
 // Error implements the error interface.
 // It returns a formatted string describing the error in detail.
 func (e *CNFError) Error() string {
-	b := new(strings.Builder)
-	fmt.Fprintf(b, "production %s is neither a binary rule, a terminal rule, nor S → ε", e.P)
+	var b bytes.Buffer
+	fmt.Fprintf(&b, "production %s is neither a binary rule, a terminal rule, nor S → ε", e.P)
 	return b.String()
 }
 
@@ -32,21 +32,21 @@ type LL1Error struct {
 // Error implements the error interface.
 // It returns a formatted string describing the error in detail.
 func (e *LL1Error) Error() string {
-	b := new(strings.Builder)
+	var b bytes.Buffer
 
-	fmt.Fprintf(b, "%s:\n", e.description)
-	fmt.Fprintf(b, "  %s → %s | %s\n", e.A, e.Alpha, e.Beta)
+	fmt.Fprintf(&b, "%s:\n", e.description)
+	fmt.Fprintf(&b, "  %s → %s | %s\n", e.A, e.Alpha, e.Beta)
 
 	if e.FOLLOWA != nil {
-		fmt.Fprintf(b, "    FOLLOW(%s): %s\n", e.A, e.FOLLOWA)
+		fmt.Fprintf(&b, "    FOLLOW(%s): %s\n", e.A, e.FOLLOWA)
 	}
 
 	if e.FIRSTα != nil {
-		fmt.Fprintf(b, "    FIRST(%s): %s\n", e.Alpha, e.FIRSTα)
+		fmt.Fprintf(&b, "    FIRST(%s): %s\n", e.Alpha, e.FIRSTα)
 	}
 
 	if e.FIRSTβ != nil {
-		fmt.Fprintf(b, "    FIRST(%s): %s\n", e.Beta, e.FIRSTβ)
+		fmt.Fprintf(&b, "    FIRST(%s): %s\n", e.Beta, e.FIRSTβ)
 	}
 
 	return b.String()

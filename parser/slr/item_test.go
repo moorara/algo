@@ -98,6 +98,30 @@ func getTestItemSets() []ItemSet {
 	return []ItemSet{I0, I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11}
 }
 
+func TestNewItemSetCollection(t *testing.T) {
+	s := getTestItemSets()
+
+	tests := []struct {
+		name                      string
+		sets                      []ItemSet
+		expectedItemSetCollection ItemSetCollection
+	}{
+		{
+			name:                      "OK",
+			sets:                      []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+			expectedItemSetCollection: NewItemSetCollection(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewItemSetCollection(tc.sets...)
+			assert.NotNil(t, s)
+			assert.True(t, s.Equals(tc.expectedItemSetCollection))
+		})
+	}
+}
+
 func TestNewItemSet(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -180,7 +204,7 @@ func TestItem_Equals(t *testing.T) {
 	tests := []struct {
 		name           string
 		i              Item
-		j              Item
+		rhs            Item
 		expectedEquals bool
 	}{
 		{
@@ -189,7 +213,7 @@ func TestItem_Equals(t *testing.T) {
 				Production: &prods[0][1],
 				Dot:        1,
 			},
-			j: Item{
+			rhs: Item{
 				Production: &prods[0][1],
 				Dot:        1,
 			},
@@ -201,7 +225,7 @@ func TestItem_Equals(t *testing.T) {
 				Production: &prods[0][1],
 				Dot:        1,
 			},
-			j: Item{
+			rhs: Item{
 				Production: &prods[0][1],
 				Dot:        2,
 			},
@@ -211,7 +235,7 @@ func TestItem_Equals(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.i.Equals(tc.j))
+			assert.Equal(t, tc.expectedEquals, tc.i.Equals(tc.rhs))
 		})
 	}
 }

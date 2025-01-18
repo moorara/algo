@@ -1,5 +1,5 @@
 // Package lalr provides data structures and algorithms for building Look-Ahead LR (LALR) parsers.
-// An LALR parser is a bottom-up parser for LR(1) grammars.
+// An LALR parser is a bottom-up parser for the class of LR(1) grammars.
 //
 // Bottom-up parsing constructs a parse tree for an input string
 // starting at the leaves (bottom) and working towards the root (top).
@@ -19,7 +19,6 @@
 // The most common type of bottom-up parser is LR(k) parsing.
 // The L is for left-to-right scanning of the input, the R for constructing a rightmost derivation in reverse,
 // and the k for the number of input symbols of lookahead that are used in making parsing decisions.
-// The cases k = 0 or k = 1 are of practical interest.
 //
 // Advantages of LR parsing:
 //
@@ -31,6 +30,23 @@
 //     a production in a right-sentential form, with k input symbols of lookahead.
 //     This requirement is far less stringent than that for LL(k) grammars where we must be able
 //     to recognize the use of a production seeing only the first k symbols of what its right side derives.
+//
+// In LR(k) parsing, the cases k = 0 or k = 1 are most commonly used in practical applications.
+// LR parsing methods use pushdown automata (PDA) to parse an input string.
+// A pushdown automaton is a type of automaton used for Type 2 languages (context-free languages) in the Chomsky hierarchy.
+// A PDA uses a state machine with a stack.
+// The next state is determined by the current state, the next input, and the top of the stack.
+// LR(0) parsers do not rely on any lookahead to make parsing decisions.
+// An LR(0) parser bases its decisions entirely on the current state and the parsing stack.
+//
+// LR(1) parsers determine the next state based on the current state, one lookahead symbol, and the top of the stack.
+// An LALR parser, similar to SLR, uses the canonical LR(0) items to construct the state machine (DFA),
+// but refines the states by incorporating lookahead symbols explicitly.
+// LALR merges states with identical core LR(0) items but handles lookahead symbols for each merged state separately,
+// making it more precise than SLR and avoids many conflicts that SLR might encounter.
+// LALR is more powerful than SLR as it can handle a wider range of grammars, including most programming languages.
+// However, it is less powerful than canonical LR(1) because state merging
+// can lose distinctions in lookahead contexts, potentially leading to conflicts for some grammars.
 //
 // Shift-reduce parsing is a bottom-up parsing technique that uses
 // a stack for grammar symbols and an input buffer for the remaining string.

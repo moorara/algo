@@ -8,8 +8,8 @@
 package parser
 
 import (
+	"bytes"
 	"fmt"
-	"strings"
 
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/lexer"
@@ -41,24 +41,24 @@ type ParseError struct {
 // Error implements the error interface.
 // It returns a formatted string describing the error in detail.
 func (e *ParseError) Error() string {
-	b := new(strings.Builder)
+	var b bytes.Buffer
 
 	if !e.Pos.IsZero() {
-		fmt.Fprintf(b, "%s", e.Pos)
+		fmt.Fprintf(&b, "%s", e.Pos)
 	}
 
 	if len(e.Description) != 0 {
 		if b.Len() > 0 {
-			fmt.Fprint(b, ": ")
+			fmt.Fprint(&b, ": ")
 		}
-		fmt.Fprintf(b, "%s", e.Description)
+		fmt.Fprintf(&b, "%s", e.Description)
 	}
 
 	if e.Cause != nil {
 		if b.Len() > 0 {
-			fmt.Fprint(b, ": ")
+			fmt.Fprint(&b, ": ")
 		}
-		fmt.Fprintf(b, "%s", e.Cause)
+		fmt.Fprintf(&b, "%s", e.Cause)
 	}
 
 	return b.String()

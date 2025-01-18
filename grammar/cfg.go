@@ -1136,7 +1136,7 @@ func (g CFG) OrderTerminals() String[Terminal] {
 // The goal of this function is to ensure a consistent and deterministic order for any given set of non-terminals.
 func (g CFG) OrderNonTerminals() (String[NonTerminal], String[NonTerminal], String[NonTerminal]) {
 	prods := generic.Collect1(g.Productions.All())
-	OrderProductionSlice(prods)
+	orderProductionSlice(prods)
 
 	visited := make(String[NonTerminal], 0)
 	isVisited := func(n NonTerminal) bool {

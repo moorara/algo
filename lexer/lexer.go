@@ -14,8 +14,8 @@
 package lexer
 
 import (
+	"bytes"
 	"fmt"
-	"strings"
 
 	"github.com/moorara/algo/grammar"
 )
@@ -61,16 +61,16 @@ type Position struct {
 //
 // It returns a formatted string representation of the position.
 func (p Position) String() string {
-	b := new(strings.Builder)
+	var b bytes.Buffer
 
 	if len(p.Filename) > 0 {
-		fmt.Fprintf(b, "%s:", p.Filename)
+		fmt.Fprintf(&b, "%s:", p.Filename)
 	}
 
 	if p.Line > 0 && p.Column > 0 {
-		fmt.Fprintf(b, "%d:%d", p.Line, p.Column)
+		fmt.Fprintf(&b, "%d:%d", p.Line, p.Column)
 	} else {
-		fmt.Fprintf(b, "%d", p.Offset)
+		fmt.Fprintf(&b, "%d", p.Offset)
 	}
 
 	return b.String()
