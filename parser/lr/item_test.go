@@ -1,110 +1,178 @@
 package lr
 
 import (
+	"strings"
 	"testing"
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/sort"
-	"github.com/stretchr/testify/assert"
 )
 
-var start = grammar.NonTerminal("E′")
+type mockItem string
 
-var prods = []grammar.Production{
-	{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E")}},                                                 // E′ → E
-	{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T
-	{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")}},                                                  // E → T
-	{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.Terminal("*"), grammar.NonTerminal("F")}}, // T → T * F
-	{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F")}},                                                  // T → F
-	{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}},    // F → ( E )
-	{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                    // F → id
+func (i mockItem) String() string {
+	return string(i)
+}
+
+func (i mockItem) Equals(rhs Item) bool {
+	ii, ok := rhs.(mockItem)
+	return ok && i == ii
+}
+
+func (i mockItem) Compare(rhs Item) int {
+	ii, _ := rhs.(mockItem)
+
+	if i.IsInitial() && !ii.IsInitial() {
+		return -1
+	} else if !i.IsInitial() && ii.IsInitial() {
+		return 1
+	}
+
+	if i.IsKernel() && !ii.IsKernel() {
+		return -1
+	} else if !i.IsKernel() && ii.IsKernel() {
+		return 1
+	}
+
+	s1, s2 := i.String(), ii.String()
+	if s1 < s2 {
+		return -1
+	} else if s1 > s2 {
+		return 1
+	}
+
+	return 0
+}
+
+func (i mockItem) IsInitial() bool {
+	return strings.Contains(string(i), "′→•")
+}
+
+func (i mockItem) IsKernel() bool {
+	return i.IsInitial() || !strings.Contains(string(i), "→•")
+}
+
+func (i mockItem) IsComplete() bool {
+	r, _ := utf8.DecodeLastRuneInString(string(i))
+	return r == '•'
+}
+
+func (i mockItem) DotSymbol() (grammar.Symbol, bool) {
+	dot := strings.IndexRune(string(i), '•')
+	_, s1 := utf8.DecodeRuneInString(string(i[dot:]))
+	r, s2 := utf8.DecodeRuneInString(string(i[dot+s1:]))
+
+	if s2 == 0 {
+		return nil, false
+	}
+
+	if unicode.IsUpper(r) {
+		return grammar.NonTerminal(r), true
+	}
+	return grammar.Terminal(r), true
+}
+
+func (i mockItem) Next() (Item, bool) {
+	dot := strings.IndexRune(string(i), '•')
+	_, s1 := utf8.DecodeRuneInString(string(i[dot:]))
+	r, s2 := utf8.DecodeRuneInString(string(i[dot+s1:]))
+
+	if s2 == 0 {
+		return nil, false
+	}
+
+	return mockItem(string(i[:dot]) + string(r) + "•" + string(i[dot+s1+s2:])), true
 }
 
 func getTestItemSets() []ItemSet {
 	I0 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[0], Start: &start, Dot: 0}, // E′ → •E
+		mockItem("E′→•E"),
 		// Non-Kernels
-		Item0{Production: &prods[1], Start: &start, Dot: 0}, // E → •E + T
-		Item0{Production: &prods[2], Start: &start, Dot: 0}, // E → •T
-		Item0{Production: &prods[3], Start: &start, Dot: 0}, // T → •T * F
-		Item0{Production: &prods[4], Start: &start, Dot: 0}, // T → •F
-		Item0{Production: &prods[5], Start: &start, Dot: 0}, // F → •( E )
-		Item0{Production: &prods[6], Start: &start, Dot: 0}, // F → •id
+		mockItem("E→•E+T"),
+		mockItem("E→•T"),
+		mockItem("T→•T*F"),
+		mockItem("T→•F"),
+		mockItem("F→•(E)"),
+		mockItem("F→•id"),
 	)
 
 	I1 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[0], Start: &start, Dot: 1}, // E′ → E•
-		Item0{Production: &prods[1], Start: &start, Dot: 1}, // E → E•+ T
+		mockItem("E′→E•"),
+		mockItem("E→E•+T"),
 	)
 
 	I2 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[2], Start: &start, Dot: 1}, // E → T•
-		Item0{Production: &prods[3], Start: &start, Dot: 1}, // T → T•* F
+		mockItem("E→T•"),
+		mockItem("T→T•*F"),
 	)
 
 	I3 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[4], Start: &start, Dot: 1}, // T → F•
+		mockItem("T→F•"),
 	)
 
 	I4 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[5], Start: &start, Dot: 1}, // F → (•E )
+		mockItem("F→(•E)"),
 		// Non-Kernels
-		Item0{Production: &prods[1], Start: &start, Dot: 0}, // E → •E + T
-		Item0{Production: &prods[2], Start: &start, Dot: 0}, // E → •T
-		Item0{Production: &prods[3], Start: &start, Dot: 0}, // T → •T * F
-		Item0{Production: &prods[4], Start: &start, Dot: 0}, // T → •F
-		Item0{Production: &prods[5], Start: &start, Dot: 0}, // F → •( E )
-		Item0{Production: &prods[6], Start: &start, Dot: 0}, // F → •id
+		mockItem("E→•E+T"),
+		mockItem("E→•T"),
+		mockItem("T→•T*F"),
+		mockItem("T→•F"),
+		mockItem("F→•(E)"),
+		mockItem("F→•id"),
 	)
 
 	I5 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[6], Start: &start, Dot: 1}, // F → id•
+		mockItem("F→id•"),
 	)
 
 	I6 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[1], Start: &start, Dot: 2}, // E → E +•T
+		mockItem("E→E+•T"),
 		// Non-Kernels
-		Item0{Production: &prods[3], Start: &start, Dot: 0}, // T → •T * F
-		Item0{Production: &prods[4], Start: &start, Dot: 0}, // T → •F
-		Item0{Production: &prods[5], Start: &start, Dot: 0}, // F → •( E )
-		Item0{Production: &prods[6], Start: &start, Dot: 0}, // F → •id
+		mockItem("T→•T*F"),
+		mockItem("T→•F"),
+		mockItem("F→•(E)"),
+		mockItem("F→•id"),
 	)
 
 	I7 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[3], Start: &start, Dot: 2}, // T → T *•F
+		mockItem("T→T*•F"),
 		// Non-Kernels
-		Item0{Production: &prods[5], Start: &start, Dot: 0}, // F → •( E )
-		Item0{Production: &prods[6], Start: &start, Dot: 0}, // F → •id
+		mockItem("F→•(E)"),
+		mockItem("F→•id"),
 	)
 
 	I8 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[1], Start: &start, Dot: 1}, // E → E• + T
-		Item0{Production: &prods[5], Start: &start, Dot: 2}, // F → ( E•)
+		mockItem("E→E•+T"),
+		mockItem("F→(E•)"),
 	)
 
 	I9 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[1], Start: &start, Dot: 3}, // E → E + T•
-		Item0{Production: &prods[3], Start: &start, Dot: 1}, // T → T•* F
+		mockItem("E→E+T•"),
+		mockItem("T→T•*F"),
 	)
 
 	I10 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[3], Start: &start, Dot: 3}, // T → T * F•
+		mockItem("T→T*F•"),
 	)
 
 	I11 := NewItemSet(
 		// Kernels
-		Item0{Production: &prods[5], Start: &start, Dot: 3}, // F → ( E )•
+		mockItem("F→(E)•"),
 	)
 
 	return []ItemSet{I0, I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11}
@@ -143,8 +211,8 @@ func TestNewItemSet(t *testing.T) {
 		{
 			name: "OK",
 			items: []Item{
-				Item0{Production: &prods[0], Start: &start, Dot: 1}, // E′ → E•
-				Item0{Production: &prods[1], Start: &start, Dot: 1}, // E → E•+ T
+				mockItem("E′ → E•"),
+				mockItem("E → E•+ T"),
 			},
 		},
 	}
@@ -172,7 +240,7 @@ func TestCmpItemSet(t *testing.T) {
 		{
 			name:         "OK",
 			sets:         []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
-			expectedSets: []ItemSet{s[0], s[1], s[9], s[11], s[10], s[6], s[8], s[7], s[2], s[4], s[5], s[3]},
+			expectedSets: []ItemSet{s[0], s[1], s[9], s[6], s[8], s[2], s[11], s[4], s[5], s[3], s[10], s[7]},
 		},
 	}
 
@@ -180,287 +248,6 @@ func TestCmpItemSet(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			sort.Quick(tc.sets, cmpItemSet)
 			assert.Equal(t, tc.expectedSets, tc.sets)
-		})
-	}
-}
-
-func TestItem0_String(t *testing.T) {
-	tests := []struct {
-		name           string
-		i              Item0
-		expectedString string
-	}{
-		{
-			name: "EmptyProduction",
-			i: Item0{
-				Production: &grammar.Production{Head: "E", Body: grammar.E},
-				Start:      &start,
-				Dot:        0,
-			},
-			expectedString: `E → •`,
-		},
-		{
-			name:           "Initial",
-			i:              Item0{Production: &prods[0], Start: &start, Dot: 0},
-			expectedString: `E′ → •E`,
-		},
-		{
-			name:           "DotAtLeft",
-			i:              Item0{Production: &prods[1], Start: &start, Dot: 0},
-			expectedString: `E → •E "+" T`,
-		},
-		{
-			name:           "DotInMiddle",
-			i:              Item0{Production: &prods[1], Start: &start, Dot: 2},
-			expectedString: `E → E "+"•T`,
-		},
-		{
-			name:           "DotAtRight",
-			i:              Item0{Production: &prods[1], Start: &start, Dot: 3},
-			expectedString: `E → E "+" T•`,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedString, tc.i.String())
-		})
-	}
-}
-
-func TestItem0_Equals(t *testing.T) {
-	tests := []struct {
-		name           string
-		i              Item0
-		rhs            Item0
-		expectedEquals bool
-	}{
-		{
-			name:           "Equal",
-			i:              Item0{Production: &prods[1], Start: &start, Dot: 1}, // E → E•+ T
-			rhs:            Item0{Production: &prods[1], Start: &start, Dot: 1}, // E → E•+ T
-			expectedEquals: true,
-		},
-		{
-			name:           "NotEqual",
-			i:              Item0{Production: &prods[1], Start: &start, Dot: 1}, // E → E•+ T
-			rhs:            Item0{Production: &prods[1], Start: &start, Dot: 2}, // E → E +•T
-			expectedEquals: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.i.Equals(tc.rhs))
-		})
-	}
-}
-
-func TestItem0_Compare(t *testing.T) {
-	tests := []struct {
-		name          string
-		items         []Item0
-		expectedItems []Item0
-	}{
-		{
-			name: "I₀",
-			items: []Item0{
-				{Production: &prods[0], Start: &start, Dot: 0}, // E′ → •E
-				{Production: &prods[1], Start: &start, Dot: 0}, // E → •E + T
-				{Production: &prods[2], Start: &start, Dot: 0}, // E → •T
-				{Production: &prods[3], Start: &start, Dot: 0}, // T → •T * F
-				{Production: &prods[4], Start: &start, Dot: 0}, // T → •F
-				{Production: &prods[5], Start: &start, Dot: 0}, // F → •( E )
-				{Production: &prods[6], Start: &start, Dot: 0}, // F → •id
-			},
-			expectedItems: []Item0{
-				{Production: &prods[0], Start: &start, Dot: 0}, // E′ → •E
-				{Production: &prods[1], Start: &start, Dot: 0}, // E → •E + T
-				{Production: &prods[2], Start: &start, Dot: 0}, // E → •T
-				{Production: &prods[5], Start: &start, Dot: 0}, // F → •( E )
-				{Production: &prods[6], Start: &start, Dot: 0}, // F → •id
-				{Production: &prods[3], Start: &start, Dot: 0}, // T → •T * F
-				{Production: &prods[4], Start: &start, Dot: 0}, // T → •F
-			},
-		},
-		{
-			name: "I₈",
-			items: []Item0{
-				{Production: &prods[1], Start: &start, Dot: 1}, // E → E• + T
-				{Production: &prods[5], Start: &start, Dot: 2}, // F → ( E•)
-			},
-			expectedItems: []Item0{
-				{Production: &prods[5], Start: &start, Dot: 2}, // F → ( E•)
-				{Production: &prods[1], Start: &start, Dot: 1}, // E → E• + T
-			},
-		},
-		{
-			name: "I₉",
-			items: []Item0{
-				{Production: &prods[1], Start: &start, Dot: 3}, // E → E + T•
-				{Production: &prods[3], Start: &start, Dot: 1}, // T → T•* F
-			},
-			expectedItems: []Item0{
-				{Production: &prods[1], Start: &start, Dot: 3}, // E → E + T•
-				{Production: &prods[3], Start: &start, Dot: 1}, // T → T•* F
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			sort.Quick(tc.items, func(lhs, rhs Item0) int {
-				return lhs.Compare(rhs)
-			})
-
-			assert.Equal(t, tc.expectedItems, tc.items)
-		})
-	}
-}
-
-func TestItem0_IsInitial(t *testing.T) {
-	tests := []struct {
-		name             string
-		i                Item0
-		expectedIsKernel bool
-	}{
-		{
-			name:             "Initial",
-			i:                Item0{Production: &prods[0], Start: &start, Dot: 0}, // E′ → •E
-			expectedIsKernel: true,
-		},
-		{
-			name:             "NotInitial",
-			i:                Item0{Production: &prods[0], Start: &start, Dot: 1}, // E′ → E•
-			expectedIsKernel: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedIsKernel, tc.i.IsInitial())
-		})
-	}
-}
-
-func TestItem0_IsKernel(t *testing.T) {
-	tests := []struct {
-		name             string
-		i                Item0
-		expectedIsKernel bool
-	}{
-		{
-			name:             "Initial",
-			i:                Item0{Production: &prods[0], Start: &start, Dot: 0}, // E′ → •E
-			expectedIsKernel: true,
-		},
-		{
-			name:             "Kernel",
-			i:                Item0{Production: &prods[1], Start: &start, Dot: 2}, // E → E +•T
-			expectedIsKernel: true,
-		},
-		{
-			name:             "NonKernel",
-			i:                Item0{Production: &prods[1], Start: &start, Dot: 0}, // E → •E + T
-			expectedIsKernel: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedIsKernel, tc.i.IsKernel())
-		})
-	}
-}
-
-func TestItem0_IsComplete(t *testing.T) {
-	tests := []struct {
-		name               string
-		i                  Item0
-		expectedIsComplete bool
-	}{
-		{
-			name:               "Complete",
-			i:                  Item0{Production: &prods[1], Start: &start, Dot: 3}, // E → E + T•
-			expectedIsComplete: true,
-		},
-		{
-			name:               "NotComplete",
-			i:                  Item0{Production: &prods[1], Start: &start, Dot: 2}, // E → E +•T
-			expectedIsComplete: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedIsComplete, tc.i.IsComplete())
-		})
-	}
-}
-
-func TestItem0_DotSymbol(t *testing.T) {
-	tests := []struct {
-		name              string
-		i                 Item0
-		expectedDotSymbol grammar.Symbol
-		expectedOK        bool
-	}{
-		{
-			name:              "Initial",
-			i:                 Item0{Production: &prods[0], Start: &start, Dot: 0}, // E′ → •E
-			expectedDotSymbol: grammar.NonTerminal("E"),
-			expectedOK:        true,
-		},
-		{
-			name:              "Complete",
-			i:                 Item0{Production: &prods[1], Start: &start, Dot: 3}, // E → E + T•
-			expectedDotSymbol: nil,
-			expectedOK:        false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			X, ok := tc.i.DotSymbol()
-
-			if tc.expectedOK {
-				assert.True(t, X.Equals(tc.expectedDotSymbol))
-				assert.True(t, ok)
-			} else {
-				assert.Nil(t, X)
-				assert.False(t, ok)
-			}
-		})
-	}
-}
-
-func TestItem0_Next(t *testing.T) {
-	tests := []struct {
-		name         string
-		i            Item0
-		expectedNext Item
-		expectedOK   bool
-	}{
-		{
-			name:         "Initial",
-			i:            Item0{Production: &prods[0], Start: &start, Dot: 0}, // E′ → •E
-			expectedNext: Item0{Production: &prods[0], Start: &start, Dot: 1}, // E′ → E•
-			expectedOK:   true,
-		},
-		{
-			name:         "Complete",
-			i:            Item0{Production: &prods[1], Start: &start, Dot: 3}, // E → E + T•
-			expectedNext: Item0{},
-			expectedOK:   false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			item, ok := tc.i.Next()
-
-			assert.Equal(t, tc.expectedNext, item)
-			assert.Equal(t, tc.expectedOK, ok)
 		})
 	}
 }

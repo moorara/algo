@@ -54,3 +54,92 @@
 // For more details on parsing theory,
 // refer to "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 package lr
+
+import "github.com/moorara/algo/grammar"
+
+var (
+	primeSuffixes = []string{
+		"′", // Prime (U+2032)
+		"″", // Double Prime (U+2033)
+		"‴", // Triple Prime (U+2034)
+		"⁗", // Quadruple Prime (U+2057)
+	}
+)
+
+// Augment augments a context-free grammar G by creating a new start symbol S′
+// and adding a production "S′ → S", where S is the original start symbol of G.
+// This transformation is used to prepare grammars for LR parsing.
+// The function clones the input grammar G, ensuring that the original grammar remains unmodified.
+func Augment(G grammar.CFG) grammar.CFG {
+	S := G.Start
+	augG := G.Clone()
+
+	newS := augG.AddNewNonTerminal(S, primeSuffixes...)
+	augG.Start = newS
+	newP := grammar.Production{
+		Head: newS,
+		Body: grammar.String[grammar.Symbol]{S},
+	}
+	augG.Productions.Add(newP)
+
+	return augG
+}
+
+// Closure computes the closure of a given item set.
+// A clousre function may compute the closure for either an LR(0) item set or an LR(1) item set.
+type ClosureFunc func(ItemSet) ItemSet
+
+// GOTO(I, X) computes the closure of the set of all items "A → αX•β",
+// where "A → α•Xβ" is in the set of items I and X is a grammar symbol.
+//
+// The GOTO function defines transitions in the automaton for the grammar.
+// Each state of the automaton corresponds to a set of items, and
+// GOTO(I, X) specifies the transition from the state I on grammar symbol X.
+func GOTO(CLOSURE ClosureFunc, I ItemSet, X grammar.Symbol) ItemSet {
+	// Initialize J to be the empty set.
+	J := NewItemSet()
+
+	// For each item "A → αX•β" in I
+	for i := range I.All() {
+		if Y, ok := i.DotSymbol(); ok && Y.Equals(X) {
+			// Add item "A → α•Xβ" to set J
+			if next, ok := i.Next(); ok {
+				J.Add(next)
+			}
+		}
+	}
+
+	// Compute CLOSURE(J)
+	return CLOSURE(J)
+}
+
+// Canonical constructs the canonical collection of item sets for the augmented grammar G′.
+//
+// The canonical collection forms the basis for constructing
+// an automaton, used for making parsing decisions.
+// Each state of the automaton corresponds to an item set in the canonical collection.
+func Canonical(augG grammar.CFG, initial Item, CLOSURE ClosureFunc) ItemSetCollection {
+	// Initialize C to { CLOSURE(initial item) }.
+	C := NewItemSetCollection(
+		CLOSURE(NewItemSet(initial)),
+	)
+
+	for newItemSets := []ItemSet{}; newItemSets != nil; {
+		newItemSets = nil
+
+		// For each set of items I in C
+		for I := range C.All() {
+			// For each grammar symbol X
+			for X := range augG.Symbols().All() {
+				// If GOTO(I,X) is not empty and not in C, add GOTO(I,X) to C
+				if J := GOTO(CLOSURE, I, X); !J.IsEmpty() && !C.Contains(J) {
+					newItemSets = append(newItemSets, J)
+				}
+			}
+		}
+
+		C.Add(newItemSets...)
+	}
+
+	return C
+}

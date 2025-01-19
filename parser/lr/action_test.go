@@ -3,8 +3,9 @@ package lr
 import (
 	"testing"
 
-	"github.com/moorara/algo/grammar"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moorara/algo/grammar"
 )
 
 var actions = []Action{

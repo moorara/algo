@@ -26,8 +26,7 @@ type StateMap []ItemSet
 // BuildStateMap constructs a deterministic mapping of states to item sets.
 // It creates a StateMap that associates a state (index) with each item set in the collection.
 func BuildStateMap(C ItemSetCollection) StateMap {
-	var states StateMap
-	states = generic.Collect1(C.All())
+	states := generic.Collect1(C.All())
 	sort.Quick(states, cmpItemSet)
 
 	return states
@@ -63,7 +62,7 @@ func (m StateMap) String() string {
 	width := 10 // minimum width
 	for _, I := range m {
 		for i := range I.All() {
-			if l := len(i.String()); l > width {
+			if l := utf8.RuneCountInString(i.String()); l > width {
 				width = l
 			}
 		}

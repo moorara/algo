@@ -2,7 +2,7 @@
 // An LALR parser is a bottom-up parser for the class of LR(1) grammars.
 //
 // An LALR parser, similar to SLR, uses the canonical LR(0) items to construct the state machine (DFA),
-// but refines the states by incorporating lookahead symbols explicitly.
+// but it refines the states by incorporating lookahead symbols explicitly.
 // LALR merges states with identical core LR(0) items but handles lookahead symbols for each merged state separately,
 // making it more precise than SLR and avoids many conflicts that SLR might encounter.
 // LALR is more powerful than SLR as it can handle a wider range of grammars, including most programming languages.
