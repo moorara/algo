@@ -94,6 +94,11 @@ type Item interface {
 	// IsComplete checks if the dot has reached the end of the item's body.
 	IsComplete() bool
 
+	// IsFinal checks if an item is the final item in the augmented grammar.
+	// For LR(0), the final item is "S′ → S•",
+	// and for LR(1), the initial item is "S′ → S•, $".
+	IsFinal() bool
+
 	// Dot returns the grammar symbol at the dot position in the item's body.
 	// If the dot is at the end of the body, it returns nil and false.
 	DotSymbol() (grammar.Symbol, bool)

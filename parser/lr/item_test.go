@@ -61,6 +61,10 @@ func (i mockItem) IsComplete() bool {
 	return r == '•'
 }
 
+func (i mockItem) IsFinal() bool {
+	return strings.Contains(string(i), "′→") && strings.HasSuffix(string(i), "•")
+}
+
 func (i mockItem) DotSymbol() (grammar.Symbol, bool) {
 	dot := strings.IndexRune(string(i), '•')
 	_, s1 := utf8.DecodeRuneInString(string(i[dot:]))

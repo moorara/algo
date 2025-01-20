@@ -124,6 +124,11 @@ func (i LR0Item) IsComplete() bool {
 	return i.Dot == len(i.Body)
 }
 
+// IsInitial checks if an LR(0) item is the final item "S′ → S•" in the augmented grammar.
+func (i LR0Item) IsFinal() bool {
+	return i.Production.Head.Equals(*i.Start) && i.IsComplete()
+}
+
 // Dot returns the grammar symbol at the dot position in the item's body.
 // If the dot is at the end of the body, it returns nil and false.
 // For example, in the LR(0) item A → α•Bβ, it returns B.

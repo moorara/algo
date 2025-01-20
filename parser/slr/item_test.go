@@ -314,6 +314,31 @@ func TestLR0Item_IsComplete(t *testing.T) {
 	}
 }
 
+func TestLR0Item_IsFinal(t *testing.T) {
+	tests := []struct {
+		name            string
+		i               LR0Item
+		expectedIsFinal bool
+	}{
+		{
+			name:            "Final",
+			i:               LR0Item{Production: &prods[0][0], Start: &starts[0], Dot: 1}, // E′ → E•
+			expectedIsFinal: true,
+		},
+		{
+			name:            "NotFinal",
+			i:               LR0Item{Production: &prods[0][0], Start: &starts[0], Dot: 0}, // E′ → •E
+			expectedIsFinal: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedIsFinal, tc.i.IsFinal())
+		})
+	}
+}
+
 func TestLR0Item_DotSymbol(t *testing.T) {
 	tests := []struct {
 		name              string
