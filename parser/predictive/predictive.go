@@ -54,7 +54,7 @@ func New(G grammar.CFG, lexer lexer.Lexer) parser.Parser {
 // It returns an error if the input fails to conform to the grammar rules.
 func (p *predictiveParser) Parse(yield parser.Action) error {
 	/*
-	 * INPUT:  • A lexer for reading string w.
+	 * INPUT:  • A lexer for reading input string w.
 	 *         • A parsing table M for grammar G.
 	 * OUTPUT: • If w ∈ L(G), a leftmost derivation of w; otherwise an error indication.
 	 *
@@ -80,16 +80,15 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 	 *         }
 	 */
 
-	stack := list.NewStack[grammar.Symbol](1024, grammar.EqSymbol)
-
 	M := BuildParsingTable(p.G)
 	if err := M.Error(); err != nil {
 		return &parser.ParseError{
-			Description: "failed to construct the parsing table",
+			Description: "failed to construct the predictive parsing table",
 			Cause:       err,
 		}
 	}
 
+	stack := list.NewStack[grammar.Symbol](1024, grammar.EqSymbol)
 	stack.Push(grammar.Endmarker)
 	stack.Push(p.G.Start)
 

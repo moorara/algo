@@ -133,7 +133,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 			},
 		},
 		{
-			name: "Input_Empty",
+			name: "EmptyString",
 			p: &predictiveParser{
 				G: grammars[2],
 				lexer: &MockLexer{
