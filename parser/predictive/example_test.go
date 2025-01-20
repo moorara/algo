@@ -40,9 +40,12 @@ func (l *exprLexer) NextToken() (lexer.Token, error) {
 	}
 
 	// Process last lexeme.
-	if err == io.EOF && state == 5 {
+	if err == io.EOF {
 		lexeme, pos := l.in.Lexeme()
-		return lexer.Token{Terminal: grammar.Terminal("id"), Lexeme: lexeme, Pos: pos}, nil
+		if state == 5 {
+			return lexer.Token{Terminal: grammar.Terminal("id"), Lexeme: lexeme, Pos: pos}, nil
+		}
+		return lexer.Token{Terminal: grammar.Endmarker, Lexeme: "", Pos: pos}, nil
 	}
 
 	return lexer.Token{}, err
@@ -175,7 +178,7 @@ func (l *exprLexer) evalDFA(state int, r rune) (lexer.Token, bool) {
 func Example() {
 	src := strings.NewReader(`
 		(price + tax * quantity) * 
-			discount + shipping * 
+			(discount + shipping) * 
 		(weight + volume) + total
 	`)
 
@@ -210,7 +213,7 @@ func Example() {
 	}
 }
 
-func ExampleParsingTable() {
+func Example_parsingTable() {
 	G := grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},

@@ -47,11 +47,24 @@ func New(G grammar.CFG, lexer lexer.Lexer) parser.Parser {
 	}
 }
 
+// nextToken wraps the Lexer.NextToken method and ensures
+// an Endmarker token is returned when the end of input is reached.
+func (p *predictiveParser) nextToken() (lexer.Token, error) {
+	token, err := p.lexer.NextToken()
+	if err != nil && errors.Is(err, io.EOF) {
+		token.Terminal, token.Lexeme = grammar.Endmarker, ""
+		return token, nil
+	}
+
+	return token, err
+}
+
 // Parse analyzes input tokens (terminal symbols) provided by the lexical analyzer
 // and attempts to construct a syntactic representation (i.e., a parse tree) of the input.
 //
-// The Parse method invokes the given function for each production and token during parsing.
+// The Parse method invokes the given function for each production rule during parsing.
 // It returns an error if the input fails to conform to the grammar rules.
+// If no error occurs, the input is parsed and successfully accepted.
 func (p *predictiveParser) Parse(yield parser.Action) error {
 	/*
 	 * INPUT:  • A lexer for reading input string w.
@@ -93,11 +106,8 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 	stack.Push(p.G.Start)
 
 	// Read the first input token.
-	token, err := p.lexer.NextToken()
+	token, err := p.nextToken()
 	if err != nil {
-		if errors.Is(err, io.EOF) {
-			return nil
-		}
 		return &parser.ParseError{Cause: err}
 	}
 
@@ -107,11 +117,8 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 			stack.Pop()
 
 			// Read the next input token.
-			token, err = p.lexer.NextToken()
+			token, err = p.nextToken()
 			if err != nil {
-				if errors.Is(err, io.EOF) {
-					break
-				}
 				return &parser.ParseError{Cause: err}
 			}
 
@@ -147,5 +154,6 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 		yield(P, token)
 	}
 
+	// Accept the input string.
 	return nil
 }

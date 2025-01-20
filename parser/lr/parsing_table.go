@@ -27,8 +27,8 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 	opts := symboltable.HashOpts{}
 
 	actions := symboltable.NewQuadraticHashTable(
-		hashState,
-		eqState,
+		HashState,
+		EqState,
 		func(lhs, rhs symboltable.SymbolTable[grammar.Terminal, set.Set[Action]]) bool {
 			return lhs.Equals(rhs)
 		},
@@ -36,8 +36,8 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 	)
 
 	gotos := symboltable.NewQuadraticHashTable(
-		hashState,
-		eqState,
+		HashState,
+		EqState,
 		func(lhs, rhs symboltable.SymbolTable[grammar.NonTerminal, State]) bool {
 			return lhs.Equals(rhs)
 		},
@@ -155,7 +155,7 @@ func (t *ParsingTable) SetGOTO(s State, A grammar.NonTerminal, next State) {
 		t.gotos.Put(s, symboltable.NewQuadraticHashTable(
 			grammar.HashNonTerminal,
 			grammar.EqNonTerminal,
-			eqState,
+			EqState,
 			symboltable.HashOpts{},
 		))
 	}

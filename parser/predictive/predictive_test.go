@@ -142,8 +142,10 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			yield:                func(grammar.Production, lexer.Token) {},
-			expectedErrorStrings: nil,
+			yield: func(grammar.Production, lexer.Token) {},
+			expectedErrorStrings: []string{
+				`unacceptable input <$, > for non-terminal E`,
+			},
 		},
 		{
 			name: "First_NextToken_Fails",

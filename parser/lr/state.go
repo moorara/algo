@@ -15,10 +15,10 @@ import (
 const ErrState = State(-1)
 
 var (
-	eqState   = generic.NewEqualFunc[State]()
-	hashState = hash.HashFuncForInt[State](nil)
+	EqState   = generic.NewEqualFunc[State]()
+	HashState = hash.HashFuncForInt[State](nil)
 
-	cmpState = func(lhs, rhs State) int {
+	CmpState = func(lhs, rhs State) int {
 		return int(lhs) - int(rhs)
 	}
 
