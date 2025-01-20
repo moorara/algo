@@ -88,10 +88,9 @@ func TestBuildParsingTable(t *testing.T) {
 			},
 		},
 		{
-			name:                 "3rd",
-			expectedTable:        pt[0],
-			G:                    grammars[2],
-			expectedErrorStrings: nil,
+			name:          "3rd",
+			G:             grammars[2],
+			expectedTable: pt[0],
 		},
 		{
 			name: "4th",
