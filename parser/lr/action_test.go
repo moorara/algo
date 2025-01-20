@@ -11,7 +11,11 @@ import (
 var actions = []Action{
 	{
 		Type:  SHIFT,
-		State: StatePtr(4),
+		State: 5,
+	},
+	{
+		Type:  SHIFT,
+		State: 7,
 	},
 	{
 		Type: REDUCE,
@@ -27,10 +31,12 @@ var actions = []Action{
 			Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
 		},
 	},
-}
-
-func StatePtr(s State) *State {
-	return &s
+	{
+		Type: ACCEPT,
+	},
+	{
+		Type: ERROR,
+	},
 }
 
 func TestEqAction(t *testing.T) {
@@ -49,28 +55,25 @@ func TestEqAction(t *testing.T) {
 		{
 			name:           "DifferentTypes",
 			lhs:            actions[0],
+			rhs:            actions[2],
+			expectedEquals: false,
+		},
+		{
+			name:           "DifferentStates",
+			lhs:            actions[0],
 			rhs:            actions[1],
 			expectedEquals: false,
 		},
 		{
-			name: "DifferentStates",
-			lhs:  actions[0],
-			rhs: Action{
-				Type:  SHIFT,
-				State: StatePtr(6),
-			},
-			expectedEquals: false,
-		},
-		{
 			name:           "DifferentProductions",
-			lhs:            actions[1],
-			rhs:            actions[2],
+			lhs:            actions[2],
+			rhs:            actions[3],
 			expectedEquals: false,
 		},
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc.expectedEquals, EqAction(tc.lhs, tc.rhs))
+		assert.Equal(t, tc.expectedEquals, eqAction(tc.lhs, tc.rhs))
 	}
 }
 
@@ -83,25 +86,21 @@ func TestAction_String(t *testing.T) {
 		{
 			name:           "SHIFT",
 			a:              actions[0],
-			expectedString: "SHIFT 4",
+			expectedString: "SHIFT 5",
 		},
 		{
 			name:           "REDUCE",
-			a:              actions[1],
+			a:              actions[2],
 			expectedString: "REDUCE E → T",
 		},
 		{
-			name: "ACCEPT",
-			a: Action{
-				Type: ACCEPT,
-			},
+			name:           "ACCEPT",
+			a:              actions[4],
 			expectedString: "ACCEPT",
 		},
 		{
-			name: "ERROR",
-			a: Action{
-				Type: ERROR,
-			},
+			name:           "ERROR",
+			a:              actions[5],
 			expectedString: "ERROR",
 		},
 		{
@@ -132,27 +131,59 @@ func TestAction_Equals(t *testing.T) {
 		{
 			name:           "DifferentTypes",
 			a:              actions[0],
+			rhs:            actions[2],
+			expectedEquals: false,
+		},
+		{
+			name:           "DifferentStates",
+			a:              actions[0],
 			rhs:            actions[1],
 			expectedEquals: false,
 		},
 		{
-			name: "DifferentStates",
-			a:    actions[0],
-			rhs: Action{
-				Type:  SHIFT,
-				State: StatePtr(6),
-			},
-			expectedEquals: false,
-		},
-		{
 			name:           "DifferentProductions",
-			a:              actions[1],
-			rhs:            actions[2],
+			a:              actions[2],
+			rhs:            actions[3],
 			expectedEquals: false,
 		},
 	}
 
 	for _, tc := range tests {
 		assert.Equal(t, tc.expectedEquals, tc.a.Equals(tc.rhs))
+	}
+}
+
+func TestCmpAction(t *testing.T) {
+	tests := []struct {
+		name            string
+		lhs             Action
+		rhs             Action
+		expectedCompare int
+	}{
+		{
+			name:            "ByStates",
+			lhs:             actions[0],
+			rhs:             actions[1],
+			expectedCompare: -2,
+		},
+		{
+			name:            "ByProductions",
+			lhs:             actions[2],
+			rhs:             actions[3],
+			expectedCompare: -1,
+		},
+		{
+			name:            "ByTypes",
+			lhs:             actions[4],
+			rhs:             actions[5],
+			expectedCompare: -1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cmp := cmpAction(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedCompare, cmp)
+		})
 	}
 }

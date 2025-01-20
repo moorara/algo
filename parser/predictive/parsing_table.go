@@ -3,12 +3,10 @@ package predictive
 import (
 	"bytes"
 	"fmt"
-	"strings"
 
 	"github.com/moorara/algo/errors"
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
-	"github.com/moorara/algo/parser"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/symboltable"
 )
@@ -208,16 +206,15 @@ func (t *parsingTable) setSync(A grammar.NonTerminal, a grammar.Terminal, sync b
 }
 
 func (t *parsingTable) String() string {
-	ts := &parser.TableStringer[grammar.NonTerminal, grammar.Terminal]{
+	ts := &tableStringer[grammar.NonTerminal, grammar.Terminal]{
 		K1Title:  "Non-Terminal",
 		K1Values: t.nonTerminals,
 		K2Title:  "Terminal",
 		K2Values: t.terminals,
-		GetEntry: func(A grammar.NonTerminal, a grammar.Terminal) string {
+		GetK1K2: func(A grammar.NonTerminal, a grammar.Terminal) string {
 			if e, ok := t.getEntry(A, a); ok {
 				return e.String()
 			}
-
 			return ""
 		},
 	}
@@ -295,20 +292,22 @@ func (e *parsingTableEntry) String() string {
 		return ""
 	}
 
-	prods := grammar.OrderProductionSet(e.Productions)
-	ss := make([]string, len(prods))
-	for i, p := range prods {
-		ss[i] = p.String()
-	}
+	var b bytes.Buffer
 
-	return strings.Join(ss, " ┆ ")
+	prods := grammar.OrderProductionSet(e.Productions)
+	for _, p := range prods {
+		fmt.Fprintf(&b, "%s ┆ ", p)
+	}
+	b.Truncate(b.Len() - 5)
+
+	return b.String()
 }
 
 func (e *parsingTableEntry) Equals(rhs *parsingTableEntry) bool {
 	return e.Productions.Equals(rhs.Productions) && e.Sync == rhs.Sync
 }
 
-// parsingTableError represents an error for a predictive parser parsing table.
+// ParsingTableError represents an error encountered in a predictive parsing table.
 // This error occurs due to the presence of left recursion or ambiguity in the grammar.
 type parsingTableError struct {
 	NonTerminal grammar.NonTerminal
@@ -319,7 +318,7 @@ type parsingTableError struct {
 func (e *parsingTableError) Error() string {
 	var b bytes.Buffer
 
-	fmt.Fprintf(&b, "multiple productions in parsing table at M[%s, %s]:\n", e.NonTerminal, e.Terminal)
+	fmt.Fprintf(&b, "multiple productions at M[%s, %s]:\n", e.NonTerminal, e.Terminal)
 	for _, p := range grammar.OrderProductionSet(e.Productions) {
 		fmt.Fprintf(&b, "  %s\n", p)
 	}

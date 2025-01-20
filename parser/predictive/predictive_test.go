@@ -127,9 +127,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 			},
 			yield: func(grammar.Production, lexer.Token) {},
 			expectedErrorStrings: []string{
-				`multiple productions in parsing table at M[E, "-"]`,
-				`multiple productions in parsing table at M[E, "("]`,
-				`multiple productions in parsing table at M[E, "id"]`,
+				`multiple productions at M[E, "-"]`,
+				`multiple productions at M[E, "("]`,
+				`multiple productions at M[E, "id"]`,
 			},
 		},
 		{

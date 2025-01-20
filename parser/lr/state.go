@@ -8,13 +8,23 @@ import (
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/hash"
+	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
 )
 
+const ErrState = State(-1)
+
 var (
-	ErrState  = State(-1)
-	EqState   = generic.NewEqualFunc[State]()
-	HashState = hash.HashFuncForInt[State](nil)
+	eqState   = generic.NewEqualFunc[State]()
+	hashState = hash.HashFuncForInt[State](nil)
+
+	cmpState = func(lhs, rhs State) int {
+		return int(lhs) - int(rhs)
+	}
+
+	eqStateSet = func(lhs, rhs set.Set[State]) bool {
+		return lhs.Equals(rhs)
+	}
 )
 
 // State represents a state in the LR parsing table or automaton.
