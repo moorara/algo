@@ -8,7 +8,7 @@ import (
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/lexer/input"
-	"github.com/moorara/algo/parser/slr"
+	"github.com/moorara/algo/parser/lr/slr"
 )
 
 type exprLexer struct {
