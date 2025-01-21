@@ -15,21 +15,34 @@ import (
 	"github.com/moorara/algo/lexer"
 )
 
-// Action is a function that gets called whenever a production
-// rule is selected from the parsing table for an input token.
-// It performs the necessary actions associated with the production rule
-// and the corresponding lexical token during the predictive top-down parsing.
-type Action func(grammar.Production, lexer.Token)
-
-// Parser defines the interface for a syntax analyzer.
+// Parser defines the interface for a syntax analyzer that processes input tokens.
 type Parser interface {
-	// Parse analyzes input tokens (terminal symbols) provided by a lexical analyzer
-	// and attempts to construct a syntactic representation (parse tree).
+	// Parse analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+	// It attempts to parse the input according to the production rules of a context-free grammar,
+	// determining whether the input string belongs to the language defined by the grammar.
 	//
-	// The Parse method invokes the given function for each production and token during parsing.
-	// It returns an error if the input fails to conform to the grammar rules.
-	Parse(Action) error
+	// The Parse method invokes the provided function each time a production rule is successfully matched.
+	// This allows the caller to process or react to each step of the parsing process.
+	//
+	// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+	Parse(ProcessFunc) error
+
+	// ParseAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+	// It attempts to parse the input according to the production rules of a context-free grammar,
+	// constructing an abstract syntax tree (AST) that reflects the structure of the input.
+	//
+	// If the input string is valid, the root node of the AST is returned,
+	// representing the syntactic structure of the input string.
+	//
+	// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+	ParseAST() (Node, error)
 }
+
+// ProcessFunc is a function that is invoked each time a production rule
+// is matched or applied during the parsing process of an input string.
+// It executes the actions associated with the matched production rule, which may include semantic processing,
+// building abstract syntax trees (AST), or other custom logic required for the parsing process.
+type ProcessFunc func(grammar.Production)
 
 // ParseError represents an error encountered when parsing an input string.
 type ParseError struct {

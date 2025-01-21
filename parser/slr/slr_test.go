@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/parser"
 	"github.com/moorara/algo/parser/lr"
 )
 
@@ -129,59 +130,50 @@ func getTestParsingTables() []*lr.ParsingTable {
 	return []*lr.ParsingTable{pt0, pt1}
 }
 
-func TestBuildParsingTable(t *testing.T) {
-	pt := getTestParsingTables()
-
+func TestSLRParser_Parse(t *testing.T) {
 	tests := []struct {
 		name                 string
-		G                    grammar.CFG
-		expectedTable        *lr.ParsingTable
+		p                    *slrParser
+		process              parser.ProcessFunc
 		expectedErrorStrings []string
-	}{
-		{
-			name:          "1st",
-			G:             grammars[0],
-			expectedTable: pt[0],
-		},
-		{
-			name: "2nd",
-			G:    grammars[1],
-			expectedErrorStrings: []string{
-				`20 errors occurred:`,
-				`shift/reduce conflict at ACTION[2, "("]`,
-				`shift/reduce conflict at ACTION[2, "IDENT"]`,
-				`shift/reduce conflict at ACTION[2, "STRING"]`,
-				`shift/reduce conflict at ACTION[2, "TOKEN"]`,
-				`shift/reduce conflict at ACTION[2, "["]`,
-				`shift/reduce conflict at ACTION[2, "{"]`,
-				`shift/reduce conflict at ACTION[2, "{{"]`,
-				`shift/reduce conflict at ACTION[2, "|"]`,
-				`shift/reduce conflict at ACTION[7, "IDENT"]`,
-				`shift/reduce conflict at ACTION[7, "TOKEN"]`,
-				`shift/reduce conflict at ACTION[14, "("]`,
-				`shift/reduce conflict at ACTION[14, "IDENT"]`,
-				`shift/reduce conflict at ACTION[14, "STRING"]`,
-				`shift/reduce conflict at ACTION[14, "TOKEN"]`,
-				`shift/reduce conflict at ACTION[14, "["]`,
-				`shift/reduce conflict at ACTION[14, "{"]`,
-				`shift/reduce conflict at ACTION[14, "{{"]`,
-				`shift/reduce conflict at ACTION[14, "|"]`,
-				`shift/reduce conflict at ACTION[19, "IDENT"]`,
-				`shift/reduce conflict at ACTION[19, "TOKEN"]`,
-			},
-		},
-	}
+	}{}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.G.Verify())
-			table := BuildParsingTable(tc.G)
-			err := table.Error()
+			assert.NoError(t, tc.p.G.Verify())
+			err := tc.p.Parse(tc.process)
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)
-				assert.True(t, table.Equals(tc.expectedTable))
 			} else {
+				assert.Error(t, err)
+				s := err.Error()
+				for _, expectedErrorString := range tc.expectedErrorStrings {
+					assert.Contains(t, s, expectedErrorString)
+				}
+			}
+		})
+	}
+}
+
+func TestSLRParser_ParseAST(t *testing.T) {
+	tests := []struct {
+		name                 string
+		p                    *slrParser
+		expectedAST          parser.Node
+		expectedErrorStrings []string
+	}{}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.p.G.Verify())
+			ast, err := tc.p.ParseAST()
+
+			if len(tc.expectedErrorStrings) == 0 {
+				assert.True(t, ast.Equals(tc.expectedAST))
+				assert.NoError(t, err)
+			} else {
+				assert.Nil(t, ast)
 				assert.Error(t, err)
 				s := err.Error()
 				for _, expectedErrorString := range tc.expectedErrorStrings {

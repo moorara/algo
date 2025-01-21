@@ -175,7 +175,7 @@ func (l *exprLexer) evalDFA(state int, r rune) (lexer.Token, bool) {
 	return lexer.Token{}, false
 }
 
-func Example() {
+func Example_parse() {
 	src := strings.NewReader(`
 		(price + tax * quantity) * 
 			(discount + shipping) * 
@@ -204,13 +204,52 @@ func Example() {
 	)
 
 	parser := predictive.New(G, l)
-	err = parser.Parse(func(P grammar.Production, token lexer.Token) {
-		fmt.Printf("%s\n%s\n\n", P, token)
+
+	err = parser.Parse(func(P grammar.Production) {
+		fmt.Println(P)
 	})
 
 	if err != nil {
 		panic(err)
 	}
+}
+
+func Example_parseAST() {
+	src := strings.NewReader(`
+		(price + tax * quantity) * 
+			(discount + shipping) * 
+		(weight + volume) + total
+	`)
+
+	l, err := NewExprLexer(src)
+	if err != nil {
+		panic(err)
+	}
+
+	G := grammar.NewCFG(
+		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
+		[]grammar.Production{
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}},                         // E → T E′
+			{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}}, // E′ → + T E′
+			{Head: "E′", Body: grammar.E}, // E′ → ε
+			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}},                         // T → F T′
+			{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}}, // T′ → * F T′
+			{Head: "T′", Body: grammar.E}, // T′ → ε
+			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}}, // F → ( E )
+			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                 // F → id
+		},
+		"E",
+	)
+
+	parser := predictive.New(G, l)
+
+	ast, err := parser.ParseAST()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(ast.DOT())
 }
 
 func Example_parsingTable() {

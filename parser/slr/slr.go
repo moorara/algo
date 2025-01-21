@@ -10,8 +10,13 @@
 package slr
 
 import (
+	"errors"
+	"fmt"
+	"io"
+
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/lexer"
+	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/parser"
 	"github.com/moorara/algo/parser/lr"
 )
@@ -32,122 +37,128 @@ func New(G grammar.CFG, lexer lexer.Lexer) parser.Parser {
 	}
 }
 
-// Parse analyzes input tokens (terminal symbols) provided by the lexical analyzer
-// and attempts to construct a syntactic representation (i.e., a parse tree) of the input.
+// nextToken wraps the Lexer.NextToken method and ensures
+// an Endmarker token is returned when the end of input is reached.
+func (p *slrParser) nextToken() (lexer.Token, error) {
+	token, err := p.lexer.NextToken()
+	if err != nil && errors.Is(err, io.EOF) {
+		token.Terminal, token.Lexeme = grammar.Endmarker, ""
+		return token, nil
+	}
+
+	return token, err
+}
+
+// Parse analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+// It attempts to parse the input according to the production rules of a context-free grammar,
+// determining whether the input string belongs to the language defined by the grammar.
 //
-// The Parse method invokes the given function for each production and token during parsing.
-// It returns an error if the input fails to conform to the grammar rules.
-func (p *slrParser) Parse(yield parser.Action) error {
+// The Parse method invokes the provided function each time a production rule is successfully matched.
+// This allows the caller to process or react to each step of the parsing process.
+//
+// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+func (p *slrParser) Parse(process parser.ProcessFunc) error {
 
 	/*
-	 * INPUT:  • A lexer for reading string w.
-	 *         • A parsing table M for grammar G.
-	 * OUTPUT: • If w ∈ L(G), a leftmost derivation of w; otherwise an error indication.
+	 * INPUT:  • A lexer for reading input string w.
+	 *         • An LR parsing table with functions ACTION and GOTO for a grammar G.
+	 * OUTPUT: • If w ∈ L(G), the reduction steps of a bottom-up parse for w; otherwise, an error indication.
 	 *
-	 * METHOD: TBD
+	 * METHOD: Initially, the parser has s₀ on its stack,
+	 *         where s₀ is the initial state, and w$ in the input buffer.
+	 *
+	 *         let a be the first symbol of w$;
+	 *         while (true) {
+	 *           let s be the state on top of the stack;
+	 *           if (ACTION[s,a] = shift t) {
+	 *             push t onto the stack;
+	 *             let a be the next input symbol;
+	 *           } else if (ACTION[s,a] = reduce A → β) {
+	 *             pop |β| symbols off the stack;
+	 *             let state t now be on top of the stack;
+	 *             push GOTO[t,A] onto the stack;
+	 *             output the production A → β;
+	 *           } else if (ACTION[s,a] = accept) {
+	 *             break;
+	 *           } else {
+	 *             call error-recovery routine;
+	 *           }
+	 *         }
 	 */
 
+	T := BuildParsingTable(p.G)
+	if err := T.Error(); err != nil {
+		return &parser.ParseError{
+			Description: "failed to construct the SLR parsing table",
+			Cause:       err,
+		}
+	}
+
+	stack := list.NewStack[lr.State](1024, lr.EqState)
+
+	// The BuildStateMap function ensures that state 0 always includes the initial item "S′ → •S".
+	stack.Push(lr.State(0))
+
+	// Read the first input token.
+	token, err := p.lexer.NextToken()
+	if err != nil {
+		return &parser.ParseError{Cause: err}
+	}
+
+	for {
+		s, _ := stack.Peek()
+		a := token.Terminal
+
+		action, err := T.ACTION(s, a)
+		if err != nil {
+			return &parser.ParseError{Cause: err}
+		}
+
+		if action.Type == lr.SHIFT {
+			stack.Push(action.State)
+
+			// Read the next input token.
+			token, err = p.lexer.NextToken()
+			if err != nil {
+				return &parser.ParseError{Cause: err}
+			}
+		} else if action.Type == lr.REDUCE {
+			A, β := action.Production.Head, action.Production.Body
+
+			for range len(β) {
+				stack.Pop()
+			}
+
+			t, _ := stack.Peek()
+
+			next, err := T.GOTO(t, A)
+			if err != nil {
+				return &parser.ParseError{Cause: err}
+			}
+
+			stack.Push(next)
+
+			process(*action.Production)
+		} else if action.Type == lr.ACCEPT {
+			break
+		} else {
+			// TODO:
+			fmt.Println("ERROR RECOVERY!")
+		}
+	}
+
+	// Accept the input string.
 	return nil
 }
 
-// BuildParsingTable constructs a parsing table for an SLR parser.
+// ParseAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+// It attempts to parse the input according to the production rules of a context-free grammar,
+// constructing an abstract syntax tree (AST) that reflects the structure of the input.
 //
-// This method constructs an LR(0) parsing table for any context-free grammar.
-// To identify errors in the table, use the Error method.
-func BuildParsingTable(G grammar.CFG) *lr.ParsingTable {
-	/*
-	 * INPUT:  An augmented grammar G′.
-	 * OUTPUT: The SLR-parsing table functions ACTION and GOTO for G′.
-	 */
-
-	augG := lr.Augment(G)
-	first := augG.ComputeFIRST()
-	follow := augG.ComputeFOLLOW(first)
-
-	init := Initial(augG)
-	CLOSURE := LR0Closure(augG)
-
-	// 1. Construct C = {I₀, I₁, ..., Iₙ}, the collection of sets of LR(0) items for G′.
-	C := lr.Canonical(augG, init, CLOSURE)
-
-	states := lr.BuildStateMap(C)
-	terminals := G.OrderTerminals()
-	_, _, nonTerminals := G.OrderNonTerminals()
-
-	table := lr.NewParsingTable(states.All(), terminals, nonTerminals)
-
-	// 2. State i is constructed from I.
-	for i, I := range states {
-		// The parsing actions for state i are determined as follows:
-
-		for item := range I.All() {
-			if item, ok := item.(LR0Item); ok {
-				// If A → α•aβ is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
-				if X, ok := item.DotSymbol(); ok {
-					if a, ok := X.(grammar.Terminal); ok {
-						J := lr.GOTO(CLOSURE, I, a)
-						j := states.For(J)
-
-						// Set ACTION[i,a] to SHIFT j
-						table.AddACTION(lr.State(i), a, lr.Action{
-							Type:  lr.SHIFT,
-							State: j,
-						})
-					}
-				}
-
-				// If A → α• is in Iᵢ (A may not be S′)
-				if item.IsComplete() && !item.IsFinal() {
-					followA := follow(item.Head)
-
-					// For all a in FOLLOW(A)
-					for a := range followA.Terminals.All() {
-						// Set ACTION[i,a] to REDUCE A → α
-						table.AddACTION(lr.State(i), a, lr.Action{
-							Type:       lr.REDUCE,
-							Production: item.Production,
-						})
-					}
-
-					if followA.IncludesEndmarker {
-						// Set ACTION[i,$] to REDUCE A → α
-						table.AddACTION(lr.State(i), grammar.Endmarker, lr.Action{
-							Type:       lr.REDUCE,
-							Production: item.Production,
-						})
-					}
-				}
-
-				// If S′ → S• is in Iᵢ
-				if item.IsFinal() {
-					// Set ACTION[i,$] to ACCEPT
-					table.AddACTION(lr.State(i), grammar.Endmarker, lr.Action{
-						Type: lr.ACCEPT,
-					})
-				}
-
-				// If any conflicting actions result from the above rules, the grammar is not SLR(1).
-				// The table.Error() method will list all conflicts, if any exist.
-			}
-		}
-
-		// 3. The goto transitions for state i are constructed for all non-terminals A using the rule:
-		// If GOTO(Iᵢ,A) = Iⱼ
-		for A := range augG.NonTerminals.All() {
-			if !A.Equals(augG.Start) {
-				J := lr.GOTO(CLOSURE, I, A)
-				j := states.For(J)
-
-				// Set GOTO[i,A] = j
-				table.SetGOTO(lr.State(i), A, j)
-			}
-		}
-
-		// 4. All entries not defined by rules (2) and (3) are made ERROR.
-	}
-
-	// 5. The initial state of the parser is the one constructed from the set of items containing "S′ → •S".
-	// The BuildStateMap function ensures that state 0 always includes the initial item "S′ → •S".
-
-	return table
+// If the input string is valid, the root node of the AST is returned,
+// representing the syntactic structure of the input string.
+//
+// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+func (p *slrParser) ParseAST() (parser.Node, error) {
+	return nil, nil
 }

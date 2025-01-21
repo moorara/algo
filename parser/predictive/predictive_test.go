@@ -116,7 +116,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 	tests := []struct {
 		name                 string
 		p                    *predictiveParser
-		yield                parser.Action
+		process              parser.ProcessFunc
 		expectedErrorStrings []string
 	}{
 		{
@@ -125,7 +125,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 				G:     grammars[0],
 				lexer: new(MockLexer),
 			},
-			yield: func(grammar.Production, lexer.Token) {},
+			process: func(grammar.Production) {},
 			expectedErrorStrings: []string{
 				`multiple productions at M[E, "-"]`,
 				`multiple productions at M[E, "("]`,
@@ -142,7 +142,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			yield: func(grammar.Production, lexer.Token) {},
+			process: func(grammar.Production) {},
 			expectedErrorStrings: []string{
 				`unacceptable input <$, > for non-terminal E`,
 			},
@@ -157,7 +157,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			yield: func(grammar.Production, lexer.Token) {},
+			process: func(grammar.Production) {},
 			expectedErrorStrings: []string{
 				`cannot read rune`,
 			},
@@ -186,7 +186,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			yield: func(grammar.Production, lexer.Token) {},
+			process: func(grammar.Production) {},
 			expectedErrorStrings: []string{
 				`input stream failed`,
 			},
@@ -213,7 +213,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			yield: func(grammar.Production, lexer.Token) {},
+			process: func(grammar.Production) {},
 			expectedErrorStrings: []string{
 				`unacceptable input <"+", +> for non-terminal E`,
 			},
@@ -268,7 +268,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			yield:                func(grammar.Production, lexer.Token) {},
+			process:              func(grammar.Production) {},
 			expectedErrorStrings: nil,
 		},
 	}
@@ -276,11 +276,192 @@ func TestPredictiveParser_Parse(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.p.G.Verify())
-			err := tc.p.Parse(tc.yield)
+			err := tc.p.Parse(tc.process)
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)
 			} else {
+				assert.Error(t, err)
+				s := err.Error()
+				for _, expectedErrorString := range tc.expectedErrorStrings {
+					assert.Contains(t, s, expectedErrorString)
+				}
+			}
+		})
+	}
+}
+
+func TestPredictiveParser_ParseAST(t *testing.T) {
+	tests := []struct {
+		name                 string
+		p                    *predictiveParser
+		expectedAST          parser.Node
+		expectedErrorStrings []string
+	}{
+		{
+			name: "None_LL(1)_Grammar",
+			p: &predictiveParser{
+				G:     grammars[0],
+				lexer: new(MockLexer),
+			},
+			expectedAST: nil,
+			expectedErrorStrings: []string{
+				`multiple productions at M[E, "-"]`,
+				`multiple productions at M[E, "("]`,
+				`multiple productions at M[E, "id"]`,
+			},
+		},
+		{
+			name: "EmptyString",
+			p: &predictiveParser{
+				G: grammars[2],
+				lexer: &MockLexer{
+					NextTokenMocks: []NextTokenMock{
+						{OutError: io.EOF},
+					},
+				},
+			},
+			expectedAST: nil,
+			expectedErrorStrings: []string{
+				`unacceptable input <$, > for non-terminal E`,
+			},
+		},
+		{
+			name: "First_NextToken_Fails",
+			p: &predictiveParser{
+				G: grammars[2],
+				lexer: &MockLexer{
+					NextTokenMocks: []NextTokenMock{
+						{OutError: errors.New("cannot read rune")},
+					},
+				},
+			},
+			expectedAST: nil,
+			expectedErrorStrings: []string{
+				`cannot read rune`,
+			},
+		},
+		{
+			name: "Second_NextToken_Fails",
+			p: &predictiveParser{
+				G: grammars[2],
+				lexer: &MockLexer{
+					NextTokenMocks: []NextTokenMock{
+						// First token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("id"),
+								Lexeme:   "a",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   0,
+									Line:     1,
+									Column:   1,
+								},
+							},
+						},
+						// EOF
+						{OutError: errors.New("input stream failed")},
+					},
+				},
+			},
+			expectedAST: nil,
+			expectedErrorStrings: []string{
+				`input stream failed`,
+			},
+		},
+		{
+			name: "Invalid_Input",
+			p: &predictiveParser{
+				G: grammars[2],
+				lexer: &MockLexer{
+					NextTokenMocks: []NextTokenMock{
+						// First token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("+"),
+								Lexeme:   "+",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   0,
+									Line:     1,
+									Column:   1,
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedAST: nil,
+			expectedErrorStrings: []string{
+				`unacceptable input <"+", +> for non-terminal E`,
+			},
+		},
+		{
+			name: "Success",
+			p: &predictiveParser{
+				G: grammars[2],
+				lexer: &MockLexer{
+					NextTokenMocks: []NextTokenMock{
+						// First token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("id"),
+								Lexeme:   "a",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   0,
+									Line:     1,
+									Column:   1,
+								},
+							},
+						},
+						// Second token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("+"),
+								Lexeme:   "+",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   2,
+									Line:     1,
+									Column:   3,
+								},
+							},
+						},
+						// Third token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("id"),
+								Lexeme:   "b",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   4,
+									Line:     1,
+									Column:   5,
+								},
+							},
+						},
+						// EOF
+						{OutError: io.EOF},
+					},
+				},
+			},
+			expectedAST:          nil,
+			expectedErrorStrings: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.p.G.Verify())
+			ast, err := tc.p.ParseAST()
+
+			if len(tc.expectedErrorStrings) == 0 {
+				assert.True(t, ast.Equals(tc.expectedAST))
+				assert.NoError(t, err)
+			} else {
+				assert.Nil(t, ast)
 				assert.Error(t, err)
 				s := err.Error()
 				for _, expectedErrorString := range tc.expectedErrorStrings {

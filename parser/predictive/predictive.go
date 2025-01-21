@@ -59,13 +59,15 @@ func (p *predictiveParser) nextToken() (lexer.Token, error) {
 	return token, err
 }
 
-// Parse analyzes input tokens (terminal symbols) provided by the lexical analyzer
-// and attempts to construct a syntactic representation (i.e., a parse tree) of the input.
+// Parse analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+// It attempts to parse the input according to the production rules of a context-free grammar,
+// determining whether the input string belongs to the language defined by the grammar.
 //
-// The Parse method invokes the given function for each production rule during parsing.
-// It returns an error if the input fails to conform to the grammar rules.
-// If no error occurs, the input is parsed and successfully accepted.
-func (p *predictiveParser) Parse(yield parser.Action) error {
+// The Parse method invokes the provided function each time a production rule is successfully matched.
+// This allows the caller to process or react to each step of the parsing process.
+//
+// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+func (p *predictiveParser) Parse(process parser.ProcessFunc) error {
 	/*
 	 * INPUT:  • A lexer for reading input string w.
 	 *         • A parsing table M for grammar G.
@@ -151,9 +153,22 @@ func (p *predictiveParser) Parse(yield parser.Action) error {
 			stack.Push(P.Body[i])
 		}
 
-		yield(P, token)
+		process(P)
 	}
 
 	// Accept the input string.
 	return nil
+}
+
+// ParseAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+// It attempts to parse the input according to the production rules of a context-free grammar,
+// constructing an abstract syntax tree (AST) that reflects the structure of the input.
+//
+// If the input string is valid, the root node of the AST is returned,
+// representing the syntactic structure of the input string.
+//
+// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+func (p *predictiveParser) ParseAST() (parser.Node, error) {
+	// TODO:
+	return nil, nil
 }
