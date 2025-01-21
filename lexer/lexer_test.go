@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestToken(t *testing.T) {
+func TestToken_String(t *testing.T) {
 	tests := []struct {
 		name           string
 		t              Token
@@ -36,18 +36,80 @@ func TestToken(t *testing.T) {
 	}
 }
 
-func TestPosition(t *testing.T) {
+func TestToken_Equals(t *testing.T) {
+	tests := []struct {
+		name           string
+		t              Token
+		rhs            Token
+		expectedEquals bool
+	}{
+		{
+			name: "Equal",
+			t: Token{
+				Terminal: grammar.Terminal("ID"),
+				Lexeme:   "name",
+				Pos: Position{
+					Filename: "test_file",
+					Offset:   69,
+					Line:     8,
+					Column:   27,
+				},
+			},
+			rhs: Token{
+				Terminal: grammar.Terminal("ID"),
+				Lexeme:   "name",
+				Pos: Position{
+					Filename: "test_file",
+					Offset:   69,
+					Line:     8,
+					Column:   27,
+				},
+			},
+			expectedEquals: true,
+		},
+		{
+			name: "NotEqual",
+			t: Token{
+				Terminal: grammar.Terminal("ID"),
+				Lexeme:   "name",
+				Pos: Position{
+					Filename: "foo",
+					Offset:   69,
+					Line:     8,
+					Column:   27,
+				},
+			},
+			rhs: Token{
+				Terminal: grammar.Terminal("ID"),
+				Lexeme:   "name",
+				Pos: Position{
+					Filename: "bar",
+					Offset:   69,
+					Line:     8,
+					Column:   27,
+				},
+			},
+			expectedEquals: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEquals, tc.t.Equals(tc.rhs))
+		})
+	}
+}
+
+func TestPosition_Strong(t *testing.T) {
 	tests := []struct {
 		name           string
 		p              Position
 		expectedString string
-		expectedIsZero bool
 	}{
 		{
 			name:           "Zero",
 			p:              Position{},
 			expectedString: `0`,
-			expectedIsZero: true,
 		},
 		{
 			name: "WithoutLineAndColumn",
@@ -56,7 +118,6 @@ func TestPosition(t *testing.T) {
 				Offset:   69,
 			},
 			expectedString: `test_file:69`,
-			expectedIsZero: false,
 		},
 		{
 			name: "WithLineAndColumn",
@@ -67,13 +128,87 @@ func TestPosition(t *testing.T) {
 				Column:   27,
 			},
 			expectedString: `test_file:8:27`,
-			expectedIsZero: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedString, tc.p.String())
+		})
+	}
+}
+
+func TestPosition_Equals(t *testing.T) {
+	tests := []struct {
+		name           string
+		p              Position
+		rhs            Position
+		expectedEquals bool
+	}{
+		{
+			name: "Equal",
+			p: Position{
+				Filename: "test_file",
+				Offset:   69,
+				Line:     8,
+				Column:   27,
+			},
+			rhs: Position{
+				Filename: "test_file",
+				Offset:   69,
+				Line:     8,
+				Column:   27,
+			},
+			expectedEquals: true,
+		},
+		{
+			name: "NotEqual",
+			p: Position{
+				Filename: "foo",
+				Offset:   69,
+				Line:     8,
+				Column:   27,
+			},
+			rhs: Position{
+				Filename: "bar",
+				Offset:   69,
+				Line:     8,
+				Column:   27,
+			},
+			expectedEquals: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEquals, tc.p.Equals(tc.rhs))
+		})
+	}
+}
+
+func TestPosition_IsZero(t *testing.T) {
+	tests := []struct {
+		name           string
+		p              Position
+		expectedIsZero bool
+	}{
+		{
+			name:           "Zero",
+			p:              Position{},
+			expectedIsZero: true,
+		},
+		{
+			name: "NotZero",
+			p: Position{
+				Filename: "test_file",
+				Offset:   69,
+			},
+			expectedIsZero: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedIsZero, tc.p.IsZero())
 		})
 	}
