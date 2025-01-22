@@ -69,6 +69,8 @@ A collection of common data structures and algorithms for Go applications.
     - Parsers
       - Two-Buffer Input Reader
       - Parser Combinators
+      - Predictive Parser
+      - LR Parsers (SLR, LALR, Canonical LR)
 
 ## Development
 
