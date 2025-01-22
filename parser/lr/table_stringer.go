@@ -144,26 +144,24 @@ func (t *tableStringer[K1, K2, K3]) printK2Titles() {
 	t.b.WriteRune('│')
 	t.b.WriteString(strings.Repeat(" ", t.cLens[0]))
 
-	s1 := fmt.Sprintf("%s", t.K2Title)
-	s2 := fmt.Sprintf("%s", t.K3Title)
 	lenI, lenII := t.getTitleIAndIILens()
 
-	padI := lenI - utf8.RuneCountInString(s1)
+	padI := lenI - utf8.RuneCountInString(t.K2Title)
 	lpadI := padI / 2
 	rpadI := padI - lpadI
 
 	t.b.WriteRune('│')
 	t.b.WriteString(strings.Repeat(" ", lpadI))
-	t.b.WriteString(s1)
+	t.b.WriteString(t.K2Title)
 	t.b.WriteString(strings.Repeat(" ", rpadI))
 
-	padII := lenII - utf8.RuneCountInString(s2)
+	padII := lenII - utf8.RuneCountInString(t.K3Title)
 	lpadII := padII / 2
 	rpadII := padII - lpadII
 
 	t.b.WriteRune('│')
 	t.b.WriteString(strings.Repeat(" ", lpadII))
-	t.b.WriteString(s2)
+	t.b.WriteString(t.K3Title)
 	t.b.WriteString(strings.Repeat(" ", rpadII))
 	t.b.WriteRune('│')
 	t.b.WriteRune('\n')

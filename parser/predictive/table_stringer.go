@@ -100,16 +100,14 @@ func (t *tableStringer[K1, K2]) printK2Title() {
 	t.b.WriteRune('│')
 	t.b.WriteString(strings.Repeat(" ", t.cLens[0]))
 
-	s := fmt.Sprintf("%s", t.K2Title)
-
 	lenI := t.tLen - t.cLens[0] - 3
-	padI := lenI - utf8.RuneCountInString(s)
+	padI := lenI - utf8.RuneCountInString(t.K2Title)
 	lpadI := padI / 2
 	rpadI := padI - lpadI
 
 	t.b.WriteRune('│')
 	t.b.WriteString(strings.Repeat(" ", lpadI))
-	t.b.WriteString(s)
+	t.b.WriteString(t.K2Title)
 	t.b.WriteString(strings.Repeat(" ", rpadI))
 	t.b.WriteRune('│')
 	t.b.WriteRune('\n')

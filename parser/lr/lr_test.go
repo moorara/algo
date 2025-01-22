@@ -8,10 +8,6 @@ import (
 	"github.com/moorara/algo/grammar"
 )
 
-var starts = []grammar.NonTerminal{
-	"E′",
-}
-
 var prods = [][]grammar.Production{
 	{
 		{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T

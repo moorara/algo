@@ -8,7 +8,6 @@ import (
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/hash"
-	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
 )
 
@@ -20,10 +19,6 @@ var (
 
 	CmpState = func(lhs, rhs State) int {
 		return int(lhs) - int(rhs)
-	}
-
-	eqStateSet = func(lhs, rhs set.Set[State]) bool {
-		return lhs.Equals(rhs)
 	}
 )
 

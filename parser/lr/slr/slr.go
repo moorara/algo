@@ -146,9 +146,9 @@ func (p *slrParser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) 
 			}
 		} else if action.Type == lr.ACCEPT {
 			break
-		} else {
+		} /* else {
 			// TODO: This is unreachable currently, since T.ACTION handles the error.
-		}
+		} */
 	}
 
 	// Accept the input string.
@@ -234,9 +234,9 @@ func (p *slrParser) ParseAST() (parser.Node, error) {
 			nodes.Push(in)
 		} else if action.Type == lr.ACCEPT {
 			break
-		} else {
+		} /* else {
 			// TODO: This is unreachable currently, since T.ACTION handles the error.
-		}
+		} */
 	}
 
 	// The nodes stack only contains the root of AST at this point.
