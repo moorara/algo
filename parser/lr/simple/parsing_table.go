@@ -5,6 +5,81 @@ import (
 	"github.com/moorara/algo/parser/lr"
 )
 
+// calculator implemented the lr.Calculator interface for LR(0) items.
+type calculator struct {
+	augG grammar.CFG
+}
+
+// G returns the augmented context-free grammar.
+func (c *calculator) G() grammar.CFG {
+	return c.augG
+}
+
+// Initial returns the initial LR(0) item "S′ → •S" for an augmented grammar.
+func (c *calculator) Initial() lr.Item {
+	for p := range c.augG.Productions.Get(c.augG.Start).All() {
+		return LR0Item{
+			Production: &p,
+			Start:      &c.augG.Start,
+			Dot:        0,
+		}
+	}
+
+	// This will never be the case.
+	return LR0Item{}
+}
+
+// CLOSURE computes the closure of a given LR(0) item set.
+//
+// Intuitively, A → α•Bβ in CLOSURE(I) indicates that at some point in the parsing process,
+// we anticipate seeing a substring derivable from Bβ as input.
+// The substring derivable from Bβ will have a prefix derivable from B.
+// Thus, for every production B → γ, we include the LR(0) item B → •γ in CLOSURE(I).
+func (c *calculator) CLOSURE(I lr.ItemSet) lr.ItemSet {
+	/*
+	 * If I is a set of items for a grammar G,
+	 * then CLOSURE(I) is the set of items constructed from I by the two rules:
+	 *
+	 *   1. Initially, add every item in I to CLOSURE(I).
+	 *   2. If A → α•Bβ is in CLOSURE(I) and B → γ is a production,
+	 *      then add the item B → •γ to CLOSURE(I), if it is not already there.
+	 *      Apply this rule until no more new items can be added to CLOSURE(I).
+	 */
+
+	J := I.Clone()
+
+	for newItems := []lr.Item{}; newItems != nil; {
+		newItems = nil
+
+		// For each item A → α•Bβ in J
+		for i := range J.All() {
+			if i, ok := i.(LR0Item); ok {
+				if X, ok := i.DotSymbol(); ok {
+					if B, ok := X.(grammar.NonTerminal); ok {
+						// For each production B → γ of G
+						for BProd := range c.augG.Productions.Get(B).All() {
+							j := LR0Item{
+								Production: &BProd,
+								Start:      &c.augG.Start,
+								Dot:        0,
+							}
+
+							// If B → •γ is not in J
+							if !J.Contains(j) {
+								newItems = append(newItems, j)
+							}
+						}
+					}
+				}
+			}
+		}
+
+		J.Add(newItems...)
+	}
+
+	return J
+}
+
 // BuildParsingTable constructs a parsing table for an SLR parser.
 //
 // This method constructs an LR(0) parsing table for any context-free grammar.
@@ -19,11 +94,14 @@ func BuildParsingTable(G grammar.CFG) *lr.ParsingTable {
 	first := augG.ComputeFIRST()
 	follow := augG.ComputeFOLLOW(first)
 
-	init := Initial(augG)
-	CLOSURE := LR0Closure(augG)
+	calc := &lr.AutomatonCalculator{
+		Calculator: &calculator{
+			augG: augG,
+		},
+	}
 
 	// 1. Construct C = {I₀, I₁, ..., Iₙ}, the collection of sets of LR(0) items for G′.
-	C := lr.Canonical(augG, init, CLOSURE)
+	C := calc.Canonical()
 
 	states := lr.BuildStateMap(C)
 	terminals := G.OrderTerminals()
@@ -40,7 +118,7 @@ func BuildParsingTable(G grammar.CFG) *lr.ParsingTable {
 				// If A → α•aβ is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
 				if X, ok := item.DotSymbol(); ok {
 					if a, ok := X.(grammar.Terminal); ok {
-						J := lr.GOTO(CLOSURE, I, a)
+						J := calc.GOTO(I, a)
 						j := states.For(J)
 
 						// Set ACTION[i,a] to SHIFT j
@@ -90,7 +168,7 @@ func BuildParsingTable(G grammar.CFG) *lr.ParsingTable {
 		// If GOTO(Iᵢ,A) = Iⱼ
 		for A := range augG.NonTerminals.All() {
 			if !A.Equals(augG.Start) {
-				J := lr.GOTO(CLOSURE, I, A)
+				J := calc.GOTO(I, A)
 				j := states.For(J)
 
 				// Set GOTO[i,A] = j
