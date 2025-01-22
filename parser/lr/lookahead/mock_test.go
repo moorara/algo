@@ -1,4 +1,4 @@
-package lalr
+package lookahead
 
 import "github.com/moorara/algo/lexer"
 
