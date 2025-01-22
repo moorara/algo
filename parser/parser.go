@@ -11,7 +11,6 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/lexer"
 )
 
@@ -21,11 +20,11 @@ type Parser interface {
 	// It attempts to parse the input according to the production rules of a context-free grammar,
 	// determining whether the input string belongs to the language defined by the grammar.
 	//
-	// The Parse method invokes the provided function each time a production rule is successfully matched.
+	// The Parse method invokes the provided functions each time a production rule or a token is successfully matched.
 	// This allows the caller to process or react to each step of the parsing process.
 	//
 	// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-	Parse(ProcessFunc) error
+	Parse(ProductionFunc, TokenFunc) error
 
 	// ParseAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
 	// It attempts to parse the input according to the production rules of a context-free grammar,
@@ -37,12 +36,6 @@ type Parser interface {
 	// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
 	ParseAST() (Node, error)
 }
-
-// ProcessFunc is a function that is invoked each time a production rule
-// is matched or applied during the parsing process of an input string.
-// It executes the actions associated with the matched production rule, which may include semantic processing,
-// building abstract syntax trees (AST), or other custom logic required for the parsing process.
-type ProcessFunc func(grammar.Production)
 
 // ParseError represents an error encountered when parsing an input string.
 type ParseError struct {

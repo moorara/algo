@@ -116,7 +116,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 	tests := []struct {
 		name                 string
 		p                    *predictiveParser
-		process              parser.ProcessFunc
+		prodF                parser.ProductionFunc
+		tokenF               parser.TokenFunc
 		expectedErrorStrings []string
 	}{
 		{
@@ -125,7 +126,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 				G:     grammars[0],
 				lexer: new(MockLexer),
 			},
-			process: func(grammar.Production) {},
+			prodF:  func(grammar.Production) {},
+			tokenF: func(lexer.Token) {},
 			expectedErrorStrings: []string{
 				`multiple productions at M[E, "-"]`,
 				`multiple productions at M[E, "("]`,
@@ -142,7 +144,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			process: func(grammar.Production) {},
+			prodF:  func(grammar.Production) {},
+			tokenF: func(lexer.Token) {},
 			expectedErrorStrings: []string{
 				`unacceptable input <$, > for non-terminal E`,
 			},
@@ -157,7 +160,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			process: func(grammar.Production) {},
+			prodF:  func(grammar.Production) {},
+			tokenF: func(lexer.Token) {},
 			expectedErrorStrings: []string{
 				`cannot read rune`,
 			},
@@ -182,13 +186,14 @@ func TestPredictiveParser_Parse(t *testing.T) {
 							},
 						},
 						// EOF
-						{OutError: errors.New("input stream failed")},
+						{OutError: errors.New("input failed")},
 					},
 				},
 			},
-			process: func(grammar.Production) {},
+			prodF:  func(grammar.Production) {},
+			tokenF: func(lexer.Token) {},
 			expectedErrorStrings: []string{
-				`input stream failed`,
+				`input failed`,
 			},
 		},
 		{
@@ -213,7 +218,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			process: func(grammar.Production) {},
+			prodF:  func(grammar.Production) {},
+			tokenF: func(lexer.Token) {},
 			expectedErrorStrings: []string{
 				`unacceptable input <"+", +> for non-terminal E`,
 			},
@@ -268,7 +274,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			process:              func(grammar.Production) {},
+			prodF:                func(grammar.Production) {},
+			tokenF:               func(lexer.Token) {},
 			expectedErrorStrings: nil,
 		},
 	}
@@ -276,7 +283,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.p.G.Verify())
-			err := tc.p.Parse(tc.process)
+			err := tc.p.Parse(tc.prodF, tc.tokenF)
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)
@@ -361,13 +368,13 @@ func TestPredictiveParser_ParseAST(t *testing.T) {
 							},
 						},
 						// EOF
-						{OutError: errors.New("input stream failed")},
+						{OutError: errors.New("input failed")},
 					},
 				},
 			},
 			expectedAST: nil,
 			expectedErrorStrings: []string{
-				`input stream failed`,
+				`input failed`,
 			},
 		},
 		{
@@ -447,7 +454,111 @@ func TestPredictiveParser_ParseAST(t *testing.T) {
 					},
 				},
 			},
-			expectedAST:          nil,
+			expectedAST: &parser.InternalNode{
+				NonTerminal: "E",
+				Production: &grammar.Production{
+					Head: "E",
+					Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")},
+				},
+				Children: []parser.Node{
+					&parser.InternalNode{
+						NonTerminal: "T",
+						Production: &grammar.Production{
+							Head: "T",
+							Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")},
+						},
+						Children: []parser.Node{
+							&parser.InternalNode{
+								NonTerminal: "F",
+								Production: &grammar.Production{
+									Head: "F",
+									Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
+								},
+								Children: []parser.Node{
+									&parser.LeafNode{
+										Terminal: "id",
+										Lexeme:   "a",
+										Position: lexer.Position{
+											Filename: "test",
+											Offset:   0,
+											Line:     1,
+											Column:   1,
+										},
+									},
+								},
+							},
+							&parser.InternalNode{
+								NonTerminal: "T′",
+								Production: &grammar.Production{
+									Head: "T′",
+									Body: grammar.E,
+								},
+							},
+						},
+					},
+					&parser.InternalNode{
+						NonTerminal: "E′",
+						Production: &grammar.Production{
+							Head: "E′",
+							Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")},
+						},
+						Children: []parser.Node{
+							&parser.LeafNode{
+								Terminal: "+",
+								Lexeme:   "+",
+								Position: lexer.Position{
+									Filename: "test",
+									Offset:   2,
+									Line:     1,
+									Column:   3,
+								},
+							},
+							&parser.InternalNode{
+								NonTerminal: "T",
+								Production: &grammar.Production{
+									Head: "T",
+									Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")},
+								},
+								Children: []parser.Node{
+									&parser.InternalNode{
+										NonTerminal: "F",
+										Production: &grammar.Production{
+											Head: "F",
+											Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
+										},
+										Children: []parser.Node{
+											&parser.LeafNode{
+												Terminal: "id",
+												Lexeme:   "b",
+												Position: lexer.Position{
+													Filename: "test",
+													Offset:   4,
+													Line:     1,
+													Column:   5,
+												},
+											},
+										},
+									},
+									&parser.InternalNode{
+										NonTerminal: "T′",
+										Production: &grammar.Production{
+											Head: "T′",
+											Body: grammar.E,
+										},
+									},
+								},
+							},
+							&parser.InternalNode{
+								NonTerminal: "E′",
+								Production: &grammar.Production{
+									Head: "E′",
+									Body: grammar.E,
+								},
+							},
+						},
+					},
+				},
+			},
 			expectedErrorStrings: nil,
 		},
 	}

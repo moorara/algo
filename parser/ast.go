@@ -10,6 +10,12 @@ import (
 	"github.com/moorara/algo/lexer"
 )
 
+var (
+	EqNode = func(lhs, rhs Node) bool {
+		return lhs.Equals(rhs)
+	}
+)
+
 // Node represents a node in an abstract syntax tree (AST)
 // derived from an input string allowed based on a context-free grammar.
 //
@@ -28,7 +34,7 @@ type Node interface {
 	Symbol() grammar.Symbol
 
 	// Pos returns the leftmost position in the input string that this node represent.
-	Pos() *lexer.Position
+	Pos() lexer.Position
 
 	// Child returns the child node at the specified index (0-based) for this node.
 	// The child represents a symbol from the right-hand side of the production rule associated with this node.
@@ -80,29 +86,29 @@ func Traverse(n Node, order generic.TraverseOrder, visit generic.VisitFunc1[Node
 	switch order {
 	case generic.VLR:
 		res := visit(in)
-		for i := range len(in.children) {
-			res = res && Traverse(in.children[i], order, visit)
+		for i := range len(in.Children) {
+			res = res && Traverse(in.Children[i], order, visit)
 		}
 		return res
 
 	case generic.VRL:
 		res := visit(in)
-		for i := len(in.children) - 1; i >= 0; i-- {
-			res = res && Traverse(in.children[i], order, visit)
+		for i := len(in.Children) - 1; i >= 0; i-- {
+			res = res && Traverse(in.Children[i], order, visit)
 		}
 		return res
 
 	case generic.LRV:
 		res := true
-		for i := range len(in.children) {
-			res = res && Traverse(in.children[i], order, visit)
+		for i := range len(in.Children) {
+			res = res && Traverse(in.Children[i], order, visit)
 		}
 		return res && visit(in)
 
 	case generic.RLV:
 		res := true
-		for i := len(in.children) - 1; i >= 0; i-- {
-			res = res && Traverse(in.children[i], order, visit)
+		for i := len(in.Children) - 1; i >= 0; i-- {
+			res = res && Traverse(in.Children[i], order, visit)
 		}
 		return res && visit(in)
 
@@ -114,19 +120,10 @@ func Traverse(n Node, order generic.TraverseOrder, visit generic.VisitFunc1[Node
 // InternalNode represents an internal node in an abstract syntax tree (AST).
 // An InternalNode represents a non-terminal symbol and its associated production rule.
 type InternalNode struct {
-	nonTerminal grammar.NonTerminal
-	production  *grammar.Production
-	children    []Node
+	NonTerminal grammar.NonTerminal
+	Production  *grammar.Production
+	Children    []Node
 	annotation  any
-}
-
-// NewInternalNode creates a new internal node for an abstract syntax tree (AST).
-func NewInternalNode(nonTerminal grammar.NonTerminal, production *grammar.Production, children ...Node) *InternalNode {
-	return &InternalNode{
-		nonTerminal: nonTerminal,
-		production:  production,
-		children:    children,
-	}
 }
 
 // String returns a string representation of an internal node.
@@ -142,9 +139,9 @@ func (n *InternalNode) String() string {
 	})
 
 	if ok {
-		fmt.Fprintf(&b, "%s <%s, %s>", n.production, ll.lexeme, ll.pos)
+		fmt.Fprintf(&b, "%s <%s, %s>", n.Production, ll.Lexeme, ll.Position)
 	} else {
-		fmt.Fprintf(&b, "%s <%s>", n.production, n.Pos())
+		fmt.Fprintf(&b, "%s", n.Production)
 	}
 
 	return b.String()
@@ -155,14 +152,14 @@ func (n *InternalNode) String() string {
 func (n *InternalNode) Equals(rhs Node) bool {
 	nn, ok := rhs.(*InternalNode)
 	if !ok ||
-		!n.nonTerminal.Equals(nn.nonTerminal) ||
-		!equalProductions(n.production, nn.production) ||
-		len(n.children) != len(nn.children) {
+		!n.NonTerminal.Equals(nn.NonTerminal) ||
+		!equalProductions(n.Production, nn.Production) ||
+		len(n.Children) != len(nn.Children) {
 		return false
 	}
 
-	for i := range len(n.children) {
-		if !n.children[i].Equals(nn.children[i]) {
+	for i := range len(n.Children) {
+		if !n.Children[i].Equals(nn.Children[i]) {
 			return false
 		}
 	}
@@ -180,16 +177,16 @@ func equalProductions(lhs, rhs *grammar.Production) bool {
 // Symbol returns the non-terminal symbol associated with this internal node
 // (the left-hand side of the production rule represented by the node).
 func (n *InternalNode) Symbol() grammar.Symbol {
-	return n.nonTerminal
+	return n.NonTerminal
 }
 
 // Pos returns the position of the first child of this internal node.
-func (n *InternalNode) Pos() *lexer.Position {
-	if len(n.children) > 0 {
-		return n.children[0].Pos()
+func (n *InternalNode) Pos() lexer.Position {
+	if len(n.Children) > 0 {
+		return n.Children[0].Pos()
 	}
 
-	return nil
+	return lexer.Position{}
 }
 
 // Child returns the child node at the specified index (0-based) for this internal node.
@@ -197,8 +194,8 @@ func (n *InternalNode) Pos() *lexer.Position {
 //
 // If the index is out of bounds, the method returns nil and false.
 func (n *InternalNode) Child(i int) (Node, bool) {
-	if 0 <= i && i < len(n.children) {
-		return n.children[i], true
+	if 0 <= i && i < len(n.Children) {
+		return n.Children[i], true
 	}
 
 	return nil, false
@@ -243,7 +240,7 @@ func (n *InternalNode) DOT() string {
 		name := fmt.Sprintf("%d", nodeID[n])
 
 		if lf, ok := n.(*LeafNode); ok {
-			label := fmt.Sprintf("%s <%s>", lf.terminal, lf.lexeme)
+			label := fmt.Sprintf("%s <%s>", lf.Terminal, lf.Lexeme)
 			graph.AddNode(dot.NewNode(name, "", label, "", dot.StyleBold, dot.ShapeOval, "", ""))
 			return true
 		}
@@ -254,16 +251,22 @@ func (n *InternalNode) DOT() string {
 		}
 
 		body := dot.NewRecord()
-		for i, X := range in.production.Body {
+		for i, X := range in.Production.Body {
 			body.Fields = append(body.Fields,
 				dot.NewSimpleField(fmt.Sprintf("%d", i), X.String()),
+			)
+		}
+
+		if len(in.Production.Body) == 0 {
+			body.Fields = append(body.Fields,
+				dot.NewSimpleField("", "ε"),
 			)
 		}
 
 		rec := dot.NewRecord(
 			dot.NewComplexField(
 				dot.NewRecord(
-					dot.NewSimpleField("", fmt.Sprintf("%s →", in.production.Head)),
+					dot.NewSimpleField("", fmt.Sprintf("%s →", in.Production.Head)),
 					dot.NewComplexField(body),
 				),
 			),
@@ -271,7 +274,7 @@ func (n *InternalNode) DOT() string {
 
 		graph.AddNode(dot.NewNode(name, "", rec.Label(), "", "", "", "", ""))
 
-		for i, m := range in.children {
+		for i, m := range in.Children {
 			from := fmt.Sprintf("%s:%d", name, i)
 			to := fmt.Sprintf("%d", nodeID[m])
 			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", "", "", "", "", ""))
@@ -286,24 +289,19 @@ func (n *InternalNode) DOT() string {
 // LeafNode represents a leaf node in an abstract syntax tree (AST).
 // A LeafNode represents a terminal symbol.
 type LeafNode struct {
-	terminal   grammar.Terminal
-	lexeme     string
-	pos        *lexer.Position
+	Terminal   grammar.Terminal
+	Lexeme     string
+	Position   lexer.Position
 	annotation any
-}
-
-// LeafNode creates a new leaf node for an abstract syntax tree (AST).
-func NewLeafNode(terminal grammar.Terminal, lexeme string, pos *lexer.Position) *LeafNode {
-	return &LeafNode{
-		terminal: terminal,
-		lexeme:   lexeme,
-		pos:      pos,
-	}
 }
 
 // String returns a string representation of a leaf node.
 func (n *LeafNode) String() string {
-	return fmt.Sprintf("%s <%s, %s>", n.terminal, n.lexeme, n.pos)
+	if n.Position.IsZero() {
+		return fmt.Sprintf("%s <%s>", n.Terminal, n.Lexeme)
+	}
+
+	return fmt.Sprintf("%s <%s, %s>", n.Terminal, n.Lexeme, n.Position)
 }
 
 // Equals determines whether or not two leaf nodes are the same.
@@ -311,26 +309,19 @@ func (n *LeafNode) String() string {
 func (n *LeafNode) Equals(rhs Node) bool {
 	nn, ok := rhs.(*LeafNode)
 	return ok &&
-		n.terminal.Equals(nn.terminal) &&
-		n.lexeme == nn.lexeme &&
-		equalPositions(n.pos, nn.pos)
-}
-
-func equalPositions(lhs, rhs *lexer.Position) bool {
-	if lhs == nil || rhs == nil {
-		return lhs == rhs
-	}
-	return lhs.Equals(*rhs)
+		n.Terminal.Equals(nn.Terminal) &&
+		n.Lexeme == nn.Lexeme &&
+		n.Position.Equals(nn.Position)
 }
 
 // Symbol returns the terminal symbol associated with this leaf node.
 func (n *LeafNode) Symbol() grammar.Symbol {
-	return n.terminal
+	return n.Terminal
 }
 
 // Pos returns the position of the substring represented by this leaf node in the input string.
-func (n *LeafNode) Pos() *lexer.Position {
-	return n.pos
+func (n *LeafNode) Pos() lexer.Position {
+	return n.Position
 }
 
 // Child method is not applicable for leaf nodes, and will always return nil and false.
@@ -361,7 +352,7 @@ func (n *LeafNode) Annotation() any {
 // DOT generates and returns a representation of a leaf node in DOT format.
 // This format is commonly used for visualizing graphs with Graphviz tools.
 func (n *LeafNode) DOT() string {
-	label := fmt.Sprintf("%s <%s>", n.terminal, n.lexeme)
+	label := fmt.Sprintf("%s <%s>", n.Terminal, n.Lexeme)
 	graph := dot.NewGraph(false, false, false, "", "", "", "", "")
 	graph.AddNode(dot.NewNode("1", "", label, "", dot.StyleBold, "", "", ""))
 

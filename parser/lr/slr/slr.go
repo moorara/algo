@@ -49,6 +49,33 @@ func (p *slrParser) nextToken() (lexer.Token, error) {
 	return token, err
 }
 
+/*
+ * INPUT:  • A lexer for reading input string w.
+ *         • An LR parsing table with functions ACTION and GOTO for a grammar G.
+ * OUTPUT: • If w ∈ L(G), the reduction steps of a bottom-up parse for w; otherwise, an error indication.
+ *
+ * METHOD: Initially, the parser has s₀ on its stack,
+ *         where s₀ is the initial state, and w$ in the input buffer.
+ *
+ *         let a be the first symbol of w$;
+ *         while (true) {
+ *           let s be the state on top of the stack;
+ *           if (ACTION[s,a] = shift t) {
+ *             push t onto the stack;
+ *             let a be the next input symbol;
+ *           } else if (ACTION[s,a] = reduce A → β) {
+ *             pop |β| symbols off the stack;
+ *             let state t now be on top of the stack;
+ *             push GOTO[t,A] onto the stack;
+ *             output the production A → β;
+ *           } else if (ACTION[s,a] = accept) {
+ *             break;
+ *           } else {
+ *             call error-recovery routine;
+ *           }
+ *         }
+ */
+
 // Parse analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
 // It attempts to parse the input according to the production rules of a context-free grammar,
 // determining whether the input string belongs to the language defined by the grammar.
@@ -57,35 +84,7 @@ func (p *slrParser) nextToken() (lexer.Token, error) {
 // This allows the caller to process or react to each step of the parsing process.
 //
 // It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-func (p *slrParser) Parse(process parser.ProcessFunc) error {
-
-	/*
-	 * INPUT:  • A lexer for reading input string w.
-	 *         • An LR parsing table with functions ACTION and GOTO for a grammar G.
-	 * OUTPUT: • If w ∈ L(G), the reduction steps of a bottom-up parse for w; otherwise, an error indication.
-	 *
-	 * METHOD: Initially, the parser has s₀ on its stack,
-	 *         where s₀ is the initial state, and w$ in the input buffer.
-	 *
-	 *         let a be the first symbol of w$;
-	 *         while (true) {
-	 *           let s be the state on top of the stack;
-	 *           if (ACTION[s,a] = shift t) {
-	 *             push t onto the stack;
-	 *             let a be the next input symbol;
-	 *           } else if (ACTION[s,a] = reduce A → β) {
-	 *             pop |β| symbols off the stack;
-	 *             let state t now be on top of the stack;
-	 *             push GOTO[t,A] onto the stack;
-	 *             output the production A → β;
-	 *           } else if (ACTION[s,a] = accept) {
-	 *             break;
-	 *           } else {
-	 *             call error-recovery routine;
-	 *           }
-	 *         }
-	 */
-
+func (p *slrParser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) error {
 	T := BuildParsingTable(p.G)
 	if err := T.Error(); err != nil {
 		return &parser.ParseError{
@@ -94,13 +93,12 @@ func (p *slrParser) Parse(process parser.ProcessFunc) error {
 		}
 	}
 
+	// Main stack
 	stack := list.NewStack[lr.State](1024, lr.EqState)
-
-	// The BuildStateMap function ensures that state 0 always includes the initial item "S′ → •S".
-	stack.Push(lr.State(0))
+	stack.Push(lr.State(0)) // BuildStateMap ensures state 0 always includes the initial item "S′ → •S"
 
 	// Read the first input token.
-	token, err := p.lexer.NextToken()
+	token, err := p.nextToken()
 	if err != nil {
 		return &parser.ParseError{Cause: err}
 	}
@@ -117,8 +115,13 @@ func (p *slrParser) Parse(process parser.ProcessFunc) error {
 		if action.Type == lr.SHIFT {
 			stack.Push(action.State)
 
+			// Yield the token.
+			if tokenF != nil {
+				tokenF(token)
+			}
+
 			// Read the next input token.
-			token, err = p.lexer.NextToken()
+			token, err = p.nextToken()
 			if err != nil {
 				return &parser.ParseError{Cause: err}
 			}
@@ -130,19 +133,22 @@ func (p *slrParser) Parse(process parser.ProcessFunc) error {
 			}
 
 			t, _ := stack.Peek()
-
 			next, err := T.GOTO(t, A)
 			if err != nil {
+				// Unlikely to occur: If ACTION(s, a) is valid, GOTO(t, A) should also be defined.
 				return &parser.ParseError{Cause: err}
 			}
 
 			stack.Push(next)
 
-			process(*action.Production)
+			// Yield the production.
+			if prodF != nil {
+				prodF(*action.Production)
+			}
 		} else if action.Type == lr.ACCEPT {
 			break
 		} else {
-			// TODO:
+			// TODO: this is unreachable currently, since T.ACTION returns an error.
 			fmt.Println("ERROR RECOVERY!")
 		}
 	}
@@ -160,5 +166,85 @@ func (p *slrParser) Parse(process parser.ProcessFunc) error {
 //
 // It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
 func (p *slrParser) ParseAST() (parser.Node, error) {
-	return nil, nil
+	T := BuildParsingTable(p.G)
+	if err := T.Error(); err != nil {
+		return nil, &parser.ParseError{
+			Description: "failed to construct the SLR parsing table",
+			Cause:       err,
+		}
+	}
+
+	// Main stack
+	stack := list.NewStack[lr.State](1024, lr.EqState)
+	stack.Push(lr.State(0)) // BuildStateMap ensures state 0 always includes the initial item "S′ → •S"
+
+	// Stack for constructing the abstract syntax tree.
+	nodes := list.NewStack[parser.Node](1024, parser.EqNode)
+
+	// Read the first input token.
+	token, err := p.nextToken()
+	if err != nil {
+		return nil, &parser.ParseError{Cause: err}
+	}
+
+	for {
+		s, _ := stack.Peek()
+		a := token.Terminal
+
+		action, err := T.ACTION(s, a)
+		if err != nil {
+			return nil, &parser.ParseError{Cause: err}
+		}
+
+		if action.Type == lr.SHIFT {
+			stack.Push(action.State)
+			nodes.Push(&parser.LeafNode{
+				Terminal: token.Terminal,
+				Lexeme:   token.Lexeme,
+				Position: token.Pos,
+			})
+
+			// Read the next input token.
+			token, err = p.nextToken()
+			if err != nil {
+				return nil, &parser.ParseError{Cause: err}
+			}
+		} else if action.Type == lr.REDUCE {
+			A, β := action.Production.Head, action.Production.Body
+
+			in := &parser.InternalNode{
+				NonTerminal: A,
+				Production:  action.Production,
+			}
+
+			for range len(β) {
+				stack.Pop()
+				child, _ := nodes.Pop()
+
+				// Prepend child nodes to maintain correct production body order.
+				in.Children = append([]parser.Node{child}, in.Children...)
+			}
+
+			t, _ := stack.Peek()
+			next, err := T.GOTO(t, A)
+			if err != nil {
+				// Unlikely to occur: If ACTION(s, a) is valid, GOTO(t, A) should also be defined.
+				return nil, &parser.ParseError{Cause: err}
+			}
+
+			stack.Push(next)
+			nodes.Push(in)
+		} else if action.Type == lr.ACCEPT {
+			break
+		} else {
+			// TODO: this is unreachable currently, since T.ACTION returns an error.
+			fmt.Println("ERROR RECOVERY!")
+		}
+	}
+
+	// The nodes stack only contains the root of AST at this point.
+	root, _ := nodes.Pop()
+
+	// Accept the input string.
+	return root, nil
 }

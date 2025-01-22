@@ -203,9 +203,14 @@ func Example_parse() {
 
 	parser := slr.New(G, l)
 
-	err = parser.Parse(func(P grammar.Production) {
-		fmt.Println(P)
-	})
+	err = parser.Parse(
+		func(prod grammar.Production) {
+			fmt.Printf("Production: %s\n", prod)
+		},
+		func(token lexer.Token) {
+			fmt.Printf("Token: %s\n", token)
+		},
+	)
 
 	if err != nil {
 		panic(err)

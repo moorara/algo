@@ -205,15 +205,21 @@ func Example_parse() {
 
 	parser := predictive.New(G, l)
 
-	err = parser.Parse(func(P grammar.Production) {
-		fmt.Println(P)
-	})
+	err = parser.Parse(
+		func(prod grammar.Production) {
+			fmt.Printf("Production: %s\n", prod)
+		},
+		func(token lexer.Token) {
+			fmt.Printf("Token: %s\n", token)
+		},
+	)
 
 	if err != nil {
 		panic(err)
 	}
 }
 
+// You can copy-paste the output of this example into https://edotor.net to view the result!
 func Example_parseAST() {
 	src := strings.NewReader(`
 		(price + tax * quantity) * 

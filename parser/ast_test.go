@@ -12,23 +12,23 @@ import (
 
 func getTestInternalNodes() []*InternalNode {
 	n0 := &InternalNode{
-		nonTerminal: "E",
-		production: &grammar.Production{
+		NonTerminal: "E",
+		Production: &grammar.Production{
 			Head: "E",
 			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("E")},
 		},
-		children: []Node{
+		Children: []Node{
 			&InternalNode{
-				nonTerminal: "E",
-				production: &grammar.Production{
+				NonTerminal: "E",
+				Production: &grammar.Production{
 					Head: "E",
 					Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
 				},
-				children: []Node{
+				Children: []Node{
 					&LeafNode{
-						terminal: "id",
-						lexeme:   "fee",
-						pos: &lexer.Position{
+						Terminal: "id",
+						Lexeme:   "fee",
+						Position: lexer.Position{
 							Filename: "test",
 							Offset:   2,
 							Line:     1,
@@ -38,9 +38,9 @@ func getTestInternalNodes() []*InternalNode {
 				},
 			},
 			&LeafNode{
-				terminal: "+",
-				lexeme:   "+",
-				pos: &lexer.Position{
+				Terminal: "+",
+				Lexeme:   "+",
+				Position: lexer.Position{
 					Filename: "test",
 					Offset:   8,
 					Line:     1,
@@ -48,23 +48,23 @@ func getTestInternalNodes() []*InternalNode {
 				},
 			},
 			&InternalNode{
-				nonTerminal: "E",
-				production: &grammar.Production{
+				NonTerminal: "E",
+				Production: &grammar.Production{
 					Head: "E",
 					Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("*"), grammar.NonTerminal("E")},
 				},
-				children: []Node{
+				Children: []Node{
 					&InternalNode{
-						nonTerminal: "E",
-						production: &grammar.Production{
+						NonTerminal: "E",
+						Production: &grammar.Production{
 							Head: "E",
 							Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
 						},
-						children: []Node{
+						Children: []Node{
 							&LeafNode{
-								terminal: "id",
-								lexeme:   "count",
-								pos: &lexer.Position{
+								Terminal: "id",
+								Lexeme:   "count",
+								Position: lexer.Position{
 									Filename: "test",
 									Offset:   10,
 									Line:     1,
@@ -74,9 +74,9 @@ func getTestInternalNodes() []*InternalNode {
 						},
 					},
 					&LeafNode{
-						terminal: "*",
-						lexeme:   "*",
-						pos: &lexer.Position{
+						Terminal: "*",
+						Lexeme:   "*",
+						Position: lexer.Position{
 							Filename: "test",
 							Offset:   18,
 							Line:     1,
@@ -84,16 +84,16 @@ func getTestInternalNodes() []*InternalNode {
 						},
 					},
 					&InternalNode{
-						nonTerminal: "E",
-						production: &grammar.Production{
+						NonTerminal: "E",
+						Production: &grammar.Production{
 							Head: "E",
 							Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
 						},
-						children: []Node{
+						Children: []Node{
 							&LeafNode{
-								terminal: "id",
-								lexeme:   "price",
-								pos: &lexer.Position{
+								Terminal: "id",
+								Lexeme:   "price",
+								Position: lexer.Position{
 									Filename: "test",
 									Offset:   20,
 									Line:     1,
@@ -109,30 +109,30 @@ func getTestInternalNodes() []*InternalNode {
 	}
 
 	n1 := &InternalNode{
-		nonTerminal: "E",
-		production: &grammar.Production{
+		NonTerminal: "E",
+		Production: &grammar.Production{
 			Head: "E",
 			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("*"), grammar.NonTerminal("E")},
 		},
-		children: []Node{
+		Children: []Node{
 			&InternalNode{
-				nonTerminal: "E",
-				production: &grammar.Production{
+				NonTerminal: "E",
+				Production: &grammar.Production{
 					Head: "E",
 					Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("E")},
 				},
-				children: []Node{
+				Children: []Node{
 					&InternalNode{
-						nonTerminal: "E",
-						production: &grammar.Production{
+						NonTerminal: "E",
+						Production: &grammar.Production{
 							Head: "E",
 							Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
 						},
-						children: []Node{
+						Children: []Node{
 							&LeafNode{
-								terminal: "id",
-								lexeme:   "fee",
-								pos: &lexer.Position{
+								Terminal: "id",
+								Lexeme:   "fee",
+								Position: lexer.Position{
 									Filename: "test",
 									Offset:   2,
 									Line:     1,
@@ -142,9 +142,9 @@ func getTestInternalNodes() []*InternalNode {
 						},
 					},
 					&LeafNode{
-						terminal: "+",
-						lexeme:   "+",
-						pos: &lexer.Position{
+						Terminal: "+",
+						Lexeme:   "+",
+						Position: lexer.Position{
 							Filename: "test",
 							Offset:   8,
 							Line:     1,
@@ -152,16 +152,16 @@ func getTestInternalNodes() []*InternalNode {
 						},
 					},
 					&InternalNode{
-						nonTerminal: "E",
-						production: &grammar.Production{
+						NonTerminal: "E",
+						Production: &grammar.Production{
 							Head: "E",
 							Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
 						},
-						children: []Node{
+						Children: []Node{
 							&LeafNode{
-								terminal: "id",
-								lexeme:   "count",
-								pos: &lexer.Position{
+								Terminal: "id",
+								Lexeme:   "count",
+								Position: lexer.Position{
 									Filename: "test",
 									Offset:   10,
 									Line:     1,
@@ -173,9 +173,9 @@ func getTestInternalNodes() []*InternalNode {
 				},
 			},
 			&LeafNode{
-				terminal: "*",
-				lexeme:   "*",
-				pos: &lexer.Position{
+				Terminal: "*",
+				Lexeme:   "*",
+				Position: lexer.Position{
 					Filename: "test",
 					Offset:   18,
 					Line:     1,
@@ -183,16 +183,16 @@ func getTestInternalNodes() []*InternalNode {
 				},
 			},
 			&InternalNode{
-				nonTerminal: "E",
-				production: &grammar.Production{
+				NonTerminal: "E",
+				Production: &grammar.Production{
 					Head: "E",
 					Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
 				},
-				children: []Node{
+				Children: []Node{
 					&LeafNode{
-						terminal: "id",
-						lexeme:   "price",
-						pos: &lexer.Position{
+						Terminal: "id",
+						Lexeme:   "price",
+						Position: lexer.Position{
 							Filename: "test",
 							Offset:   20,
 							Line:     1,
@@ -206,16 +206,16 @@ func getTestInternalNodes() []*InternalNode {
 	}
 
 	n2 := &InternalNode{
-		nonTerminal: "E",
-		production: &grammar.Production{
+		NonTerminal: "E",
+		Production: &grammar.Production{
 			Head: "E",
 			Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
 		},
-		children: []Node{
+		Children: []Node{
 			&LeafNode{
-				terminal: "id",
-				lexeme:   "fee",
-				pos: &lexer.Position{
+				Terminal: "id",
+				Lexeme:   "fee",
+				Position: lexer.Position{
 					Filename: "test",
 					Offset:   2,
 					Line:     1,
@@ -226,16 +226,16 @@ func getTestInternalNodes() []*InternalNode {
 	}
 
 	n3 := &InternalNode{
-		nonTerminal: "E",
-		production: &grammar.Production{
+		NonTerminal: "E",
+		Production: &grammar.Production{
 			Head: "E",
 			Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
 		},
-		children: []Node{
+		Children: []Node{
 			&LeafNode{
-				terminal: "id",
-				lexeme:   "count",
-				pos: &lexer.Position{
+				Terminal: "id",
+				Lexeme:   "count",
+				Position: lexer.Position{
 					Filename: "test",
 					Offset:   10,
 					Line:     1,
@@ -246,16 +246,16 @@ func getTestInternalNodes() []*InternalNode {
 	}
 
 	n4 := &InternalNode{
-		nonTerminal: "E",
-		production: &grammar.Production{
+		NonTerminal: "E",
+		Production: &grammar.Production{
 			Head: "E",
 			Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
 		},
-		children: []Node{
+		Children: []Node{
 			&LeafNode{
-				terminal: "id",
-				lexeme:   "price",
-				pos: &lexer.Position{
+				Terminal: "id",
+				Lexeme:   "price",
+				Position: lexer.Position{
 					Filename: "test",
 					Offset:   20,
 					Line:     1,
@@ -270,9 +270,9 @@ func getTestInternalNodes() []*InternalNode {
 
 func getTestLeafNodes() []*LeafNode {
 	n0 := &LeafNode{
-		terminal: "id",
-		lexeme:   "fee",
-		pos: &lexer.Position{
+		Terminal: "id",
+		Lexeme:   "fee",
+		Position: lexer.Position{
 			Filename: "test",
 			Offset:   2,
 			Line:     1,
@@ -282,9 +282,9 @@ func getTestLeafNodes() []*LeafNode {
 	}
 
 	n1 := &LeafNode{
-		terminal: "+",
-		lexeme:   "+",
-		pos: &lexer.Position{
+		Terminal: "+",
+		Lexeme:   "+",
+		Position: lexer.Position{
 			Filename: "test",
 			Offset:   8,
 			Line:     1,
@@ -293,9 +293,9 @@ func getTestLeafNodes() []*LeafNode {
 	}
 
 	n2 := &LeafNode{
-		terminal: "id",
-		lexeme:   "count",
-		pos: &lexer.Position{
+		Terminal: "id",
+		Lexeme:   "count",
+		Position: lexer.Position{
 			Filename: "test",
 			Offset:   10,
 			Line:     1,
@@ -305,9 +305,9 @@ func getTestLeafNodes() []*LeafNode {
 	}
 
 	n3 := &LeafNode{
-		terminal: "*",
-		lexeme:   "*",
-		pos: &lexer.Position{
+		Terminal: "*",
+		Lexeme:   "*",
+		Position: lexer.Position{
 			Filename: "test",
 			Offset:   18,
 			Line:     1,
@@ -316,9 +316,9 @@ func getTestLeafNodes() []*LeafNode {
 	}
 
 	n4 := &LeafNode{
-		terminal: "id",
-		lexeme:   "price",
-		pos: &lexer.Position{
+		Terminal: "id",
+		Lexeme:   "price",
+		Position: lexer.Position{
 			Filename: "test",
 			Offset:   20,
 			Line:     1,
@@ -328,6 +328,55 @@ func getTestLeafNodes() []*LeafNode {
 	}
 
 	return []*LeafNode{n0, n1, n2, n3, n4}
+}
+
+func TestEqNode(t *testing.T) {
+	in := getTestInternalNodes()
+	ln := getTestLeafNodes()
+
+	tests := []struct {
+		name           string
+		lhs            Node
+		rhs            Node
+		expectedEquals bool
+	}{
+		{
+			name:           "BothInternal_Equal",
+			lhs:            in[0],
+			rhs:            in[0],
+			expectedEquals: true,
+		},
+		{
+			name:           "BothInternal_NotEqual",
+			lhs:            in[0],
+			rhs:            in[1],
+			expectedEquals: false,
+		},
+		{
+			name:           "BothLeaf_Equal",
+			lhs:            ln[0],
+			rhs:            ln[0],
+			expectedEquals: true,
+		},
+		{
+			name:           "BothLeaf_NotEqual",
+			lhs:            ln[0],
+			rhs:            ln[1],
+			expectedEquals: false,
+		},
+		{
+			name:           "InternalAndLeaf_NotEqual",
+			lhs:            in[0],
+			rhs:            ln[0],
+			expectedEquals: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEquals, EqNode(tc.lhs, tc.rhs))
+		})
+	}
 }
 
 func TestTraverse(t *testing.T) {
@@ -428,47 +477,6 @@ func TestTraverse(t *testing.T) {
 	}
 }
 
-func TestNewInternalNode(t *testing.T) {
-	tests := []struct {
-		name        string
-		nonTerminal grammar.NonTerminal
-		production  *grammar.Production
-		children    []Node
-	}{
-		{
-			name:        "OK",
-			nonTerminal: grammar.NonTerminal("E"),
-			production: &grammar.Production{
-				Head: "E",
-				Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
-			},
-			children: []Node{
-				&LeafNode{
-					terminal: "id",
-					lexeme:   "count",
-					pos: &lexer.Position{
-						Filename: "test",
-						Offset:   10,
-						Line:     1,
-						Column:   11,
-					},
-				},
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			n := NewInternalNode(tc.nonTerminal, tc.production, tc.children...)
-
-			assert.NotNil(t, n)
-			assert.Equal(t, tc.nonTerminal, n.nonTerminal)
-			assert.Equal(t, tc.production, n.production)
-			assert.Equal(t, tc.children, n.children)
-		})
-	}
-}
-
 func TestInternalNode_String(t *testing.T) {
 	n := getTestInternalNodes()
 
@@ -480,7 +488,7 @@ func TestInternalNode_String(t *testing.T) {
 		{
 			name:           "Zero",
 			n:              &InternalNode{},
-			expectedString: `<nil> <<nil>>`,
+			expectedString: `<nil>`,
 		},
 		{
 			name:           "OK",
@@ -527,7 +535,7 @@ func TestInternalNode_Equals(t *testing.T) {
 			name: "NilProduction",
 			n:    n[4],
 			rhs: &InternalNode{
-				nonTerminal: "E",
+				NonTerminal: "E",
 			},
 			expectedEquals: false,
 		},
@@ -568,17 +576,28 @@ func TestInternalNode_Pos(t *testing.T) {
 	tests := []struct {
 		name        string
 		n           *InternalNode
-		expectedPos *lexer.Position
+		expectedPos lexer.Position
 	}{
 		{
 			name: "OK",
 			n:    n[0],
-			expectedPos: &lexer.Position{
+			expectedPos: lexer.Position{
 				Filename: "test",
 				Offset:   2,
 				Line:     1,
 				Column:   3,
 			},
+		},
+		{
+			name: "EmptyProduction",
+			n: &InternalNode{
+				NonTerminal: "E",
+				Production: &grammar.Production{
+					Head: "E",
+					Body: grammar.E,
+				},
+			},
+			expectedPos: lexer.Position{},
 		},
 	}
 
@@ -586,11 +605,7 @@ func TestInternalNode_Pos(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pos := tc.n.Pos()
 
-			if tc.expectedPos == nil {
-				assert.Nil(t, pos)
-			} else {
-				assert.True(t, pos.Equals(*tc.expectedPos))
-			}
+			assert.True(t, pos.Equals(tc.expectedPos))
 		})
 	}
 }
@@ -617,9 +632,9 @@ func TestInternalNode_Child(t *testing.T) {
 			n:    n[0],
 			i:    1,
 			expectedChild: &LeafNode{
-				terminal: "+",
-				lexeme:   "+",
-				pos: &lexer.Position{
+				Terminal: "+",
+				Lexeme:   "+",
+				Position: lexer.Position{
 					Filename: "test",
 					Offset:   8,
 					Line:     1,
@@ -733,38 +748,6 @@ func TestInternalNode_DOT(t *testing.T) {
 	}
 }
 
-func TestNewLeafNode(t *testing.T) {
-	tests := []struct {
-		name     string
-		terminal grammar.Terminal
-		lexeme   string
-		pos      *lexer.Position
-	}{
-		{
-			name:     "OK",
-			terminal: grammar.Terminal("id"),
-			lexeme:   "count",
-			pos: &lexer.Position{
-				Filename: "test",
-				Offset:   10,
-				Line:     1,
-				Column:   11,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			n := NewLeafNode(tc.terminal, tc.lexeme, tc.pos)
-
-			assert.NotNil(t, n)
-			assert.Equal(t, tc.terminal, n.terminal)
-			assert.Equal(t, tc.lexeme, n.lexeme)
-			assert.Equal(t, tc.pos, n.pos)
-		})
-	}
-}
-
 func TestLeafNode_String(t *testing.T) {
 	n := getTestLeafNodes()
 
@@ -776,7 +759,7 @@ func TestLeafNode_String(t *testing.T) {
 		{
 			name:           "Zero",
 			n:              &LeafNode{},
-			expectedString: `"" <, <nil>>`,
+			expectedString: `"" <>`,
 		},
 		{
 			name:           "OK",
@@ -817,8 +800,8 @@ func TestLeafNode_Equals(t *testing.T) {
 			name: "NilPosition",
 			n:    n[0],
 			rhs: &LeafNode{
-				terminal: "id",
-				lexeme:   "fee",
+				Terminal: "id",
+				Lexeme:   "fee",
 			},
 			expectedEquals: false,
 		},
@@ -859,12 +842,12 @@ func TestLeafNode_Pos(t *testing.T) {
 	tests := []struct {
 		name        string
 		n           *LeafNode
-		expectedPos *lexer.Position
+		expectedPos lexer.Position
 	}{
 		{
 			name: "OK",
 			n:    n[0],
-			expectedPos: &lexer.Position{
+			expectedPos: lexer.Position{
 				Filename: "test",
 				Offset:   2,
 				Line:     1,
@@ -877,11 +860,7 @@ func TestLeafNode_Pos(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pos := tc.n.Pos()
 
-			if tc.expectedPos == nil {
-				assert.Nil(t, pos)
-			} else {
-				assert.True(t, pos.Equals(*tc.expectedPos))
-			}
+			assert.True(t, pos.Equals(tc.expectedPos))
 		})
 	}
 }
