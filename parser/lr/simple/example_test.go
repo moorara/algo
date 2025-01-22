@@ -1,4 +1,4 @@
-package slr_test
+package simple_test
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/lexer/input"
-	"github.com/moorara/algo/parser/lr/slr"
+	"github.com/moorara/algo/parser/lr/simple"
 )
 
 type exprLexer struct {
@@ -201,7 +201,7 @@ func Example_parse() {
 		"E",
 	)
 
-	parser := slr.New(G, l)
+	parser := simple.New(G, l)
 
 	err = parser.Parse(
 		func(prod grammar.Production) {
@@ -243,7 +243,7 @@ func Example_parseAST() {
 		"E",
 	)
 
-	parser := slr.New(G, l)
+	parser := simple.New(G, l)
 
 	ast, err := parser.ParseAST()
 	if err != nil {
@@ -268,7 +268,7 @@ func Example_parsingTable() {
 		"E",
 	)
 
-	table := slr.BuildParsingTable(G)
+	table := simple.BuildParsingTable(G)
 	if err := table.Error(); err != nil {
 		panic(err)
 	}

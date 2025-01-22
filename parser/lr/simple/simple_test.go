@@ -1,4 +1,4 @@
-package slr
+package simple
 
 import (
 	"errors"
@@ -133,17 +133,17 @@ func getTestParsingTables() []*lr.ParsingTable {
 	return []*lr.ParsingTable{pt0, pt1}
 }
 
-func TestSLRParser_Parse(t *testing.T) {
+func TestSimpleLRParser_Parse(t *testing.T) {
 	tests := []struct {
 		name                 string
-		p                    *slrParser
+		p                    *simpleLRParser
 		prodF                parser.ProductionFunc
 		tokenF               parser.TokenFunc
 		expectedErrorStrings []string
 	}{
 		{
 			name: "None_SLR(1)_Grammar",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G:     grammars[1],
 				lexer: new(MockLexer),
 			},
@@ -175,7 +175,7 @@ func TestSLRParser_Parse(t *testing.T) {
 		},
 		{
 			name: "EmptyString",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G: grammars[0],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
@@ -191,7 +191,7 @@ func TestSLRParser_Parse(t *testing.T) {
 		},
 		{
 			name: "First_NextToken_Fails",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G: grammars[0],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
@@ -207,7 +207,7 @@ func TestSLRParser_Parse(t *testing.T) {
 		},
 		{
 			name: "Second_NextToken_Fails",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G: grammars[0],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
@@ -237,7 +237,7 @@ func TestSLRParser_Parse(t *testing.T) {
 		},
 		{
 			name: "Invalid_Input",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G: grammars[0],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
@@ -265,7 +265,7 @@ func TestSLRParser_Parse(t *testing.T) {
 		},
 		{
 			name: "Success",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G: grammars[0],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
@@ -337,16 +337,16 @@ func TestSLRParser_Parse(t *testing.T) {
 	}
 }
 
-func TestSLRParser_ParseAST(t *testing.T) {
+func TestSimpleLRParser_ParseAST(t *testing.T) {
 	tests := []struct {
 		name                 string
-		p                    *slrParser
+		p                    *simpleLRParser
 		expectedAST          parser.Node
 		expectedErrorStrings []string
 	}{
 		{
 			name: "None_SLR(1)_Grammar",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G:     grammars[1],
 				lexer: new(MockLexer),
 			},
@@ -377,7 +377,7 @@ func TestSLRParser_ParseAST(t *testing.T) {
 		},
 		{
 			name: "EmptyString",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G: grammars[0],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
@@ -392,7 +392,7 @@ func TestSLRParser_ParseAST(t *testing.T) {
 		},
 		{
 			name: "First_NextToken_Fails",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G: grammars[0],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
@@ -407,7 +407,7 @@ func TestSLRParser_ParseAST(t *testing.T) {
 		},
 		{
 			name: "Second_NextToken_Fails",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G: grammars[0],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
@@ -436,7 +436,7 @@ func TestSLRParser_ParseAST(t *testing.T) {
 		},
 		{
 			name: "Invalid_Input",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G: grammars[0],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{
@@ -463,7 +463,7 @@ func TestSLRParser_ParseAST(t *testing.T) {
 		},
 		{
 			name: "Success",
-			p: &slrParser{
+			p: &simpleLRParser{
 				G: grammars[0],
 				lexer: &MockLexer{
 					NextTokenMocks: []NextTokenMock{

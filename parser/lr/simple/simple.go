@@ -1,4 +1,4 @@
-// Package slr provides data structures and algorithms for building Simple LR (SLR) parsers.
+// Package simple provides data structures and algorithms for building Simple LR (SLR) parsers.
 // An SLR parser is a bottom-up parser for the class of LR(1) grammars.
 //
 // An SLR parser uses the canonical LR(0) items to construct the state machine (DFA).
@@ -7,7 +7,7 @@
 //
 // For more details on parsing theory,
 // refer to "Compilers: Principles, Techniques, and Tools (2nd Edition)".
-package slr
+package simple
 
 import (
 	"errors"
@@ -20,9 +20,9 @@ import (
 	"github.com/moorara/algo/parser/lr"
 )
 
-// slrParser is an SLR parser for LR(0) grammars.
+// simpleLRParser is an SLR parser for LR(0) grammars.
 // It implements the parser.Parser interface.
-type slrParser struct {
+type simpleLRParser struct {
 	G     grammar.CFG
 	lexer lexer.Lexer
 }
@@ -30,7 +30,7 @@ type slrParser struct {
 // New creates a new SLR parser for a given context-free grammar (CFG).
 // It requires a lexer for lexical analysis, which reads the input tokens (terminal symbols).
 func New(G grammar.CFG, lexer lexer.Lexer) parser.Parser {
-	return &slrParser{
+	return &simpleLRParser{
 		G:     G,
 		lexer: lexer,
 	}
@@ -38,7 +38,7 @@ func New(G grammar.CFG, lexer lexer.Lexer) parser.Parser {
 
 // nextToken wraps the Lexer.NextToken method and ensures
 // an Endmarker token is returned when the end of input is reached.
-func (p *slrParser) nextToken() (lexer.Token, error) {
+func (p *simpleLRParser) nextToken() (lexer.Token, error) {
 	token, err := p.lexer.NextToken()
 	if err != nil && errors.Is(err, io.EOF) {
 		token.Terminal, token.Lexeme = grammar.Endmarker, ""
@@ -83,7 +83,7 @@ func (p *slrParser) nextToken() (lexer.Token, error) {
 // This allows the caller to process or react to each step of the parsing process.
 //
 // It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-func (p *slrParser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) error {
+func (p *simpleLRParser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) error {
 	T := BuildParsingTable(p.G)
 	if err := T.Error(); err != nil {
 		return &parser.ParseError{
@@ -163,7 +163,7 @@ func (p *slrParser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) 
 // representing the syntactic structure of the input string.
 //
 // It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-func (p *slrParser) ParseAST() (parser.Node, error) {
+func (p *simpleLRParser) ParseAST() (parser.Node, error) {
 	T := BuildParsingTable(p.G)
 	if err := T.Error(); err != nil {
 		return nil, &parser.ParseError{

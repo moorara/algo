@@ -1,4 +1,4 @@
-package slr
+package simple
 
 import (
 	"github.com/moorara/algo/grammar"
