@@ -51,7 +51,7 @@ func BuildParsingTable(G grammar.CFG) *lr.ParsingTable {
 					}
 				}
 
-				// If A → α• is in Iᵢ (A may not be S′)
+				// If A → α• is in Iᵢ (A ≠ S′)
 				if item.IsComplete() && !item.IsFinal() {
 					followA := follow(item.Head)
 
