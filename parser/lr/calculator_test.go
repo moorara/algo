@@ -28,6 +28,23 @@ var grammars = []grammar.CFG{
 	),
 }
 
+type mockCalculator struct {
+	g       grammar.CFG
+	initial Item
+}
+
+func (m *mockCalculator) Initial() Item {
+	return m.initial
+}
+
+func (m *mockCalculator) CLOSURE(I ItemSet) ItemSet {
+	return I
+}
+
+func (m *mockCalculator) G() grammar.CFG {
+	return m.g
+}
+
 func TestAugment(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -63,37 +80,45 @@ func TestAugment(t *testing.T) {
 	}
 }
 
-func TestGOTO(t *testing.T) {
+func TestAutomatonCalculator_GOTO(t *testing.T) {
 	s := getTestItemSets()
-
-	mockClosure := func(I ItemSet) ItemSet {
-		return I
-	}
 
 	tests := []struct {
 		name         string
-		CLOSURE      ClosureFunc
+		a            *AutomatonCalculator
 		I            ItemSet
 		X            grammar.Symbol
 		expectedGOTO ItemSet
 	}{
 		{
-			name:         `GOTO(I₀,E)`,
-			CLOSURE:      mockClosure,
+			name: `GOTO(I₀,E)`,
+			a: &AutomatonCalculator{
+				Calculator: &mockCalculator{
+					initial: mockItem("E′→•E"),
+				},
+			},
 			I:            s[0],
 			X:            grammar.NonTerminal("E"),
 			expectedGOTO: s[1],
 		},
 		{
-			name:         `GOTO(I₀,T)`,
-			CLOSURE:      mockClosure,
+			name: `GOTO(I₀,T)`,
+			a: &AutomatonCalculator{
+				Calculator: &mockCalculator{
+					initial: mockItem("E′→•E"),
+				},
+			},
 			I:            s[0],
 			X:            grammar.NonTerminal("T"),
 			expectedGOTO: s[2],
 		},
 		{
-			name:         `GOTO(I₀,F)`,
-			CLOSURE:      mockClosure,
+			name: `GOTO(I₀,F)`,
+			a: &AutomatonCalculator{
+				Calculator: &mockCalculator{
+					initial: mockItem("E′→•E"),
+				},
+			},
 			I:            s[0],
 			X:            grammar.NonTerminal("F"),
 			expectedGOTO: s[3],
@@ -102,31 +127,27 @@ func TestGOTO(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			J := GOTO(tc.CLOSURE, tc.I, tc.X)
+			J := tc.a.GOTO(tc.I, tc.X)
+
 			assert.True(t, J.Equals(tc.expectedGOTO))
 		})
 	}
 }
 
-func TestCanonical(t *testing.T) {
-	g := Augment(grammars[0])
-
-	mockClosure := func(I ItemSet) ItemSet {
-		return I
-	}
-
+func TestAutomatonCalculator_Canonical(t *testing.T) {
 	tests := []struct {
 		name              string
-		augG              grammar.CFG
-		initial           Item
-		CLOSURE           ClosureFunc
+		a                 *AutomatonCalculator
 		expectedCanonical ItemSetCollection
 	}{
 		{
-			name:    "OK",
-			augG:    g,
-			initial: mockItem("E′→•E"),
-			CLOSURE: mockClosure,
+			name: "OK",
+			a: &AutomatonCalculator{
+				Calculator: &mockCalculator{
+					g:       Augment(grammars[0]),
+					initial: mockItem("E′→•E"),
+				},
+			},
 			expectedCanonical: NewItemSetCollection(
 				NewItemSet(
 					mockItem("E′→•E"),
@@ -140,7 +161,8 @@ func TestCanonical(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			C := Canonical(tc.augG, tc.initial, tc.CLOSURE)
+			C := tc.a.Canonical()
+
 			assert.True(t, C.Equals(tc.expectedCanonical))
 		})
 	}
