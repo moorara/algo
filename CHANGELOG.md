@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.10.2](https://github.com/moorara/algo/tree/v0.10.2) (2025-01-22)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.10.1...v0.10.2)
+
+**Merged Changes:**
+
+  - Update README.md [#256](https://github.com/moorara/algo/pull/256) ([moorara](https://github.com/moorara))
+  - Refactor lr package [#255](https://github.com/moorara/algo/pull/255) ([moorara](https://github.com/moorara))
+  - Implement SLR parsing [#254](https://github.com/moorara/algo/pull/254) ([moorara](https://github.com/moorara))
+  - Add SLR package for Simple LR parsing [#252](https://github.com/moorara/algo/pull/252) ([moorara](https://github.com/moorara))
+  - Revert &#34;Split parser package into topdown and bottomup&#34; [#251](https://github.com/moorara/algo/pull/251) ([moorara](https://github.com/moorara))
+  - Split parser package into topdown and bottomup [#250](https://github.com/moorara/algo/pull/250) ([moorara](https://github.com/moorara))
+  - Add error recovery for predictive parsing [#249](https://github.com/moorara/algo/pull/249) ([moorara](https://github.com/moorara))
+
+
 ## [v0.10.1](https://github.com/moorara/algo/tree/v0.10.1) (2025-01-15)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.10.0...v0.10.1)
