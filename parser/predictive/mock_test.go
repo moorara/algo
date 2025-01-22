@@ -2,16 +2,18 @@ package predictive
 
 import "github.com/moorara/algo/lexer"
 
-// MockLexer is an implementation of lexer.Lexer for testing purposes.
-type MockLexer struct {
-	NextTokenIndex int
-	NextTokenMocks []NextTokenMock
-}
+type (
+	// MockLexer is an implementation of lexer.Lexer for testing purposes.
+	MockLexer struct {
+		NextTokenIndex int
+		NextTokenMocks []NextTokenMock
+	}
 
-type NextTokenMock struct {
-	OutToken lexer.Token
-	OutError error
-}
+	NextTokenMock struct {
+		OutToken lexer.Token
+		OutError error
+	}
+)
 
 func (m *MockLexer) NextToken() (lexer.Token, error) {
 	i := m.NextTokenIndex

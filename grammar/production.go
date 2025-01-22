@@ -12,6 +12,8 @@ import (
 )
 
 var (
+	CmpProduction = cmpProduction
+
 	EqProduction = func(lhs, rhs Production) bool {
 		return lhs.Equals(rhs)
 	}
@@ -240,9 +242,9 @@ func (p *productions) SelectMatch(pred generic.Predicate1[Production]) Productio
 	return newP
 }
 
-// OrderProductionSet orders an unordered set of production rules in a deterministic way.
+// cmpProduction is a CompareFunc for Production type.
 //
-// The ordering criteria are as follows:
+// The comparing criteria are as follows:
 //
 //  1. Production heads are compared alphabetically.
 //  2. If two productions have the same heads,
@@ -252,63 +254,55 @@ func (p *productions) SelectMatch(pred generic.Predicate1[Production]) Productio
 //  4. If two productions have the same number of non-terminals and terminals,
 //     they are ordered alphabetically based on the symbols in their bodies.
 //
-// The goal of this function is to ensure a consistent and deterministic order for any given set of production rules.
+// This function can be used for sorting productions
+// to ensure a consistent and deterministic order for any given set of production rules.
+func cmpProduction(lhs, rhs Production) int {
+	// First, compare the heads of productions.
+	if cmp := CmpNonTerminal(lhs.Head, rhs.Head); cmp < 0 {
+		return -1
+	} else if cmp > 0 {
+		return 1
+	}
+
+	// Second, if the heads of two productions are the same,
+	//   compare based on the number of non-terminal symbols in the body.
+	lhsNonTermsLen, rhsNonTermsLen := len(lhs.Body.NonTerminals()), len(rhs.Body.NonTerminals())
+	if lhsNonTermsLen > rhsNonTermsLen {
+		return -1
+	} else if rhsNonTermsLen > lhsNonTermsLen {
+		return 1
+	}
+
+	// Next, if the number of non-terminals is the same,
+	//   compare based on the number of terminal symbols.
+	lhsTermsLen, rhsTermsLen := len(lhs.Body.Terminals()), len(rhs.Body.Terminals())
+	if lhsTermsLen > rhsTermsLen {
+		return -1
+	} else if rhsTermsLen > lhsTermsLen {
+		return 1
+	}
+
+	// Then, if the number of terminals is also the same,
+	//   compare alphabetically based on the string representation of the bodies.
+	lhsString, rhsString := lhs.String(), rhs.String()
+	if lhsString < rhsString {
+		return -1
+	} else if rhsString < lhsString {
+		return 1
+	}
+
+	return 0
+}
+
+// orderProductionSet orders an unordered set of production rules in a deterministic way.
 func OrderProductionSet(set set.Set[Production]) []Production {
 	prods := generic.Collect1(set.All())
-	OrderProductionSlice(prods)
+	orderProductionSlice(prods)
 	return prods
 }
 
-// OrderProductionSlice orders a slice of production rules in a deterministic way.
-//
-// The ordering criteria are as follows:
-//
-//  1. Production heads are compared alphabetically.
-//  2. If two productions have the same heads,
-//     productions whose bodies contain more non-terminal symbols are prioritized first.
-//  3. If two productions have the same number of non-terminals,
-//     those with more terminal symbols in the body come first.
-//  4. If two productions have the same number of non-terminals and terminals,
-//     they are ordered alphabetically based on the symbols in their bodies.
-//
-// The goal of this function is to ensure a consistent and deterministic order for any given set of production rules.
-func OrderProductionSlice(prods []Production) {
+// orderProductionSlice orders a slice of production rules in a deterministic way.
+func orderProductionSlice(prods []Production) {
 	// Sort the productions using a custom comparison function.
-	sort.Quick[Production](prods, func(lhs, rhs Production) int {
-		// First, compare the heads of productions.
-		if cmp := CmpNonTerminal(lhs.Head, rhs.Head); cmp < 0 {
-			return -1
-		} else if cmp > 0 {
-			return 1
-		}
-
-		// Second, if the heads of two productions are the same,
-		//   compare based on the number of non-terminal symbols in the body.
-		lhsNonTermsLen, rhsNonTermsLen := len(lhs.Body.NonTerminals()), len(rhs.Body.NonTerminals())
-		if lhsNonTermsLen > rhsNonTermsLen {
-			return -1
-		} else if rhsNonTermsLen > lhsNonTermsLen {
-			return 1
-		}
-
-		// Next, if the number of non-terminals is the same,
-		//   compare based on the number of terminal symbols.
-		lhsTermsLen, rhsTermsLen := len(lhs.Body.Terminals()), len(rhs.Body.Terminals())
-		if lhsTermsLen > rhsTermsLen {
-			return -1
-		} else if rhsTermsLen > lhsTermsLen {
-			return 1
-		}
-
-		// Then, if the number of terminals is also the same,
-		//   compare alphabetically based on the string representation of the bodies.
-		lhsString, rhsString := lhs.String(), rhs.String()
-		if lhsString < rhsString {
-			return -1
-		} else if rhsString < lhsString {
-			return 1
-		}
-
-		return 0
-	})
+	sort.Quick[Production](prods, CmpProduction)
 }

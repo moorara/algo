@@ -47,109 +47,236 @@ func New(G grammar.CFG, lexer lexer.Lexer) parser.Parser {
 	}
 }
 
-// Parse analyzes input tokens (terminal symbols) provided by the lexical analyzer
-// and attempts to construct a syntactic representation (parse tree).
+// nextToken wraps the Lexer.NextToken method and ensures
+// an Endmarker token is returned when the end of input is reached.
+func (p *predictiveParser) nextToken() (lexer.Token, error) {
+	token, err := p.lexer.NextToken()
+	if err != nil && errors.Is(err, io.EOF) {
+		token.Terminal, token.Lexeme = grammar.Endmarker, ""
+		return token, nil
+	}
+
+	return token, err
+}
+
+/*
+ * INPUT:  • A lexer for reading input string w.
+ *         • A parsing table M for grammar G.
+ * OUTPUT: • If w ∈ L(G), a leftmost derivation of w; otherwise an error indication.
+ *
+ * METHOD: Initially, the parser is in a configuration with w$ in the input buffer
+ *         and the start symbol S of G on top of the stack, above $.
+ *
+ *         let a be the first symbol of w
+ *         let X be the top stack symbol
+ *         while (X != $) { // stack is not empty
+ *           if (X = a) {
+ *             pop the stack
+ *             let a be the next symbol of w
+ *           } else if (X is a terminal) {
+ *             error()
+ *           } else if (M[X,a] is an error entry) {
+ *             error()
+ *           } else if (M[X,a] = X → Y₁Y₂...Yₖ) {
+ *             output the production X → Y₁Y₂...Yₖ
+ *             pop the stack
+ *             push Yₖ, Yₖ₋₁, ..., Y₁ onto the stack, with Y₁ on top
+ *           }
+ *           let X be the top stack symbol
+ *         }
+ */
+
+// Parse analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+// It attempts to parse the input according to the production rules of a context-free grammar,
+// determining whether the input string belongs to the language defined by the grammar.
 //
-// The Parse method invokes the given function for each production and token during parsing.
-// It returns an error if the input fails to conform to the grammar rules.
-func (p *predictiveParser) Parse(yield parser.Action) error {
-	/*
-	 * INPUT:  • A lexer for reading string w.
-	 *         • A parsing table M for grammar G.
-	 * OUTPUT: • If w ∈ L(G), a leftmost derivation of w; otherwise an error indication.
-	 *
-	 * METHOD: Initially, the parser is in a configuration with w$ in the input buffer
-	 *         and the start symbol S of G on top of the stack, above $.
-	 *
-	 *         let a be the first symbol of w
-	 *         let X be the top stack symbol
-	 *         while (X != $) { // stack is not empty
-	 *           if (X = a) {
-	 *             pop the stack
-	 *             let a be the next symbol of w
-	 *           } else if (X is a terminal) {
-	 *             error()
-	 *           } else if (M[X,a] is an error entry) {
-	 *             error()
-	 *           } else if (M[X,a] = X → Y₁Y₂...Yₖ) {
-	 *             output the production X → Y₁Y₂...Yₖ
-	 *             pop the stack
-	 *             push Yₖ, Yₖ₋₁, ..., Y₁ onto the stack, with Y₁ on top
-	 *           }
-	 *           let X be the top stack symbol
-	 *         }
-	 */
-
-	stack := list.NewStack[grammar.Symbol](1024, grammar.EqSymbol)
-
+// The Parse method invokes the provided function each time a production rule is successfully matched.
+// This allows the caller to process or react to each step of the parsing process.
+//
+// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+func (p *predictiveParser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) error {
 	M := BuildParsingTable(p.G)
 	if err := M.Error(); err != nil {
-		return &ParseError{
-			description: "failed to construct the parsing table",
-			cause:       err,
-			Table:       M,
+		return &parser.ParseError{
+			Description: "failed to construct the predictive parsing table",
+			Cause:       err,
 		}
 	}
 
+	// Main stack
+	stack := list.NewStack[grammar.Symbol](1024, grammar.EqSymbol)
 	stack.Push(grammar.Endmarker)
 	stack.Push(p.G.Start)
 
 	// Read the first input token.
-	token, err := p.lexer.NextToken()
+	token, err := p.nextToken()
 	if err != nil {
-		if errors.Is(err, io.EOF) {
-			return nil
-		}
-		return &ParseError{cause: err}
+		return &parser.ParseError{Cause: err}
 	}
 
 	for X, _ := stack.Peek(); !X.Equals(grammar.Endmarker); X, _ = stack.Peek() {
 		if X.Equals(token.Terminal) {
+			// Yield the token.
+			if tokenF != nil {
+				tokenF(token)
+			}
+
 			// Pop X from the stack.
 			stack.Pop()
 
 			// Read the next input token.
-			token, err = p.lexer.NextToken()
+			token, err = p.nextToken()
 			if err != nil {
-				if errors.Is(err, io.EOF) {
-					break
-				}
-				return &ParseError{cause: err}
+				return &parser.ParseError{Cause: err}
 			}
 
 			continue
 		}
 
 		if X.IsTerminal() {
-			return &ParseError{
-				description: fmt.Sprintf("unexpected terminal %s on stack", X),
-				Table:       M,
+			return &parser.ParseError{
+				Description: fmt.Sprintf("unexpected terminal %s on stack", X),
 			}
 		}
 
 		A := X.(grammar.NonTerminal)
 
 		if M.IsEmpty(A, token.Terminal) {
-			return &ParseError{
-				description: fmt.Sprintf("unacceptable input <%s, %s> for non-terminal %s", token.Terminal, token.Lexeme, A),
+			return &parser.ParseError{
+				Description: fmt.Sprintf("unacceptable input <%s, %s> for non-terminal %s", token.Terminal, token.Lexeme, A),
 				Pos:         token.Pos,
-				Table:       M,
 			}
 		}
 
 		// At this point, it is guaranteed that M[A,a] contains exactly one production.
-		P, _ := M.GetProduction(A, token.Terminal)
+		prod, _ := M.GetProduction(A, token.Terminal)
+
+		// Yield the production.
+		if prodF != nil {
+			prodF(prod)
+		}
 
 		// Pop X from the stack.
 		stack.Pop()
 
 		// Pushes the symbols of the production body onto the stack in reverse order.
-		for i := len(P.Body) - 1; i >= 0; i-- {
-			stack.Push(P.Body[i])
+		for i := len(prod.Body) - 1; i >= 0; i-- {
+			stack.Push(prod.Body[i])
 		}
-
-		yield(P, token)
 	}
 
+	// Accept the input string.
 	return nil
+}
+
+// ParseAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+// It attempts to parse the input according to the production rules of a context-free grammar,
+// constructing an abstract syntax tree (AST) that reflects the structure of the input.
+//
+// If the input string is valid, the root node of the AST is returned,
+// representing the syntactic structure of the input string.
+//
+// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+func (p *predictiveParser) ParseAST() (parser.Node, error) {
+	M := BuildParsingTable(p.G)
+	if err := M.Error(); err != nil {
+		return nil, &parser.ParseError{
+			Description: "failed to construct the predictive parsing table",
+			Cause:       err,
+		}
+	}
+
+	// Root of the abstract syntax tree.
+	root := &parser.InternalNode{
+		NonTerminal: p.G.Start,
+	}
+
+	// Stack for constructing the abstract syntax tree.
+	nodes := list.NewStack[parser.Node](1024, parser.EqNode)
+	nodes.Push(root)
+
+	// Main stack
+	stack := list.NewStack[grammar.Symbol](1024, grammar.EqSymbol)
+	stack.Push(grammar.Endmarker)
+	stack.Push(p.G.Start)
+
+	// Read the first input token.
+	token, err := p.nextToken()
+	if err != nil {
+		return nil, &parser.ParseError{Cause: err}
+	}
+
+	for X, _ := stack.Peek(); !X.Equals(grammar.Endmarker); X, _ = stack.Peek() {
+		if X.Equals(token.Terminal) {
+			// Complete the leaf node.
+			if n, ok := nodes.Pop(); ok {
+				lf, _ := n.(*parser.LeafNode)
+				lf.Lexeme = token.Lexeme
+				lf.Position = token.Pos
+			}
+
+			// Pop X from the stack.
+			stack.Pop()
+
+			// Read the next input token.
+			token, err = p.nextToken()
+			if err != nil {
+				return nil, &parser.ParseError{Cause: err}
+			}
+
+			continue
+		}
+
+		if X.IsTerminal() {
+			return nil, &parser.ParseError{
+				Description: fmt.Sprintf("unexpected terminal %s on stack", X),
+			}
+		}
+
+		A := X.(grammar.NonTerminal)
+
+		if M.IsEmpty(A, token.Terminal) {
+			return nil, &parser.ParseError{
+				Description: fmt.Sprintf("unacceptable input <%s, %s> for non-terminal %s", token.Terminal, token.Lexeme, A),
+				Pos:         token.Pos,
+			}
+		}
+
+		// At this point, it is guaranteed that M[A,a] contains exactly one production.
+		prod, _ := M.GetProduction(A, token.Terminal)
+
+		// Complete the internal node.
+		if n, ok := nodes.Pop(); ok {
+			in, _ := n.(*parser.InternalNode)
+			in.Production = &prod
+
+			// Push production body nodes onto the stack in reverse order.
+			for i := len(prod.Body) - 1; i >= 0; i-- {
+				var child parser.Node
+
+				switch Y := prod.Body[i].(type) {
+				case grammar.NonTerminal:
+					child = &parser.InternalNode{NonTerminal: Y}
+				case grammar.Terminal:
+					child = &parser.LeafNode{Terminal: Y}
+				}
+
+				// Prepend child nodes to maintain correct production body order.
+				in.Children = append([]parser.Node{child}, in.Children...)
+
+				nodes.Push(child)
+			}
+		}
+
+		// Pop X from the stack.
+		stack.Pop()
+
+		// Pushes the symbols of the production body onto the stack in reverse order.
+		for i := len(prod.Body) - 1; i >= 0; i-- {
+			stack.Push(prod.Body[i])
+		}
+	}
+
+	// Accept the input string.
+	return root, nil
 }

@@ -1,4 +1,4 @@
-package predictive_test
+package slr_test
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/lexer/input"
-	"github.com/moorara/algo/parser/predictive"
+	"github.com/moorara/algo/parser/lr/slr"
 )
 
 type exprLexer struct {
@@ -189,21 +189,19 @@ func Example_parse() {
 
 	G := grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
-		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
+		[]grammar.NonTerminal{"E", "T", "F"},
 		[]grammar.Production{
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}},                         // E → T E′
-			{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}}, // E′ → + T E′
-			{Head: "E′", Body: grammar.E}, // E′ → ε
-			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}},                         // T → F T′
-			{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}}, // T′ → * F T′
-			{Head: "T′", Body: grammar.E}, // T′ → ε
-			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}}, // F → ( E )
-			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                 // F → id
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")}},                                                  // E → T
+			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.Terminal("*"), grammar.NonTerminal("F")}}, // T → T * F
+			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F")}},                                                  // T → F
+			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}},    // F → ( E )
+			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                    // F → id
 		},
 		"E",
 	)
 
-	parser := predictive.New(G, l)
+	parser := slr.New(G, l)
 
 	err = parser.Parse(
 		func(prod grammar.Production) {
@@ -219,7 +217,6 @@ func Example_parse() {
 	}
 }
 
-// You can copy-paste the output of this example into https://edotor.net to view the result!
 func Example_parseAST() {
 	src := strings.NewReader(`
 		(price + tax * quantity) * 
@@ -234,21 +231,19 @@ func Example_parseAST() {
 
 	G := grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
-		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
+		[]grammar.NonTerminal{"E", "T", "F"},
 		[]grammar.Production{
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}},                         // E → T E′
-			{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}}, // E′ → + T E′
-			{Head: "E′", Body: grammar.E}, // E′ → ε
-			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}},                         // T → F T′
-			{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}}, // T′ → * F T′
-			{Head: "T′", Body: grammar.E}, // T′ → ε
-			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}}, // F → ( E )
-			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                 // F → id
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")}},                                                  // E → T
+			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.Terminal("*"), grammar.NonTerminal("F")}}, // T → T * F
+			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F")}},                                                  // T → F
+			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}},    // F → ( E )
+			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                    // F → id
 		},
 		"E",
 	)
 
-	parser := predictive.New(G, l)
+	parser := slr.New(G, l)
 
 	ast, err := parser.ParseAST()
 	if err != nil {
@@ -261,21 +256,19 @@ func Example_parseAST() {
 func Example_parsingTable() {
 	G := grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
-		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
+		[]grammar.NonTerminal{"E", "T", "F"},
 		[]grammar.Production{
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}},                         // E → T E′
-			{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}}, // E′ → + T E′
-			{Head: "E′", Body: grammar.E}, // E′ → ε
-			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}},                         // T → F T′
-			{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}}, // T′ → * F T′
-			{Head: "T′", Body: grammar.E}, // T′ → ε
-			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}}, // F → ( E )
-			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                 // F → id
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")}},                                                  // E → T
+			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.Terminal("*"), grammar.NonTerminal("F")}}, // T → T * F
+			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F")}},                                                  // T → F
+			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}},    // F → ( E )
+			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                    // F → id
 		},
 		"E",
 	)
 
-	table := predictive.BuildParsingTable(G)
+	table := slr.BuildParsingTable(G)
 	if err := table.Error(); err != nil {
 		panic(err)
 	}

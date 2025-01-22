@@ -10,8 +10,9 @@
 package input
 
 import (
+	"bytes"
+	"fmt"
 	"io"
-	"strings"
 
 	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/list"
@@ -163,7 +164,7 @@ func (i *Input) Next() (rune, error) {
 	if x >= as {
 		if x == xx {
 			return 0, &InputError{
-				description: "invalid utf-8 character",
+				Description: "invalid utf-8 character",
 				Pos:         i.forwardPos(),
 			}
 		}
@@ -191,7 +192,7 @@ func (i *Input) Next() (rune, error) {
 	accept := acceptRanges[x>>4]
 	if b1 < accept.lo || accept.hi < b1 {
 		return 0, &InputError{
-			description: "invalid utf-8 character",
+			Description: "invalid utf-8 character",
 			Pos:         i.forwardPos(),
 		}
 	}
@@ -210,7 +211,7 @@ func (i *Input) Next() (rune, error) {
 
 	if b2 < locb || hicb < b2 {
 		return 0, &InputError{
-			description: "invalid utf-8 character",
+			Description: "invalid utf-8 character",
 			Pos:         i.forwardPos(),
 		}
 	}
@@ -229,7 +230,7 @@ func (i *Input) Next() (rune, error) {
 
 	if b3 < locb || hicb < b3 {
 		return 0, &InputError{
-			description: "invalid utf-8 character",
+			Description: "invalid utf-8 character",
 			Pos:         i.forwardPos(),
 		}
 	}
@@ -262,7 +263,7 @@ func (i *Input) Retract() {
 func (i *Input) Lexeme() (string, lexer.Position) {
 	pos := i.pos()
 
-	var lexeme strings.Builder
+	var lexeme bytes.Buffer
 	for i.lexemeBegin != i.forward {
 		lexeme.WriteByte(i.buff[i.lexemeBegin])
 		i.lexemeBegin++
@@ -305,4 +306,18 @@ func (i *Input) Skip() lexer.Position {
 	i.column = i.nextColumn
 
 	return pos
+}
+
+// InputError represents an error encountered when reading from an input source.
+type InputError struct {
+	Description string
+	Pos         lexer.Position
+}
+
+// Error implements the error interface.
+// It returns a formatted string describing the error in detail.
+func (e *InputError) Error() string {
+	var b bytes.Buffer
+	fmt.Fprintf(&b, "%s: %s", e.Pos, e.Description)
+	return b.String()
 }

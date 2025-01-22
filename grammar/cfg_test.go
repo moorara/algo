@@ -569,6 +569,105 @@ func TestCFG_Equals(t *testing.T) {
 	}
 }
 
+func TestCFG_Symbols(t *testing.T) {
+	tests := []struct {
+		name            string
+		g               CFG
+		expectedSymbols set.Set[Symbol]
+	}{
+		{
+			name: "1st",
+			g:    CFGrammars[0],
+			expectedSymbols: set.New[Symbol](EqSymbol,
+				Terminal("0"), Terminal("1"),
+				NonTerminal("S"), NonTerminal("X"), NonTerminal("Y"),
+			),
+		},
+		{
+			name: "2nd",
+			g:    CFGrammars[1],
+			expectedSymbols: set.New[Symbol](EqSymbol,
+				Terminal("a"), Terminal("b"),
+				NonTerminal("S"),
+			),
+		},
+		{
+			name: "3rd",
+			g:    CFGrammars[2],
+			expectedSymbols: set.New[Symbol](EqSymbol,
+				Terminal("a"), Terminal("b"),
+				NonTerminal("S"), NonTerminal("A"), NonTerminal("B"),
+			),
+		},
+		{
+			name: "4th",
+			g:    CFGrammars[3],
+			expectedSymbols: set.New[Symbol](EqSymbol,
+				Terminal("b"), Terminal("c"), Terminal("d"), Terminal("s"),
+				NonTerminal("S"), NonTerminal("A"), NonTerminal("B"), NonTerminal("C"), NonTerminal("D"),
+			),
+		},
+		{
+			name: "5th",
+			g:    CFGrammars[4],
+			expectedSymbols: set.New[Symbol](EqSymbol,
+				Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d"),
+				NonTerminal("S"), NonTerminal("A"), NonTerminal("B"), NonTerminal("C"), NonTerminal("D"),
+			),
+		},
+		{
+			name: "6th",
+			g:    CFGrammars[5],
+			expectedSymbols: set.New[Symbol](EqSymbol,
+				Terminal("a"), Terminal("b"),
+				NonTerminal("S"), NonTerminal("A"), NonTerminal("A₁"), NonTerminal("B"), NonTerminal("B₁"),
+			),
+		},
+		{
+			name: "7th",
+			g:    CFGrammars[6],
+			expectedSymbols: set.New[Symbol](EqSymbol,
+				Terminal("+"), Terminal("-"), Terminal("*"), Terminal("/"), Terminal("("), Terminal(")"), Terminal("id"),
+				NonTerminal("S"), NonTerminal("E"),
+			),
+		},
+		{
+			name: "8th",
+			g:    CFGrammars[7],
+			expectedSymbols: set.New[Symbol](EqSymbol,
+				Terminal("+"), Terminal("-"), Terminal("*"), Terminal("/"), Terminal("("), Terminal(")"), Terminal("id"),
+				NonTerminal("S"), NonTerminal("E"), NonTerminal("T"), NonTerminal("F"),
+			),
+		},
+		{
+			name: "9th",
+			g:    CFGrammars[8],
+			expectedSymbols: set.New[Symbol](EqSymbol,
+				Terminal("+"), Terminal("*"), Terminal("("), Terminal(")"), Terminal("id"),
+				NonTerminal("E"), NonTerminal("E′"), NonTerminal("T"), NonTerminal("T′"), NonTerminal("F"),
+			),
+		},
+		{
+			name: "10th",
+			g:    CFGrammars[9],
+			expectedSymbols: set.New[Symbol](EqSymbol,
+				Terminal("="), Terminal("|"), Terminal("("), Terminal(")"), Terminal("["), Terminal("]"), Terminal("{"), Terminal("}"), Terminal("{{"), Terminal("}}"),
+				Terminal("GRAMMAR"), Terminal("IDENT"), Terminal("TOKEN"), Terminal("STRING"), Terminal("REGEX"),
+				NonTerminal("grammar"), NonTerminal("name"), NonTerminal("decls"), NonTerminal("decl"), NonTerminal("token"),
+				NonTerminal("rule"), NonTerminal("lhs"), NonTerminal("rhs"), NonTerminal("nonterm"), NonTerminal("term"),
+			),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
+			symbols := tc.g.Symbols()
+			assert.True(t, symbols.Equals(tc.expectedSymbols))
+		})
+	}
+}
+
 func TestCFG_IsCNF(t *testing.T) {
 	tests := []struct {
 		name                 string

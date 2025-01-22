@@ -44,6 +44,57 @@ func TestWriteSymbol(t *testing.T) {
 	}
 }
 
+func TestCompareFuncForSymbol(t *testing.T) {
+	tests := []struct {
+		name            string
+		lhs             Symbol
+		rhs             Symbol
+		expectedCompare int
+	}{
+		{
+			name:            "Terminal_NonTerminal",
+			lhs:             Terminal("a"),
+			rhs:             NonTerminal("A"),
+			expectedCompare: -1,
+		},
+		{
+			name:            "NonTerminal_Terminal",
+			lhs:             NonTerminal("A"),
+			rhs:             Terminal("a"),
+			expectedCompare: 1,
+		},
+		{
+			name:            "Terminal_Terminal",
+			lhs:             Terminal("a"),
+			rhs:             Terminal("b"),
+			expectedCompare: -1,
+		},
+		{
+			name:            "NonTerminal_NonTerminal",
+			lhs:             NonTerminal("B"),
+			rhs:             NonTerminal("A"),
+			expectedCompare: 1,
+		},
+		{
+			name:            "Terminal_Terminal_Equal",
+			lhs:             Terminal("a"),
+			rhs:             Terminal("a"),
+			expectedCompare: 0,
+		},
+		{
+			name:            "NonTerminal_NonTerminal_Equal",
+			lhs:             NonTerminal("A"),
+			rhs:             NonTerminal("A"),
+			expectedCompare: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		cmp := compareFuncForSymbol()(tc.lhs, tc.rhs)
+		assert.Equal(t, tc.expectedCompare, cmp)
+	}
+}
+
 func TestHashFuncForSymbol(t *testing.T) {
 	tests := []struct {
 		s            Symbol

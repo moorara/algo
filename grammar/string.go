@@ -20,7 +20,7 @@ var (
 		return lhs.Equals(rhs)
 	}
 
-	EqStringSet = func(lhs, rhs set.Set[String[Symbol]]) bool {
+	eqStringSet = func(lhs, rhs set.Set[String[Symbol]]) bool {
 		return lhs.Equals(rhs)
 	}
 )

@@ -14,8 +14,8 @@
 package lexer
 
 import (
+	"bytes"
 	"fmt"
-	"strings"
 
 	"github.com/moorara/algo/grammar"
 )
@@ -49,6 +49,13 @@ func (t Token) String() string {
 	return fmt.Sprintf("%s <%s, %s>", t.Terminal, t.Lexeme, t.Pos)
 }
 
+// Equals determines whether or not two tokens are the same.
+func (t Token) Equals(rhs Token) bool {
+	return t.Terminal.Equals(rhs.Terminal) &&
+		t.Lexeme == rhs.Lexeme &&
+		t.Pos.Equals(rhs.Pos)
+}
+
 // Position represents a specific location in an input source.
 type Position struct {
 	Filename string // The name of the input source file (optional).
@@ -61,19 +68,27 @@ type Position struct {
 //
 // It returns a formatted string representation of the position.
 func (p Position) String() string {
-	b := new(strings.Builder)
+	var b bytes.Buffer
 
 	if len(p.Filename) > 0 {
-		fmt.Fprintf(b, "%s:", p.Filename)
+		fmt.Fprintf(&b, "%s:", p.Filename)
 	}
 
 	if p.Line > 0 && p.Column > 0 {
-		fmt.Fprintf(b, "%d:%d", p.Line, p.Column)
+		fmt.Fprintf(&b, "%d:%d", p.Line, p.Column)
 	} else {
-		fmt.Fprintf(b, "%d", p.Offset)
+		fmt.Fprintf(&b, "%d", p.Offset)
 	}
 
 	return b.String()
+}
+
+// Equals determines whether or not two positions are the same.
+func (p Position) Equals(rhs Position) bool {
+	return p.Filename == rhs.Filename &&
+		p.Offset == rhs.Offset &&
+		p.Line == rhs.Line &&
+		p.Column == rhs.Column
 }
 
 // IsZero checks if a position is a zero (empty) value.

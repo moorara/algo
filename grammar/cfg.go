@@ -194,6 +194,21 @@ func (g CFG) Equals(rhs CFG) bool {
 		g.Start.Equals(rhs.Start)
 }
 
+// Symbols returns the set of all symbols in the grammar, including both terminal and non-terminal symbols.
+func (g CFG) Symbols() set.Set[Symbol] {
+	symbols := set.New[Symbol](EqSymbol)
+
+	for t := range g.Terminals.All() {
+		symbols.Add(t)
+	}
+
+	for n := range g.NonTerminals.All() {
+		symbols.Add(n)
+	}
+
+	return symbols
+}
+
 // IsCNF checks if a context-free grammar is in Chomsky Normal Form (CNF).
 //
 // A context-free grammar G is in Chomsky Normal Form (CNF) if all of its production rules are of the form
@@ -734,7 +749,7 @@ func (g CFG) LeftFactor() CFG {
 // over longer prefixes that encompass fewer suffixes or production bodies.
 func groupByCommonPrefix(prods set.Set[Production]) symboltable.SymbolTable[String[Symbol], set.Set[String[Symbol]]] {
 	// Define a map of prefixes to their corresponding suffixes.
-	groups := symboltable.NewQuadraticHashTable(HashString, EqString, EqStringSet, symboltable.HashOpts{})
+	groups := symboltable.NewQuadraticHashTable(HashString, EqString, eqStringSet, symboltable.HashOpts{})
 
 	for prod := range prods.All() {
 		prefixFound := false
@@ -1121,7 +1136,7 @@ func (g CFG) OrderTerminals() String[Terminal] {
 // The goal of this function is to ensure a consistent and deterministic order for any given set of non-terminals.
 func (g CFG) OrderNonTerminals() (String[NonTerminal], String[NonTerminal], String[NonTerminal]) {
 	prods := generic.Collect1(g.Productions.All())
-	OrderProductionSlice(prods)
+	orderProductionSlice(prods)
 
 	visited := make(String[NonTerminal], 0)
 	isVisited := func(n NonTerminal) bool {

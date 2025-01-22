@@ -8,22 +8,69 @@
 package parser
 
 import (
-	"github.com/moorara/algo/grammar"
+	"bytes"
+	"fmt"
+
 	"github.com/moorara/algo/lexer"
 )
 
-// Action is a function that gets called whenever a production
-// rule is selected from the parsing table for an input token.
-// It performs the necessary actions associated with the production rule
-// and the corresponding lexical token during the predictive top-down parsing.
-type Action func(grammar.Production, lexer.Token)
-
-// Parser defines the interface for a syntax analyzer.
+// Parser defines the interface for a syntax analyzer that processes input tokens.
 type Parser interface {
-	// Parse analyzes input tokens (terminal symbols) provided by a lexical analyzer
-	// and attempts to construct a syntactic representation (parse tree).
+	// Parse analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+	// It attempts to parse the input according to the production rules of a context-free grammar,
+	// determining whether the input string belongs to the language defined by the grammar.
 	//
-	// The Parse method invokes the given function for each production and token during parsing.
-	// It returns an error if the input fails to conform to the grammar rules.
-	Parse(Action) error
+	// The Parse method invokes the provided functions each time a production rule or a token is successfully matched.
+	// This allows the caller to process or react to each step of the parsing process.
+	//
+	// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+	Parse(ProductionFunc, TokenFunc) error
+
+	// ParseAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+	// It attempts to parse the input according to the production rules of a context-free grammar,
+	// constructing an abstract syntax tree (AST) that reflects the structure of the input.
+	//
+	// If the input string is valid, the root node of the AST is returned,
+	// representing the syntactic structure of the input string.
+	//
+	// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+	ParseAST() (Node, error)
+}
+
+// ParseError represents an error encountered when parsing an input string.
+type ParseError struct {
+	Description string
+	Cause       error
+	Pos         lexer.Position
+}
+
+// Error implements the error interface.
+// It returns a formatted string describing the error in detail.
+func (e *ParseError) Error() string {
+	var b bytes.Buffer
+
+	if !e.Pos.IsZero() {
+		fmt.Fprintf(&b, "%s", e.Pos)
+	}
+
+	if len(e.Description) != 0 {
+		if b.Len() > 0 {
+			fmt.Fprint(&b, ": ")
+		}
+		fmt.Fprintf(&b, "%s", e.Description)
+	}
+
+	if e.Cause != nil {
+		if b.Len() > 0 {
+			fmt.Fprint(&b, ": ")
+		}
+		fmt.Fprintf(&b, "%s", e.Cause)
+	}
+
+	return b.String()
+}
+
+// Error implements the unwrap interface.
+func (e *ParseError) Unwrap() error {
+	return e.Cause
 }
