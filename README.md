@@ -37,7 +37,7 @@ A collection of common data structures and algorithms for Go applications.
       - Union
       - Intersection
       - Difference
-      - Powerset,
+      - Powerset
       - Partitions
     - Symbol Tables
       - Unordered
