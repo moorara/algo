@@ -11,7 +11,6 @@ package slr
 
 import (
 	"errors"
-	"fmt"
 	"io"
 
 	"github.com/moorara/algo/grammar"
@@ -135,7 +134,7 @@ func (p *slrParser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) 
 			t, _ := stack.Peek()
 			next, err := T.GOTO(t, A)
 			if err != nil {
-				// Unlikely to occur: If ACTION(s, a) is valid, GOTO(t, A) should also be defined.
+				// TODO: If ACTION(s, a) is valid, GOTO(t, A) should also be defined.
 				return &parser.ParseError{Cause: err}
 			}
 
@@ -148,8 +147,7 @@ func (p *slrParser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) 
 		} else if action.Type == lr.ACCEPT {
 			break
 		} else {
-			// TODO: this is unreachable currently, since T.ACTION returns an error.
-			fmt.Println("ERROR RECOVERY!")
+			// TODO: This is unreachable currently, since T.ACTION handles the error.
 		}
 	}
 
@@ -228,7 +226,7 @@ func (p *slrParser) ParseAST() (parser.Node, error) {
 			t, _ := stack.Peek()
 			next, err := T.GOTO(t, A)
 			if err != nil {
-				// Unlikely to occur: If ACTION(s, a) is valid, GOTO(t, A) should also be defined.
+				// TODO: If ACTION(s, a) is valid, GOTO(t, A) should also be defined.
 				return nil, &parser.ParseError{Cause: err}
 			}
 
@@ -237,8 +235,7 @@ func (p *slrParser) ParseAST() (parser.Node, error) {
 		} else if action.Type == lr.ACCEPT {
 			break
 		} else {
-			// TODO: this is unreachable currently, since T.ACTION returns an error.
-			fmt.Println("ERROR RECOVERY!")
+			// TODO: This is unreachable currently, since T.ACTION handles the error.
 		}
 	}
 

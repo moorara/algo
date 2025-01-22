@@ -193,11 +193,12 @@ func (t *ParsingTable) Error() error {
 }
 
 // ACTION looks up and returns the action for state s and terminal a.
-// If the ACTION[s,a] contains more than one action, it returns an error, indicating a conflict.
+// If the ACTION[s,a] contains more than one action,
+// it returns an erroneous ACTION and an error, indicating a conflict.
 func (t *ParsingTable) ACTION(s State, a grammar.Terminal) (Action, error) {
 	actions, ok := t.getActions(s, a)
 	if !ok || actions.Size() == 0 {
-		return Action{}, &ParsingTableError{
+		return Action{Type: ERROR}, &ParsingTableError{
 			Type:   NO_ACTION,
 			State:  s,
 			Symbol: a,
@@ -211,7 +212,7 @@ func (t *ParsingTable) ACTION(s State, a grammar.Terminal) (Action, error) {
 	}
 
 	// Conflict
-	return Action{}, &ParsingTableError{
+	return Action{Type: ERROR}, &ParsingTableError{
 		Type:    CONFLICT,
 		State:   s,
 		Symbol:  a,

@@ -344,7 +344,7 @@ func TestParsingTable_ACTION(t *testing.T) {
 			pt:             pt[0],
 			s:              State(4),
 			a:              grammar.Terminal("+"),
-			expectedAction: Action{},
+			expectedAction: Action{Type: ERROR},
 			expectedError:  "no action for ACTION[4, \"+\"]",
 		},
 		{
@@ -352,7 +352,7 @@ func TestParsingTable_ACTION(t *testing.T) {
 			pt:             pt[1],
 			s:              State(0),
 			a:              grammar.Terminal("a"),
-			expectedAction: Action{},
+			expectedAction: Action{Type: ERROR},
 			expectedError:  "shift/reduce conflict at ACTION[0, \"a\"]\n  SHIFT 5\n  REDUCE A → \"a\" A\n",
 		},
 		{
@@ -376,7 +376,7 @@ func TestParsingTable_ACTION(t *testing.T) {
 				assert.True(t, action.Equals(tc.expectedAction))
 				assert.NoError(t, err)
 			} else {
-				assert.Empty(t, action)
+				assert.True(t, action.Equals(tc.expectedAction))
 				assert.EqualError(t, err, tc.expectedError)
 			}
 		})
