@@ -14,13 +14,15 @@ type calculator struct {
 // NewCalculator returns an lr.Calculator for LR(0) items.
 // It provides an implementation of the CLOSURE function
 // based on the LR(0) items of the augmented grammar.
-func NewCalculator(G grammar.CFG) lr.Calculator {
+func NewCalculator(G grammar.CFG) *lr.AutomatonCalculator {
 	augG := lr.Augment(G)
 	FIRST := augG.ComputeFIRST()
 
-	return &calculator{
-		augG:  augG,
-		FIRST: FIRST,
+	return &lr.AutomatonCalculator{
+		Calculator: &calculator{
+			augG:  augG,
+			FIRST: FIRST,
+		},
 	}
 }
 
@@ -107,9 +109,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 	 * OUTPUT: The canonical LR parsing table functions ACTION and GOTO for G′.
 	 */
 
-	calc := &lr.AutomatonCalculator{
-		Calculator: NewCalculator(G),
-	}
+	calc := NewCalculator(G)
 
 	// 1. Construct C = {I₀, I₁, ..., Iₙ}, the collection of sets of LR(1) items for G′.
 	C := calc.Canonical()

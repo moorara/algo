@@ -86,10 +86,11 @@ func TestNewCalculator(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.G.Verify())
-			calc := NewCalculator(tc.G).(*calculator)
+			calc := NewCalculator(tc.G)
 
 			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.augG)
+			assert.NotNil(t, calc.Calculator)
+			assert.NotEmpty(t, calc.Calculator.(*calculator).augG)
 		})
 	}
 }
