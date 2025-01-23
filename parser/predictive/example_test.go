@@ -219,7 +219,7 @@ func Example_parse() {
 	}
 }
 
-// You can copy-paste the output of this example into https://edotor.net to view the result!
+// You can copy-paste the output of this example into https://edotor.net to view the result.
 func Example_parseAST() {
 	src := strings.NewReader(`
 		(price + tax * quantity) * 

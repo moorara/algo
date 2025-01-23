@@ -1,13 +1,14 @@
-package simple
+package canonical
 
 import (
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/parser/lr"
 )
 
-// calculator implemented the lr.Calculator interface for LR(0) items.
+// calculator implemented the lr.Calculator interface for LR(1) items.
 type calculator struct {
-	augG grammar.CFG
+	augG  grammar.CFG
+	FIRST grammar.FIRST
 }
 
 // NewCalculator returns an lr.Calculator for LR(0) items.
@@ -15,9 +16,11 @@ type calculator struct {
 // based on the LR(0) items of the augmented grammar.
 func NewCalculator(G grammar.CFG) lr.Calculator {
 	augG := lr.Augment(G)
+	FIRST := augG.ComputeFIRST()
 
 	return &calculator{
-		augG: augG,
+		augG:  augG,
+		FIRST: FIRST,
 	}
 }
 
@@ -26,21 +29,22 @@ func (c *calculator) G() grammar.CFG {
 	return c.augG
 }
 
-// Initial returns the initial LR(0) item "S′ → •S" for an augmented grammar.
+// Initial returns the initial LR(1) item "S′ → •S, $" for an augmented grammar.
 func (c *calculator) Initial() lr.Item {
 	for p := range c.augG.Productions.Get(c.augG.Start).All() {
-		return LR0Item{
+		return LR1Item{
 			Production: &p,
 			Start:      &c.augG.Start,
 			Dot:        0,
+			Lookahead:  grammar.Endmarker,
 		}
 	}
 
 	// This will never be the case.
-	return LR0Item{}
+	return LR1Item{}
 }
 
-// CLOSURE computes the closure of a given LR(0) item set.
+// CLOSURE computes the closure of a given LR(1) item set.
 func (c *calculator) CLOSURE(I lr.ItemSet) lr.ItemSet {
 	/*
 	 * If I is a set of items for a grammar G,
@@ -57,22 +61,29 @@ func (c *calculator) CLOSURE(I lr.ItemSet) lr.ItemSet {
 	for newItems := []lr.Item{}; newItems != nil; {
 		newItems = nil
 
-		// For each item A → α•Bβ in J
+		// For each item [A → α•Bβ, a] in J
 		for i := range J.All() {
-			if i, ok := i.(LR0Item); ok {
+			if i, ok := i.(LR1Item); ok {
+				a := i.Lookahead
 				if X, ok := i.DotSymbol(); ok {
 					if B, ok := X.(grammar.NonTerminal); ok {
 						// For each production B → γ of G′
 						for BProd := range c.augG.Productions.Get(B).All() {
-							j := LR0Item{
-								Production: &BProd,
-								Start:      &c.augG.Start,
-								Dot:        0,
-							}
+							βa := i.GetβSuffix().Append(a)
 
-							// If B → •γ is not in J
-							if !J.Contains(j) {
-								newItems = append(newItems, j)
+							// For each terminal b in FIRST(βa)
+							for b := range c.FIRST(βa).Terminals.All() {
+								j := LR1Item{
+									Production: &BProd,
+									Start:      &c.augG.Start,
+									Dot:        0,
+									Lookahead:  b,
+								}
+
+								// If [B → •γ, b] is not in J
+								if !J.Contains(j) {
+									newItems = append(newItems, j)
+								}
 							}
 						}
 					}
@@ -88,22 +99,19 @@ func (c *calculator) CLOSURE(I lr.ItemSet) lr.ItemSet {
 
 // BuildParsingTable constructs a parsing table for an SLR parser.
 //
-// This method constructs an LR(0) parsing table for any context-free grammar.
+// This method constructs an LR(1) parsing table for any context-free grammar.
 // To identify errors in the table, use the Error method.
 func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 	/*
 	 * INPUT:  An augmented grammar G′.
-	 * OUTPUT: The SLR-parsing table functions ACTION and GOTO for G′.
+	 * OUTPUT: The canonical LR parsing table functions ACTION and GOTO for G′.
 	 */
 
 	calc := &lr.AutomatonCalculator{
 		Calculator: NewCalculator(G),
 	}
 
-	FIRST := calc.G().ComputeFIRST()
-	FOLLOW := calc.G().ComputeFOLLOW(FIRST)
-
-	// 1. Construct C = {I₀, I₁, ..., Iₙ}, the collection of sets of LR(0) items for G′.
+	// 1. Construct C = {I₀, I₁, ..., Iₙ}, the collection of sets of LR(1) items for G′.
 	C := calc.Canonical()
 
 	states := lr.BuildStateMap(C)
@@ -116,8 +124,8 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 		// The parsing action for state i is determined as follows:
 
 		for item := range I.All() {
-			if item, ok := item.(LR0Item); ok {
-				// If "A → α•aβ" is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
+			if item, ok := item.(LR1Item); ok {
+				// If "A → α•aβ, b" is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
 				if X, ok := item.DotSymbol(); ok {
 					if a, ok := X.(grammar.Terminal); ok {
 						J := calc.GOTO(I, a)
@@ -131,29 +139,18 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 					}
 				}
 
-				// If "A → α•" is in Iᵢ (A ≠ S′)
+				// If "A → α•, a" is in Iᵢ (A ≠ S′)
 				if item.IsComplete() && !item.IsFinal() {
-					FOLLOWA := FOLLOW(item.Head)
+					a := item.Lookahead
 
-					// For all a in FOLLOW(A)
-					for a := range FOLLOWA.Terminals.All() {
-						// Set ACTION[i,a] to REDUCE A → α
-						table.AddACTION(lr.State(i), a, lr.Action{
-							Type:       lr.REDUCE,
-							Production: item.Production,
-						})
-					}
-
-					if FOLLOWA.IncludesEndmarker {
-						// Set ACTION[i,$] to REDUCE A → α
-						table.AddACTION(lr.State(i), grammar.Endmarker, lr.Action{
-							Type:       lr.REDUCE,
-							Production: item.Production,
-						})
-					}
+					// Set ACTION[i,a] to REDUCE A → α
+					table.AddACTION(lr.State(i), a, lr.Action{
+						Type:       lr.REDUCE,
+						Production: item.Production,
+					})
 				}
 
-				// If "S′ → S•" is in Iᵢ
+				// If "S′ → S•, $" is in Iᵢ
 				if item.IsFinal() {
 					// Set ACTION[i,$] to ACCEPT
 					table.AddACTION(lr.State(i), grammar.Endmarker, lr.Action{
@@ -161,7 +158,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 					})
 				}
 
-				// If any conflicting actions result from the above rules, the grammar is not SLR(1).
+				// If any conflicting actions result from the above rules, the grammar is not LR(1).
 				// The table.Error() method will list all conflicts, if any exist.
 			}
 		}
@@ -181,7 +178,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 		// 4. All entries not defined by rules (2) and (3) are made ERROR.
 	}
 
-	// 5. The initial state of the parser is the one constructed from the set of items containing "S′ → •S".
+	// 5. The initial state of the parser is the one constructed from the set of items containing "S′ → •S, $".
 
 	if err := table.Error(); err != nil {
 		return nil, err

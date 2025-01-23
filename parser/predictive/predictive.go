@@ -59,33 +59,6 @@ func (p *predictiveParser) nextToken() (lexer.Token, error) {
 	return token, err
 }
 
-/*
- * INPUT:  • A lexer for reading input string w.
- *         • A parsing table M for grammar G.
- * OUTPUT: • If w ∈ L(G), a leftmost derivation of w; otherwise an error indication.
- *
- * METHOD: Initially, the parser is in a configuration with w$ in the input buffer
- *         and the start symbol S of G on top of the stack, above $.
- *
- *         let a be the first symbol of w
- *         let X be the top stack symbol
- *         while (X != $) { // stack is not empty
- *           if (X = a) {
- *             pop the stack
- *             let a be the next symbol of w
- *           } else if (X is a terminal) {
- *             error()
- *           } else if (M[X,a] is an error entry) {
- *             error()
- *           } else if (M[X,a] = X → Y₁Y₂...Yₖ) {
- *             output the production X → Y₁Y₂...Yₖ
- *             pop the stack
- *             push Yₖ, Yₖ₋₁, ..., Y₁ onto the stack, with Y₁ on top
- *           }
- *           let X be the top stack symbol
- *         }
- */
-
 // Parse analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
 // It attempts to parse the input according to the production rules of a context-free grammar,
 // determining whether the input string belongs to the language defined by the grammar.
@@ -95,6 +68,33 @@ func (p *predictiveParser) nextToken() (lexer.Token, error) {
 //
 // It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
 func (p *predictiveParser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) error {
+	/*
+	 * INPUT:  • A lexer for reading input string w.
+	 *         • A parsing table M for grammar G.
+	 * OUTPUT: • If w ∈ L(G), a leftmost derivation of w; otherwise an error indication.
+	 *
+	 * METHOD: Initially, the parser is in a configuration with w$ in the input buffer
+	 *         and the start symbol S of G on top of the stack, above $.
+	 *
+	 *         let a be the first symbol of w
+	 *         let X be the top stack symbol
+	 *         while (X != $) { // stack is not empty
+	 *           if (X = a) {
+	 *             pop the stack
+	 *             let a be the next symbol of w
+	 *           } else if (X is a terminal) {
+	 *             error()
+	 *           } else if (M[X,a] is an error entry) {
+	 *             error()
+	 *           } else if (M[X,a] = X → Y₁Y₂...Yₖ) {
+	 *             output the production X → Y₁Y₂...Yₖ
+	 *             pop the stack
+	 *             push Yₖ, Yₖ₋₁, ..., Y₁ onto the stack, with Y₁ on top
+	 *           }
+	 *           let X be the top stack symbol
+	 *         }
+	 */
+
 	M := BuildParsingTable(p.G)
 	if err := M.Error(); err != nil {
 		return &parser.ParseError{

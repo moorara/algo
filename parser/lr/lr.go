@@ -54,3 +54,180 @@
 // For more details on parsing theory,
 // refer to "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 package lr
+
+import (
+	"errors"
+	"io"
+
+	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/lexer"
+	"github.com/moorara/algo/list"
+	"github.com/moorara/algo/parser"
+)
+
+// lrParser is a general LR parser for LR(1) grammars.
+// It implements the parser.Parser interface.
+type Parser struct {
+	L lexer.Lexer
+	T *ParsingTable
+}
+
+// nextToken wraps the Lexer.NextToken method and ensures
+// an Endmarker token is returned when the end of input is reached.
+func (p *Parser) nextToken() (lexer.Token, error) {
+	token, err := p.L.NextToken()
+	if err != nil && errors.Is(err, io.EOF) {
+		token.Terminal, token.Lexeme = grammar.Endmarker, ""
+		return token, nil
+	}
+
+	return token, err
+}
+
+/*
+ * INPUT:  • A lexer for reading input string w.
+ *         • An LR parsing table with functions ACTION and GOTO for a grammar G.
+ * OUTPUT: • If w ∈ L(G), the reduction steps of a bottom-up parse for w; otherwise, an error indication.
+ *
+ * METHOD: Initially, the parser has s₀ on its stack,
+ *         where s₀ is the initial state, and w$ in the input buffer.
+ *
+ *         let a be the first symbol of w$;
+ *         while (true) {
+ *           let s be the state on top of the stack;
+ *           if (ACTION[s,a] = shift t) {
+ *             push t onto the stack;
+ *             let a be the next input symbol;
+ *           } else if (ACTION[s,a] = reduce A → β) {
+ *             pop |β| symbols off the stack;
+ *             let state t now be on top of the stack;
+ *             push GOTO[t,A] onto the stack;
+ *             output the production A → β;
+ *           } else if (ACTION[s,a] = accept) {
+ *             break;
+ *           } else {
+ *             call error-recovery routine;
+ *           }
+ *         }
+ */
+
+// Parse implements the LR parsing algorithm.
+// It analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+// It attempts to parse the input according to the production rules of a context-free grammar,
+// determining whether the input string belongs to the language defined by the grammar.
+//
+// This method requires a parsing table, which must be generated from a grammar
+// by an LR parser (e.g., Simple LR, Canonical LR, or LALR).
+//
+// The Parse method invokes the provided function each time a production rule is successfully matched.
+// This allows the caller to process or react to each step of the parsing process.
+//
+// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+func (p *Parser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) error {
+	stack := list.NewStack[State](1024, EqState)
+	stack.Push(State(0)) // BuildStateMap ensures state 0 always includes the initial item "S′ → •S"
+
+	// Read the first input token.
+	token, err := p.nextToken()
+	if err != nil {
+		return &parser.ParseError{Cause: err}
+	}
+
+	for {
+		s, _ := stack.Peek()
+		a := token.Terminal
+
+		action, err := p.T.ACTION(s, a)
+		if err != nil {
+			return &parser.ParseError{Cause: err}
+		}
+
+		if action.Type == SHIFT {
+			stack.Push(action.State)
+
+			// Yield the token.
+			if tokenF != nil {
+				tokenF(&token)
+			}
+
+			// Read the next input token.
+			token, err = p.nextToken()
+			if err != nil {
+				return &parser.ParseError{Cause: err}
+			}
+		} else if action.Type == REDUCE {
+			A, β := action.Production.Head, action.Production.Body
+
+			for range len(β) {
+				stack.Pop()
+			}
+
+			t, _ := stack.Peek()
+			next, err := p.T.GOTO(t, A)
+			if err != nil {
+				// TODO: If ACTION(s, a) is valid, GOTO(t, A) should also be defined.
+				return &parser.ParseError{Cause: err}
+			}
+
+			stack.Push(next)
+
+			// Yield the production.
+			if prodF != nil {
+				prodF(action.Production)
+			}
+		} else if action.Type == ACCEPT {
+			break
+		} /* else {
+			// TODO: This is unreachable currently, since T.ACTION handles the error.
+		} */
+	}
+
+	// Accept the input string.
+	return nil
+}
+
+// ParseAST implements the LR parsing algorithm.
+// It analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+// It attempts to parse the input according to the production rules of a context-free grammar,
+// constructing an abstract syntax tree (AST) that reflects the structure of the input.
+//
+// If the input string is valid, the root node of the AST is returned,
+// representing the syntactic structure of the input string.
+//
+// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+func (p *Parser) ParseAST() (parser.Node, error) {
+	// Stack for constructing the abstract syntax tree.
+	nodes := list.NewStack[parser.Node](1024, parser.EqNode)
+
+	err := p.Parse(
+		func(prod *grammar.Production) {
+			in := &parser.InternalNode{
+				NonTerminal: prod.Head,
+				Production:  prod,
+			}
+
+			for range len(prod.Body) {
+				child, _ := nodes.Pop()
+				in.Children = append([]parser.Node{child}, in.Children...) // Maintain correct production body order
+			}
+
+			nodes.Push(in)
+		},
+		func(token *lexer.Token) {
+			nodes.Push(&parser.LeafNode{
+				Terminal: token.Terminal,
+				Lexeme:   token.Lexeme,
+				Position: token.Pos,
+			})
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// The nodes stack only contains the root of AST at this point.
+	root, _ := nodes.Pop()
+
+	return root, nil
+}
