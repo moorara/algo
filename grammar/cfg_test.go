@@ -137,11 +137,11 @@ var CFGrammars = []CFG{
 		"E",
 	),
 	NewCFG(
-		[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "GRAMMAR", "IDENT", "TOKEN", "STRING", "REGEX"},
+		[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 		[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
 		[]Production{
 			{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
-			{"name", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},       // name → GRAMMAR IDENT
+			{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},       // name → "grammar" IDENT
 			{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
 			{"decls", E}, // decls → ε
 			{"decl", String[Symbol]{NonTerminal("token")}},                                  // decl → token
@@ -384,7 +384,7 @@ func TestCFG_String(t *testing.T) {
 		{
 			name:           "10th",
 			g:              CFGrammars[9],
-			expectedString: "Terminal Symbols: \"(\" \")\" \"=\" \"GRAMMAR\" \"IDENT\" \"REGEX\" \"STRING\" \"TOKEN\" \"[\" \"]\" \"{\" \"{{\" \"|\" \"}\" \"}}\"\nNon-Terminal Symbols: grammar name decls decl rule token lhs rhs nonterm term\nStart Symbol: grammar\nProduction Rules:\n  grammar → name decls\n  name → \"GRAMMAR\" \"IDENT\"\n  decls → decls decl | ε\n  decl → rule | token\n  rule → lhs \"=\" rhs | lhs \"=\"\n  token → \"TOKEN\" \"=\" \"REGEX\" | \"TOKEN\" \"=\" \"STRING\"\n  lhs → nonterm\n  rhs → rhs \"|\" rhs | rhs rhs | \"(\" rhs \")\" | \"[\" rhs \"]\" | \"{\" rhs \"}\" | \"{{\" rhs \"}}\" | nonterm | term\n  nonterm → \"IDENT\"\n  term → \"STRING\" | \"TOKEN\"\n",
+			expectedString: "Terminal Symbols: \"(\" \")\" \"=\" \"IDENT\" \"REGEX\" \"STRING\" \"TOKEN\" \"[\" \"]\" \"grammar\" \"{\" \"{{\" \"|\" \"}\" \"}}\"\nNon-Terminal Symbols: grammar name decls decl rule token lhs rhs nonterm term\nStart Symbol: grammar\nProduction Rules:\n  grammar → name decls\n  name → \"grammar\" \"IDENT\"\n  decls → decls decl | ε\n  decl → rule | token\n  rule → lhs \"=\" rhs | lhs \"=\"\n  token → \"TOKEN\" \"=\" \"REGEX\" | \"TOKEN\" \"=\" \"STRING\"\n  lhs → nonterm\n  rhs → rhs \"|\" rhs | rhs rhs | \"(\" rhs \")\" | \"[\" rhs \"]\" | \"{\" rhs \"}\" | \"{{\" rhs \"}}\" | nonterm | term\n  nonterm → \"IDENT\"\n  term → \"STRING\" | \"TOKEN\"\n",
 		},
 	}
 
@@ -652,7 +652,7 @@ func TestCFG_Symbols(t *testing.T) {
 			g:    CFGrammars[9],
 			expectedSymbols: set.New[Symbol](EqSymbol,
 				Terminal("="), Terminal("|"), Terminal("("), Terminal(")"), Terminal("["), Terminal("]"), Terminal("{"), Terminal("}"), Terminal("{{"), Terminal("}}"),
-				Terminal("GRAMMAR"), Terminal("IDENT"), Terminal("TOKEN"), Terminal("STRING"), Terminal("REGEX"),
+				Terminal("grammar"), Terminal("IDENT"), Terminal("TOKEN"), Terminal("STRING"), Terminal("REGEX"),
 				NonTerminal("grammar"), NonTerminal("name"), NonTerminal("decls"), NonTerminal("decl"), NonTerminal("token"),
 				NonTerminal("rule"), NonTerminal("lhs"), NonTerminal("rhs"), NonTerminal("nonterm"), NonTerminal("term"),
 			),
@@ -769,7 +769,7 @@ func TestCFG_IsCNF(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedErrorStrings: []string{
-				`production name → "GRAMMAR" "IDENT" is neither a binary rule, a terminal rule, nor S → ε`,
+				`production name → "grammar" "IDENT" is neither a binary rule, a terminal rule, nor S → ε`,
 				`production decls → ε is neither a binary rule, a terminal rule, nor S → ε`,
 				`production decl → token is neither a binary rule, a terminal rule, nor S → ε`,
 				`production decl → rule is neither a binary rule, a terminal rule, nor S → ε`,
@@ -1109,12 +1109,12 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "GRAMMAR", "IDENT", "TOKEN", "STRING", "REGEX"},
+				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 				[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
 				[]Production{
 					{"grammar", String[Symbol]{NonTerminal("name")}},                                // grammar → name
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},          // grammar → name decls
-					{"name", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},                // name → GRAMMAR IDENT
+					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                // name → "grammar" IDENT
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},            // decls → decls decl
 					{"decls", String[Symbol]{NonTerminal("decl")}},                                  // decls → decl
 					{"decl", String[Symbol]{NonTerminal("token")}},                                  // decl → token
@@ -1278,11 +1278,11 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "GRAMMAR", "IDENT", "TOKEN", "STRING", "REGEX"},
+				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 				[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
 				[]Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
-					{"name", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},       // name → GRAMMAR IDENT
+					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},       // name → "grammar" IDENT
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
 					{"decls", E}, // decls → ε
 					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // decl → lhs "=" rhs
@@ -1621,12 +1621,12 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "GRAMMAR", "IDENT", "TOKEN", "STRING", "REGEX"},
+				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 				[]NonTerminal{"grammar", "name", "decls", "decl", "lhs", "rhs"},
 				[]Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},           // grammar → name decls
-					{"grammar", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},              // grammar → GRAMMAR IDENT
-					{"name", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},                 // name → GRAMMAR IDENT
+					{"grammar", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},              // grammar → "grammar" IDENT
+					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                 // name → "grammar" IDENT
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},             // decls → decls decl
 					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // decls → lhs "=" rhs
 					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // decls → lhs "="
@@ -1873,12 +1873,12 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "GRAMMAR", "IDENT", "TOKEN", "STRING", "REGEX"},
+				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 				[]NonTerminal{"grammar", "name", "decls", "decls′", "decl", "lhs", "rhs", "rhs′"},
 				[]Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},                                  // grammar → name decls
-					{"grammar", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},                                     // grammar → GRAMMAR IDENT
-					{"name", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},                                        // name → GRAMMAR IDENT
+					{"grammar", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                                     // grammar → "grammar" IDENT
+					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                                        // name → "grammar" IDENT
 					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs"), NonTerminal("decls′")}}, // decls → lhs "=" rhs decls′
 					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("decls′")}},                     // decls → lhs "=" decls′
 					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX"), NonTerminal("decls′")}},   // decls → TOKEN "=" REGEX decls′
@@ -2017,11 +2017,11 @@ func TestCFG_LeftFactor(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "GRAMMAR", "IDENT", "TOKEN", "STRING", "REGEX"},
+				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 				[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "rhs′", "nonterm", "term"},
 				[]Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
-					{"name", String[Symbol]{Terminal("GRAMMAR"), Terminal("IDENT")}},       // name → GRAMMAR IDENT
+					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},       // name → "grammar" IDENT
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
 					{"decls", E}, // decls → ε
 					{"decl", String[Symbol]{NonTerminal("token")}},                                  // decl → token
@@ -2408,16 +2408,16 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "GRAMMAR", "IDENT", "TOKEN", "STRING", "REGEX"},
+				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 				[]NonTerminal{
 					"grammar", "name", "decls", "decl", "lhs", "rhs",
 					"token₁", "token₂", "rule₁", "rhs₁", "rhs₂", "rhs₃", "rhs₄", "rhs₅",
-					"=ₙ", "|ₙ", "(ₙ", ")ₙ", "[ₙ", "]ₙ", "{ₙ", "}ₙ", "{{ₙ", "}}ₙ", "GRAMMARₙ", "IDENTₙ", "TOKENₙ", "STRINGₙ", "REGEXₙ",
+					"=ₙ", "|ₙ", "(ₙ", ")ₙ", "[ₙ", "]ₙ", "{ₙ", "}ₙ", "{{ₙ", "}}ₙ", "grammarₙ", "IDENTₙ", "TOKENₙ", "STRINGₙ", "REGEXₙ",
 				},
 				[]Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},      // grammar → name decls
-					{"grammar", String[Symbol]{NonTerminal("GRAMMARₙ"), NonTerminal("IDENTₙ")}}, // grammar → GRAMMARₙ IDENTₙ
-					{"name", String[Symbol]{NonTerminal("GRAMMARₙ"), NonTerminal("IDENTₙ")}},    // name → GRAMMARₙ IDENTₙ
+					{"grammar", String[Symbol]{NonTerminal("grammarₙ"), NonTerminal("IDENTₙ")}}, // grammar → grammarₙ IDENTₙ
+					{"name", String[Symbol]{NonTerminal("grammarₙ"), NonTerminal("IDENTₙ")}},    // name → grammarₙ IDENTₙ
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},        // decls → decls decl
 					{"decls", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₁")}},     // decls → TOKENₙ token₁
 					{"decls", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₂")}},     // decls → TOKENₙ token₂
@@ -2455,7 +2455,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					{"}ₙ", String[Symbol]{Terminal("}")}},                                       // }ₙ → }
 					{"{{ₙ", String[Symbol]{Terminal("{{")}},                                     // {{ₙ → {{
 					{"}}ₙ", String[Symbol]{Terminal("}}")}},                                     // }}ₙ → }}
-					{"GRAMMARₙ", String[Symbol]{Terminal("GRAMMAR")}},                           // GRAMMARₙ → GRAMMAR
+					{"grammarₙ", String[Symbol]{Terminal("grammar")}},                           // grammarₙ → "grammar"
 					{"IDENTₙ", String[Symbol]{Terminal("IDENT")}},                               // IDENTₙ → IDENT
 					{"TOKENₙ", String[Symbol]{Terminal("TOKEN")}},                               // TOKENₙ → TOKEN
 					{"STRINGₙ", String[Symbol]{Terminal("STRING")}},                             // STRINGₙ → STRING
@@ -2818,7 +2818,7 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{Terminal("}")},          // }
 				{Terminal("{{")},         // {{
 				{Terminal("}}")},         // }}
-				{Terminal("GRAMMAR")},    // GRAMMAR
+				{Terminal("grammar")},    // grammar
 				{Terminal("IDENT")},      // IDENT
 				{Terminal("TOKEN")},      // TOKEN
 				{Terminal("STRING")},     // STRING
@@ -2850,13 +2850,13 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{Terminals: set.New(EqTerminal, "}"), IncludesEmpty: false},                                             // FIRST(})
 				{Terminals: set.New(EqTerminal, "{{"), IncludesEmpty: false},                                            // FIRST({{)
 				{Terminals: set.New(EqTerminal, "}}"), IncludesEmpty: false},                                            // FIRST(}})
-				{Terminals: set.New(EqTerminal, "GRAMMAR"), IncludesEmpty: false},                                       // FIRST(GRAMMAR)
+				{Terminals: set.New(EqTerminal, "grammar"), IncludesEmpty: false},                                       // FIRST(grammar)
 				{Terminals: set.New(EqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(IDENT)
 				{Terminals: set.New(EqTerminal, "TOKEN"), IncludesEmpty: false},                                         // FIRST(TOKEN)
 				{Terminals: set.New(EqTerminal, "STRING"), IncludesEmpty: false},                                        // FIRST(STRING)
 				{Terminals: set.New(EqTerminal, "REGEX"), IncludesEmpty: false},                                         // FIRST(REGEX)
-				{Terminals: set.New(EqTerminal, "GRAMMAR"), IncludesEmpty: false},                                       // FIRST(grammar)
-				{Terminals: set.New(EqTerminal, "GRAMMAR"), IncludesEmpty: false},                                       // FIRST(name)
+				{Terminals: set.New(EqTerminal, "grammar"), IncludesEmpty: false},                                       // FIRST(grammar)
+				{Terminals: set.New(EqTerminal, "grammar"), IncludesEmpty: false},                                       // FIRST(name)
 				{Terminals: set.New(EqTerminal, "TOKEN", "IDENT"), IncludesEmpty: true},                                 // FIRST(decls)
 				{Terminals: set.New(EqTerminal, "TOKEN", "IDENT"), IncludesEmpty: false},                                // FIRST(decl)
 				{Terminals: set.New(EqTerminal, "TOKEN"), IncludesEmpty: false},                                         // FIRST(token)
