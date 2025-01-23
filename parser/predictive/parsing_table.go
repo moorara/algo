@@ -40,7 +40,7 @@ type ParsingTable interface {
 
 	// GetProduction returns the single production from the M[A,a] entry if exactly one production exists.
 	// It returns the production and true if successful, or a default value and false otherwise.
-	GetProduction(grammar.NonTerminal, grammar.Terminal) (grammar.Production, bool)
+	GetProduction(grammar.NonTerminal, grammar.Terminal) (*grammar.Production, bool)
 }
 
 // BuildParsingTable constructs a parsing table for a predictive parser.
@@ -50,7 +50,7 @@ type ParsingTable interface {
 // Some errors may be resolved by eliminating left recursion and applying left factoring to the grammar.
 // However, certain grammars cannot be transformed into LL(1) even after these transformations.
 // Some languages may have no LL(1) grammar at all.
-func BuildParsingTable(G grammar.CFG) ParsingTable {
+func BuildParsingTable(G *grammar.CFG) ParsingTable {
 	/*
 	 * For each production A → α of the grammar:
 	 *
@@ -182,7 +182,7 @@ func (t *parsingTable) ensureEntry(A grammar.NonTerminal, a grammar.Terminal) *p
 // addProduction adds a new production to the parsing table.
 // Multiple productions can be added for the same non-terminal A and terminal a.
 // It returns false if the M[A,a] entry is marked as a synchronization token.
-func (t *parsingTable) addProduction(A grammar.NonTerminal, a grammar.Terminal, prod grammar.Production) bool {
+func (t *parsingTable) addProduction(A grammar.NonTerminal, a grammar.Terminal, prod *grammar.Production) bool {
 	e := t.ensureEntry(A, a)
 	if !e.Sync {
 		e.Productions.Add(prod)
@@ -265,7 +265,7 @@ func (t *parsingTable) IsSync(A grammar.NonTerminal, a grammar.Terminal) bool {
 	return false
 }
 
-func (t *parsingTable) GetProduction(A grammar.NonTerminal, a grammar.Terminal) (grammar.Production, bool) {
+func (t *parsingTable) GetProduction(A grammar.NonTerminal, a grammar.Terminal) (*grammar.Production, bool) {
 	if e, ok := t.getEntry(A, a); ok {
 		if prods := e.Productions; prods.Size() == 1 {
 			for p := range prods.All() {
@@ -274,12 +274,12 @@ func (t *parsingTable) GetProduction(A grammar.NonTerminal, a grammar.Terminal) 
 		}
 	}
 
-	return grammar.Production{}, false
+	return nil, false
 }
 
 // parsingTableEntry defines the type of each entry in the parsing table.
 type parsingTableEntry struct {
-	Productions set.Set[grammar.Production]
+	Productions set.Set[*grammar.Production]
 	Sync        bool
 }
 
@@ -312,7 +312,7 @@ func (e *parsingTableEntry) Equals(rhs *parsingTableEntry) bool {
 type parsingTableError struct {
 	NonTerminal grammar.NonTerminal
 	Terminal    grammar.Terminal
-	Productions set.Set[grammar.Production]
+	Productions set.Set[*grammar.Production]
 }
 
 func (e *parsingTableError) Error() string {

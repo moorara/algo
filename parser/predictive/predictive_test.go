@@ -12,11 +12,11 @@ import (
 	"github.com/moorara/algo/parser"
 )
 
-var grammars = []grammar.CFG{
+var grammars = []*grammar.CFG{
 	grammar.NewCFG(
 		[]grammar.Terminal{"+", "-", "*", "/", "(", ")", "id"},
 		[]grammar.NonTerminal{"S", "E"},
-		[]grammar.Production{
+		[]*grammar.Production{
 			{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E")}},                                                  // S → E
 			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("E")}}, // E → E + E
 			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("-"), grammar.NonTerminal("E")}}, // E → E - E
@@ -31,7 +31,7 @@ var grammars = []grammar.CFG{
 	grammar.NewCFG(
 		[]grammar.Terminal{"+", "-", "*", "/", "(", ")", "id"},
 		[]grammar.NonTerminal{"S", "E", "T", "F"},
-		[]grammar.Production{
+		[]*grammar.Production{
 			{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E")}},                                                  // S → E
 			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T
 			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("-"), grammar.NonTerminal("T")}}, // E → E - T
@@ -47,7 +47,7 @@ var grammars = []grammar.CFG{
 	grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
-		[]grammar.Production{
+		[]*grammar.Production{
 			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}},                         // E → T E′
 			{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}}, // E′ → + T E′
 			{Head: "E′", Body: grammar.E}, // E′ → ε
@@ -62,7 +62,7 @@ var grammars = []grammar.CFG{
 	grammar.NewCFG(
 		[]grammar.Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 		[]grammar.NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
-		[]grammar.Production{
+		[]*grammar.Production{
 			{Head: "grammar", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("name"), grammar.NonTerminal("decls")}}, // grammar → name decls
 			{Head: "name", Body: grammar.String[grammar.Symbol]{grammar.Terminal("grammar"), grammar.Terminal("IDENT")}},       // name → "grammar" IDENT
 			{Head: "decls", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("decls"), grammar.NonTerminal("decl")}},   // decls → decls decl
@@ -93,7 +93,7 @@ var grammars = []grammar.CFG{
 func TestNew(t *testing.T) {
 	tests := []struct {
 		name  string
-		G     grammar.CFG
+		G     *grammar.CFG
 		lexer lexer.Lexer
 	}{
 		{

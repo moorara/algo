@@ -14,11 +14,11 @@ import (
 var (
 	CmpProduction = cmpProduction
 
-	EqProduction = func(lhs, rhs Production) bool {
+	EqProduction = func(lhs, rhs *Production) bool {
 		return lhs.Equals(rhs)
 	}
 
-	EqProductionSet = func(lhs, rhs set.Set[Production]) bool {
+	EqProductionSet = func(lhs, rhs set.Set[*Production]) bool {
 		return lhs.Equals(rhs)
 	}
 )
@@ -33,33 +33,33 @@ type Production struct {
 }
 
 // String returns a string representation of a production rule.
-func (p Production) String() string {
+func (p *Production) String() string {
 	return fmt.Sprintf("%s → %s", p.Head, p.Body)
 }
 
 // Equals determines whether or not two production rules are the same.
-func (p Production) Equals(rhs Production) bool {
+func (p *Production) Equals(rhs *Production) bool {
 	return p.Head.Equals(rhs.Head) && p.Body.Equals(rhs.Body)
 }
 
 // IsEmpty determines whether or not a production rule is an empty production (ε-production).
 //
 // An empty production (ε-production) is any production of the form A → ε.
-func (p Production) IsEmpty() bool {
+func (p *Production) IsEmpty() bool {
 	return len(p.Body) == 0
 }
 
 // IsSingle determines whether or not a production rule is a single production (unit production).
 //
 // A single production (unit production) is a production whose body is a single non-terminal (A → B).
-func (p Production) IsSingle() bool {
+func (p *Production) IsSingle() bool {
 	return len(p.Body) == 1 && !p.Body[0].IsTerminal()
 }
 
 // IsLeftRecursive determines whether or not a production rule is left recursive (immediate left recursive).
 //
 // A left recursive production is a production rule of the form of A → Aα
-func (p Production) IsLeftRecursive() bool {
+func (p *Production) IsLeftRecursive() bool {
 	return len(p.Body) > 0 && p.Body[0].Equals(p.Head)
 }
 
@@ -74,7 +74,7 @@ func (p Production) IsLeftRecursive() bool {
 //
 //   - The first value indicates if the rule is of the form A → BC.
 //   - The second value indicates if the rule is of the form A → a.
-func (p Production) IsCNF() (bool, bool) {
+func (p *Production) IsCNF() (bool, bool) {
 	return len(p.Body) == 2 && !p.Body[0].IsTerminal() && !p.Body[1].IsTerminal(),
 		len(p.Body) == 1 && p.Body[0].IsTerminal()
 }
@@ -85,19 +85,19 @@ type Productions interface {
 	generic.Cloner[Productions]
 	generic.Equaler[Productions]
 
-	Add(...Production)
-	Remove(...Production)
+	Add(...*Production)
+	Remove(...*Production)
 	RemoveAll(...NonTerminal)
-	Get(NonTerminal) set.Set[Production]
-	All() iter.Seq[Production]
-	AllByHead() iter.Seq2[NonTerminal, set.Set[Production]]
-	AnyMatch(generic.Predicate1[Production]) bool
-	AllMatch(generic.Predicate1[Production]) bool
+	Get(NonTerminal) set.Set[*Production]
+	All() iter.Seq[*Production]
+	AllByHead() iter.Seq2[NonTerminal, set.Set[*Production]]
+	AnyMatch(generic.Predicate1[*Production]) bool
+	AllMatch(generic.Predicate1[*Production]) bool
 }
 
 // productions implements the Productions interface.
 type productions struct {
-	table symboltable.SymbolTable[NonTerminal, set.Set[Production]]
+	table symboltable.SymbolTable[NonTerminal, set.Set[*Production]]
 }
 
 // NewProductions creates a new instance of the Productions.
@@ -145,7 +145,7 @@ func (p *productions) Equals(rhs Productions) bool {
 }
 
 // Add adds a new production rule.
-func (p *productions) Add(ps ...Production) {
+func (p *productions) Add(ps ...*Production) {
 	for _, q := range ps {
 		if _, ok := p.table.Get(q.Head); !ok {
 			p.table.Put(q.Head, set.New(EqProduction))
@@ -157,7 +157,7 @@ func (p *productions) Add(ps ...Production) {
 }
 
 // Remove removes a production rule.
-func (p *productions) Remove(ps ...Production) {
+func (p *productions) Remove(ps ...*Production) {
 	for _, q := range ps {
 		if list, ok := p.table.Get(q.Head); ok {
 			list.Remove(q)
@@ -177,7 +177,7 @@ func (p *productions) RemoveAll(heads ...NonTerminal) {
 
 // Get finds and returns a production rule by its head non-terminal symbol.
 // It returns nil if no production rules are found for the specified head.
-func (p *productions) Get(head NonTerminal) set.Set[Production] {
+func (p *productions) Get(head NonTerminal) set.Set[*Production] {
 	list, ok := p.table.Get(head)
 	if !ok {
 		return nil
@@ -187,8 +187,8 @@ func (p *productions) Get(head NonTerminal) set.Set[Production] {
 }
 
 // All returns an iterator sequence containing all production rules.
-func (p *productions) All() iter.Seq[Production] {
-	return func(yield func(Production) bool) {
+func (p *productions) All() iter.Seq[*Production] {
+	return func(yield func(*Production) bool) {
 		for _, list := range p.table.All() {
 			for q := range list.All() {
 				if !yield(q) {
@@ -201,12 +201,12 @@ func (p *productions) All() iter.Seq[Production] {
 
 // AllByHead returns an iterator sequence sequence of pairs,
 // where each pair consists of a head non-terminal and its associated set of production rules.
-func (p *productions) AllByHead() iter.Seq2[NonTerminal, set.Set[Production]] {
+func (p *productions) AllByHead() iter.Seq2[NonTerminal, set.Set[*Production]] {
 	return p.table.All()
 }
 
 // AnyMatch returns true if at least one production rule satisfies the provided predicate.
-func (p *productions) AnyMatch(pred generic.Predicate1[Production]) bool {
+func (p *productions) AnyMatch(pred generic.Predicate1[*Production]) bool {
 	for q := range p.All() {
 		if pred(q) {
 			return true
@@ -218,7 +218,7 @@ func (p *productions) AnyMatch(pred generic.Predicate1[Production]) bool {
 
 // AllMatch returns true if all production rules satisfy the provided predicate.
 // If the set of production rules is empty, it returns true.
-func (p *productions) AllMatch(pred generic.Predicate1[Production]) bool {
+func (p *productions) AllMatch(pred generic.Predicate1[*Production]) bool {
 	for q := range p.All() {
 		if !pred(q) {
 			return false
@@ -230,7 +230,7 @@ func (p *productions) AllMatch(pred generic.Predicate1[Production]) bool {
 
 // SelectMatch selects a subset of production rules that satisfy the given predicate.
 // It returns a new set of production rules containing the matching productions, of the same type as the original set of production rules.
-func (p *productions) SelectMatch(pred generic.Predicate1[Production]) Productions {
+func (p *productions) SelectMatch(pred generic.Predicate1[*Production]) Productions {
 	newP := NewProductions()
 
 	for q := range p.All() {
@@ -256,7 +256,7 @@ func (p *productions) SelectMatch(pred generic.Predicate1[Production]) Productio
 //
 // This function can be used for sorting productions
 // to ensure a consistent and deterministic order for any given set of production rules.
-func cmpProduction(lhs, rhs Production) int {
+func cmpProduction(lhs, rhs *Production) int {
 	// First, compare the heads of productions.
 	if cmp := CmpNonTerminal(lhs.Head, rhs.Head); cmp < 0 {
 		return -1
@@ -295,14 +295,14 @@ func cmpProduction(lhs, rhs Production) int {
 }
 
 // orderProductionSet orders an unordered set of production rules in a deterministic way.
-func OrderProductionSet(set set.Set[Production]) []Production {
+func OrderProductionSet(set set.Set[*Production]) []*Production {
 	prods := generic.Collect1(set.All())
 	orderProductionSlice(prods)
 	return prods
 }
 
 // orderProductionSlice orders a slice of production rules in a deterministic way.
-func orderProductionSlice(prods []Production) {
+func orderProductionSlice(prods []*Production) {
 	// Sort the productions using a custom comparison function.
-	sort.Quick[Production](prods, CmpProduction)
+	sort.Quick[*Production](prods, CmpProduction)
 }

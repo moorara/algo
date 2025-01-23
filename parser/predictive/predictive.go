@@ -34,13 +34,13 @@ import (
 // predictiveParser is a predictive parser for LL(1) grammars.
 // It implements the parser.Parser interface.
 type predictiveParser struct {
-	G     grammar.CFG
+	G     *grammar.CFG
 	lexer lexer.Lexer
 }
 
 // New creates a new predictive parser for a given context-free grammar (CFG).
 // It requires a lexer for lexical analysis, which reads the input tokens (terminal symbols).
-func New(G grammar.CFG, lexer lexer.Lexer) parser.Parser {
+func New(G *grammar.CFG, lexer lexer.Lexer) parser.Parser {
 	return &predictiveParser{
 		G:     G,
 		lexer: lexer,
@@ -152,7 +152,7 @@ func (p *predictiveParser) Parse(prodF parser.ProductionFunc, tokenF parser.Toke
 
 		// Yield the production.
 		if prodF != nil {
-			prodF(&prod)
+			prodF(prod)
 		}
 
 		// Pop X from the stack.

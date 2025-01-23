@@ -32,12 +32,12 @@ func TestNewTerminalsAndEmpty(t *testing.T) {
 func TestTerminalsAndEmpty(t *testing.T) {
 	tests := []struct {
 		name           string
-		set            TerminalsAndEmpty
+		set            *TerminalsAndEmpty
 		expectedString string
 	}{
 		{
 			name: "OK",
-			set: TerminalsAndEmpty{
+			set: &TerminalsAndEmpty{
 				Terminals:     set.New(EqTerminal, "a", "b", "c", "d", "e", "f"),
 				IncludesEmpty: true,
 			},

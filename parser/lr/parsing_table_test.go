@@ -16,42 +16,42 @@ func getTestParsingTables() []*ParsingTable {
 		[]grammar.NonTerminal{"E", "T", "F"},
 	)
 
-	pt0.AddACTION(0, "id", Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(0, "(", Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(1, "+", Action{Type: SHIFT, State: 6})
-	pt0.AddACTION(1, grammar.Endmarker, Action{Type: ACCEPT})
-	pt0.AddACTION(2, "+", Action{Type: REDUCE, Production: &prods[0][1]})
-	pt0.AddACTION(2, "*", Action{Type: SHIFT, State: 7})
-	pt0.AddACTION(2, ")", Action{Type: REDUCE, Production: &prods[0][1]})
-	pt0.AddACTION(2, grammar.Endmarker, Action{Type: REDUCE, Production: &prods[0][1]})
-	pt0.AddACTION(3, "+", Action{Type: REDUCE, Production: &prods[0][3]})
-	pt0.AddACTION(3, "*", Action{Type: REDUCE, Production: &prods[0][3]})
-	pt0.AddACTION(3, ")", Action{Type: REDUCE, Production: &prods[0][3]})
-	pt0.AddACTION(3, grammar.Endmarker, Action{Type: REDUCE, Production: &prods[0][3]})
-	pt0.AddACTION(4, "id", Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(4, "(", Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(5, "+", Action{Type: REDUCE, Production: &prods[0][5]})
-	pt0.AddACTION(5, "*", Action{Type: REDUCE, Production: &prods[0][5]})
-	pt0.AddACTION(5, ")", Action{Type: REDUCE, Production: &prods[0][5]})
-	pt0.AddACTION(5, grammar.Endmarker, Action{Type: REDUCE, Production: &prods[0][5]})
-	pt0.AddACTION(6, "id", Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(6, "(", Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(7, "id", Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(7, "(", Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(8, "+", Action{Type: SHIFT, State: 6})
-	pt0.AddACTION(8, ")", Action{Type: SHIFT, State: 11})
-	pt0.AddACTION(9, "+", Action{Type: REDUCE, Production: &prods[0][0]})
-	pt0.AddACTION(9, "*", Action{Type: SHIFT, State: 7})
-	pt0.AddACTION(9, ")", Action{Type: REDUCE, Production: &prods[0][0]})
-	pt0.AddACTION(9, grammar.Endmarker, Action{Type: REDUCE, Production: &prods[0][0]})
-	pt0.AddACTION(10, "+", Action{Type: REDUCE, Production: &prods[0][2]})
-	pt0.AddACTION(10, "*", Action{Type: REDUCE, Production: &prods[0][2]})
-	pt0.AddACTION(10, ")", Action{Type: REDUCE, Production: &prods[0][2]})
-	pt0.AddACTION(10, grammar.Endmarker, Action{Type: REDUCE, Production: &prods[0][2]})
-	pt0.AddACTION(11, "+", Action{Type: REDUCE, Production: &prods[0][4]})
-	pt0.AddACTION(11, "*", Action{Type: REDUCE, Production: &prods[0][4]})
-	pt0.AddACTION(11, ")", Action{Type: REDUCE, Production: &prods[0][4]})
-	pt0.AddACTION(11, grammar.Endmarker, Action{Type: REDUCE, Production: &prods[0][4]})
+	pt0.AddACTION(0, "id", &Action{Type: SHIFT, State: 5})
+	pt0.AddACTION(0, "(", &Action{Type: SHIFT, State: 4})
+	pt0.AddACTION(1, "+", &Action{Type: SHIFT, State: 6})
+	pt0.AddACTION(1, grammar.Endmarker, &Action{Type: ACCEPT})
+	pt0.AddACTION(2, "+", &Action{Type: REDUCE, Production: prods[0][1]})
+	pt0.AddACTION(2, "*", &Action{Type: SHIFT, State: 7})
+	pt0.AddACTION(2, ")", &Action{Type: REDUCE, Production: prods[0][1]})
+	pt0.AddACTION(2, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][1]})
+	pt0.AddACTION(3, "+", &Action{Type: REDUCE, Production: prods[0][3]})
+	pt0.AddACTION(3, "*", &Action{Type: REDUCE, Production: prods[0][3]})
+	pt0.AddACTION(3, ")", &Action{Type: REDUCE, Production: prods[0][3]})
+	pt0.AddACTION(3, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][3]})
+	pt0.AddACTION(4, "id", &Action{Type: SHIFT, State: 5})
+	pt0.AddACTION(4, "(", &Action{Type: SHIFT, State: 4})
+	pt0.AddACTION(5, "+", &Action{Type: REDUCE, Production: prods[0][5]})
+	pt0.AddACTION(5, "*", &Action{Type: REDUCE, Production: prods[0][5]})
+	pt0.AddACTION(5, ")", &Action{Type: REDUCE, Production: prods[0][5]})
+	pt0.AddACTION(5, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][5]})
+	pt0.AddACTION(6, "id", &Action{Type: SHIFT, State: 5})
+	pt0.AddACTION(6, "(", &Action{Type: SHIFT, State: 4})
+	pt0.AddACTION(7, "id", &Action{Type: SHIFT, State: 5})
+	pt0.AddACTION(7, "(", &Action{Type: SHIFT, State: 4})
+	pt0.AddACTION(8, "+", &Action{Type: SHIFT, State: 6})
+	pt0.AddACTION(8, ")", &Action{Type: SHIFT, State: 11})
+	pt0.AddACTION(9, "+", &Action{Type: REDUCE, Production: prods[0][0]})
+	pt0.AddACTION(9, "*", &Action{Type: SHIFT, State: 7})
+	pt0.AddACTION(9, ")", &Action{Type: REDUCE, Production: prods[0][0]})
+	pt0.AddACTION(9, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][0]})
+	pt0.AddACTION(10, "+", &Action{Type: REDUCE, Production: prods[0][2]})
+	pt0.AddACTION(10, "*", &Action{Type: REDUCE, Production: prods[0][2]})
+	pt0.AddACTION(10, ")", &Action{Type: REDUCE, Production: prods[0][2]})
+	pt0.AddACTION(10, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][2]})
+	pt0.AddACTION(11, "+", &Action{Type: REDUCE, Production: prods[0][4]})
+	pt0.AddACTION(11, "*", &Action{Type: REDUCE, Production: prods[0][4]})
+	pt0.AddACTION(11, ")", &Action{Type: REDUCE, Production: prods[0][4]})
+	pt0.AddACTION(11, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][4]})
 
 	pt0.SetGOTO(0, "E", 1)
 	pt0.SetGOTO(0, "T", 2)
@@ -69,12 +69,12 @@ func getTestParsingTables() []*ParsingTable {
 		[]grammar.NonTerminal{"A", "B", "C", "D"},
 	)
 
-	pt1.AddACTION(0, "a", Action{
+	pt1.AddACTION(0, "a", &Action{
 		Type:  SHIFT,
 		State: 5,
 	})
 
-	pt1.AddACTION(0, "a", Action{
+	pt1.AddACTION(0, "a", &Action{
 		Type: REDUCE,
 		Production: &grammar.Production{
 			Head: "A",
@@ -82,7 +82,7 @@ func getTestParsingTables() []*ParsingTable {
 		},
 	})
 
-	pt1.AddACTION(1, "b", Action{
+	pt1.AddACTION(1, "b", &Action{
 		Type: REDUCE,
 		Production: &grammar.Production{
 			Head: "B",
@@ -90,7 +90,7 @@ func getTestParsingTables() []*ParsingTable {
 		},
 	})
 
-	pt1.AddACTION(1, "b", Action{
+	pt1.AddACTION(1, "b", &Action{
 		Type: REDUCE,
 		Production: &grammar.Production{
 			Head: "C",
@@ -221,7 +221,7 @@ func TestParsingTable_AddACTION(t *testing.T) {
 		pt         *ParsingTable
 		s          State
 		a          grammar.Terminal
-		action     Action
+		action     *Action
 		expectedOK bool
 	}{
 		{
@@ -229,7 +229,7 @@ func TestParsingTable_AddACTION(t *testing.T) {
 			pt:   pt[1],
 			s:    State(2),
 			a:    grammar.Terminal("c"),
-			action: Action{
+			action: &Action{
 				Type:  SHIFT,
 				State: 4,
 			},
@@ -336,7 +336,7 @@ func TestParsingTable_ACTION(t *testing.T) {
 		pt             *ParsingTable
 		s              State
 		a              grammar.Terminal
-		expectedAction Action
+		expectedAction *Action
 		expectedError  string
 	}{
 		{
@@ -344,7 +344,7 @@ func TestParsingTable_ACTION(t *testing.T) {
 			pt:             pt[0],
 			s:              State(4),
 			a:              grammar.Terminal("+"),
-			expectedAction: Action{Type: ERROR},
+			expectedAction: &Action{Type: ERROR},
 			expectedError:  "no action for ACTION[4, \"+\"]",
 		},
 		{
@@ -352,7 +352,7 @@ func TestParsingTable_ACTION(t *testing.T) {
 			pt:             pt[1],
 			s:              State(0),
 			a:              grammar.Terminal("a"),
-			expectedAction: Action{Type: ERROR},
+			expectedAction: &Action{Type: ERROR},
 			expectedError:  "shift/reduce conflict at ACTION[0, \"a\"]\n  SHIFT 5\n  REDUCE A → \"a\" A\n",
 		},
 		{
@@ -360,7 +360,7 @@ func TestParsingTable_ACTION(t *testing.T) {
 			pt:   pt[0],
 			s:    State(4),
 			a:    grammar.Terminal("id"),
-			expectedAction: Action{
+			expectedAction: &Action{
 				Type:  SHIFT,
 				State: 5,
 			},

@@ -32,12 +32,12 @@ func TestNewTerminalsAndEndmarker(t *testing.T) {
 func TestTerminalsAndEndmarker(t *testing.T) {
 	tests := []struct {
 		name           string
-		set            TerminalsAndEndmarker
+		set            *TerminalsAndEndmarker
 		expectedString string
 	}{
 		{
 			name: "OK",
-			set: TerminalsAndEndmarker{
+			set: &TerminalsAndEndmarker{
 				Terminals:         set.New(EqTerminal, "a", "b", "c", "d", "e", "f"),
 				IncludesEndmarker: true,
 			},

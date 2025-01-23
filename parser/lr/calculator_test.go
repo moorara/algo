@@ -8,7 +8,7 @@ import (
 	"github.com/moorara/algo/grammar"
 )
 
-var prods = [][]grammar.Production{
+var prods = [][]*grammar.Production{
 	{
 		{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T
 		{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")}},                                                  // E → T
@@ -19,7 +19,7 @@ var prods = [][]grammar.Production{
 	},
 }
 
-var grammars = []grammar.CFG{
+var grammars = []*grammar.CFG{
 	grammar.NewCFG(
 		[]grammar.Terminal{"+", "-", "*", "/", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "T", "F"},
@@ -29,8 +29,12 @@ var grammars = []grammar.CFG{
 }
 
 type mockCalculator struct {
-	g       grammar.CFG
+	g       *grammar.CFG
 	initial Item
+}
+
+func (m *mockCalculator) G() *grammar.CFG {
+	return m.g
 }
 
 func (m *mockCalculator) Initial() Item {
@@ -41,15 +45,11 @@ func (m *mockCalculator) CLOSURE(I ItemSet) ItemSet {
 	return I
 }
 
-func (m *mockCalculator) G() grammar.CFG {
-	return m.g
-}
-
 func TestAugment(t *testing.T) {
 	tests := []struct {
 		name        string
-		G           grammar.CFG
-		expectedCFG grammar.CFG
+		G           *grammar.CFG
+		expectedCFG *grammar.CFG
 	}{
 		{
 			name: "OK",
@@ -57,7 +57,7 @@ func TestAugment(t *testing.T) {
 			expectedCFG: grammar.NewCFG(
 				[]grammar.Terminal{"+", "-", "*", "/", "(", ")", "id"},
 				[]grammar.NonTerminal{"E′", "E", "T", "F"},
-				[]grammar.Production{
+				[]*grammar.Production{
 					{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E")}},                                                 // E′ → E
 					{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T
 					{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")}},                                                  // E → T

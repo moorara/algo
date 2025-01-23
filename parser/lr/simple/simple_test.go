@@ -14,7 +14,7 @@ var starts = []grammar.NonTerminal{
 	"grammar′",
 }
 
-var prods = [][]grammar.Production{
+var prods = [][]*grammar.Production{
 	{
 		{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E")}},                                                 // E′ → E
 		{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T
@@ -51,7 +51,7 @@ var prods = [][]grammar.Production{
 	},
 }
 
-var grammars = []grammar.CFG{
+var grammars = []*grammar.CFG{
 	grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "T", "F"},
@@ -70,7 +70,7 @@ func TestNew(t *testing.T) {
 	tests := []struct {
 		name                 string
 		L                    lexer.Lexer
-		G                    grammar.CFG
+		G                    *grammar.CFG
 		expectedErrorStrings []string
 	}{
 		{

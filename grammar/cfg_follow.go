@@ -42,7 +42,7 @@ func newTerminalsAndEndmarker(terms ...Terminal) *TerminalsAndEndmarker {
 }
 
 // String returns a string representation of the FOLLOW set.
-func (s TerminalsAndEndmarker) String() string {
+func (s *TerminalsAndEndmarker) String() string {
 	members := []string{}
 
 	for term := range s.Terminals.All() {

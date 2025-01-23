@@ -17,7 +17,7 @@ func TestCNFError(t *testing.T) {
 		{
 			name: "OK",
 			e: &CNFError{
-				P: Production{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}},
+				P: &Production{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}},
 			},
 			expectedError: `production rule → lhs "=" rhs is neither a binary rule, a terminal rule, nor S → ε`,
 		},

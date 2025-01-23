@@ -9,11 +9,11 @@ import (
 	"github.com/moorara/algo/set"
 )
 
-var CFGrammars = []CFG{
+var CFGrammars = []*CFG{
 	NewCFG(
 		[]Terminal{"0", "1"},
 		[]NonTerminal{"S", "X", "Y"},
-		[]Production{
+		[]*Production{
 			{"S", String[Symbol]{NonTerminal("X"), NonTerminal("Y"), NonTerminal("X")}}, // S → XYX
 			{"X", String[Symbol]{Terminal("0"), NonTerminal("X")}},                      // X → 0X
 			{"X", E}, // X → ε
@@ -25,7 +25,7 @@ var CFGrammars = []CFG{
 	NewCFG(
 		[]Terminal{"a", "b"},
 		[]NonTerminal{"S"},
-		[]Production{
+		[]*Production{
 			{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 			{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
 			{"S", E}, // S → ε
@@ -35,7 +35,7 @@ var CFGrammars = []CFG{
 	NewCFG(
 		[]Terminal{"a", "b"},
 		[]NonTerminal{"S", "A", "B"},
-		[]Production{
+		[]*Production{
 			{"S", String[Symbol]{Terminal("a"), NonTerminal("B"), Terminal("a")}}, // S → aBa
 			{"S", String[Symbol]{NonTerminal("A"), Terminal("b")}},                // S → Ab
 			{"S", String[Symbol]{Terminal("a")}},                                  // S → a
@@ -49,7 +49,7 @@ var CFGrammars = []CFG{
 	NewCFG(
 		[]Terminal{"b", "c", "d", "s"},
 		[]NonTerminal{"S", "A", "B", "C", "D"},
-		[]Production{
+		[]*Production{
 			{"S", String[Symbol]{NonTerminal("A")}}, // S → A
 			{"S", String[Symbol]{Terminal("s")}},    // S → s
 			{"A", String[Symbol]{NonTerminal("B")}}, // A → B
@@ -63,7 +63,7 @@ var CFGrammars = []CFG{
 	NewCFG(
 		[]Terminal{"a", "b", "c", "d"},
 		[]NonTerminal{"S", "A", "B", "C", "D"},
-		[]Production{
+		[]*Production{
 			{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S → AB
 			{"A", String[Symbol]{Terminal("a"), NonTerminal("A")}},    // A → aA
 			{"A", String[Symbol]{Terminal("a")}},                      // A → a
@@ -78,7 +78,7 @@ var CFGrammars = []CFG{
 	NewCFG(
 		[]Terminal{"a", "b"},
 		[]NonTerminal{"S", "A", "A₁", "B", "B₁"},
-		[]Production{
+		[]*Production{
 			{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S → AB
 			{"S", E}, // S → ε
 			{"A", String[Symbol]{NonTerminal("A₁"), NonTerminal("A")}}, // A → A₁A
@@ -93,7 +93,7 @@ var CFGrammars = []CFG{
 	NewCFG(
 		[]Terminal{"+", "-", "*", "/", "(", ")", "id"},
 		[]NonTerminal{"S", "E"},
-		[]Production{
+		[]*Production{
 			{"S", String[Symbol]{NonTerminal("E")}},                                  // S → E
 			{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
 			{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
@@ -108,7 +108,7 @@ var CFGrammars = []CFG{
 	NewCFG(
 		[]Terminal{"+", "-", "*", "/", "(", ")", "id"},
 		[]NonTerminal{"S", "E", "T", "F"},
-		[]Production{
+		[]*Production{
 			{"S", String[Symbol]{NonTerminal("E")}},                                  // S → E
 			{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}}, // E → E + T
 			{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}}, // E → E - T
@@ -124,7 +124,7 @@ var CFGrammars = []CFG{
 	NewCFG(
 		[]Terminal{"+", "*", "(", ")", "id"},
 		[]NonTerminal{"E", "E′", "T", "T′", "F"},
-		[]Production{
+		[]*Production{
 			{"E", String[Symbol]{NonTerminal("T"), NonTerminal("E′")}},                 // E → T E′
 			{"E′", String[Symbol]{Terminal("+"), NonTerminal("T"), NonTerminal("E′")}}, // E′ → + T E′
 			{"E′", E}, // E′ → ε
@@ -139,7 +139,7 @@ var CFGrammars = []CFG{
 	NewCFG(
 		[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 		[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
-		[]Production{
+		[]*Production{
 			{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
 			{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},       // name → "grammar" IDENT
 			{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
@@ -172,14 +172,14 @@ func TestNewCFG(t *testing.T) {
 		name     string
 		terms    []Terminal
 		nonTerms []NonTerminal
-		prods    []Production
+		prods    []*Production
 		start    NonTerminal
 	}{
 		{
 			name:     "MatchingPairs",
 			terms:    []Terminal{"a", "b"},
 			nonTerms: []NonTerminal{"S"},
-			prods: []Production{
+			prods: []*Production{
 				{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b")}}, //  S → aSb
 				{"S", E}, //  S → ε
 			},
@@ -189,7 +189,7 @@ func TestNewCFG(t *testing.T) {
 			name:     "WellformedParantheses",
 			terms:    []Terminal{"(", ")"},
 			nonTerms: []NonTerminal{"S"},
-			prods: []Production{
+			prods: []*Production{
 				{"S", String[Symbol]{NonTerminal("S"), NonTerminal("S")}},             //  S → SS
 				{"S", String[Symbol]{Terminal("("), NonTerminal("S"), Terminal(")")}}, //  S → (S)
 				{"S", String[Symbol]{Terminal("("), Terminal(")")}},                   //  S → ()
@@ -200,7 +200,7 @@ func TestNewCFG(t *testing.T) {
 			name:     "WellformedParanthesesAndBrackets",
 			terms:    []Terminal{"(", ")", "[", "]"},
 			nonTerms: []NonTerminal{"S"},
-			prods: []Production{
+			prods: []*Production{
 				{"S", String[Symbol]{NonTerminal("S"), NonTerminal("S")}},             //  S → SS
 				{"S", String[Symbol]{Terminal("("), NonTerminal("S"), Terminal(")")}}, //  S → (S)
 				{"S", String[Symbol]{Terminal("["), NonTerminal("S"), Terminal("]")}}, //  S → [S]
@@ -223,7 +223,7 @@ func TestNewCFG(t *testing.T) {
 func TestCFG_Verify(t *testing.T) {
 	tests := []struct {
 		name          string
-		g             CFG
+		g             *CFG
 		expectedError string
 	}{
 		{
@@ -231,7 +231,7 @@ func TestCFG_Verify(t *testing.T) {
 			g: NewCFG(
 				[]Terminal{},
 				[]NonTerminal{},
-				[]Production{},
+				[]*Production{},
 				"S",
 			),
 			expectedError: "start symbol S not in the set of non-terminal symbols\nno production rule for start symbol S\n",
@@ -241,7 +241,7 @@ func TestCFG_Verify(t *testing.T) {
 			g: NewCFG(
 				[]Terminal{},
 				[]NonTerminal{"S"},
-				[]Production{},
+				[]*Production{},
 				"S",
 			),
 			expectedError: "no production rule for start symbol S\nno production rule for non-terminal symbol S\n",
@@ -251,7 +251,7 @@ func TestCFG_Verify(t *testing.T) {
 			g: NewCFG(
 				[]Terminal{},
 				[]NonTerminal{"A", "S"},
-				[]Production{
+				[]*Production{
 					{"S", E}, // S → ε
 				},
 				"S",
@@ -263,7 +263,7 @@ func TestCFG_Verify(t *testing.T) {
 			g: NewCFG(
 				[]Terminal{},
 				[]NonTerminal{"A", "S"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("A")}}, // S → A
 					{"A", E},                                // A → ε
 					{"B", E},                                // B → ε
@@ -277,7 +277,7 @@ func TestCFG_Verify(t *testing.T) {
 			g: NewCFG(
 				[]Terminal{},
 				[]NonTerminal{"A", "B", "S"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("A")}}, // S → A
 					{"A", String[Symbol]{Terminal("a")}},    // A → a
 					{"B", E},                                // B → ε
@@ -291,7 +291,7 @@ func TestCFG_Verify(t *testing.T) {
 			g: NewCFG(
 				[]Terminal{"a"},
 				[]NonTerminal{"A", "B", "S"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("A")}}, // S → A
 					{"A", String[Symbol]{Terminal("a")}},    // A → a
 					{"B", String[Symbol]{NonTerminal("C")}}, // B → C
@@ -305,7 +305,7 @@ func TestCFG_Verify(t *testing.T) {
 			g: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"A", "B", "S"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("A")}}, // S → A
 					{"S", String[Symbol]{NonTerminal("B")}}, // S → B
 					{"A", String[Symbol]{Terminal("a")}},    // A → a
@@ -333,7 +333,7 @@ func TestCFG_Verify(t *testing.T) {
 func TestCFG_String(t *testing.T) {
 	tests := []struct {
 		name           string
-		g              CFG
+		g              *CFG
 		expectedString string
 	}{
 		{
@@ -399,7 +399,7 @@ func TestCFG_String(t *testing.T) {
 func TestCFG_Clone(t *testing.T) {
 	tests := []struct {
 		name string
-		g    CFG
+		g    *CFG
 	}{
 		{
 			name: "OK",
@@ -421,8 +421,8 @@ func TestCFG_Clone(t *testing.T) {
 func TestCFG_Equals(t *testing.T) {
 	tests := []struct {
 		name           string
-		lhs            CFG
-		rhs            CFG
+		lhs            *CFG
+		rhs            *CFG
 		expectedEquals bool
 	}{
 		{
@@ -430,13 +430,13 @@ func TestCFG_Equals(t *testing.T) {
 			lhs: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"A", "B", "S"},
-				[]Production{},
+				[]*Production{},
 				"S",
 			),
 			rhs: NewCFG(
 				[]Terminal{"a", "b", "c"},
 				[]NonTerminal{"A", "B", "S"},
-				[]Production{},
+				[]*Production{},
 				"S",
 			),
 			expectedEquals: false,
@@ -446,13 +446,13 @@ func TestCFG_Equals(t *testing.T) {
 			lhs: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"A", "B", "C", "S"},
-				[]Production{},
+				[]*Production{},
 				"S",
 			),
 			rhs: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"A", "B", "S"},
-				[]Production{},
+				[]*Production{},
 				"S",
 			),
 			expectedEquals: false,
@@ -462,7 +462,7 @@ func TestCFG_Equals(t *testing.T) {
 			lhs: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"A", "B", "S"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("A")}}, // S → aA
 					{"S", String[Symbol]{Terminal("b"), NonTerminal("B")}}, // S → bB
 					{"A", String[Symbol]{Terminal("a"), NonTerminal("S")}}, // A → aS
@@ -477,7 +477,7 @@ func TestCFG_Equals(t *testing.T) {
 			rhs: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"A", "B", "S"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("A")}}, // S → aA
 					{"S", String[Symbol]{Terminal("b"), NonTerminal("B")}}, // S → bB
 					{"A", String[Symbol]{Terminal("a"), NonTerminal("S")}}, // A → aS
@@ -495,7 +495,7 @@ func TestCFG_Equals(t *testing.T) {
 			lhs: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"A", "B", "S"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("A")}}, // S → aA
 					{"S", String[Symbol]{Terminal("b"), NonTerminal("B")}}, // S → bB
 					{"A", String[Symbol]{Terminal("a"), NonTerminal("S")}}, // A → aS
@@ -510,7 +510,7 @@ func TestCFG_Equals(t *testing.T) {
 			rhs: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"A", "B", "S"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("A")}}, // S → aA
 					{"S", String[Symbol]{Terminal("b"), NonTerminal("B")}}, // S → bB
 					{"A", String[Symbol]{Terminal("a"), NonTerminal("S")}}, // A → aS
@@ -529,7 +529,7 @@ func TestCFG_Equals(t *testing.T) {
 			lhs: NewCFG(
 				[]Terminal{"+", "-", "*", "/", "(", ")", "id"},
 				[]NonTerminal{"S", "E", "T", "F"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("E")}},                                  // S → E
 					{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}}, // E → E + T
 					{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}}, // E → E - T
@@ -545,7 +545,7 @@ func TestCFG_Equals(t *testing.T) {
 			rhs: NewCFG(
 				[]Terminal{"id", "(", ")", "+", "-", "*", "/"},
 				[]NonTerminal{"F", "T", "E", "S"},
-				[]Production{
+				[]*Production{
 					{"F", String[Symbol]{Terminal("id")}},                                    // F → id
 					{"F", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}},    // F → ( E )
 					{"T", String[Symbol]{NonTerminal("F")}},                                  // T → F
@@ -572,7 +572,7 @@ func TestCFG_Equals(t *testing.T) {
 func TestCFG_Symbols(t *testing.T) {
 	tests := []struct {
 		name            string
-		g               CFG
+		g               *CFG
 		expectedSymbols set.Set[Symbol]
 	}{
 		{
@@ -671,7 +671,7 @@ func TestCFG_Symbols(t *testing.T) {
 func TestCFG_IsCNF(t *testing.T) {
 	tests := []struct {
 		name                 string
-		g                    CFG
+		g                    *CFG
 		expectedErrorStrings []string
 	}{
 		{
@@ -810,7 +810,7 @@ func TestCFG_IsCNF(t *testing.T) {
 func TestCFG_IsLL1(t *testing.T) {
 	tests := []struct {
 		name                 string
-		g                    CFG
+		g                    *CFG
 		expectedErrorStrings []string
 	}{
 		{
@@ -904,7 +904,7 @@ func TestCFG_IsLL1(t *testing.T) {
 func TestCFG_NullableNonTerminals(t *testing.T) {
 	tests := []struct {
 		name              string
-		g                 CFG
+		g                 *CFG
 		expectedNullables []NonTerminal
 	}{
 		{
@@ -978,8 +978,8 @@ func TestCFG_NullableNonTerminals(t *testing.T) {
 func TestCFG_EliminateEmptyProductions(t *testing.T) {
 	tests := []struct {
 		name            string
-		g               CFG
-		expectedGrammar CFG
+		g               *CFG
+		expectedGrammar *CFG
 	}{
 		{
 			name: "1st",
@@ -987,7 +987,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"0", "1"},
 				[]NonTerminal{"S′", "S", "X", "Y"},
-				[]Production{
+				[]*Production{
 					{"S′", String[Symbol]{NonTerminal("S")}}, // S′ → S
 					{"S′", E}, // S′ → ε
 					{"S", String[Symbol]{NonTerminal("X"), NonTerminal("Y"), NonTerminal("X")}}, // S → XYX
@@ -1010,7 +1010,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S′", "S"},
-				[]Production{
+				[]*Production{
 					{"S′", String[Symbol]{NonTerminal("S")}}, // S′ → S
 					{"S′", E}, // S′ → ε
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
@@ -1031,7 +1031,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S", "A", "B"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("B"), Terminal("a")}}, // S → aBa
 					{"S", String[Symbol]{NonTerminal("A"), Terminal("b")}},                // S → Ab
 					{"S", String[Symbol]{Terminal("a"), Terminal("a")}},                   // S → aa
@@ -1060,7 +1060,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S", "S′", "A", "A₁", "B", "B₁"},
-				[]Production{
+				[]*Production{
 					{"S′", String[Symbol]{NonTerminal("S")}}, // S′ → S
 					{"S′", E}, // S′ → ε
 					{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}},  // S → AB
@@ -1090,7 +1090,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "*", "(", ")", "id"},
 				[]NonTerminal{"E", "E′", "T", "T′", "F"},
-				[]Production{
+				[]*Production{
 					{"E", String[Symbol]{NonTerminal("T"), NonTerminal("E′")}},                 // E → T E′
 					{"E", String[Symbol]{NonTerminal("T")}},                                    // E → T
 					{"E′", String[Symbol]{Terminal("+"), NonTerminal("T"), NonTerminal("E′")}}, // E′ → + T E′
@@ -1111,7 +1111,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 				[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
-				[]Production{
+				[]*Production{
 					{"grammar", String[Symbol]{NonTerminal("name")}},                                // grammar → name
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},          // grammar → name decls
 					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                // name → "grammar" IDENT
@@ -1154,8 +1154,8 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 func TestCFG_EliminateSingleProductions(t *testing.T) {
 	tests := []struct {
 		name            string
-		g               CFG
-		expectedGrammar CFG
+		g               *CFG
+		expectedGrammar *CFG
 	}{
 		{
 			name:            "1st",
@@ -1173,7 +1173,7 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S", "A", "B"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("B"), Terminal("a")}}, // S → aBa
 					{"S", String[Symbol]{NonTerminal("A"), Terminal("b")}},                // S → Ab
 					{"S", String[Symbol]{Terminal("a")}},                                  // S → a
@@ -1191,7 +1191,7 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"b", "c", "d", "s"},
 				[]NonTerminal{"S", "A", "B", "C", "D"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("b")}}, // S → b
 					{"S", String[Symbol]{Terminal("d")}}, // S → d
 					{"S", String[Symbol]{Terminal("s")}}, // S → s
@@ -1221,7 +1221,7 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "-", "*", "/", "(", ")", "id"},
 				[]NonTerminal{"S", "E"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // S → E + E
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // S → E - E
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}}, // S → E * E
@@ -1246,7 +1246,7 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "-", "*", "/", "(", ")", "id"},
 				[]NonTerminal{"S", "E", "T", "F"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}}, // S → E + T
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}}, // S → E - T
 					{"S", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}}, // S → T * F
@@ -1280,7 +1280,7 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 				[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
-				[]Production{
+				[]*Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
 					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},       // name → "grammar" IDENT
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
@@ -1325,8 +1325,8 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 func TestCFG_EliminateUnreachableProductions(t *testing.T) {
 	tests := []struct {
 		name            string
-		g               CFG
-		expectedGrammar CFG
+		g               *CFG
+		expectedGrammar *CFG
 	}{
 		{
 			name:            "1st",
@@ -1349,7 +1349,7 @@ func TestCFG_EliminateUnreachableProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"b", "d", "s"},
 				[]NonTerminal{"S", "A", "B", "C", "D"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("A")}}, // S → A
 					{"S", String[Symbol]{Terminal("s")}},    // S → s
 					{"A", String[Symbol]{NonTerminal("B")}}, // A → B
@@ -1367,7 +1367,7 @@ func TestCFG_EliminateUnreachableProductions(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S", "A", "B"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S → AB
 					{"A", String[Symbol]{Terminal("a"), NonTerminal("A")}},    // A → aA
 					{"A", String[Symbol]{Terminal("a")}},                      // A → a
@@ -1417,8 +1417,8 @@ func TestCFG_EliminateUnreachableProductions(t *testing.T) {
 func TestCFG_EliminateCycles(t *testing.T) {
 	tests := []struct {
 		name            string
-		g               CFG
-		expectedGrammar CFG
+		g               *CFG
+		expectedGrammar *CFG
 	}{
 		{
 			name: "1st",
@@ -1426,7 +1426,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"0", "1"},
 				[]NonTerminal{"S′", "X", "Y"},
-				[]Production{
+				[]*Production{
 					{"S′", String[Symbol]{NonTerminal("X"), NonTerminal("Y"), NonTerminal("X")}}, // S′ → XYX
 					{"S′", String[Symbol]{NonTerminal("X"), NonTerminal("X")}},                   // S′ → XX
 					{"S′", String[Symbol]{NonTerminal("X"), NonTerminal("Y")}},                   // S′ → XY
@@ -1450,7 +1450,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S′", "S"},
-				[]Production{
+				[]*Production{
 					{"S′", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S′ → aSbS
 					{"S′", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S′ → bSaS
 					{"S′", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b")}},                   // S′ → aSb
@@ -1478,7 +1478,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S", "A", "B"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("B"), Terminal("a")}}, // S → aBa
 					{"S", String[Symbol]{NonTerminal("A"), Terminal("b")}},                // S → Ab
 					{"S", String[Symbol]{Terminal("a"), Terminal("a")}},                   // S → aa
@@ -1496,7 +1496,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"b", "d", "s"},
 				[]NonTerminal{"S"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("b")}}, // S → b
 					{"S", String[Symbol]{Terminal("d")}}, // S → d
 					{"S", String[Symbol]{Terminal("s")}}, // S → s
@@ -1510,7 +1510,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S", "A", "B"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S → AB
 					{"A", String[Symbol]{Terminal("a"), NonTerminal("A")}},    // A → aA
 					{"A", String[Symbol]{Terminal("a")}},                      // A → a
@@ -1526,7 +1526,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S′", "A", "A₁", "B", "B₁"},
-				[]Production{
+				[]*Production{
 					{"S′", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S′ → AB
 					{"S′", E}, // S′ → ε
 					{"A", String[Symbol]{NonTerminal("A₁"), NonTerminal("A")}}, // A → A₁A
@@ -1545,7 +1545,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "-", "*", "/", "(", ")", "id"},
 				[]NonTerminal{"S", "E"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // S → E + E
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // S → E - E
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}}, // S → E * E
@@ -1570,7 +1570,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "-", "*", "/", "(", ")", "id"},
 				[]NonTerminal{"S", "E", "T", "F"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}}, // S → E + T
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}}, // S → E - T
 					{"S", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}}, // S → T * F
@@ -1599,7 +1599,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "*", "(", ")", "id"},
 				[]NonTerminal{"E", "E′", "T", "T′", "F"},
-				[]Production{
+				[]*Production{
 					{"E", String[Symbol]{NonTerminal("F"), NonTerminal("T′")}},                 // E → F T′
 					{"E", String[Symbol]{NonTerminal("T"), NonTerminal("E′")}},                 // E → T E′
 					{"E", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}},      // E → ( E )
@@ -1623,7 +1623,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 				[]NonTerminal{"grammar", "name", "decls", "decl", "lhs", "rhs"},
-				[]Production{
+				[]*Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},           // grammar → name decls
 					{"grammar", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},              // grammar → "grammar" IDENT
 					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                 // name → "grammar" IDENT
@@ -1665,8 +1665,8 @@ func TestCFG_EliminateCycles(t *testing.T) {
 func TestCFG_EliminateLeftRecursion(t *testing.T) {
 	tests := []struct {
 		name            string
-		g               CFG
-		expectedGrammar CFG
+		g               *CFG
+		expectedGrammar *CFG
 	}{
 		{
 			name: "1st",
@@ -1674,7 +1674,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"0", "1"},
 				[]NonTerminal{"S′", "X", "Y"},
-				[]Production{
+				[]*Production{
 					{"S′", String[Symbol]{NonTerminal("X"), NonTerminal("Y"), NonTerminal("X")}}, // S′ → XYX
 					{"S′", String[Symbol]{NonTerminal("X"), NonTerminal("X")}},                   // S′ → XX
 					{"S′", String[Symbol]{NonTerminal("X"), NonTerminal("Y")}},                   // S′ → XY
@@ -1698,7 +1698,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S′", "S"},
-				[]Production{
+				[]*Production{
 					{"S′", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S′ → aSbS
 					{"S′", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S′ → bSaS
 					{"S′", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b")}},                   // S′ → aSb
@@ -1726,7 +1726,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S", "A", "B"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("B"), Terminal("a")}}, // S → aBa
 					{"S", String[Symbol]{NonTerminal("A"), Terminal("b")}},                // S → Ab
 					{"S", String[Symbol]{Terminal("a"), Terminal("a")}},                   // S → aa
@@ -1744,7 +1744,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"b", "d", "s"},
 				[]NonTerminal{"S"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("b")}}, // S → b
 					{"S", String[Symbol]{Terminal("d")}}, // S → d
 					{"S", String[Symbol]{Terminal("s")}}, // S → s
@@ -1758,7 +1758,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S", "A", "B"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S → AB
 					{"A", String[Symbol]{Terminal("a"), NonTerminal("A")}},    // A → aA
 					{"A", String[Symbol]{Terminal("a")}},                      // A → a
@@ -1774,7 +1774,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S′", "A", "A₁", "B", "B₁"},
-				[]Production{
+				[]*Production{
 					{"S′", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S′ → AB
 					{"S′", E}, // S′ → ε
 					{"A", String[Symbol]{NonTerminal("A₁"), NonTerminal("A")}}, // A → A₁A
@@ -1793,7 +1793,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "-", "*", "/", "(", ")", "id"},
 				[]NonTerminal{"S", "E", "E′"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}},                 // S → E + E
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}},                 // S → E - E
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}},                 // S → E * E
@@ -1819,7 +1819,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "-", "*", "/", "(", ")", "id"},
 				[]NonTerminal{"S", "E", "E′", "T", "T′", "F"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}},                    // S → E + T
 					{"S", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}},                    // S → E - T
 					{"S", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}},                    // S → T * F
@@ -1850,7 +1850,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "*", "(", ")", "id"},
 				[]NonTerminal{"E", "E′", "T", "T′", "F"},
-				[]Production{
+				[]*Production{
 					{"E", String[Symbol]{NonTerminal("F"), NonTerminal("T′")}},                               // E → F T′
 					{"E", String[Symbol]{NonTerminal("T"), NonTerminal("E′")}},                               // E → T E′
 					{"E", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}},                    // E → ( E )
@@ -1875,7 +1875,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 				[]NonTerminal{"grammar", "name", "decls", "decls′", "decl", "lhs", "rhs", "rhs′"},
-				[]Production{
+				[]*Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},                                  // grammar → name decls
 					{"grammar", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                                     // grammar → "grammar" IDENT
 					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                                        // name → "grammar" IDENT
@@ -1919,8 +1919,8 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 func TestCFG_LeftFactor(t *testing.T) {
 	tests := []struct {
 		name            string
-		g               CFG
-		expectedGrammar CFG
+		g               *CFG
+		expectedGrammar *CFG
 	}{
 		{
 			name:            "1st",
@@ -1938,7 +1938,7 @@ func TestCFG_LeftFactor(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S", "S′", "A", "B"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("a"), NonTerminal("S′")}}, // S → aS′
 					{"S", String[Symbol]{NonTerminal("A"), Terminal("b")}},  // S → Ab
 					{"S′", String[Symbol]{NonTerminal("B"), Terminal("a")}}, // S′ → Ba
@@ -1972,7 +1972,7 @@ func TestCFG_LeftFactor(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "-", "*", "/", "(", ")", "id"},
 				[]NonTerminal{"S", "E", "E′"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("E")}},                               // S → E
 					{"E", String[Symbol]{NonTerminal("E"), NonTerminal("E′")}},            // E → EE′
 					{"E", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}}, // E → ( E )
@@ -1992,7 +1992,7 @@ func TestCFG_LeftFactor(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "-", "*", "/", "(", ")", "id"},
 				[]NonTerminal{"S", "E", "E′", "T", "T′", "F"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("E")}},                               // S → E
 					{"E", String[Symbol]{NonTerminal("E"), NonTerminal("E′")}},            // E → EE′
 					{"E", String[Symbol]{NonTerminal("T")}},                               // E → T
@@ -2019,7 +2019,7 @@ func TestCFG_LeftFactor(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 				[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "rhs′", "nonterm", "term"},
-				[]Production{
+				[]*Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
 					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},       // name → "grammar" IDENT
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
@@ -2062,14 +2062,14 @@ func TestCFG_LeftFactor(t *testing.T) {
 func TestGroupByCommonPrefix(t *testing.T) {
 	tests := []struct {
 		name           string
-		prods          set.Set[Production]
+		prods          set.Set[*Production]
 		expectedGroups map[string][]string
 	}{
 		{
 			name: "1st",
 			prods: set.New(EqProduction,
-				Production{"A", String[Symbol]{Terminal("a")}},
-				Production{"A", E},
+				&Production{"A", String[Symbol]{Terminal("a")}},
+				&Production{"A", E},
 			),
 			expectedGroups: map[string][]string{
 				`"a"`: {`ε`},
@@ -2079,9 +2079,9 @@ func TestGroupByCommonPrefix(t *testing.T) {
 		{
 			name: "2nd",
 			prods: set.New(EqProduction,
-				Production{"stmt", String[Symbol]{NonTerminal("expr")}},
-				Production{"stmt", String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt")}},
-				Production{"stmt", String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt"), Terminal("else"), NonTerminal("stmt")}},
+				&Production{"stmt", String[Symbol]{NonTerminal("expr")}},
+				&Production{"stmt", String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt")}},
+				&Production{"stmt", String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt"), Terminal("else"), NonTerminal("stmt")}},
 			),
 			expectedGroups: map[string][]string{
 				`"if"`: {`expr "then" stmt`, `expr "then" stmt "else" stmt`},
@@ -2091,19 +2091,19 @@ func TestGroupByCommonPrefix(t *testing.T) {
 		{
 			name: "3rd",
 			prods: set.New(EqProduction,
-				Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d"), NonTerminal("A"), NonTerminal("B")}},
-				Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d"), NonTerminal("C"), NonTerminal("D")}},
-				Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), NonTerminal("E"), NonTerminal("F")}},
-				Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), NonTerminal("G"), NonTerminal("H")}},
-				Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), NonTerminal("I"), NonTerminal("J")}},
-				Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), NonTerminal("K"), NonTerminal("L")}},
-				Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), NonTerminal("M"), NonTerminal("N")}},
-				Production{"S", String[Symbol]{Terminal("a"), NonTerminal("O"), NonTerminal("P")}},
-				Production{"S", String[Symbol]{Terminal("a")}},
-				Production{"S", String[Symbol]{Terminal("u"), Terminal("v"), NonTerminal("Q"), NonTerminal("R")}},
-				Production{"S", String[Symbol]{Terminal("u"), Terminal("v"), Terminal("w"), NonTerminal("S"), NonTerminal("T")}},
-				Production{"S", String[Symbol]{Terminal("x"), Terminal("y"), NonTerminal("U"), NonTerminal("V")}},
-				Production{"S", String[Symbol]{Terminal("z"), NonTerminal("W")}},
+				&Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d"), NonTerminal("A"), NonTerminal("B")}},
+				&Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d"), NonTerminal("C"), NonTerminal("D")}},
+				&Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), NonTerminal("E"), NonTerminal("F")}},
+				&Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), NonTerminal("G"), NonTerminal("H")}},
+				&Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), NonTerminal("I"), NonTerminal("J")}},
+				&Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), NonTerminal("K"), NonTerminal("L")}},
+				&Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), NonTerminal("M"), NonTerminal("N")}},
+				&Production{"S", String[Symbol]{Terminal("a"), NonTerminal("O"), NonTerminal("P")}},
+				&Production{"S", String[Symbol]{Terminal("a")}},
+				&Production{"S", String[Symbol]{Terminal("u"), Terminal("v"), NonTerminal("Q"), NonTerminal("R")}},
+				&Production{"S", String[Symbol]{Terminal("u"), Terminal("v"), Terminal("w"), NonTerminal("S"), NonTerminal("T")}},
+				&Production{"S", String[Symbol]{Terminal("x"), Terminal("y"), NonTerminal("U"), NonTerminal("V")}},
+				&Production{"S", String[Symbol]{Terminal("z"), NonTerminal("W")}},
 			),
 			expectedGroups: map[string][]string{
 				`"a"`: {`"b" "c" "d" A B`, `"b" "c" "d" C D`, `"b" "c" E F`, `"b" "c" G H`, `"b" I J`, `"b" K L`, `"b" M N`, `O P`, `ε`},
@@ -2133,8 +2133,8 @@ func TestGroupByCommonPrefix(t *testing.T) {
 func TestCFG_ChomskyNormalForm(t *testing.T) {
 	tests := []struct {
 		name            string
-		g               CFG
-		expectedGrammar CFG
+		g               *CFG
+		expectedGrammar *CFG
 	}{
 		{
 			name: "1st",
@@ -2147,7 +2147,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					"S₁",
 					"0ₙ", "1ₙ",
 				},
-				[]Production{
+				[]*Production{
 					{"S′", String[Symbol]{NonTerminal("0ₙ"), NonTerminal("X")}}, // S′ → 0ₙX
 					{"S′", String[Symbol]{NonTerminal("1ₙ"), NonTerminal("Y")}}, // S′ → 1ₙY
 					{"S′", String[Symbol]{NonTerminal("X"), NonTerminal("S₁")}}, // S′ → XS₁
@@ -2181,7 +2181,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					"S₁", "S₂", "S₃", "S₄",
 					"aₙ", "bₙ",
 				},
-				[]Production{
+				[]*Production{
 					{"S″", String[Symbol]{NonTerminal("aₙ"), NonTerminal("S₁")}}, // S″ → aₙS₁
 					{"S″", String[Symbol]{NonTerminal("bₙ"), NonTerminal("S₃")}}, // S″ → bₙS₃
 					{"S″", E}, // S″ → ε
@@ -2213,7 +2213,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					"S₁",
 					"aₙ", "bₙ",
 				},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("A"), NonTerminal("bₙ")}},  // S → Abₙ
 					{"S", String[Symbol]{NonTerminal("aₙ"), NonTerminal("S₁")}}, // S → aₙS₁
 					{"S", String[Symbol]{Terminal("a")}},                        // S → a
@@ -2234,7 +2234,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"b", "d", "s"},
 				[]NonTerminal{"S"},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{Terminal("b")}}, // S → b
 					{"S", String[Symbol]{Terminal("d")}}, // S → d
 					{"S", String[Symbol]{Terminal("s")}}, // S → s
@@ -2251,7 +2251,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					"S", "A", "B",
 					"aₙ", "bₙ",
 				},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}},  // S → AB
 					{"A", String[Symbol]{NonTerminal("aₙ"), NonTerminal("A")}}, // A → aₙA
 					{"A", String[Symbol]{Terminal("a")}},                       // A → a
@@ -2269,7 +2269,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"a", "b"},
 				[]NonTerminal{"S′", "A", "A₁", "B", "B₁"},
-				[]Production{
+				[]*Production{
 					{"S′", String[Symbol]{NonTerminal("A"), NonTerminal("B")}}, // S′ → AB
 					{"S′", E}, // S′ → ε
 					{"A", String[Symbol]{NonTerminal("A₁"), NonTerminal("A")}}, // A → A₁A
@@ -2292,7 +2292,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					"E₁", "E₂", "E₃", "E₄", "E₅",
 					"+ₙ", "-ₙ", "*ₙ", "/ₙ", "(ₙ", ")ₙ",
 				},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("(ₙ"), NonTerminal("E₁")}}, // S → (ₙ E₁
 					{"S", String[Symbol]{NonTerminal("E"), NonTerminal("E₂")}},  // S → E E₂
 					{"S", String[Symbol]{NonTerminal("E"), NonTerminal("E₃")}},  // S → E E₃
@@ -2332,7 +2332,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					"E₁", "E₂", "T₁", "T₂", "F₁",
 					"+ₙ", "-ₙ", "*ₙ", "/ₙ", "(ₙ", ")ₙ",
 				},
-				[]Production{
+				[]*Production{
 					{"S", String[Symbol]{NonTerminal("E"), NonTerminal("E₁")}},  // S → E E₁
 					{"S", String[Symbol]{NonTerminal("E"), NonTerminal("E₂")}},  // S → E E₂
 					{"S", String[Symbol]{NonTerminal("T"), NonTerminal("T₁")}},  // S → T T₁
@@ -2372,7 +2372,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 			expectedGrammar: NewCFG(
 				[]Terminal{"+", "*", "(", ")", "id"},
 				[]NonTerminal{"E″", "E′", "E′₁", "E", "T′", "T′₁", "T", "F₁", "F", "+ₙ", "*ₙ", "(ₙ", ")ₙ"},
-				[]Production{
+				[]*Production{
 					{"E″", String[Symbol]{NonTerminal("(ₙ"), NonTerminal("F₁")}},  // E″ → (ₙ F₁
 					{"E″", String[Symbol]{NonTerminal("F"), NonTerminal("T′")}},   // E″ → F T′
 					{"E″", String[Symbol]{NonTerminal("T"), NonTerminal("E′")}},   // E″ → T E′
@@ -2414,7 +2414,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					"token₁", "token₂", "rule₁", "rhs₁", "rhs₂", "rhs₃", "rhs₄", "rhs₅",
 					"=ₙ", "|ₙ", "(ₙ", ")ₙ", "[ₙ", "]ₙ", "{ₙ", "}ₙ", "{{ₙ", "}}ₙ", "grammarₙ", "IDENTₙ", "TOKENₙ", "STRINGₙ", "REGEXₙ",
 				},
-				[]Production{
+				[]*Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},      // grammar → name decls
 					{"grammar", String[Symbol]{NonTerminal("grammarₙ"), NonTerminal("IDENTₙ")}}, // grammar → grammarₙ IDENTₙ
 					{"name", String[Symbol]{NonTerminal("grammarₙ"), NonTerminal("IDENTₙ")}},    // name → grammarₙ IDENTₙ
@@ -2479,7 +2479,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 func TestCFG_ComputeFIRST(t *testing.T) {
 	tests := []struct {
 		name           string
-		g              CFG
+		g              *CFG
 		firsts         []String[Symbol]
 		expectedFirsts []TerminalsAndEmpty
 	}{
@@ -2892,7 +2892,7 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 func TestCFG_ComputeFOLLOW(t *testing.T) {
 	tests := []struct {
 		name            string
-		g               CFG
+		g               *CFG
 		follows         []NonTerminal
 		expectedFollows []TerminalsAndEndmarker
 	}{
@@ -3084,7 +3084,7 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 func TestCFG_OrderTerminals(t *testing.T) {
 	tests := []struct {
 		name              string
-		g                 CFG
+		g                 *CFG
 		expectedTerminals String[Terminal]
 	}{
 		{
@@ -3106,7 +3106,7 @@ func TestCFG_OrderTerminals(t *testing.T) {
 func TestCFG_OrderNonTerminals(t *testing.T) {
 	tests := []struct {
 		name                 string
-		g                    CFG
+		g                    *CFG
 		expectedVisited      String[NonTerminal]
 		expectedUnvisited    String[NonTerminal]
 		expectedNonTerminals String[NonTerminal]
@@ -3134,7 +3134,7 @@ func TestCFG_OrderNonTerminals(t *testing.T) {
 func TestCFG_AddNewNonTerminal(t *testing.T) {
 	tests := []struct {
 		name                string
-		g                   CFG
+		g                   *CFG
 		prefix              NonTerminal
 		suffixes            []string
 		expectedNonTerminal NonTerminal

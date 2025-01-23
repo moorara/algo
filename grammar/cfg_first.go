@@ -41,7 +41,7 @@ func newTerminalsAndEmpty(terms ...Terminal) *TerminalsAndEmpty {
 }
 
 // String returns a string representation of the FIRST set.
-func (s TerminalsAndEmpty) String() string {
+func (s *TerminalsAndEmpty) String() string {
 	members := []string{}
 
 	for term := range s.Terminals.All() {

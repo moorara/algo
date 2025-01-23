@@ -7,14 +7,14 @@ import (
 
 // calculator implemented the lr.Calculator interface for LR(1) items.
 type calculator struct {
-	augG  grammar.CFG
+	augG  *grammar.CFG
 	FIRST grammar.FIRST
 }
 
 // NewCalculator returns an lr.Calculator for LR(0) items.
 // It provides an implementation of the CLOSURE function
 // based on the LR(0) items of the augmented grammar.
-func NewCalculator(G grammar.CFG) *lr.AutomatonCalculator {
+func NewCalculator(G *grammar.CFG) *lr.AutomatonCalculator {
 	augG := lr.Augment(G)
 	FIRST := augG.ComputeFIRST()
 
@@ -27,23 +27,23 @@ func NewCalculator(G grammar.CFG) *lr.AutomatonCalculator {
 }
 
 // G returns the augmented context-free grammar.
-func (c *calculator) G() grammar.CFG {
+func (c *calculator) G() *grammar.CFG {
 	return c.augG
 }
 
 // Initial returns the initial LR(1) item "S′ → •S, $" for an augmented grammar.
 func (c *calculator) Initial() lr.Item {
 	for p := range c.augG.Productions.Get(c.augG.Start).All() {
-		return LR1Item{
-			Production: &p,
-			Start:      &c.augG.Start,
+		return &LR1Item{
+			Production: p,
+			Start:      c.augG.Start,
 			Dot:        0,
 			Lookahead:  grammar.Endmarker,
 		}
 	}
 
 	// This will never be the case.
-	return LR1Item{}
+	return nil
 }
 
 // CLOSURE computes the closure of a given LR(1) item set.
@@ -65,7 +65,7 @@ func (c *calculator) CLOSURE(I lr.ItemSet) lr.ItemSet {
 
 		// For each item [A → α•Bβ, a] in J
 		for i := range J.All() {
-			if i, ok := i.(LR1Item); ok {
+			if i, ok := i.(*LR1Item); ok {
 				a := i.Lookahead
 				if X, ok := i.DotSymbol(); ok {
 					if B, ok := X.(grammar.NonTerminal); ok {
@@ -75,9 +75,9 @@ func (c *calculator) CLOSURE(I lr.ItemSet) lr.ItemSet {
 
 							// For each terminal b in FIRST(βa)
 							for b := range c.FIRST(βa).Terminals.All() {
-								j := LR1Item{
-									Production: &BProd,
-									Start:      &c.augG.Start,
+								j := &LR1Item{
+									Production: BProd,
+									Start:      c.augG.Start,
 									Dot:        0,
 									Lookahead:  b,
 								}
@@ -103,7 +103,7 @@ func (c *calculator) CLOSURE(I lr.ItemSet) lr.ItemSet {
 //
 // This method constructs an LR(1) parsing table for any context-free grammar.
 // To identify errors in the table, use the Error method.
-func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
+func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 	/*
 	 * INPUT:  An augmented grammar G′.
 	 * OUTPUT: The canonical LR parsing table functions ACTION and GOTO for G′.
@@ -124,7 +124,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 		// The parsing action for state i is determined as follows:
 
 		for item := range I.All() {
-			if item, ok := item.(LR1Item); ok {
+			if item, ok := item.(*LR1Item); ok {
 				// If "A → α•aβ, b" is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
 				if X, ok := item.DotSymbol(); ok {
 					if a, ok := X.(grammar.Terminal); ok {
@@ -132,7 +132,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 						j := states.For(J)
 
 						// Set ACTION[i,a] to SHIFT j
-						table.AddACTION(lr.State(i), a, lr.Action{
+						table.AddACTION(lr.State(i), a, &lr.Action{
 							Type:  lr.SHIFT,
 							State: j,
 						})
@@ -144,7 +144,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 					a := item.Lookahead
 
 					// Set ACTION[i,a] to REDUCE A → α
-					table.AddACTION(lr.State(i), a, lr.Action{
+					table.AddACTION(lr.State(i), a, &lr.Action{
 						Type:       lr.REDUCE,
 						Production: item.Production,
 					})
@@ -153,7 +153,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 				// If "S′ → S•, $" is in Iᵢ
 				if item.IsFinal() {
 					// Set ACTION[i,$] to ACCEPT
-					table.AddACTION(lr.State(i), grammar.Endmarker, lr.Action{
+					table.AddACTION(lr.State(i), grammar.Endmarker, &lr.Action{
 						Type: lr.ACCEPT,
 					})
 				}

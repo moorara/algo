@@ -8,7 +8,7 @@ import (
 // CNFError represents an error for a production rule in the form
 // A → α that does not conform to Chomsky Normal Form (CNF).
 type CNFError struct {
-	P Production
+	P *Production
 }
 
 // Error implements the error interface.

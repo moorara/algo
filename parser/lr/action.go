@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	eqAction = func(lhs, rhs Action) bool {
+	eqAction = func(lhs, rhs *Action) bool {
 		return lhs.Equals(rhs)
 	}
 
-	eqActionSet = func(lhs, rhs set.Set[Action]) bool {
+	eqActionSet = func(lhs, rhs set.Set[*Action]) bool {
 		return lhs.Equals(rhs)
 	}
 )
@@ -35,12 +35,12 @@ type Action struct {
 }
 
 // String returns a string representation of an action.
-func (a Action) String() string {
+func (a *Action) String() string {
 	switch a.Type {
 	case SHIFT:
 		return fmt.Sprintf("SHIFT %d", a.State)
 	case REDUCE:
-		return fmt.Sprintf("REDUCE %s", *a.Production)
+		return fmt.Sprintf("REDUCE %s", a.Production)
 	case ACCEPT:
 		return "ACCEPT"
 	case ERROR:
@@ -51,7 +51,7 @@ func (a Action) String() string {
 }
 
 // Equals determines whether or not two actions are the same.
-func (a Action) Equals(rhs Action) bool {
+func (a *Action) Equals(rhs *Action) bool {
 	return a.Type == rhs.Type &&
 		a.State == rhs.State &&
 		equalProductions(a.Production, rhs.Production)
@@ -61,14 +61,14 @@ func equalProductions(lhs, rhs *grammar.Production) bool {
 	if lhs == nil || rhs == nil {
 		return lhs == rhs
 	}
-	return lhs.Equals(*rhs)
+	return lhs.Equals(rhs)
 }
 
-func cmpAction(lhs, rhs Action) int {
+func cmpAction(lhs, rhs *Action) int {
 	if lhs.Type == SHIFT && rhs.Type == SHIFT {
 		return int(lhs.State) - int(rhs.State)
 	} else if lhs.Type == REDUCE && rhs.Type == REDUCE {
-		return grammar.CmpProduction(*lhs.Production, *rhs.Production)
+		return grammar.CmpProduction(lhs.Production, rhs.Production)
 	}
 
 	return int(lhs.Type) - int(rhs.Type)

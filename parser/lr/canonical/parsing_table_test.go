@@ -16,22 +16,22 @@ func getTestParsingTables() []*lr.ParsingTable {
 		[]grammar.NonTerminal{"S", "C"},
 	)
 
-	pt0.AddACTION(0, "c", lr.Action{Type: lr.SHIFT, State: 5})
-	pt0.AddACTION(0, "d", lr.Action{Type: lr.SHIFT, State: 7})
-	pt0.AddACTION(1, grammar.Endmarker, lr.Action{Type: lr.ACCEPT})
-	pt0.AddACTION(9, "c", lr.Action{Type: lr.SHIFT, State: 6})
-	pt0.AddACTION(9, "d", lr.Action{Type: lr.SHIFT, State: 8})
-	pt0.AddACTION(5, "c", lr.Action{Type: lr.SHIFT, State: 5})
-	pt0.AddACTION(5, "d", lr.Action{Type: lr.SHIFT, State: 7})
-	pt0.AddACTION(7, "c", lr.Action{Type: lr.REDUCE, Production: &prods[0][3]})
-	pt0.AddACTION(7, "d", lr.Action{Type: lr.REDUCE, Production: &prods[0][3]})
-	pt0.AddACTION(4, grammar.Endmarker, lr.Action{Type: lr.REDUCE, Production: &prods[0][1]})
-	pt0.AddACTION(6, "c", lr.Action{Type: lr.SHIFT, State: 6})
-	pt0.AddACTION(6, "d", lr.Action{Type: lr.SHIFT, State: 8})
-	pt0.AddACTION(8, grammar.Endmarker, lr.Action{Type: lr.REDUCE, Production: &prods[0][3]})
-	pt0.AddACTION(2, "c", lr.Action{Type: lr.REDUCE, Production: &prods[0][2]})
-	pt0.AddACTION(2, "d", lr.Action{Type: lr.REDUCE, Production: &prods[0][2]})
-	pt0.AddACTION(3, grammar.Endmarker, lr.Action{Type: lr.REDUCE, Production: &prods[0][2]})
+	pt0.AddACTION(0, "c", &lr.Action{Type: lr.SHIFT, State: 5})
+	pt0.AddACTION(0, "d", &lr.Action{Type: lr.SHIFT, State: 7})
+	pt0.AddACTION(1, grammar.Endmarker, &lr.Action{Type: lr.ACCEPT})
+	pt0.AddACTION(9, "c", &lr.Action{Type: lr.SHIFT, State: 6})
+	pt0.AddACTION(9, "d", &lr.Action{Type: lr.SHIFT, State: 8})
+	pt0.AddACTION(5, "c", &lr.Action{Type: lr.SHIFT, State: 5})
+	pt0.AddACTION(5, "d", &lr.Action{Type: lr.SHIFT, State: 7})
+	pt0.AddACTION(7, "c", &lr.Action{Type: lr.REDUCE, Production: prods[0][3]})
+	pt0.AddACTION(7, "d", &lr.Action{Type: lr.REDUCE, Production: prods[0][3]})
+	pt0.AddACTION(4, grammar.Endmarker, &lr.Action{Type: lr.REDUCE, Production: prods[0][1]})
+	pt0.AddACTION(6, "c", &lr.Action{Type: lr.SHIFT, State: 6})
+	pt0.AddACTION(6, "d", &lr.Action{Type: lr.SHIFT, State: 8})
+	pt0.AddACTION(8, grammar.Endmarker, &lr.Action{Type: lr.REDUCE, Production: prods[0][3]})
+	pt0.AddACTION(2, "c", &lr.Action{Type: lr.REDUCE, Production: prods[0][2]})
+	pt0.AddACTION(2, "d", &lr.Action{Type: lr.REDUCE, Production: prods[0][2]})
+	pt0.AddACTION(3, grammar.Endmarker, &lr.Action{Type: lr.REDUCE, Production: prods[0][2]})
 
 	pt0.SetGOTO(0, "S", 1)
 	pt0.SetGOTO(0, "C", 9)
@@ -51,7 +51,7 @@ func getTestParsingTables() []*lr.ParsingTable {
 func TestNewCalculator(t *testing.T) {
 	tests := []struct {
 		name string
-		G    grammar.CFG
+		G    *grammar.CFG
 	}{
 		{
 			name: "OK",
@@ -106,9 +106,9 @@ func TestCalculator_Initial(t *testing.T) {
 			c: &calculator{
 				augG: lr.Augment(grammars[0]),
 			},
-			expectedInitial: LR1Item{
-				Production: &prods[0][0],
-				Start:      &starts[0],
+			expectedInitial: &LR1Item{
+				Production: prods[0][0],
+				Start:      starts[0],
 				Dot:        0,
 				Lookahead:  grammar.Endmarker,
 			},
@@ -142,7 +142,7 @@ func TestCalculator_CLOSURE(t *testing.T) {
 				FIRST: g.ComputeFIRST(),
 			},
 			I: lr.NewItemSet(
-				LR1Item{Production: &prods[0][0], Start: &starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
+				&LR1Item{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
 			),
 			expectedCLOSURE: s[0],
 		},
@@ -163,7 +163,7 @@ func TestBuildParsingTable(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		G                    grammar.CFG
+		G                    *grammar.CFG
 		expectedTable        *lr.ParsingTable
 		expectedErrorStrings []string
 	}{

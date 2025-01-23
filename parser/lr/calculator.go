@@ -15,12 +15,12 @@ var (
 // and adding a production "S′ → S", where S is the original start symbol of G.
 // This transformation is used to prepare grammars for LR parsing.
 // The function clones the input grammar G, ensuring that the original grammar remains unmodified.
-func Augment(G grammar.CFG) grammar.CFG {
+func Augment(G *grammar.CFG) *grammar.CFG {
 	augG := G.Clone()
 
 	newS := augG.AddNewNonTerminal(G.Start, primeSuffixes...)
 	augG.Start = newS
-	augG.Productions.Add(grammar.Production{
+	augG.Productions.Add(&grammar.Production{
 		Head: newS,
 		Body: grammar.String[grammar.Symbol]{G.Start},
 	})
@@ -33,7 +33,7 @@ func Augment(G grammar.CFG) grammar.CFG {
 // must provide an implementation of this interface.
 type Calculator interface {
 	// G returns the augmented context-free grammar.
-	G() grammar.CFG
+	G() *grammar.CFG
 
 	// Initial returns the initial item of an augmented grammar.
 	// For LR(0), the initial item is "S′ → •S",

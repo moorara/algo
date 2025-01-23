@@ -26,12 +26,12 @@ import (
 // and the parser expects a string derivable from YZ next.
 type LR0Item struct {
 	*grammar.Production
-	Start *grammar.NonTerminal // The start symbol S′ in the augmented grammar.
-	Dot   int                  // Position of the dot in the production body.
+	Start grammar.NonTerminal // The start symbol S′ in the augmented grammar.
+	Dot   int                 // Position of the dot in the production body.
 }
 
 // String returns a string representation of an LR(0) item.
-func (i LR0Item) String() string {
+func (i *LR0Item) String() string {
 	var b bytes.Buffer
 
 	fmt.Fprintf(&b, "%s → ", i.Head)
@@ -50,11 +50,11 @@ func (i LR0Item) String() string {
 }
 
 // Equals determines whether or not two LR(0) items are the same.
-func (i LR0Item) Equals(rhs lr.Item) bool {
-	ii, ok := rhs.(LR0Item)
+func (i *LR0Item) Equals(rhs lr.Item) bool {
+	ii, ok := rhs.(*LR0Item)
 	return ok &&
-		i.Production.Equals(*ii.Production) &&
-		i.Start.Equals(*ii.Start) &&
+		i.Production.Equals(ii.Production) &&
+		i.Start.Equals(ii.Start) &&
 		i.Dot == ii.Dot
 }
 
@@ -69,8 +69,8 @@ func (i LR0Item) Equals(rhs lr.Item) bool {
 //  5. If dot positions are identical, the order is determined by comparing productions.
 //
 // This function is useful for sorting LR(0) items, ensuring stability and predictability in their ordering.
-func (i LR0Item) Compare(rhs lr.Item) int {
-	ii, ok := rhs.(LR0Item)
+func (i *LR0Item) Compare(rhs lr.Item) int {
+	ii, ok := rhs.(*LR0Item)
 	if !ok {
 		panic("Compare: rhs must be of type LR0Item")
 	}
@@ -87,9 +87,9 @@ func (i LR0Item) Compare(rhs lr.Item) int {
 		return 1
 	}
 
-	if i.Production.Head.Equals(*i.Start) && !ii.Production.Head.Equals(*ii.Start) {
+	if i.Production.Head.Equals(i.Start) && !ii.Production.Head.Equals(ii.Start) {
 		return -1
-	} else if !i.Production.Head.Equals(*i.Start) && ii.Production.Head.Equals(*ii.Start) {
+	} else if !i.Production.Head.Equals(i.Start) && ii.Production.Head.Equals(ii.Start) {
 		return 1
 	}
 
@@ -99,12 +99,12 @@ func (i LR0Item) Compare(rhs lr.Item) int {
 		return 1
 	}
 
-	return grammar.CmpProduction(*i.Production, *ii.Production)
+	return grammar.CmpProduction(i.Production, ii.Production)
 }
 
 // IsInitial checks if an LR(0) item is the initial item "S′ → •S" in the augmented grammar.
-func (i LR0Item) IsInitial() bool {
-	return i.Production.Head.Equals(*i.Start) &&
+func (i *LR0Item) IsInitial() bool {
+	return i.Production.Head.Equals(i.Start) &&
 		i.Dot == 0
 }
 
@@ -116,25 +116,25 @@ func (i LR0Item) IsInitial() bool {
 //   - All items where the dot is not at the beginning (left end) of the item's body.
 //
 // Non-kernel items are those where the dot is at the beginning, except for the initial item.
-func (i LR0Item) IsKernel() bool {
+func (i *LR0Item) IsKernel() bool {
 	return i.IsInitial() || i.Dot > 0
 }
 
 // IsComplete checks if the dot has reached the end of the item's body.
-func (i LR0Item) IsComplete() bool {
+func (i *LR0Item) IsComplete() bool {
 	return i.Dot == len(i.Body)
 }
 
 // IsInitial checks if an LR(0) item is the final item "S′ → S•" in the augmented grammar.
-func (i LR0Item) IsFinal() bool {
-	return i.Production.Head.Equals(*i.Start) &&
+func (i *LR0Item) IsFinal() bool {
+	return i.Production.Head.Equals(i.Start) &&
 		i.IsComplete()
 }
 
 // Dot returns the grammar symbol at the dot position in the item's body.
 // If the dot is at the end of the body, it returns nil and false.
 // For example, in the LR(0) item A → α•Bβ, it returns B.
-func (i LR0Item) DotSymbol() (grammar.Symbol, bool) {
+func (i *LR0Item) DotSymbol() (grammar.Symbol, bool) {
 	if i.IsComplete() {
 		return nil, false
 	}
@@ -145,12 +145,12 @@ func (i LR0Item) DotSymbol() (grammar.Symbol, bool) {
 // NextItem generates a new LR(0) item by advancing the dot one position forward in the item's body.
 // If the dot is at the end of the body, it returns an empty LR(0) item and false.
 // For example, for the LR(0) item A → α•Bβ, it returns A → αB•β.
-func (i LR0Item) Next() (lr.Item, bool) {
+func (i *LR0Item) Next() (lr.Item, bool) {
 	if i.IsComplete() {
-		return LR0Item{}, false
+		return nil, false
 	}
 
-	return LR0Item{
+	return &LR0Item{
 		Production: i.Production,
 		Start:      i.Start,
 		Dot:        i.Dot + 1,

@@ -18,7 +18,7 @@ type ParsingTable struct {
 	states       []State
 	terminals    []grammar.Terminal
 	nonTerminals []grammar.NonTerminal
-	actions      symboltable.SymbolTable[State, symboltable.SymbolTable[grammar.Terminal, set.Set[Action]]]
+	actions      symboltable.SymbolTable[State, symboltable.SymbolTable[grammar.Terminal, set.Set[*Action]]]
 	gotos        symboltable.SymbolTable[State, symboltable.SymbolTable[grammar.NonTerminal, State]]
 }
 
@@ -29,7 +29,7 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 	actions := symboltable.NewQuadraticHashTable(
 		HashState,
 		EqState,
-		func(lhs, rhs symboltable.SymbolTable[grammar.Terminal, set.Set[Action]]) bool {
+		func(lhs, rhs symboltable.SymbolTable[grammar.Terminal, set.Set[*Action]]) bool {
 			return lhs.Equals(rhs)
 		},
 		opts,
@@ -53,7 +53,7 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 	}
 }
 
-func (t *ParsingTable) getActions(s State, a grammar.Terminal) (set.Set[Action], bool) {
+func (t *ParsingTable) getActions(s State, a grammar.Terminal) (set.Set[*Action], bool) {
 	if row, ok := t.actions.Get(s); ok {
 		if actions, ok := row.Get(a); ok {
 			if actions != nil {
@@ -123,7 +123,7 @@ func (t *ParsingTable) Equals(rhs *ParsingTable) bool {
 // AddACTION adds a new action for state s and terminal a to the parsing table.
 // Multiple actions can be added for the same state s and terminal a.
 // It returns false if the ACTION[s,a] contains more than one action, indicating a conflict.
-func (t *ParsingTable) AddACTION(s State, a grammar.Terminal, action Action) bool {
+func (t *ParsingTable) AddACTION(s State, a grammar.Terminal, action *Action) bool {
 	if _, ok := t.actions.Get(s); !ok {
 		t.actions.Put(s, symboltable.NewQuadraticHashTable(
 			grammar.HashTerminal,
@@ -135,7 +135,7 @@ func (t *ParsingTable) AddACTION(s State, a grammar.Terminal, action Action) boo
 
 	row, _ := t.actions.Get(s)
 	if _, ok := row.Get(a); !ok {
-		row.Put(a, set.New[Action](eqAction))
+		row.Put(a, set.New[*Action](eqAction))
 	}
 
 	actions, _ := row.Get(a)
@@ -195,10 +195,10 @@ func (t *ParsingTable) Error() error {
 // ACTION looks up and returns the action for state s and terminal a.
 // If the ACTION[s,a] contains more than one action,
 // it returns an erroneous ACTION and an error, indicating a conflict.
-func (t *ParsingTable) ACTION(s State, a grammar.Terminal) (Action, error) {
+func (t *ParsingTable) ACTION(s State, a grammar.Terminal) (*Action, error) {
 	actions, ok := t.getActions(s, a)
 	if !ok || actions.Size() == 0 {
-		return Action{Type: ERROR}, &ParsingTableError{
+		return &Action{Type: ERROR}, &ParsingTableError{
 			Type:   NO_ACTION,
 			State:  s,
 			Symbol: a,
@@ -212,7 +212,7 @@ func (t *ParsingTable) ACTION(s State, a grammar.Terminal) (Action, error) {
 	}
 
 	// Conflict
-	return Action{Type: ERROR}, &ParsingTableError{
+	return &Action{Type: ERROR}, &ParsingTableError{
 		Type:    CONFLICT,
 		State:   s,
 		Symbol:  a,
@@ -258,7 +258,7 @@ type ParsingTableError struct {
 	Type    ParsingTableErrorType
 	State   State
 	Symbol  grammar.Symbol
-	Actions set.Set[Action]
+	Actions set.Set[*Action]
 }
 
 // Error implements the error interface.
@@ -293,9 +293,9 @@ func (e *ParsingTableError) Error() string {
 // isSRConflict determines whether or not the error is a Shift/Reduce conflict.
 func (e *ParsingTableError) isSRConflict() bool {
 	return e.Type == CONFLICT &&
-		e.Actions.AnyMatch(func(action Action) bool {
+		e.Actions.AnyMatch(func(action *Action) bool {
 			return action.Type == SHIFT
-		}) && e.Actions.AnyMatch(func(action Action) bool {
+		}) && e.Actions.AnyMatch(func(action *Action) bool {
 		return action.Type == REDUCE
 	})
 }
@@ -303,7 +303,7 @@ func (e *ParsingTableError) isSRConflict() bool {
 // isRRConflict determines whether or not the error is a Reduce/Reduce conflict.
 func (e *ParsingTableError) isRRConflict() bool {
 	return e.Type == CONFLICT &&
-		e.Actions.AllMatch(func(action Action) bool {
+		e.Actions.AllMatch(func(action *Action) bool {
 			return action.Type == REDUCE
 		})
 }
