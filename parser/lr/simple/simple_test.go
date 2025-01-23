@@ -75,13 +75,13 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			name:                 "Success",
-			L:                    new(MockLexer),
+			L:                    nil,
 			G:                    grammars[0],
 			expectedErrorStrings: nil,
 		},
 		{
 			name: "None_SLR(1)_Grammar",
-			L:    new(MockLexer),
+			L:    nil,
 			G:    grammars[1],
 			expectedErrorStrings: []string{
 				`failed to construct the SLR parsing table: 20 errors occurred:`,

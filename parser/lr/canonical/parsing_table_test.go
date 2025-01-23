@@ -167,9 +167,24 @@ func TestBuildParsingTable(t *testing.T) {
 		expectedErrorStrings []string
 	}{
 		{
-			name:          "OK",
+			name:          "1st",
 			G:             grammars[0],
 			expectedTable: pt[0],
+		},
+		{
+			name: "2nd",
+			G:    grammars[1],
+			expectedErrorStrings: []string{
+				`8 errors occurred:`,
+				`shift/reduce conflict at ACTION[2, "*"]`,
+				`shift/reduce conflict at ACTION[2, "+"]`,
+				`shift/reduce conflict at ACTION[3, "*"]`,
+				`shift/reduce conflict at ACTION[3, "+"]`,
+				`shift/reduce conflict at ACTION[4, "*"]`,
+				`shift/reduce conflict at ACTION[4, "+"]`,
+				`shift/reduce conflict at ACTION[5, "*"]`,
+				`shift/reduce conflict at ACTION[5, "+"]`,
+			},
 		},
 	}
 
