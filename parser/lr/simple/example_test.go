@@ -201,7 +201,10 @@ func Example_parse() {
 		"E",
 	)
 
-	parser := simple.New(G, l)
+	parser, err := simple.New(l, G)
+	if err != nil {
+		panic(err)
+	}
 
 	err = parser.Parse(
 		func(prod *grammar.Production) {
@@ -217,6 +220,7 @@ func Example_parse() {
 	}
 }
 
+// You can copy-paste the output of this example into https://edotor.net to view the result.
 func Example_parseAST() {
 	src := strings.NewReader(`
 		(price + tax * quantity) * 
@@ -243,7 +247,10 @@ func Example_parseAST() {
 		"E",
 	)
 
-	parser := simple.New(G, l)
+	parser, err := simple.New(l, G)
+	if err != nil {
+		panic(err)
+	}
 
 	ast, err := parser.ParseAST()
 	if err != nil {
@@ -268,8 +275,8 @@ func Example_parsingTable() {
 		"E",
 	)
 
-	table := simple.BuildParsingTable(G)
-	if err := table.Error(); err != nil {
+	table, err := simple.BuildParsingTable(G)
+	if err != nil {
 		panic(err)
 	}
 

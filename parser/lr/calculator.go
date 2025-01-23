@@ -16,16 +16,14 @@ var (
 // This transformation is used to prepare grammars for LR parsing.
 // The function clones the input grammar G, ensuring that the original grammar remains unmodified.
 func Augment(G grammar.CFG) grammar.CFG {
-	S := G.Start
 	augG := G.Clone()
 
-	newS := augG.AddNewNonTerminal(S, primeSuffixes...)
+	newS := augG.AddNewNonTerminal(G.Start, primeSuffixes...)
 	augG.Start = newS
-	newP := grammar.Production{
+	augG.Productions.Add(grammar.Production{
 		Head: newS,
-		Body: grammar.String[grammar.Symbol]{S},
-	}
-	augG.Productions.Add(newP)
+		Body: grammar.String[grammar.Symbol]{G.Start},
+	})
 
 	return augG
 }

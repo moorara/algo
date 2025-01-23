@@ -961,6 +961,9 @@ func (g CFG) ComputeFIRST() FIRST {
 		firstBySymbol.Put(X, newTerminalsAndEmpty(X))
 	}
 
+	// Add FIRST($) = {$}
+	firstBySymbol.Put(Endmarker, newTerminalsAndEmpty(Endmarker))
+
 	// Initialize FIRST(X) for all non-terminals.
 	for X := range g.NonTerminals.All() {
 		firstBySymbol.Put(X, newTerminalsAndEmpty())

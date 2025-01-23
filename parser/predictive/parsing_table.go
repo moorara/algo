@@ -61,17 +61,17 @@ func BuildParsingTable(G grammar.CFG) ParsingTable {
 	 *      then set M[A,a] to error (can be represented by an empty entry in the table).
 	 */
 
+	FIRST := G.ComputeFIRST()
+	FOLLOW := G.ComputeFOLLOW(FIRST)
+
 	terminals := G.OrderTerminals()
 	_, _, nonTerminals := G.OrderNonTerminals()
 	table := newParsingTable(terminals, nonTerminals)
 
-	first := G.ComputeFIRST()
-	follow := G.ComputeFOLLOW(first)
-
 	// For each production A → α
 	for p := range G.Productions.All() {
 		A := p.Head
-		FIRSTα := first(p.Body)
+		FIRSTα := FIRST(p.Body)
 
 		// For each terminal a ∈ FIRST(α), add A → α to M[A,a].
 		for a := range FIRSTα.Terminals.All() {
@@ -80,7 +80,7 @@ func BuildParsingTable(G grammar.CFG) ParsingTable {
 
 		// If ε ∈ FIRST(α)
 		if FIRSTα.IncludesEmpty {
-			FOLLOWA := follow(A)
+			FOLLOWA := FOLLOW(A)
 
 			// For each terminal b ∈ FOLLOW(A), add A → α to M[A,b].
 			for b := range FOLLOWA.Terminals.All() {
@@ -103,7 +103,7 @@ func BuildParsingTable(G grammar.CFG) ParsingTable {
 
 	// As a starting point, add all terminals in FOLLOW(A) to the synchronization set for non-terminal A.
 	for _, A := range nonTerminals {
-		FOLLOWA := follow(A)
+		FOLLOWA := FOLLOW(A)
 
 		for a := range FOLLOWA.Terminals.All() {
 			// If M[A,a] has any productions, the sync flag will not be set.

@@ -9,7 +9,7 @@ import (
 )
 
 // LR0Item represents an LR(0) item for a context-free grammar.
-// It implements the Item interace.
+// It implements the Item interface.
 //
 // An LR(0) item is a production with a dot at some position of the body.
 // For example, production A → XYZ yields the four LR(0) items:
@@ -104,7 +104,8 @@ func (i LR0Item) Compare(rhs lr.Item) int {
 
 // IsInitial checks if an LR(0) item is the initial item "S′ → •S" in the augmented grammar.
 func (i LR0Item) IsInitial() bool {
-	return i.Production.Head.Equals(*i.Start) && i.Dot == 0
+	return i.Production.Head.Equals(*i.Start) &&
+		i.Dot == 0
 }
 
 // IsKernel determines whether an LR(0) item is a kernel item.
@@ -126,7 +127,8 @@ func (i LR0Item) IsComplete() bool {
 
 // IsInitial checks if an LR(0) item is the final item "S′ → S•" in the augmented grammar.
 func (i LR0Item) IsFinal() bool {
-	return i.Production.Head.Equals(*i.Start) && i.IsComplete()
+	return i.Production.Head.Equals(*i.Start) &&
+		i.IsComplete()
 }
 
 // Dot returns the grammar symbol at the dot position in the item's body.
