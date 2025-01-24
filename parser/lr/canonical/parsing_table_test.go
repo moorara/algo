@@ -9,6 +9,68 @@ import (
 	"github.com/moorara/algo/parser/lr"
 )
 
+var prods = [][]*grammar.Production{
+	{
+		{Head: "S′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("S")}},                          // S′ → S
+		{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("C"), grammar.NonTerminal("C")}}, // S → CC
+		{Head: "C", Body: grammar.String[grammar.Symbol]{grammar.Terminal("c"), grammar.NonTerminal("C")}},    // C → cC
+		{Head: "C", Body: grammar.String[grammar.Symbol]{grammar.Terminal("d")}},                              // C → d
+	},
+	{
+		{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E")}},                                                 // E′ → E
+		{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("E")}}, // E → E + E
+		{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("*"), grammar.NonTerminal("E")}}, // E → E * E
+		{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}},    // E → ( E )
+		{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                    // E → id
+	},
+	{
+		{Head: "grammar′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("grammar")}},                           // grammar′ → grammar
+		{Head: "grammar", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("name"), grammar.NonTerminal("decls")}}, // grammar → name decls
+		{Head: "name", Body: grammar.String[grammar.Symbol]{grammar.Terminal("grammar"), grammar.Terminal("IDENT")}},       // name → "grammar" IDENT
+		{Head: "decls", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("decls"), grammar.NonTerminal("decl")}},   // decls → decls decl
+		{Head: "decls", Body: grammar.E}, // decls → ε
+		{Head: "decl", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("token")}},                                                  // decl → token
+		{Head: "decl", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rule")}},                                                   // decl → rule
+		{Head: "token", Body: grammar.String[grammar.Symbol]{grammar.Terminal("TOKEN"), grammar.Terminal("="), grammar.Terminal("STRING")}}, // token → TOKEN "=" STRING
+		{Head: "token", Body: grammar.String[grammar.Symbol]{grammar.Terminal("TOKEN"), grammar.Terminal("="), grammar.Terminal("REGEX")}},  // token → TOKEN "=" REGEX
+		{Head: "rule", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("lhs"), grammar.Terminal("="), grammar.NonTerminal("rhs")}}, // rule → lhs "=" rhs
+		{Head: "rule", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("lhs"), grammar.Terminal("=")}},                             // rule → lhs "="
+		{Head: "lhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("nonterm")}},                                                 // lhs → nonterm
+		{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")}},                         // rhs → rhs rhs
+		{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.Terminal("|"), grammar.NonTerminal("rhs")}},  // rhs → rhs "|" rhs
+		{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("rhs"), grammar.Terminal(")")}},       // rhs → "(" rhs ")"
+		{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("["), grammar.NonTerminal("rhs"), grammar.Terminal("]")}},       // rhs → "[" rhs "]"
+		{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("{"), grammar.NonTerminal("rhs"), grammar.Terminal("}")}},       // rhs → "{" rhs "}"
+		{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("{{"), grammar.NonTerminal("rhs"), grammar.Terminal("}}")}},     // rhs → "{{" rhs "}}"
+		{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("nonterm")}},                                                 // rhs → nonterm
+		{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("term")}},                                                    // rhs → term
+		{Head: "nonterm", Body: grammar.String[grammar.Symbol]{grammar.Terminal("IDENT")}},                                                  // nonterm → IDENT
+		{Head: "term", Body: grammar.String[grammar.Symbol]{grammar.Terminal("TOKEN")}},                                                     // term → TOKEN
+		{Head: "term", Body: grammar.String[grammar.Symbol]{grammar.Terminal("STRING")}},                                                    // term → STRING
+	},
+}
+
+var grammars = []*grammar.CFG{
+	grammar.NewCFG(
+		[]grammar.Terminal{"c", "d"},
+		[]grammar.NonTerminal{"S", "C"},
+		prods[0][1:],
+		"S",
+	),
+	grammar.NewCFG(
+		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.NonTerminal{"E"},
+		prods[1][1:],
+		"E",
+	),
+	grammar.NewCFG(
+		[]grammar.Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
+		[]grammar.NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
+		prods[2][1:],
+		"grammar",
+	),
+}
+
 func getTestParsingTables() []*lr.ParsingTable {
 	pt0 := lr.NewParsingTable(
 		[]lr.State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
@@ -46,116 +108,6 @@ func getTestParsingTables() []*lr.ParsingTable {
 	)
 
 	return []*lr.ParsingTable{pt0, pt1}
-}
-
-func TestNewCalculator(t *testing.T) {
-	tests := []struct {
-		name string
-		G    *grammar.CFG
-	}{
-		{
-			name: "OK",
-			G:    grammars[0],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.G.Verify())
-			calc := NewCalculator(tc.G)
-
-			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.Calculator)
-			assert.NotEmpty(t, calc.Calculator.(*calculator).augG)
-			assert.NotNil(t, calc.Calculator.(*calculator).FIRST)
-		})
-	}
-}
-
-func TestCalculator_G(t *testing.T) {
-	tests := []struct {
-		name string
-		c    *calculator
-	}{
-		{
-			name: "OK",
-			c: &calculator{
-				augG: lr.Augment(grammars[0]),
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.c.augG.Verify())
-			G := tc.c.G()
-
-			assert.True(t, G.Equals(tc.c.augG))
-		})
-	}
-}
-
-func TestCalculator_Initial(t *testing.T) {
-	tests := []struct {
-		name            string
-		c               *calculator
-		expectedInitial lr.Item
-	}{
-		{
-			name: "OK",
-			c: &calculator{
-				augG: lr.Augment(grammars[0]),
-			},
-			expectedInitial: &LR1Item{
-				Production: prods[0][0],
-				Start:      starts[0],
-				Dot:        0,
-				Lookahead:  grammar.Endmarker,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.c.augG.Verify())
-			initial := tc.c.Initial()
-
-			assert.True(t, initial.Equals(tc.expectedInitial))
-		})
-	}
-}
-
-func TestCalculator_CLOSURE(t *testing.T) {
-	s := getTestItemSets()
-	g := lr.Augment(grammars[0])
-
-	tests := []struct {
-		name            string
-		c               *calculator
-		I               lr.ItemSet
-		expectedCLOSURE lr.ItemSet
-	}{
-		{
-			name: "OK",
-			c: &calculator{
-				augG:  g,
-				FIRST: g.ComputeFIRST(),
-			},
-			I: lr.NewItemSet(
-				&LR1Item{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
-			),
-			expectedCLOSURE: s[0],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.c.augG.Verify())
-			J := tc.c.CLOSURE(tc.I)
-
-			assert.True(t, J.Equals(tc.expectedCLOSURE))
-		})
-	}
 }
 
 func TestBuildParsingTable(t *testing.T) {
