@@ -431,3 +431,12 @@ func (i *Item1) GetPrefix() grammar.String[grammar.Symbol] {
 func (i *Item1) GetSuffix() grammar.String[grammar.Symbol] {
 	return i.Body[i.Dot:]
 }
+
+// Item0 converts an LR(1) item into its equivalent LR(0) item by dropping the lookahead.
+func (i *Item1) Item0() *Item0 {
+	return &Item0{
+		Production: i.Production,
+		Start:      i.Start,
+		Dot:        i.Dot,
+	}
+}

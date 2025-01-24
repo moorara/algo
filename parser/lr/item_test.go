@@ -961,3 +961,29 @@ func TestItem1_GetSuffix(t *testing.T) {
 		})
 	}
 }
+
+func TestItem1_Item0(t *testing.T) {
+	tests := []struct {
+		name          string
+		i             *Item1
+		expectedItem0 *Item0
+	}{
+		{
+			name:          "OK",
+			i:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			expectedItem0: &Item0{Production: prods[0][1], Start: starts[0], Dot: 1},                               // S → C•C
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			item0 := tc.i.Item0()
+
+			if tc.expectedItem0 == nil {
+				assert.Nil(t, item0)
+			} else {
+				assert.True(t, item0.Equals(tc.expectedItem0))
+			}
+		})
+	}
+}
