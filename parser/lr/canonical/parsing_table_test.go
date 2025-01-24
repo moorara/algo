@@ -74,7 +74,7 @@ var grammars = []*grammar.CFG{
 func getTestParsingTables() []lr.ParsingTable {
 	pt0 := lr.NewParsingTable(
 		[]lr.State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-		[]grammar.Terminal{"c", "d"},
+		[]grammar.Terminal{"c", "d", grammar.Endmarker},
 		[]grammar.NonTerminal{"S", "C"},
 	)
 
@@ -103,7 +103,7 @@ func getTestParsingTables() []lr.ParsingTable {
 
 	pt1 := lr.NewParsingTable(
 		[]lr.State{},
-		[]grammar.Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
+		[]grammar.Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX", grammar.Endmarker},
 		[]grammar.NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
 	)
 
