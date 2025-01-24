@@ -12,7 +12,7 @@ import (
 func getTestParsingTables() []*ParsingTable {
 	pt0 := NewParsingTable(
 		[]State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "T", "F"},
 	)
 
@@ -65,7 +65,7 @@ func getTestParsingTables() []*ParsingTable {
 
 	pt1 := NewParsingTable(
 		[]State{0, 1, 2, 3, 4, 5, 6},
-		[]grammar.Terminal{"a", "b", "c", "d"},
+		[]grammar.Terminal{"a", "b", "c", "d", grammar.Endmarker},
 		[]grammar.NonTerminal{"A", "B", "C", "D"},
 	)
 

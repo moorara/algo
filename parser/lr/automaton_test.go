@@ -18,7 +18,7 @@ func TestAugment(t *testing.T) {
 			name: "OK",
 			G:    grammars[2],
 			expectedCFG: grammar.NewCFG(
-				[]grammar.Terminal{"+", "*", "(", ")", "id"},
+				[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 				[]grammar.NonTerminal{"E′", "E", "T", "F"},
 				prods[2],
 				"E′",

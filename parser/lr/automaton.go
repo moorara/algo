@@ -9,6 +9,9 @@ import "github.com/moorara/algo/grammar"
 func augment(G *grammar.CFG) *grammar.CFG {
 	augG := G.Clone()
 
+	// A special symbol used to indicate the end of a string.
+	augG.Terminals.Add(grammar.Endmarker)
+
 	newS := augG.AddNewNonTerminal(G.Start, primeSuffixes...)
 	augG.Start = newS
 	augG.Productions.Add(&grammar.Production{

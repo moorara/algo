@@ -11,7 +11,7 @@ import (
 
 func getTestParsingTables() []*parsingTable {
 	pt0 := newParsingTable(
-		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
 	)
 
@@ -52,7 +52,7 @@ func getTestParsingTables() []*parsingTable {
 	pt1.addProduction("E", "b", &grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("b")}})
 
 	pt2 := newParsingTable(
-		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "T", "F"},
 	)
 

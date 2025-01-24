@@ -46,7 +46,7 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 
 	return &ParsingTable{
 		states:       states,
-		terminals:    append(terminals, grammar.Endmarker),
+		terminals:    terminals,
 		nonTerminals: nonTerminals,
 		actions:      actions,
 		gotos:        gotos,

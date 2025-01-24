@@ -61,6 +61,9 @@ func BuildParsingTable(G *grammar.CFG) ParsingTable {
 	 *      then set M[A,a] to error (can be represented by an empty entry in the table).
 	 */
 
+	// A special symbol used to indicate the end of a string.
+	G.Terminals.Add(grammar.Endmarker)
+
 	FIRST := G.ComputeFIRST()
 	FOLLOW := G.ComputeFOLLOW(FIRST)
 
@@ -135,7 +138,7 @@ type parsingTable struct {
 func newParsingTable(terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal) *parsingTable {
 	return &parsingTable{
 		nonTerminals: nonTerminals,
-		terminals:    append(terminals, grammar.Endmarker),
+		terminals:    terminals,
 		table: symboltable.NewQuadraticHashTable(
 			grammar.HashNonTerminal,
 			grammar.EqNonTerminal,
