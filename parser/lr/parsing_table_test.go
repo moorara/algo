@@ -9,12 +9,12 @@ import (
 	"github.com/moorara/algo/set"
 )
 
-func getTestParsingTables() []*ParsingTable {
+func getTestParsingTables() []*parsingTable {
 	pt0 := NewParsingTable(
 		[]State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
 		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "T", "F"},
-	)
+	).(*parsingTable)
 
 	pt0.AddACTION(0, "id", &Action{Type: SHIFT, State: 5})
 	pt0.AddACTION(0, "(", &Action{Type: SHIFT, State: 4})
@@ -67,7 +67,7 @@ func getTestParsingTables() []*ParsingTable {
 		[]State{0, 1, 2, 3, 4, 5, 6},
 		[]grammar.Terminal{"a", "b", "c", "d", grammar.Endmarker},
 		[]grammar.NonTerminal{"A", "B", "C", "D"},
-	)
+	).(*parsingTable)
 
 	pt1.AddACTION(0, "a", &Action{
 		Type:  SHIFT,
@@ -98,7 +98,7 @@ func getTestParsingTables() []*ParsingTable {
 		},
 	})
 
-	return []*ParsingTable{pt0, pt1}
+	return []*parsingTable{pt0, pt1}
 }
 
 func TestNewParsingTable(t *testing.T) {
@@ -121,8 +121,8 @@ func TestNewParsingTable(t *testing.T) {
 			pt := NewParsingTable(tc.states, tc.terminals, tc.nonTerminals)
 
 			assert.NotNil(t, pt)
-			assert.NotNil(t, pt.actions)
-			assert.NotNil(t, pt.gotos)
+			assert.NotNil(t, pt.(*parsingTable).actions)
+			assert.NotNil(t, pt.(*parsingTable).gotos)
 		})
 	}
 }
@@ -132,7 +132,7 @@ func TestParsingTable_String(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		pt                 *ParsingTable
+		pt                 *parsingTable
 		expectedSubstrings []string
 	}{
 		{
@@ -188,8 +188,8 @@ func TestParsingTable_Equals(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		pt             *ParsingTable
-		rhs            *ParsingTable
+		pt             *parsingTable
+		rhs            ParsingTable
 		expectedEquals bool
 	}{
 		{
@@ -218,7 +218,7 @@ func TestParsingTable_AddACTION(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		pt         *ParsingTable
+		pt         *parsingTable
 		s          State
 		a          grammar.Terminal
 		action     *Action
@@ -256,7 +256,7 @@ func TestParsingTable_SetGOTO(t *testing.T) {
 
 	tests := []struct {
 		name string
-		pt   *ParsingTable
+		pt   *parsingTable
 		s    State
 		A    grammar.NonTerminal
 		next State
@@ -288,7 +288,7 @@ func TestParsingTable_Error(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		pt                   *ParsingTable
+		pt                   *parsingTable
 		expectedErrorStrings []string
 	}{
 		{
@@ -333,7 +333,7 @@ func TestParsingTable_ACTION(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		pt             *ParsingTable
+		pt             *parsingTable
 		s              State
 		a              grammar.Terminal
 		expectedAction *Action
@@ -388,7 +388,7 @@ func TestParsingTable_GOTO(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		pt            *ParsingTable
+		pt            *parsingTable
 		s             State
 		A             grammar.NonTerminal
 		expectedState State

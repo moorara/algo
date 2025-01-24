@@ -9,7 +9,7 @@ import (
 //
 // This method constructs an LR(1) parsing table for any context-free grammar.
 // To identify errors in the table, use the Error method.
-func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
+func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 	/*
 	 * INPUT:  An augmented grammar G′.
 	 * OUTPUT: The canonical LR parsing table functions ACTION and GOTO for G′.

@@ -71,7 +71,7 @@ var grammars = []*grammar.CFG{
 	),
 }
 
-func getTestParsingTables() []*lr.ParsingTable {
+func getTestParsingTables() []lr.ParsingTable {
 	pt0 := lr.NewParsingTable(
 		[]lr.State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 		[]grammar.Terminal{"c", "d"},
@@ -107,7 +107,7 @@ func getTestParsingTables() []*lr.ParsingTable {
 		[]grammar.NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
 	)
 
-	return []*lr.ParsingTable{pt0, pt1}
+	return []lr.ParsingTable{pt0, pt1}
 }
 
 func TestBuildParsingTable(t *testing.T) {
@@ -116,7 +116,7 @@ func TestBuildParsingTable(t *testing.T) {
 	tests := []struct {
 		name                 string
 		G                    *grammar.CFG
-		expectedTable        *lr.ParsingTable
+		expectedTable        lr.ParsingTable
 		expectedErrorStrings []string
 	}{
 		{
