@@ -253,6 +253,16 @@ func (i *Item0) Next() (Item, bool) {
 	}, true
 }
 
+// Item1 converts an LR(0) item into its equivalent LR(1) item by adding a lookahead.
+func (i *Item0) Item1(lookahead grammar.Terminal) *Item1 {
+	return &Item1{
+		Production: i.Production,
+		Start:      i.Start,
+		Dot:        i.Dot,
+		Lookahead:  lookahead,
+	}
+}
+
 // Item1 represents an LR(1) item for a context-free grammar.
 // The "1" indicates the length of the lookahead of the item.
 // Item1 implements the Item interace.

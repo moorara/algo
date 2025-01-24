@@ -558,6 +558,34 @@ func TestItem0_Next(t *testing.T) {
 	}
 }
 
+func TestItem0_Item1(t *testing.T) {
+	tests := []struct {
+		name          string
+		i             *Item0
+		lookahead     grammar.Terminal
+		expectedItem1 *Item1
+	}{
+		{
+			name:          "OK",
+			i:             &Item0{Production: prods[0][1], Start: starts[0], Dot: 1}, // S → C•C
+			lookahead:     grammar.Endmarker,
+			expectedItem1: &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			item0 := tc.i.Item1(tc.lookahead)
+
+			if tc.expectedItem1 == nil {
+				assert.Nil(t, item0)
+			} else {
+				assert.True(t, item0.Equal(tc.expectedItem1))
+			}
+		})
+	}
+}
+
 func TestItem1_String(t *testing.T) {
 	tests := []struct {
 		name           string
