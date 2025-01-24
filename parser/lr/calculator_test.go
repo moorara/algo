@@ -8,136 +8,6 @@ import (
 	"github.com/moorara/algo/grammar"
 )
 
-func TestAugment(t *testing.T) {
-	tests := []struct {
-		name        string
-		G           *grammar.CFG
-		expectedCFG *grammar.CFG
-	}{
-		{
-			name: "OK",
-			G:    grammars[2],
-			expectedCFG: grammar.NewCFG(
-				[]grammar.Terminal{"+", "*", "(", ")", "id"},
-				[]grammar.NonTerminal{"E′", "E", "T", "F"},
-				prods[2],
-				"E′",
-			),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.G.Verify())
-			augG := Augment(tc.G)
-			assert.True(t, augG.Equals(tc.expectedCFG))
-		})
-	}
-}
-
-func TestAutomatonCalculator_GOTO(t *testing.T) {
-	s := getTestLR0ItemSets()
-
-	tests := []struct {
-		name         string
-		a            *AutomatonCalculator
-		I            ItemSet
-		X            grammar.Symbol
-		expectedGOTO ItemSet
-	}{
-		{
-			name: `GOTO(I₀,E)`,
-			a: &AutomatonCalculator{
-				Calculator: &calculator0{
-					augG: Augment(grammars[2]),
-				},
-			},
-			I:            s[0],
-			X:            grammar.NonTerminal("E"),
-			expectedGOTO: s[1],
-		},
-		{
-			name: `GOTO(I₀,T)`,
-			a: &AutomatonCalculator{
-				Calculator: &calculator0{
-					augG: Augment(grammars[2]),
-				},
-			},
-			I:            s[0],
-			X:            grammar.NonTerminal("T"),
-			expectedGOTO: s[2],
-		},
-		{
-			name: `GOTO(I₀,F)`,
-			a: &AutomatonCalculator{
-				Calculator: &calculator0{
-					augG: Augment(grammars[2]),
-				},
-			},
-			I:            s[0],
-			X:            grammar.NonTerminal("F"),
-			expectedGOTO: s[3],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			J := tc.a.GOTO(tc.I, tc.X)
-			assert.True(t, J.Equals(tc.expectedGOTO))
-		})
-	}
-}
-
-func TestAutomatonCalculator_Canonical(t *testing.T) {
-	s := getTestLR0ItemSets()
-
-	tests := []struct {
-		name              string
-		a                 *AutomatonCalculator
-		expectedCanonical ItemSetCollection
-	}{
-		{
-			name: "OK",
-			a: &AutomatonCalculator{
-				Calculator: &calculator0{
-					augG: Augment(grammars[2]),
-				},
-			},
-			expectedCanonical: NewItemSetCollection(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			C := tc.a.Canonical()
-			assert.True(t, C.Equals(tc.expectedCanonical))
-		})
-	}
-}
-
-func TestNewLR0AutomatonCalculator(t *testing.T) {
-	tests := []struct {
-		name string
-		G    *grammar.CFG
-	}{
-		{
-			name: "OK",
-			G:    grammars[0],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.G.Verify())
-			calc := NewLR0AutomatonCalculator(tc.G)
-
-			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.Calculator)
-			assert.NotEmpty(t, calc.Calculator.(*calculator0).augG)
-		})
-	}
-}
-
 func TestCalculator0_G(t *testing.T) {
 	tests := []struct {
 		name string
@@ -146,7 +16,7 @@ func TestCalculator0_G(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator0{
-				augG: Augment(grammars[2]),
+				augG: augment(grammars[2]),
 			},
 		},
 	}
@@ -170,7 +40,7 @@ func TestCalculator0_Initial(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator0{
-				augG: Augment(grammars[2]),
+				augG: augment(grammars[2]),
 			},
 			expectedInitial: &Item0{
 				Production: prods[2][0],
@@ -202,7 +72,7 @@ func TestCalculator0_CLOSURE(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator0{
-				augG: Augment(grammars[2]),
+				augG: augment(grammars[2]),
 			},
 			I: NewItemSet(
 				&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
@@ -221,31 +91,7 @@ func TestCalculator0_CLOSURE(t *testing.T) {
 	}
 }
 
-func TestNewLR1AutomatonCalculator(t *testing.T) {
-	tests := []struct {
-		name string
-		G    *grammar.CFG
-	}{
-		{
-			name: "OK",
-			G:    grammars[0],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.G.Verify())
-			calc := NewLR1AutomatonCalculator(tc.G)
-
-			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.Calculator)
-			assert.NotEmpty(t, calc.Calculator.(*calculator1).augG)
-			assert.NotNil(t, calc.Calculator.(*calculator1).FIRST)
-		})
-	}
-}
-
-func TestCalculator_G(t *testing.T) {
+func TestCalculator1_G(t *testing.T) {
 	tests := []struct {
 		name string
 		c    *calculator1
@@ -253,7 +99,7 @@ func TestCalculator_G(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator1{
-				augG: Augment(grammars[0]),
+				augG: augment(grammars[0]),
 			},
 		},
 	}
@@ -268,7 +114,7 @@ func TestCalculator_G(t *testing.T) {
 	}
 }
 
-func TestCalculator_Initial(t *testing.T) {
+func TestCalculator1_Initial(t *testing.T) {
 	tests := []struct {
 		name            string
 		c               *calculator1
@@ -277,7 +123,7 @@ func TestCalculator_Initial(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator1{
-				augG: Augment(grammars[0]),
+				augG: augment(grammars[0]),
 			},
 			expectedInitial: &Item1{
 				Production: prods[0][0],
@@ -298,9 +144,9 @@ func TestCalculator_Initial(t *testing.T) {
 	}
 }
 
-func TestCalculator_CLOSURE(t *testing.T) {
+func TestCalculator1_CLOSURE(t *testing.T) {
 	s := getTestLR1ItemSets()
-	g := Augment(grammars[0])
+	g := augment(grammars[0])
 
 	tests := []struct {
 		name            string

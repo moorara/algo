@@ -15,10 +15,10 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 	 * OUTPUT: The canonical LR parsing table functions ACTION and GOTO for G′.
 	 */
 
-	calc := lr.NewLR1AutomatonCalculator(G)
+	auto1 := lr.NewLR1Automaton(G)
 
 	// 1. Construct C = {I₀, I₁, ..., Iₙ}, the collection of sets of LR(1) items for G′.
-	C := calc.Canonical()
+	C := auto1.Canonical()
 
 	states := lr.BuildStateMap(C)
 	terminals := G.OrderTerminals()
@@ -34,7 +34,7 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 				// If "A → α•aβ, b" is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
 				if X, ok := item.DotSymbol(); ok {
 					if a, ok := X.(grammar.Terminal); ok {
-						J := calc.GOTO(I, a)
+						J := auto1.GOTO(I, a)
 						j := states.For(J)
 
 						// Set ACTION[i,a] to SHIFT j
@@ -71,9 +71,9 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 
 		// 3. The goto transitions for state i are constructed for all non-terminals A using the rule:
 		// If GOTO(Iᵢ,A) = Iⱼ
-		for A := range calc.G().NonTerminals.All() {
-			if !A.Equals(calc.G().Start) {
-				J := calc.GOTO(I, A)
+		for A := range auto1.G().NonTerminals.All() {
+			if !A.Equals(auto1.G().Start) {
+				J := auto1.GOTO(I, A)
 				j := states.For(J)
 
 				// Set GOTO[i,A] = j
