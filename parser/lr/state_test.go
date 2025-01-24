@@ -35,19 +35,19 @@ func TestStateMap_For(t *testing.T) {
 	tests := []struct {
 		name          string
 		m             StateMap
-		J             ItemSet
+		I             ItemSet
 		expectedState State
 	}{
 		{
 			name:          "OK",
 			m:             []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
-			J:             s[7],
+			I:             s[7],
 			expectedState: State(7),
 		},
 		{
 			name: "Error",
 			m:    []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
-			J: NewItemSet(
+			I: NewItemSet(
 				&Item0{Production: prods[1][0], Start: starts[1], Dot: 1}, // E′ → E•
 			),
 			expectedState: ErrState,
@@ -55,7 +55,7 @@ func TestStateMap_For(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc.expectedState, tc.m.For(tc.J))
+		assert.Equal(t, tc.expectedState, tc.m.For(tc.I))
 	}
 }
 

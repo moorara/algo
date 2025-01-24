@@ -39,9 +39,9 @@ func BuildStateMap(C ItemSetCollection) StateMap {
 
 // For finds the state corresponding to a given item set.
 // Returns the state if found, or ErrState if no match exists.
-func (m StateMap) For(J ItemSet) State {
+func (m StateMap) For(I ItemSet) State {
 	for i := range m {
-		if m[i].Equals(J) {
+		if m[i].Equals(I) {
 			return State(i)
 		}
 	}
