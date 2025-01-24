@@ -35,7 +35,7 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 				if X, ok := item.DotSymbol(); ok {
 					if a, ok := X.(grammar.Terminal); ok {
 						J := auto1.GOTO(I, a)
-						j := states.For(J)
+						j := states.Find(J)
 
 						// Set ACTION[i,a] to SHIFT j
 						table.AddACTION(lr.State(i), a, &lr.Action{
@@ -74,7 +74,7 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 		for A := range auto1.G().NonTerminals.All() {
 			if !A.Equals(auto1.G().Start) {
 				J := auto1.GOTO(I, A)
-				j := states.For(J)
+				j := states.Find(J)
 
 				// Set GOTO[i,A] = j
 				table.SetGOTO(lr.State(i), A, j)

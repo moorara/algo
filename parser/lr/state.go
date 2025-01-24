@@ -37,12 +37,12 @@ func BuildStateMap(C ItemSetCollection) StateMap {
 	return states
 }
 
-// For finds the state corresponding to a given item set.
+// Find finds the state corresponding to a given item set.
 // Returns the state if found, or ErrState if no match exists.
-func (m StateMap) For(I ItemSet) State {
-	for i := range m {
-		if m[i].Equals(I) {
-			return State(i)
+func (m StateMap) Find(I ItemSet) State {
+	for s := range m {
+		if m[s].Equals(I) {
+			return State(s)
 		}
 	}
 

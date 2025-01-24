@@ -29,7 +29,7 @@ func TestBuildStateMap(t *testing.T) {
 	}
 }
 
-func TestStateMap_For(t *testing.T) {
+func TestStateMap_Find(t *testing.T) {
 	s := getTestLR0ItemSets()
 
 	tests := []struct {
@@ -55,7 +55,7 @@ func TestStateMap_For(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc.expectedState, tc.m.For(tc.I))
+		assert.Equal(t, tc.expectedState, tc.m.Find(tc.I))
 	}
 }
 
