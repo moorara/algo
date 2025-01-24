@@ -148,7 +148,7 @@ func TestBuildParsingTable(t *testing.T) {
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)
-				assert.True(t, table.Equals(tc.expectedTable))
+				assert.True(t, table.Equal(tc.expectedTable))
 			} else {
 				assert.Error(t, err)
 				s := err.Error()

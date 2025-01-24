@@ -12,7 +12,7 @@ import (
 
 var (
 	eqItem = func(lhs, rhs Item) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 
 	cmpItem = func(lhs, rhs Item) int {
@@ -20,7 +20,7 @@ var (
 	}
 
 	eqItemSet = func(lhs, rhs ItemSet) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 )
 
@@ -72,10 +72,7 @@ func cmpItemSet(lhs, rhs ItemSet) int {
 type Item interface {
 	fmt.Stringer
 	generic.Equaler[Item]
-
-	// Compare compares two items to establish a consistent and deterministic order.
-	// This function is useful for sorting items, ensuring stability and predictability in their ordering.
-	Compare(Item) int
+	generic.Comparer[Item]
 
 	// IsInitial checks if an item is the initial item in the augmented grammar.
 	// For LR(0), the initial item is "S′ → •S",
@@ -150,12 +147,12 @@ func (i *Item0) String() string {
 	return b.String()
 }
 
-// Equals determines whether or not two LR(0) items are the same.
-func (i *Item0) Equals(rhs Item) bool {
+// Equal determines whether or not two LR(0) items are the same.
+func (i *Item0) Equal(rhs Item) bool {
 	ii, ok := rhs.(*Item0)
 	return ok &&
-		i.Production.Equals(ii.Production) &&
-		i.Start.Equals(ii.Start) &&
+		i.Production.Equal(ii.Production) &&
+		i.Start.Equal(ii.Start) &&
 		i.Dot == ii.Dot
 }
 
@@ -188,9 +185,9 @@ func (i *Item0) Compare(rhs Item) int {
 		return 1
 	}
 
-	if i.Production.Head.Equals(i.Start) && !ii.Production.Head.Equals(ii.Start) {
+	if i.Production.Head.Equal(i.Start) && !ii.Production.Head.Equal(ii.Start) {
 		return -1
-	} else if !i.Production.Head.Equals(i.Start) && ii.Production.Head.Equals(ii.Start) {
+	} else if !i.Production.Head.Equal(i.Start) && ii.Production.Head.Equal(ii.Start) {
 		return 1
 	}
 
@@ -205,8 +202,7 @@ func (i *Item0) Compare(rhs Item) int {
 
 // IsInitial checks if an LR(0) item is the initial item "S′ → •S" in the augmented grammar.
 func (i *Item0) IsInitial() bool {
-	return i.Production.Head.Equals(i.Start) &&
-		i.Dot == 0
+	return i.Production.Head.Equal(i.Start) && i.Dot == 0
 }
 
 // IsKernel determines whether an LR(0) item is a kernel item.
@@ -228,8 +224,7 @@ func (i *Item0) IsComplete() bool {
 
 // IsInitial checks if an LR(0) item is the final item "S′ → S•" in the augmented grammar.
 func (i *Item0) IsFinal() bool {
-	return i.Production.Head.Equals(i.Start) &&
-		i.IsComplete()
+	return i.Production.Head.Equal(i.Start) && i.IsComplete()
 }
 
 // Dot returns the grammar symbol at the dot position in the item's body.
@@ -298,14 +293,14 @@ func (i *Item1) String() string {
 	return b.String()
 }
 
-// Equals determines whether or not two LR(1) items are the same.
-func (i *Item1) Equals(rhs Item) bool {
+// Equal determines whether or not two LR(1) items are the same.
+func (i *Item1) Equal(rhs Item) bool {
 	ii, ok := rhs.(*Item1)
 	return ok &&
-		i.Production.Equals(ii.Production) &&
-		i.Start.Equals(ii.Start) &&
+		i.Production.Equal(ii.Production) &&
+		i.Start.Equal(ii.Start) &&
 		i.Dot == ii.Dot &&
-		i.Lookahead.Equals(ii.Lookahead)
+		i.Lookahead.Equal(ii.Lookahead)
 }
 
 // Compare compares two LR(1) items to establish a consistent and deterministic order.
@@ -339,9 +334,9 @@ func (i *Item1) Compare(rhs Item) int {
 		return 1
 	}
 
-	if i.Production.Head.Equals(i.Start) && !ii.Production.Head.Equals(ii.Start) {
+	if i.Production.Head.Equal(i.Start) && !ii.Production.Head.Equal(ii.Start) {
 		return -1
-	} else if !i.Production.Head.Equals(i.Start) && ii.Production.Head.Equals(ii.Start) {
+	} else if !i.Production.Head.Equal(i.Start) && ii.Production.Head.Equal(ii.Start) {
 		return 1
 	}
 
@@ -362,9 +357,8 @@ func (i *Item1) Compare(rhs Item) int {
 
 // IsInitial checks if an LR(1) item is the initial item "S′ → •S, $" in the augmented grammar.
 func (i *Item1) IsInitial() bool {
-	return i.Production.Head.Equals(i.Start) &&
-		i.Dot == 0 &&
-		i.Lookahead.Equals(grammar.Endmarker)
+	return i.Production.Head.Equal(i.Start) && i.Dot == 0 &&
+		i.Lookahead.Equal(grammar.Endmarker)
 }
 
 // IsKernel determines whether an LR(1) item is a kernel item.
@@ -386,9 +380,8 @@ func (i *Item1) IsComplete() bool {
 
 // IsInitial checks if an LR(1) item is the final item "S′ → S•, $" in the augmented grammar.
 func (i *Item1) IsFinal() bool {
-	return i.Production.Head.Equals(i.Start) &&
-		i.IsComplete() &&
-		i.Lookahead.Equals(grammar.Endmarker)
+	return i.Production.Head.Equal(i.Start) && i.IsComplete() &&
+		i.Lookahead.Equal(grammar.Endmarker)
 }
 
 // Dot returns the grammar symbol at the dot position in the item's body.

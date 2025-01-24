@@ -70,7 +70,7 @@ func TestSet_String(t *testing.T) {
 	}
 }
 
-func TestSet_Equals(t *testing.T) {
+func TestSet_Equal(t *testing.T) {
 	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
@@ -131,7 +131,7 @@ func TestSet_Equals(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b := tc.s.Equals(tc.t)
+			b := tc.s.Equal(tc.t)
 			assert.Equal(t, tc.expected, b)
 		})
 	}
@@ -548,7 +548,7 @@ func TestSet_SelectMatch(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			set := tc.s.SelectMatch(tc.p).(*set[string])
-			assert.True(t, set.Equals(tc.expected))
+			assert.True(t, set.Equal(tc.expected))
 		})
 	}
 }
@@ -579,7 +579,7 @@ func TestSet_Clone(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			set := tc.s.Clone()
-			assert.True(t, set.Equals(tc.s))
+			assert.True(t, set.Equal(tc.s))
 		})
 	}
 }
@@ -613,7 +613,7 @@ func TestSet_CloneEmpty(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			set := tc.s.CloneEmpty()
-			assert.True(t, set.Equals(tc.expected))
+			assert.True(t, set.Equal(tc.expected))
 		})
 	}
 }
@@ -760,7 +760,7 @@ func TestSet_Union(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			set := tc.s.Union(tc.sets...)
-			assert.True(t, set.Equals(tc.expected))
+			assert.True(t, set.Equal(tc.expected))
 		})
 	}
 }
@@ -821,7 +821,7 @@ func TestSet_Intersection(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			set := tc.s.Intersection(tc.sets...)
-			assert.True(t, set.Equals(tc.expected))
+			assert.True(t, set.Equal(tc.expected))
 		})
 	}
 }
@@ -882,14 +882,14 @@ func TestSet_Difference(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			set := tc.s.Difference(tc.sets...)
-			assert.True(t, set.Equals(tc.expected))
+			assert.True(t, set.Equal(tc.expected))
 		})
 	}
 }
 
 func TestSet_Powerset(t *testing.T) {
 	eqFunc := generic.NewEqualFunc[string]()
-	setEqFunc := func(a, b Set[string]) bool { return a.Equals(b) }
+	setEqFunc := func(a, b Set[string]) bool { return a.Equal(b) }
 
 	tests := []struct {
 		name     string
@@ -1009,15 +1009,15 @@ func TestSet_Powerset(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			ps := Powerset[string](tc.s)
-			assert.True(t, ps.Equals(tc.expected))
+			assert.True(t, ps.Equal(tc.expected))
 		})
 	}
 }
 
 func TestSet_Partitions(t *testing.T) {
 	eqFunc := generic.NewEqualFunc[string]()
-	setEqFunc := func(a, b Set[string]) bool { return a.Equals(b) }
-	partEqFunc := func(a, b Set[Set[string]]) bool { return a.Equals(b) }
+	setEqFunc := func(a, b Set[string]) bool { return a.Equal(b) }
+	partEqFunc := func(a, b Set[Set[string]]) bool { return a.Equal(b) }
 
 	tests := []struct {
 		name     string
@@ -1177,7 +1177,7 @@ func TestSet_Partitions(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			parts := Partitions[string](tc.s)
-			assert.True(t, parts.Equals(tc.expected))
+			assert.True(t, parts.Equal(tc.expected))
 		})
 	}
 }

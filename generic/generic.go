@@ -8,9 +8,9 @@ type Cloner[T any] interface {
 	Clone() T
 }
 
-// Equaler is an interface that defines a method for determining equality between two objects of the same type.
+// Equaler is a generic interface for determining equality two objects of the same type.
 type Equaler[T any] interface {
-	Equals(T) bool
+	Equal(T) bool
 }
 
 // EqualFunc defines a generic function type for checking equality between two values of the same type.
@@ -24,6 +24,14 @@ func NewEqualFunc[T comparable]() EqualFunc[T] {
 	}
 }
 
+// Comparer is a generic interface for comparing two objects of the same type
+// and establishing an order between them.
+// The Compare method returns a negative value if the current object is less than the given object,
+// zero if they are equal, and a positive value if the current object is greater.
+type Comparer[T any] interface {
+	Compare(T) int
+}
+
 // CompareFunc defines a generic function type for comparing two values of the same type.
 // The function takes two arguments of type T and returns:
 //   - A negative integer if the first value is less than the second,
@@ -31,7 +39,8 @@ func NewEqualFunc[T comparable]() EqualFunc[T] {
 //   - A positive integer if the first value is greater than the second.
 type CompareFunc[T any] func(T, T) int
 
-// NewCompareFunc returns a generic comparison function for any type that satisfies the constraints.Ordered interface.
+// NewCompareFunc returns a generic comparison function
+// for any type that satisfies the constraints.Ordered interface.
 // The returned function compares two values of type T and returns:
 //   - -1 if lhs is less than rhs,
 //   - 1 if lhs is greater than rhs,
@@ -51,7 +60,8 @@ func NewCompareFunc[T constraints.Ordered]() CompareFunc[T] {
 	}
 }
 
-// NewReverseCompareFunc returns a generic reverse comparison function for any type that satisfies the constraints.Ordered interface.
+// NewReverseCompareFunc returns a generic reverse comparison function
+// for any type that satisfies the constraints.Ordered interface.
 // The returned function compares two values of type T and returns:
 //   - 1 if lhs is less than rhs,
 //   - -1 if lhs is greater than rhs,

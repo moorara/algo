@@ -113,8 +113,8 @@ func (p *predictiveParser) Parse(prodF parser.ProductionFunc, tokenF parser.Toke
 		return &parser.ParseError{Cause: err}
 	}
 
-	for X, _ := stack.Peek(); !X.Equals(grammar.Endmarker); X, _ = stack.Peek() {
-		if X.Equals(token.Terminal) {
+	for X, _ := stack.Peek(); !X.Equal(grammar.Endmarker); X, _ = stack.Peek() {
+		if X.Equal(token.Terminal) {
 			// Yield the token.
 			if tokenF != nil {
 				tokenF(&token)

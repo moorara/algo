@@ -11,7 +11,7 @@ import (
 )
 
 var EqTerminalsAndEmpty = func(lhs, rhs *TerminalsAndEmpty) bool {
-	return lhs.Terminals.Equals(rhs.Terminals) && lhs.IncludesEmpty == rhs.IncludesEmpty
+	return lhs.Terminals.Equal(rhs.Terminals) && lhs.IncludesEmpty == rhs.IncludesEmpty
 }
 
 // FIRST is the FIRST function associated with a context-free grammar.

@@ -30,7 +30,7 @@ type bst[K, V any] struct {
 //	Larger than all keys in its left sub-tree.
 //	Smaller than all keys in its right sub-tree.
 //
-// The second parameter (eqVal) is needed only if you want to use the Equals method.
+// The second parameter (eqVal) is needed only if you want to use the Equal method.
 func NewBST[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) OrderedSymbolTable[K, V] {
 	return &bst[K, V]{
 		root:   nil,
@@ -471,8 +471,8 @@ func (t *bst[K, V]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 }
 
-// Equals determines whether or not two BSTs have the same key-values.
-func (t *bst[K, V]) Equals(rhs SymbolTable[K, V]) bool {
+// Equal determines whether or not two BSTs have the same key-values.
+func (t *bst[K, V]) Equal(rhs SymbolTable[K, V]) bool {
 	t2, ok := rhs.(*bst[K, V])
 	if !ok {
 		return false

@@ -50,8 +50,8 @@ type trieTest[V any] struct {
 	expectedLongestPrefixOfVal V
 	expectedLongestPrefixOfOK  bool
 	expectedString             string
-	equals                     Trie[V]
-	expectedEquals             bool
+	equal                      Trie[V]
+	expectedEqual              bool
 	expectedAll                []KeyValue[string, V]
 	anyMatchPredicate          Predicate2[string, V]
 	expectedAnyMatch           bool
@@ -525,9 +525,9 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 			assert.Equal(t, test.expectedString, trie.String())
 		})
 
-		t.Run("Equals", func(t *testing.T) {
-			equals := trie.Equals(test.equals)
-			assert.Equal(t, test.expectedEquals, equals)
+		t.Run("Equal", func(t *testing.T) {
+			equal := trie.Equal(test.equal)
+			assert.Equal(t, test.expectedEqual, equal)
 		})
 
 		t.Run("All", func(t *testing.T) {

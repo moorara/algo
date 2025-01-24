@@ -183,32 +183,32 @@ func TestParsingTable_String(t *testing.T) {
 	}
 }
 
-func TestParsingTable_Equals(t *testing.T) {
+func TestParsingTable_Equal(t *testing.T) {
 	pt := getTestParsingTables()
 
 	tests := []struct {
-		name           string
-		pt             *parsingTable
-		rhs            ParsingTable
-		expectedEquals bool
+		name          string
+		pt            *parsingTable
+		rhs           ParsingTable
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			pt:             pt[0],
-			rhs:            pt[0],
-			expectedEquals: true,
+			name:          "Equal",
+			pt:            pt[0],
+			rhs:           pt[0],
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			pt:             pt[0],
-			rhs:            pt[1],
-			expectedEquals: false,
+			name:          "NotEqual",
+			pt:            pt[0],
+			rhs:           pt[1],
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.pt.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.pt.Equal(tc.rhs))
 		})
 	}
 }
@@ -373,10 +373,10 @@ func TestParsingTable_ACTION(t *testing.T) {
 			action, err := tc.pt.ACTION(tc.s, tc.a)
 
 			if len(tc.expectedError) == 0 {
-				assert.True(t, action.Equals(tc.expectedAction))
+				assert.True(t, action.Equal(tc.expectedAction))
 				assert.NoError(t, err)
 			} else {
-				assert.True(t, action.Equals(tc.expectedAction))
+				assert.True(t, action.Equal(tc.expectedAction))
 				assert.EqualError(t, err, tc.expectedError)
 			}
 		})

@@ -10,15 +10,15 @@ var (
 	cmpState = generic.NewCompareFunc[State]()
 
 	eqStates = func(a, b States) bool {
-		return a.Equals(b)
+		return a.Equal(b)
 	}
 
 	eqSymbolState = func(a, b symboltable.SymbolTable[Symbol, State]) bool {
-		return a.Equals(b)
+		return a.Equal(b)
 	}
 
 	eqSymbolStates = func(a, b symboltable.SymbolTable[Symbol, States]) bool {
-		return a.Equals(b)
+		return a.Equal(b)
 	}
 )
 
@@ -39,8 +39,8 @@ func (s States) Contains(t State) bool {
 	return false
 }
 
-// Equals determines whether or not two sets of states are equal.
-func (s States) Equals(rhs States) bool {
+// Equal determines whether or not two sets of states are equal.
+func (s States) Equal(rhs States) bool {
 	for _, state := range s {
 		if !rhs.Contains(state) {
 			return false

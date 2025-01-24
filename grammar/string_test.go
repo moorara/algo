@@ -114,8 +114,8 @@ func TestString(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedString, tc.s.String())
-			assert.True(t, tc.s.Equals(tc.s))
-			assert.False(t, tc.s.Equals(notEqual))
+			assert.True(t, tc.s.Equal(tc.s))
+			assert.False(t, tc.s.Equal(notEqual))
 			assert.Equal(t, tc.expectedContainsSymbol, tc.s.ContainsSymbol(tc.containsSymbol))
 			assert.Equal(t, tc.expectedHasPrefix, tc.s.HasPrefix(tc.prefix))
 			assert.Equal(t, tc.expectedHasSuffix, tc.s.HasSuffix(tc.suffix))

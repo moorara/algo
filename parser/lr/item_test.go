@@ -291,30 +291,30 @@ func TestItem0_String(t *testing.T) {
 	}
 }
 
-func TestItem0_Equals(t *testing.T) {
+func TestItem0_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		i              *Item0
-		rhs            *Item0
-		expectedEquals bool
+		name          string
+		i             *Item0
+		rhs           *Item0
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			i:              &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
-			rhs:            &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
-			expectedEquals: true,
+			name:          "Equal",
+			i:             &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
+			rhs:           &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			i:              &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
-			rhs:            &Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
-			expectedEquals: false,
+			name:          "NotEqual",
+			i:             &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
+			rhs:           &Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.i.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.i.Equal(tc.rhs))
 		})
 	}
 }
@@ -512,7 +512,7 @@ func TestItem0_DotSymbol(t *testing.T) {
 			X, ok := tc.i.DotSymbol()
 
 			if tc.expectedOK {
-				assert.True(t, X.Equals(tc.expectedDotSymbol))
+				assert.True(t, X.Equal(tc.expectedDotSymbol))
 				assert.True(t, ok)
 			} else {
 				assert.Nil(t, X)
@@ -549,7 +549,7 @@ func TestItem0_Next(t *testing.T) {
 
 			if tc.expectedOK {
 				assert.True(t, ok)
-				assert.True(t, item.Equals(tc.expectedNext))
+				assert.True(t, item.Equal(tc.expectedNext))
 			} else {
 				assert.False(t, ok)
 				assert.Nil(t, item)
@@ -603,30 +603,30 @@ func TestItem1_String(t *testing.T) {
 	}
 }
 
-func TestItem1_Equals(t *testing.T) {
+func TestItem1_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		i              *Item1
-		rhs            *Item1
-		expectedEquals bool
+		name          string
+		i             *Item1
+		rhs           *Item1
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			i:              &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
-			rhs:            &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
-			expectedEquals: true,
+			name:          "Equal",
+			i:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			rhs:           &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			i:              &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
-			rhs:            &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
-			expectedEquals: false,
+			name:          "NotEqual",
+			i:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			rhs:           &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.i.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.i.Equal(tc.rhs))
 		})
 	}
 }
@@ -852,7 +852,7 @@ func TestItem1_DotSymbol(t *testing.T) {
 			X, ok := tc.i.DotSymbol()
 
 			if tc.expectedOK {
-				assert.True(t, X.Equals(tc.expectedDotSymbol))
+				assert.True(t, X.Equal(tc.expectedDotSymbol))
 				assert.True(t, ok)
 			} else {
 				assert.Nil(t, X)
@@ -889,7 +889,7 @@ func TestItem1_Next(t *testing.T) {
 
 			if tc.expectedOK {
 				assert.True(t, ok)
-				assert.True(t, item.Equals(tc.expectedNext))
+				assert.True(t, item.Equal(tc.expectedNext))
 			} else {
 				assert.False(t, ok)
 				assert.Nil(t, item)
@@ -925,7 +925,7 @@ func TestItem1_GetPrefix(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			alpha := tc.i.GetPrefix()
 
-			assert.True(t, alpha.Equals(tc.expectedAlpha))
+			assert.True(t, alpha.Equal(tc.expectedAlpha))
 		})
 	}
 }
@@ -957,7 +957,7 @@ func TestItem1_GetSuffix(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			beta := tc.i.GetSuffix()
 
-			assert.True(t, beta.Equals(tc.expectedBeta))
+			assert.True(t, beta.Equal(tc.expectedBeta))
 		})
 	}
 }
@@ -982,7 +982,7 @@ func TestItem1_Item0(t *testing.T) {
 			if tc.expectedItem0 == nil {
 				assert.Nil(t, item0)
 			} else {
-				assert.True(t, item0.Equals(tc.expectedItem0))
+				assert.True(t, item0.Equal(tc.expectedItem0))
 			}
 		})
 	}

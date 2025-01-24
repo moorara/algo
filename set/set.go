@@ -67,7 +67,7 @@ func (s *set[T]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(members, ", "))
 }
 
-func (s *set[T]) Equals(rhs Set[T]) bool {
+func (s *set[T]) Equal(rhs Set[T]) bool {
 	for _, m := range s.members {
 		if !rhs.Contains(m) {
 			return false
@@ -267,7 +267,7 @@ func (s *set[T]) Difference(sets ...Set[T]) Set[T] {
 //	Set[T]      A set
 //	Set[Set[T]  The power set (the set of all subsets)
 func Powerset[T any](s Set[T]) Set[Set[T]] {
-	setEqFunc := func(a, b Set[T]) bool { return a.Equals(b) }
+	setEqFunc := func(a, b Set[T]) bool { return a.Equal(b) }
 
 	// The power set
 	PS := New[Set[T]](setEqFunc)
@@ -302,8 +302,8 @@ func Powerset[T any](s Set[T]) Set[Set[T]] {
 //	Set[Set[T]        A partition (a set of non-empty disjoint subsets with every element included)
 //	Set[Set[Set[T]]]  The set of all partitions
 func Partitions[T any](s Set[T]) Set[Set[Set[T]]] {
-	setEqFunc := func(a, b Set[T]) bool { return a.Equals(b) }
-	partEqFunc := func(a, b Set[Set[T]]) bool { return a.Equals(b) }
+	setEqFunc := func(a, b Set[T]) bool { return a.Equal(b) }
+	partEqFunc := func(a, b Set[Set[T]]) bool { return a.Equal(b) }
 
 	// The set of all partitions
 	Ps := New[Set[Set[T]]](partEqFunc)

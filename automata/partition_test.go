@@ -7,30 +7,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGroup_Equals(t *testing.T) {
+func TestGroup_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		g              group
-		rhs            group
-		expectedEquals bool
+		name          string
+		g             group
+		rhs           group
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			g:              group{rep: 0, states: States{0, 1, 2}},
-			rhs:            group{rep: 1, states: States{0, 1, 2}},
-			expectedEquals: true,
+			name:          "Equal",
+			g:             group{rep: 0, states: States{0, 1, 2}},
+			rhs:           group{rep: 1, states: States{0, 1, 2}},
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			g:              group{rep: 0, states: States{0, 1, 2}},
-			rhs:            group{rep: 1, states: States{0, 1, 2, 3}},
-			expectedEquals: false,
+			name:          "NotEqual",
+			g:             group{rep: 0, states: States{0, 1, 2}},
+			rhs:           group{rep: 1, states: States{0, 1, 2, 3}},
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.g.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.g.Equal(tc.rhs))
 		})
 	}
 }
@@ -71,12 +71,12 @@ func TestGroups_Contains(t *testing.T) {
 	}
 }
 
-func TestGroups_Equals(t *testing.T) {
+func TestGroups_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		g              groups
-		rhs            groups
-		expectedEquals bool
+		name          string
+		g             groups
+		rhs           groups
+		expectedEqual bool
 	}{
 		{
 			name: "Equal",
@@ -90,7 +90,7 @@ func TestGroups_Equals(t *testing.T) {
 				group{rep: 1, states: States{1, 2}},
 				group{rep: 2, states: States{3, 4}},
 			},
-			expectedEquals: true,
+			expectedEqual: true,
 		},
 		{
 			name: "NotEqual",
@@ -105,7 +105,7 @@ func TestGroups_Equals(t *testing.T) {
 				group{rep: 2, states: States{3}},
 				group{rep: 3, states: States{4}},
 			},
-			expectedEquals: false,
+			expectedEqual: false,
 		},
 		{
 			name: "NotEqual",
@@ -120,13 +120,13 @@ func TestGroups_Equals(t *testing.T) {
 				group{rep: 2, states: States{3, 4}},
 				group{rep: 3, states: States{5, 6}},
 			},
-			expectedEquals: false,
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.g.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.g.Equal(tc.rhs))
 		})
 	}
 }
@@ -136,12 +136,12 @@ func TestNewPartition(t *testing.T) {
 	assert.NotNil(t, p)
 }
 
-func TestPartition_Equals(t *testing.T) {
+func TestPartition_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		p              *partition
-		rhs            *partition
-		expectedEquals bool
+		name          string
+		p             *partition
+		rhs           *partition
+		expectedEqual bool
 	}{
 		{
 			name: "Equal",
@@ -159,7 +159,7 @@ func TestPartition_Equals(t *testing.T) {
 				},
 				nextRep: 2,
 			},
-			expectedEquals: true,
+			expectedEqual: true,
 		},
 		{
 			name: "NotEqual",
@@ -178,13 +178,13 @@ func TestPartition_Equals(t *testing.T) {
 				},
 				nextRep: 3,
 			},
-			expectedEquals: false,
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.p.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.p.Equal(tc.rhs))
 		})
 	}
 }
@@ -222,7 +222,7 @@ func TestPartition_Add(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.p.Add(tc.groups...)
-			assert.True(t, tc.p.Equals(tc.expectedPartition))
+			assert.True(t, tc.p.Equal(tc.expectedPartition))
 		})
 	}
 }
@@ -312,7 +312,7 @@ func TestPartition_BuildGroupTrans(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			trans := tc.p.BuildGroupTrans(tc.dfa, tc.G)
-			assert.True(t, trans.Equals(tc.expectedTrans))
+			assert.True(t, trans.Equal(tc.expectedTrans))
 		})
 	}
 }
@@ -354,7 +354,7 @@ func TestPartition_PartitionAndAddGroups(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.p.PartitionAndAddGroups(tc.Gtrans)
-			assert.True(t, tc.p.Equals(tc.expectedPartition))
+			assert.True(t, tc.p.Equal(tc.expectedPartition))
 		})
 	}
 }

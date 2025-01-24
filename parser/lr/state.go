@@ -41,7 +41,7 @@ func BuildStateMap(C ItemSetCollection) StateMap {
 // Returns the state if found, or ErrState if no match exists.
 func (m StateMap) Find(I ItemSet) State {
 	for s := range m {
-		if m[s].Equals(I) {
+		if m[s].Equal(I) {
 			return State(s)
 		}
 	}

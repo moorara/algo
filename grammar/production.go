@@ -15,11 +15,11 @@ var (
 	CmpProduction = cmpProduction
 
 	EqProduction = func(lhs, rhs *Production) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 
 	EqProductionSet = func(lhs, rhs set.Set[*Production]) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 )
 
@@ -37,9 +37,9 @@ func (p *Production) String() string {
 	return fmt.Sprintf("%s → %s", p.Head, p.Body)
 }
 
-// Equals determines whether or not two production rules are the same.
-func (p *Production) Equals(rhs *Production) bool {
-	return p.Head.Equals(rhs.Head) && p.Body.Equals(rhs.Body)
+// Equal determines whether or not two production rules are the same.
+func (p *Production) Equal(rhs *Production) bool {
+	return p.Head.Equal(rhs.Head) && p.Body.Equal(rhs.Body)
 }
 
 // IsEmpty determines whether or not a production rule is an empty production (ε-production).
@@ -60,7 +60,7 @@ func (p *Production) IsSingle() bool {
 //
 // A left recursive production is a production rule of the form of A → Aα
 func (p *Production) IsLeftRecursive() bool {
-	return len(p.Body) > 0 && p.Body[0].Equals(p.Head)
+	return len(p.Body) > 0 && p.Body[0].Equal(p.Head)
 }
 
 // IsCNF checks if a production rule is in Chomsky Normal Form (CNF).
@@ -138,10 +138,10 @@ func (p *productions) Clone() Productions {
 	return newP
 }
 
-// Equals determines whether or not two sets of production rules are the same.
-func (p *productions) Equals(rhs Productions) bool {
+// Equal determines whether or not two sets of production rules are the same.
+func (p *productions) Equal(rhs Productions) bool {
 	q, ok := rhs.(*productions)
-	return ok && p.table.Equals(q.table)
+	return ok && p.table.Equal(q.table)
 }
 
 // Add adds a new production rule.

@@ -26,7 +26,7 @@ func TestCalculator0_G(t *testing.T) {
 			assert.NoError(t, tc.c.augG.Verify())
 			G := tc.c.G()
 
-			assert.True(t, G.Equals(tc.c.augG))
+			assert.True(t, G.Equal(tc.c.augG))
 		})
 	}
 }
@@ -55,7 +55,7 @@ func TestCalculator0_Initial(t *testing.T) {
 			assert.NoError(t, tc.c.augG.Verify())
 			initial := tc.c.Initial()
 
-			assert.True(t, initial.Equals(tc.expectedInitial))
+			assert.True(t, initial.Equal(tc.expectedInitial))
 		})
 	}
 }
@@ -86,7 +86,7 @@ func TestCalculator0_CLOSURE(t *testing.T) {
 			assert.NoError(t, tc.c.augG.Verify())
 			J := tc.c.CLOSURE(tc.I)
 
-			assert.True(t, J.Equals(tc.expectedCLOSURE))
+			assert.True(t, J.Equal(tc.expectedCLOSURE))
 		})
 	}
 }
@@ -109,7 +109,7 @@ func TestCalculator1_G(t *testing.T) {
 			assert.NoError(t, tc.c.augG.Verify())
 			G := tc.c.G()
 
-			assert.True(t, G.Equals(tc.c.augG))
+			assert.True(t, G.Equal(tc.c.augG))
 		})
 	}
 }
@@ -139,7 +139,7 @@ func TestCalculator1_Initial(t *testing.T) {
 			assert.NoError(t, tc.c.augG.Verify())
 			initial := tc.c.Initial()
 
-			assert.True(t, initial.Equals(tc.expectedInitial))
+			assert.True(t, initial.Equal(tc.expectedInitial))
 		})
 	}
 }
@@ -172,7 +172,7 @@ func TestCalculator1_CLOSURE(t *testing.T) {
 			assert.NoError(t, tc.c.augG.Verify())
 			J := tc.c.CLOSURE(tc.I)
 
-			assert.True(t, J.Equals(tc.expectedCLOSURE))
+			assert.True(t, J.Equal(tc.expectedCLOSURE))
 		})
 	}
 }

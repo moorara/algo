@@ -127,8 +127,8 @@ func TestProduction(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedString, tc.p.String())
-			assert.True(t, tc.p.Equals(tc.p))
-			assert.False(t, tc.p.Equals(notEqual))
+			assert.True(t, tc.p.Equal(tc.p))
+			assert.False(t, tc.p.Equal(notEqual))
 			assert.Equal(t, tc.expectedIsEmpty, tc.p.IsEmpty())
 			assert.Equal(t, tc.expectedIsSingle, tc.p.IsSingle())
 			assert.Equal(t, tc.expectedIsLeftRecursive, tc.p.IsLeftRecursive())
@@ -218,37 +218,37 @@ func TestProductions_Clone(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			newP := tc.p.Clone()
 			assert.False(t, newP == tc.p)
-			assert.True(t, newP.Equals(tc.p))
+			assert.True(t, newP.Equal(tc.p))
 		})
 	}
 }
 
-func TestProductions_Equals(t *testing.T) {
+func TestProductions_Equal(t *testing.T) {
 	p := getTestProductions()
 
 	tests := []struct {
-		name           string
-		p              *productions
-		rhs            Productions
-		expectedEquals bool
+		name          string
+		p             *productions
+		rhs           Productions
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			p:              p[2],
-			rhs:            p[2],
-			expectedEquals: true,
+			name:          "Equal",
+			p:             p[2],
+			rhs:           p[2],
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			p:              p[2],
-			rhs:            p[3],
-			expectedEquals: false,
+			name:          "NotEqual",
+			p:             p[2],
+			rhs:           p[3],
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.p.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.p.Equal(tc.rhs))
 		})
 	}
 }
@@ -308,7 +308,7 @@ func TestProductions_Add(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.p.Add(tc.ps...)
-			assert.True(t, tc.p.Equals(tc.expectedProductions))
+			assert.True(t, tc.p.Equal(tc.expectedProductions))
 		})
 	}
 }
@@ -368,7 +368,7 @@ func TestProductions_Remove(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.p.Remove(tc.ps...)
-			assert.True(t, tc.p.Equals(tc.expectedProductions))
+			assert.True(t, tc.p.Equal(tc.expectedProductions))
 		})
 	}
 }
@@ -405,7 +405,7 @@ func TestProductions_RemoveAll(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.p.RemoveAll(tc.heads...)
-			assert.True(t, tc.p.Equals(tc.expectedProductions))
+			assert.True(t, tc.p.Equal(tc.expectedProductions))
 		})
 	}
 }
@@ -474,7 +474,7 @@ func TestProductions_Get(t *testing.T) {
 			if tc.expectedProductions == nil {
 				assert.Nil(t, prods)
 			} else {
-				assert.True(t, prods.Equals(tc.expectedProductions))
+				assert.True(t, prods.Equal(tc.expectedProductions))
 			}
 		})
 	}
@@ -589,7 +589,7 @@ func TestProductions_AllByHead(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			for head, list := range tc.p.AllByHead() {
 				for p := range list.All() {
-					assert.True(t, p.Head.Equals(head))
+					assert.True(t, p.Head.Equal(head))
 					assert.Contains(t, tc.expectedProductions, p)
 				}
 			}
@@ -684,7 +684,7 @@ func TestProductions_SelectMatch(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			selectMatch := tc.p.SelectMatch(tc.pred)
-			assert.True(t, selectMatch.Equals(tc.expectedSelectMatch))
+			assert.True(t, selectMatch.Equal(tc.expectedSelectMatch))
 		})
 	}
 }

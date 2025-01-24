@@ -39,7 +39,7 @@ type redBlack[K, V any] struct {
 //	No node has two red links connect to it.
 //	Every path from root to null link has the same number of black links.
 //
-// The second parameter (eqVal) is needed only if you want to use the Equals method.
+// The second parameter (eqVal) is needed only if you want to use the Equal method.
 func NewRedBlack[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) OrderedSymbolTable[K, V] {
 	return &redBlack[K, V]{
 		root:   nil,
@@ -671,8 +671,8 @@ func (t *redBlack[K, V]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 }
 
-// Equals determines whether or not two Red-Black trees have the same key-values.
-func (t *redBlack[K, V]) Equals(rhs SymbolTable[K, V]) bool {
+// Equal determines whether or not two Red-Black trees have the same key-values.
+func (t *redBlack[K, V]) Equal(rhs SymbolTable[K, V]) bool {
 	t2, ok := rhs.(*redBlack[K, V])
 	if !ok {
 		return false

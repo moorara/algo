@@ -167,7 +167,7 @@ func (d *DFA) Minimize() *DFA {
 			Πnew.PartitionAndAddGroups(Gtrans)
 		}
 
-		if Πnew.Equals(Π) {
+		if Πnew.Equal(Π) {
 			break
 		}
 
@@ -273,14 +273,14 @@ func dfs(adj map[State]States, visited map[State]bool, s State) {
 	}
 }
 
-// Equals determines whether or not two DFAs are identical in structure and labeling.
+// Equal determines whether or not two DFAs are identical in structure and labeling.
 // Two DFAs are considered equal if they have the same start state, final states, and transitions.
 //
 // For isomorphic equality, structural equivalence with potentially different state names, use the Isomorphic method.
-func (d *DFA) Equals(rhs *DFA) bool {
+func (d *DFA) Equal(rhs *DFA) bool {
 	return d.Start == rhs.Start &&
-		d.Final.Equals(rhs.Final) &&
-		d.trans.Equals(rhs.trans)
+		d.Final.Equal(rhs.Final) &&
+		d.trans.Equal(rhs.trans)
 }
 
 // Isomorphic determines whether or not two DFAs are isomorphically the same.
@@ -305,7 +305,7 @@ func (d *DFA) Isomorphic(rhs *DFA) bool {
 
 	// D₁ and D₂ must have the same input alphabet.
 	symbols1, symbols2 := d.Symbols(), rhs.Symbols()
-	if !symbols1.Equals(symbols2) {
+	if !symbols1.Equal(symbols2) {
 		return false
 	}
 
@@ -349,7 +349,7 @@ func (d *DFA) Isomorphic(rhs *DFA) bool {
 
 		// If the current permutation of D₁ is equal to D₂, we stop checking more permutations by returning false.
 		// If the current permutation of D₁ is not equal to D₂, we continue with checking more permutations by returning true.
-		return !permutedDFA.Equals(rhs)
+		return !permutedDFA.Equal(rhs)
 	})
 }
 

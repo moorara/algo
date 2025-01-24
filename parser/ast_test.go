@@ -335,46 +335,46 @@ func TestEqNode(t *testing.T) {
 	ln := getTestLeafNodes()
 
 	tests := []struct {
-		name           string
-		lhs            Node
-		rhs            Node
-		expectedEquals bool
+		name          string
+		lhs           Node
+		rhs           Node
+		expectedEqual bool
 	}{
 		{
-			name:           "BothInternal_Equal",
-			lhs:            in[0],
-			rhs:            in[0],
-			expectedEquals: true,
+			name:          "BothInternal_Equal",
+			lhs:           in[0],
+			rhs:           in[0],
+			expectedEqual: true,
 		},
 		{
-			name:           "BothInternal_NotEqual",
-			lhs:            in[0],
-			rhs:            in[1],
-			expectedEquals: false,
+			name:          "BothInternal_NotEqual",
+			lhs:           in[0],
+			rhs:           in[1],
+			expectedEqual: false,
 		},
 		{
-			name:           "BothLeaf_Equal",
-			lhs:            ln[0],
-			rhs:            ln[0],
-			expectedEquals: true,
+			name:          "BothLeaf_Equal",
+			lhs:           ln[0],
+			rhs:           ln[0],
+			expectedEqual: true,
 		},
 		{
-			name:           "BothLeaf_NotEqual",
-			lhs:            ln[0],
-			rhs:            ln[1],
-			expectedEquals: false,
+			name:          "BothLeaf_NotEqual",
+			lhs:           ln[0],
+			rhs:           ln[1],
+			expectedEqual: false,
 		},
 		{
-			name:           "InternalAndLeaf_NotEqual",
-			lhs:            in[0],
-			rhs:            ln[0],
-			expectedEquals: false,
+			name:          "InternalAndLeaf_NotEqual",
+			lhs:           in[0],
+			rhs:           ln[0],
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, EqNode(tc.lhs, tc.rhs))
+			assert.Equal(t, tc.expectedEqual, EqNode(tc.lhs, tc.rhs))
 		})
 	}
 }
@@ -472,7 +472,7 @@ func TestTraverse(t *testing.T) {
 				return true
 			})
 
-			assert.True(t, visits.Equals(tc.expectedVisits))
+			assert.True(t, visits.Equal(tc.expectedVisits))
 		})
 	}
 }
@@ -504,32 +504,32 @@ func TestInternalNode_String(t *testing.T) {
 	}
 }
 
-func TestInternalNode_Equals(t *testing.T) {
+func TestInternalNode_Equal(t *testing.T) {
 	n := getTestInternalNodes()
 
 	tests := []struct {
-		name           string
-		n              *InternalNode
-		rhs            Node
-		expectedEquals bool
+		name          string
+		n             *InternalNode
+		rhs           Node
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			n:              n[0],
-			rhs:            n[0],
-			expectedEquals: true,
+			name:          "Equal",
+			n:             n[0],
+			rhs:           n[0],
+			expectedEqual: true,
 		},
 		{
-			name:           "ProductionsNotEqual",
-			n:              n[0],
-			rhs:            n[1],
-			expectedEquals: false,
+			name:          "ProductionsNotEqual",
+			n:             n[0],
+			rhs:           n[1],
+			expectedEqual: false,
 		},
 		{
-			name:           "ChildrenNotEqual",
-			n:              n[2],
-			rhs:            n[3],
-			expectedEquals: false,
+			name:          "ChildrenNotEqual",
+			n:             n[2],
+			rhs:           n[3],
+			expectedEqual: false,
 		},
 		{
 			name: "NilProduction",
@@ -537,13 +537,13 @@ func TestInternalNode_Equals(t *testing.T) {
 			rhs: &InternalNode{
 				NonTerminal: "E",
 			},
-			expectedEquals: false,
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.n.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.n.Equal(tc.rhs))
 		})
 	}
 }
@@ -605,7 +605,7 @@ func TestInternalNode_Pos(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pos := tc.n.Pos()
 
-			assert.True(t, pos.Equals(tc.expectedPos))
+			assert.True(t, pos.Equal(tc.expectedPos))
 		})
 	}
 }
@@ -775,26 +775,26 @@ func TestLeafNode_String(t *testing.T) {
 	}
 }
 
-func TestLeafNode_Equals(t *testing.T) {
+func TestLeafNode_Equal(t *testing.T) {
 	n := getTestLeafNodes()
 
 	tests := []struct {
-		name           string
-		n              *LeafNode
-		rhs            Node
-		expectedEquals bool
+		name          string
+		n             *LeafNode
+		rhs           Node
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			n:              n[0],
-			rhs:            n[0],
-			expectedEquals: true,
+			name:          "Equal",
+			n:             n[0],
+			rhs:           n[0],
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			n:              n[0],
-			rhs:            n[1],
-			expectedEquals: false,
+			name:          "NotEqual",
+			n:             n[0],
+			rhs:           n[1],
+			expectedEqual: false,
 		},
 		{
 			name: "NilPosition",
@@ -803,13 +803,13 @@ func TestLeafNode_Equals(t *testing.T) {
 				Terminal: "id",
 				Lexeme:   "fee",
 			},
-			expectedEquals: false,
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.n.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.n.Equal(tc.rhs))
 		})
 	}
 }
@@ -860,7 +860,7 @@ func TestLeafNode_Pos(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pos := tc.n.Pos()
 
-			assert.True(t, pos.Equals(tc.expectedPos))
+			assert.True(t, pos.Equal(tc.expectedPos))
 		})
 	}
 }

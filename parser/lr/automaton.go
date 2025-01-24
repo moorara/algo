@@ -54,7 +54,7 @@ func (a *automaton) GOTO(I ItemSet, X grammar.Symbol) ItemSet {
 
 	// For each item "A → αX•β" in I
 	for i := range I.All() {
-		if Y, ok := i.DotSymbol(); ok && Y.Equals(X) {
+		if Y, ok := i.DotSymbol(); ok && Y.Equal(X) {
 			// Add item "A → α•Xβ" to set J
 			if next, ok := i.Next(); ok {
 				J.Add(next)
@@ -135,7 +135,7 @@ func (a *kernelAutomaton) GOTO(I ItemSet, X grammar.Symbol) ItemSet {
 
 	// For each item "A → αX•β" in CLOSURE(I)
 	for i := range a.CLOSURE(I).All() {
-		if Y, ok := i.DotSymbol(); ok && Y.Equals(X) {
+		if Y, ok := i.DotSymbol(); ok && Y.Equal(X) {
 			// Add item "A → α•Xβ" to set J
 			if next, ok := i.Next(); ok {
 				J.Add(next)

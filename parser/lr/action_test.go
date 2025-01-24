@@ -41,39 +41,39 @@ var actions = []*Action{
 
 func TestEqAction(t *testing.T) {
 	tests := []struct {
-		name           string
-		lhs            *Action
-		rhs            *Action
-		expectedEquals bool
+		name          string
+		lhs           *Action
+		rhs           *Action
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			lhs:            actions[0],
-			rhs:            actions[0],
-			expectedEquals: true,
+			name:          "Equal",
+			lhs:           actions[0],
+			rhs:           actions[0],
+			expectedEqual: true,
 		},
 		{
-			name:           "DifferentTypes",
-			lhs:            actions[0],
-			rhs:            actions[2],
-			expectedEquals: false,
+			name:          "DifferentTypes",
+			lhs:           actions[0],
+			rhs:           actions[2],
+			expectedEqual: false,
 		},
 		{
-			name:           "DifferentStates",
-			lhs:            actions[0],
-			rhs:            actions[1],
-			expectedEquals: false,
+			name:          "DifferentStates",
+			lhs:           actions[0],
+			rhs:           actions[1],
+			expectedEqual: false,
 		},
 		{
-			name:           "DifferentProductions",
-			lhs:            actions[2],
-			rhs:            actions[3],
-			expectedEquals: false,
+			name:          "DifferentProductions",
+			lhs:           actions[2],
+			rhs:           actions[3],
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc.expectedEquals, eqAction(tc.lhs, tc.rhs))
+		assert.Equal(t, tc.expectedEqual, eqAction(tc.lhs, tc.rhs))
 	}
 }
 
@@ -115,41 +115,41 @@ func TestAction_String(t *testing.T) {
 	}
 }
 
-func TestAction_Equals(t *testing.T) {
+func TestAction_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		a              *Action
-		rhs            *Action
-		expectedEquals bool
+		name          string
+		a             *Action
+		rhs           *Action
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			a:              actions[0],
-			rhs:            actions[0],
-			expectedEquals: true,
+			name:          "Equal",
+			a:             actions[0],
+			rhs:           actions[0],
+			expectedEqual: true,
 		},
 		{
-			name:           "DifferentTypes",
-			a:              actions[0],
-			rhs:            actions[2],
-			expectedEquals: false,
+			name:          "DifferentTypes",
+			a:             actions[0],
+			rhs:           actions[2],
+			expectedEqual: false,
 		},
 		{
-			name:           "DifferentStates",
-			a:              actions[0],
-			rhs:            actions[1],
-			expectedEquals: false,
+			name:          "DifferentStates",
+			a:             actions[0],
+			rhs:           actions[1],
+			expectedEqual: false,
 		},
 		{
-			name:           "DifferentProductions",
-			a:              actions[2],
-			rhs:            actions[3],
-			expectedEquals: false,
+			name:          "DifferentProductions",
+			a:             actions[2],
+			rhs:           actions[3],
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc.expectedEquals, tc.a.Equals(tc.rhs))
+		assert.Equal(t, tc.expectedEqual, tc.a.Equal(tc.rhs))
 	}
 }
 

@@ -27,7 +27,7 @@ type avl[K, V any] struct {
 // AVL tree is a self-balancing binary search tree.
 // In an AVL tree, the heights of the left and right subtrees of any node differ by at most 1.
 //
-// The second parameter (eqVal) is needed only if you want to use the Equals method.
+// The second parameter (eqVal) is needed only if you want to use the Equal method.
 func NewAVL[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) OrderedSymbolTable[K, V] {
 	return &avl[K, V]{
 		root:   nil,
@@ -534,8 +534,8 @@ func (t *avl[K, V]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 }
 
-// Equals determines whether or not two AVLs have the same key-values.
-func (t *avl[K, V]) Equals(rhs SymbolTable[K, V]) bool {
+// Equal determines whether or not two AVLs have the same key-values.
+func (t *avl[K, V]) Equal(rhs SymbolTable[K, V]) bool {
 	t2, ok := rhs.(*avl[K, V])
 	if !ok {
 		return false

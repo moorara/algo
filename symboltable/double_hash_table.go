@@ -249,8 +249,8 @@ func (ht *doubleHashTable[K, V]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 }
 
-// Equals determines whether or not two hash tables have the same key-values.
-func (ht *doubleHashTable[K, V]) Equals(rhs SymbolTable[K, V]) bool {
+// Equal determines whether or not two hash tables have the same key-values.
+func (ht *doubleHashTable[K, V]) Equal(rhs SymbolTable[K, V]) bool {
 	ht2, ok := rhs.(*doubleHashTable[K, V])
 	if !ok {
 		return false

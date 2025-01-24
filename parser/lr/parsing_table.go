@@ -51,7 +51,7 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 		HashState,
 		EqState,
 		func(lhs, rhs symboltable.SymbolTable[grammar.Terminal, set.Set[*Action]]) bool {
-			return lhs.Equals(rhs)
+			return lhs.Equal(rhs)
 		},
 		opts,
 	)
@@ -60,7 +60,7 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 		HashState,
 		EqState,
 		func(lhs, rhs symboltable.SymbolTable[grammar.NonTerminal, State]) bool {
-			return lhs.Equals(rhs)
+			return lhs.Equal(rhs)
 		},
 		opts,
 	)
@@ -143,11 +143,11 @@ func (t *parsingTable) String() string {
 	return ts.String()
 }
 
-func (t *parsingTable) Equals(rhs ParsingTable) bool {
+func (t *parsingTable) Equal(rhs ParsingTable) bool {
 	tt, ok := rhs.(*parsingTable)
 	return ok &&
-		t.actions.Equals(tt.actions) &&
-		t.gotos.Equals(tt.gotos)
+		t.actions.Equal(tt.actions) &&
+		t.gotos.Equal(tt.gotos)
 }
 
 func (t *parsingTable) AddACTION(s State, a grammar.Terminal, action *Action) bool {

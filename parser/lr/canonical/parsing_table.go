@@ -72,7 +72,7 @@ func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 		// 3. The goto transitions for state i are constructed for all non-terminals A using the rule:
 		// If GOTO(Iᵢ,A) = Iⱼ
 		for A := range auto1.G().NonTerminals.All() {
-			if !A.Equals(auto1.G().Start) {
+			if !A.Equal(auto1.G().Start) {
 				J := auto1.GOTO(I, A)
 				j := states.Find(J)
 

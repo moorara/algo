@@ -9,11 +9,11 @@ import (
 
 var (
 	eqAction = func(lhs, rhs *Action) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 
 	eqActionSet = func(lhs, rhs set.Set[*Action]) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 )
 
@@ -50,8 +50,8 @@ func (a *Action) String() string {
 	return fmt.Sprintf("INVALID ACTION(%d)", a.Type)
 }
 
-// Equals determines whether or not two actions are the same.
-func (a *Action) Equals(rhs *Action) bool {
+// Equal determines whether or not two actions are the same.
+func (a *Action) Equal(rhs *Action) bool {
 	return a.Type == rhs.Type &&
 		a.State == rhs.State &&
 		equalProductions(a.Production, rhs.Production)
@@ -61,7 +61,7 @@ func equalProductions(lhs, rhs *grammar.Production) bool {
 	if lhs == nil || rhs == nil {
 		return lhs == rhs
 	}
-	return lhs.Equals(rhs)
+	return lhs.Equal(rhs)
 }
 
 func cmpAction(lhs, rhs *Action) int {

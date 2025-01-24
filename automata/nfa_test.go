@@ -192,7 +192,7 @@ func TestNFA_States(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.True(t, tc.n.States().Equals(tc.expectedStates))
+			assert.True(t, tc.n.States().Equal(tc.expectedStates))
 		})
 	}
 }
@@ -273,7 +273,7 @@ func TestNFA_Star(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			nfa := tc.n.Star()
-			assert.True(t, nfa.Equals(tc.expectedNFA))
+			assert.True(t, nfa.Equal(tc.expectedNFA))
 		})
 	}
 }
@@ -298,7 +298,7 @@ func TestNFA_Union(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			nfa := tc.n.Union(tc.ns...)
-			assert.True(t, nfa.Equals(tc.expectedNFA))
+			assert.True(t, nfa.Equal(tc.expectedNFA))
 		})
 	}
 }
@@ -323,7 +323,7 @@ func TestNFA_Concat(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			nfa := tc.n.Concat(tc.ns...)
-			assert.True(t, nfa.Equals(tc.expectedNFA))
+			assert.True(t, nfa.Equal(tc.expectedNFA))
 		})
 	}
 }
@@ -347,37 +347,37 @@ func TestNFA_ToDFA(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			dfa := tc.n.ToDFA()
-			assert.True(t, dfa.Equals(tc.expectedDFA))
+			assert.True(t, dfa.Equal(tc.expectedDFA))
 		})
 	}
 }
 
-func TestNFA_Equals(t *testing.T) {
+func TestNFA_Equal(t *testing.T) {
 	nfas := getTestNFAs()
 
 	tests := []struct {
-		name           string
-		n              *NFA
-		rhs            *NFA
-		expectedEquals bool
+		name          string
+		n             *NFA
+		rhs           *NFA
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			n:              nfas[0],
-			rhs:            nfas[0],
-			expectedEquals: true,
+			name:          "Equal",
+			n:             nfas[0],
+			rhs:           nfas[0],
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			n:              nfas[0],
-			rhs:            nfas[1],
-			expectedEquals: false,
+			name:          "NotEqual",
+			n:             nfas[0],
+			rhs:           nfas[1],
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.n.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.n.Equal(tc.rhs))
 		})
 	}
 }

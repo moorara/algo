@@ -26,8 +26,8 @@ func (s Symbols) Contains(t Symbol) bool {
 	return false
 }
 
-// Equals determines whether or not two sets of symbols are equal.
-func (s Symbols) Equals(rhs Symbols) bool {
+// Equal determines whether or not two sets of symbols are equal.
+func (s Symbols) Equal(rhs Symbols) bool {
 	for _, symbol := range s {
 		if !rhs.Contains(symbol) {
 			return false

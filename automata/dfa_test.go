@@ -177,7 +177,7 @@ func TestDFA_States(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.True(t, tc.d.States().Equals(tc.expectedStates))
+			assert.True(t, tc.d.States().Equal(tc.expectedStates))
 		})
 	}
 }
@@ -259,7 +259,7 @@ func TestDFA_ToNFA(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			nfa := tc.d.ToNFA()
-			assert.True(t, nfa.Equals(tc.expectedNFA))
+			assert.True(t, nfa.Equal(tc.expectedNFA))
 		})
 	}
 }
@@ -305,37 +305,37 @@ func TestDFA_WithoutDeadStates(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			dfa := tc.d.WithoutDeadStates()
-			assert.True(t, dfa.Equals(tc.expectedDFA))
+			assert.True(t, dfa.Equal(tc.expectedDFA))
 		})
 	}
 }
 
-func TestDFA_Equals(t *testing.T) {
+func TestDFA_Equal(t *testing.T) {
 	dfas := getTestDFAs()
 
 	tests := []struct {
-		name           string
-		d              *DFA
-		rhs            *DFA
-		expectedEquals bool
+		name          string
+		d             *DFA
+		rhs           *DFA
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			d:              dfas[0],
-			rhs:            dfas[0],
-			expectedEquals: true,
+			name:          "Equal",
+			d:             dfas[0],
+			rhs:           dfas[0],
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			d:              dfas[0],
-			rhs:            dfas[1],
-			expectedEquals: false,
+			name:          "NotEqual",
+			d:             dfas[0],
+			rhs:           dfas[1],
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.d.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.d.Equal(tc.rhs))
 		})
 	}
 }

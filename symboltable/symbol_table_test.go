@@ -21,8 +21,8 @@ type symbolTableTest[K, V any] struct {
 	expectedSize         int
 	expectedIsEmpty      bool
 	expectedSubstrings   []string
-	equals               SymbolTable[K, V]
-	expectedEquals       bool
+	equal                SymbolTable[K, V]
+	expectedEqual        bool
 	expectedAll          []KeyValue[K, V]
 	anyMatchPredicate    Predicate2[K, V]
 	expectedAnyMatch     bool
@@ -66,8 +66,8 @@ type orderedSymbolTableTest[K, V any] struct {
 	expectedRange              []KeyValue[K, V]
 	expectedRangeSize          int
 	expectedString             string
-	equals                     SymbolTable[K, V]
-	expectedEquals             bool
+	equal                      SymbolTable[K, V]
+	expectedEqual              bool
 	expectedAll                []KeyValue[K, V]
 	anyMatchPredicate          Predicate2[K, V]
 	expectedAnyMatch           bool
@@ -829,9 +829,9 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 			}
 		})
 
-		t.Run("Equals", func(t *testing.T) {
-			equals := st.Equals(test.equals)
-			assert.Equal(t, test.expectedEquals, equals)
+		t.Run("Equal", func(t *testing.T) {
+			equal := st.Equal(test.equal)
+			assert.Equal(t, test.expectedEqual, equal)
 		})
 
 		t.Run("All", func(t *testing.T) {
@@ -1049,9 +1049,9 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 			assert.Equal(t, test.expectedString, ost.String())
 		})
 
-		t.Run("Equals", func(t *testing.T) {
-			equals := ost.Equals(test.equals)
-			assert.Equal(t, test.expectedEquals, equals)
+		t.Run("Equal", func(t *testing.T) {
+			equal := ost.Equal(test.equal)
+			assert.Equal(t, test.expectedEqual, equal)
 		})
 
 		t.Run("All", func(t *testing.T) {

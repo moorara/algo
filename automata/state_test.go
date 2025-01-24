@@ -34,36 +34,36 @@ func TestStates_Contains(t *testing.T) {
 	}
 }
 
-func TestStates_Equals(t *testing.T) {
+func TestStates_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		s              States
-		rhs            States
-		expectedEquals bool
+		name          string
+		s             States
+		rhs           States
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			s:              States{2, 4},
-			rhs:            States{4, 2},
-			expectedEquals: true,
+			name:          "Equal",
+			s:             States{2, 4},
+			rhs:           States{4, 2},
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			s:              States{2, 4},
-			rhs:            States{2},
-			expectedEquals: false,
+			name:          "NotEqual",
+			s:             States{2, 4},
+			rhs:           States{2},
+			expectedEqual: false,
 		},
 		{
-			name:           "NotEqual",
-			s:              States{2},
-			rhs:            States{2, 4},
-			expectedEquals: false,
+			name:          "NotEqual",
+			s:             States{2},
+			rhs:           States{2, 4},
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.s.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.s.Equal(tc.rhs))
 		})
 	}
 }

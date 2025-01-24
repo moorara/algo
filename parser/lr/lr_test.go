@@ -521,7 +521,7 @@ func TestParser_ParseAST(t *testing.T) {
 			ast, err := tc.p.ParseAST()
 
 			if len(tc.expectedErrorStrings) == 0 {
-				assert.True(t, ast.Equals(tc.expectedAST))
+				assert.True(t, ast.Equal(tc.expectedAST))
 				assert.NoError(t, err)
 			} else {
 				assert.Nil(t, ast)

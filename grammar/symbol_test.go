@@ -120,9 +120,9 @@ func TestTerminal(t *testing.T) {
 	t.Run("Endmarker", func(t *testing.T) {
 		assert.Equal(t, "$", Endmarker.String())
 		assert.Equal(t, "$", Endmarker.Name())
-		assert.True(t, Endmarker.Equals(Terminal("\uEEEE")))
-		assert.False(t, Endmarker.Equals(NonTerminal("\uEEEE")))
-		assert.False(t, Endmarker.Equals(Terminal("\uEEEF")))
+		assert.True(t, Endmarker.Equal(Terminal("\uEEEE")))
+		assert.False(t, Endmarker.Equal(NonTerminal("\uEEEE")))
+		assert.False(t, Endmarker.Equal(Terminal("\uEEEF")))
 		assert.True(t, Endmarker.IsTerminal())
 	})
 
@@ -150,10 +150,10 @@ func TestTerminal(t *testing.T) {
 		t.Run(tc.value, func(t *testing.T) {
 			tr := Terminal(tc.value)
 			assert.Equal(t, tc.expectedString, tr.String())
+			assert.True(t, tr.Equal(Terminal(tc.value)))
+			assert.False(t, tr.Equal(NonTerminal(tc.value)))
+			assert.False(t, tr.Equal(notEqual))
 			assert.Equal(t, tc.value, tr.Name())
-			assert.True(t, tr.Equals(Terminal(tc.value)))
-			assert.False(t, tr.Equals(NonTerminal(tc.value)))
-			assert.False(t, tr.Equals(notEqual))
 			assert.True(t, tr.IsTerminal())
 		})
 	}
@@ -177,10 +177,10 @@ func TestNonTerminal(t *testing.T) {
 		t.Run(tc.value, func(t *testing.T) {
 			n := NonTerminal(tc.value)
 			assert.Equal(t, tc.value, n.String())
+			assert.True(t, n.Equal(NonTerminal(tc.value)))
+			assert.False(t, n.Equal(Terminal(tc.value)))
+			assert.False(t, n.Equal(notEqual))
 			assert.Equal(t, tc.value, n.Name())
-			assert.True(t, n.Equals(NonTerminal(tc.value)))
-			assert.False(t, n.Equals(Terminal(tc.value)))
-			assert.False(t, n.Equals(notEqual))
 			assert.False(t, n.IsTerminal())
 		})
 	}

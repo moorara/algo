@@ -11,8 +11,8 @@ func getPatriciaTests() []trieTest[int] {
 
 	tests[0].trie = "Patricia"
 	tests[0].expectedHeight = 2
-	tests[0].equals = nil
-	tests[0].expectedEquals = false
+	tests[0].equal = nil
+	tests[0].expectedEqual = false
 	tests[0].expectedVLRTraverse = []KeyValue[string, int]{{Key: "B", Val: 2}, {Key: "A", Val: 1}, {Key: "C", Val: 3}}
 	tests[0].expectedVRLTraverse = []KeyValue[string, int]{{Key: "B", Val: 2}, {Key: "A", Val: 1}, {Key: "C", Val: 3}}
 	tests[0].expectedLVRTraverse = []KeyValue[string, int]{{Key: "A", Val: 1}, {Key: "C", Val: 3}, {Key: "B", Val: 2}}
@@ -39,8 +39,8 @@ func getPatriciaTests() []trieTest[int] {
 
 	tests[1].trie = "Patricia"
 	tests[1].expectedHeight = 3
-	tests[1].equals = NewPatricia[int](nil)
-	tests[1].expectedEquals = false
+	tests[1].equal = NewPatricia[int](nil)
+	tests[1].expectedEqual = false
 	tests[1].expectedVLRTraverse = []KeyValue[string, int]{{Key: "B", Val: 2}, {Key: "D", Val: 4}, {Key: "A", Val: 1}, {Key: "C", Val: 3}, {Key: "E", Val: 5}}
 	tests[1].expectedVRLTraverse = []KeyValue[string, int]{{Key: "B", Val: 2}, {Key: "D", Val: 4}, {Key: "E", Val: 5}, {Key: "A", Val: 1}, {Key: "C", Val: 3}}
 	tests[1].expectedLVRTraverse = []KeyValue[string, int]{{Key: "A", Val: 1}, {Key: "C", Val: 3}, {Key: "D", Val: 4}, {Key: "E", Val: 5}, {Key: "B", Val: 2}}
@@ -73,11 +73,11 @@ func getPatriciaTests() []trieTest[int] {
 
 	tests[2].trie = "Patricia"
 	tests[2].expectedHeight = 4
-	tests[2].equals = NewPatricia[int](nil)
-	tests[2].equals.Put("A", 1)
-	tests[2].equals.Put("D", 4)
-	tests[2].equals.Put("G", 7)
-	tests[2].expectedEquals = false
+	tests[2].equal = NewPatricia[int](nil)
+	tests[2].equal.Put("A", 1)
+	tests[2].equal.Put("D", 4)
+	tests[2].equal.Put("G", 7)
+	tests[2].expectedEqual = false
 	tests[2].expectedVLRTraverse = []KeyValue[string, int]{{Key: "J", Val: 10}, {Key: "P", Val: 16}, {Key: "D", Val: 4}, {Key: "A", Val: 1}, {Key: "G", Val: 7}, {Key: "M", Val: 13}, {Key: "S", Val: 19}}
 	tests[2].expectedVRLTraverse = []KeyValue[string, int]{{Key: "J", Val: 10}, {Key: "P", Val: 16}, {Key: "S", Val: 19}, {Key: "D", Val: 4}, {Key: "M", Val: 13}, {Key: "A", Val: 1}, {Key: "G", Val: 7}}
 	tests[2].expectedLVRTraverse = []KeyValue[string, int]{{Key: "A", Val: 1}, {Key: "G", Val: 7}, {Key: "D", Val: 4}, {Key: "M", Val: 13}, {Key: "P", Val: 16}, {Key: "S", Val: 19}, {Key: "J", Val: 10}}
@@ -116,15 +116,15 @@ func getPatriciaTests() []trieTest[int] {
 
 	tests[3].trie = "Patricia"
 	tests[3].expectedHeight = 4
-	tests[3].equals = NewPatricia[int](nil)
-	tests[3].equals.Put("box", 2)
-	tests[3].equals.Put("dad", 3)
-	tests[3].equals.Put("baby", 5)
-	tests[3].equals.Put("dome", 7)
-	tests[3].equals.Put("band", 11)
-	tests[3].equals.Put("dance", 13)
-	tests[3].equals.Put("balloon", 17)
-	tests[3].expectedEquals = true
+	tests[3].equal = NewPatricia[int](nil)
+	tests[3].equal.Put("box", 2)
+	tests[3].equal.Put("dad", 3)
+	tests[3].equal.Put("baby", 5)
+	tests[3].equal.Put("dome", 7)
+	tests[3].equal.Put("band", 11)
+	tests[3].equal.Put("dance", 13)
+	tests[3].equal.Put("balloon", 17)
+	tests[3].expectedEqual = true
 	tests[3].expectedVLRTraverse = []KeyValue[string, int]{{Key: "box", Val: 2}, {Key: "dad", Val: 3}, {Key: "band", Val: 11}, {Key: "baby", Val: 5}, {Key: "balloon", Val: 17}, {Key: "dome", Val: 7}, {Key: "dance", Val: 13}}
 	tests[3].expectedVRLTraverse = []KeyValue[string, int]{{Key: "box", Val: 2}, {Key: "dad", Val: 3}, {Key: "dome", Val: 7}, {Key: "dance", Val: 13}, {Key: "band", Val: 11}, {Key: "baby", Val: 5}, {Key: "balloon", Val: 17}}
 	tests[3].expectedLVRTraverse = []KeyValue[string, int]{{Key: "baby", Val: 5}, {Key: "balloon", Val: 17}, {Key: "band", Val: 11}, {Key: "dad", Val: 3}, {Key: "dance", Val: 13}, {Key: "dome", Val: 7}, {Key: "box", Val: 2}}

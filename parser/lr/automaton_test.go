@@ -30,7 +30,7 @@ func TestAugment(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.G.Verify())
 			augG := augment(tc.G)
-			assert.True(t, augG.Equals(tc.expectedCFG))
+			assert.True(t, augG.Equal(tc.expectedCFG))
 		})
 	}
 }
@@ -61,7 +61,7 @@ func TestAutomaton_GOTO(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			J := tc.a.GOTO(tc.I, tc.X)
-			assert.True(t, J.Equals(tc.expectedGOTO))
+			assert.True(t, J.Equal(tc.expectedGOTO))
 		})
 	}
 }
@@ -88,7 +88,7 @@ func TestAutomaton_Canonical(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			C := tc.a.Canonical()
-			assert.True(t, C.Equals(tc.expectedCanonical))
+			assert.True(t, C.Equal(tc.expectedCanonical))
 		})
 	}
 }
@@ -168,7 +168,7 @@ func TestKernelAutomaton_GOTO(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			J := tc.a.GOTO(tc.I, tc.X)
-			assert.True(t, J.Equals(tc.expectedGOTO))
+			assert.True(t, J.Equal(tc.expectedGOTO))
 		})
 	}
 }
@@ -234,7 +234,7 @@ func TestKernelAutomaton_Canonical(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			C := tc.a.Canonical()
-			assert.True(t, C.Equals(tc.expectedCanonical))
+			assert.True(t, C.Equal(tc.expectedCanonical))
 		})
 	}
 }

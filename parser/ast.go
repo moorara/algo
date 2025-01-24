@@ -12,7 +12,7 @@ import (
 
 var (
 	EqNode = func(lhs, rhs Node) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 )
 
@@ -147,19 +147,19 @@ func (n *InternalNode) String() string {
 	return b.String()
 }
 
-// Equals determines whether or not two internal nodes are the same.
+// Equal determines whether or not two internal nodes are the same.
 // Annotations are excluded from the equality check.
-func (n *InternalNode) Equals(rhs Node) bool {
+func (n *InternalNode) Equal(rhs Node) bool {
 	nn, ok := rhs.(*InternalNode)
 	if !ok ||
-		!n.NonTerminal.Equals(nn.NonTerminal) ||
+		!n.NonTerminal.Equal(nn.NonTerminal) ||
 		!equalProductions(n.Production, nn.Production) ||
 		len(n.Children) != len(nn.Children) {
 		return false
 	}
 
 	for i := range len(n.Children) {
-		if !n.Children[i].Equals(nn.Children[i]) {
+		if !n.Children[i].Equal(nn.Children[i]) {
 			return false
 		}
 	}
@@ -171,7 +171,7 @@ func equalProductions(lhs, rhs *grammar.Production) bool {
 	if lhs == nil || rhs == nil {
 		return lhs == rhs
 	}
-	return lhs.Equals(rhs)
+	return lhs.Equal(rhs)
 }
 
 // Symbol returns the non-terminal symbol associated with this internal node
@@ -304,14 +304,14 @@ func (n *LeafNode) String() string {
 	return fmt.Sprintf("%s <%s, %s>", n.Terminal, n.Lexeme, n.Position)
 }
 
-// Equals determines whether or not two leaf nodes are the same.
+// Equal determines whether or not two leaf nodes are the same.
 // Annotations are excluded from the equality check.
-func (n *LeafNode) Equals(rhs Node) bool {
+func (n *LeafNode) Equal(rhs Node) bool {
 	nn, ok := rhs.(*LeafNode)
 	return ok &&
-		n.Terminal.Equals(nn.Terminal) &&
+		n.Terminal.Equal(nn.Terminal) &&
 		n.Lexeme == nn.Lexeme &&
-		n.Position.Equals(nn.Position)
+		n.Position.Equal(nn.Position)
 }
 
 // Symbol returns the terminal symbol associated with this leaf node.

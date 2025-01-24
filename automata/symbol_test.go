@@ -34,36 +34,36 @@ func TestSymbols_Contains(t *testing.T) {
 	}
 }
 
-func TestSymbols_Equals(t *testing.T) {
+func TestSymbols_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		s              Symbols
-		rhs            Symbols
-		expectedEquals bool
+		name          string
+		s             Symbols
+		rhs           Symbols
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			s:              Symbols{'a', 'b'},
-			rhs:            Symbols{'b', 'a'},
-			expectedEquals: true,
+			name:          "Equal",
+			s:             Symbols{'a', 'b'},
+			rhs:           Symbols{'b', 'a'},
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			s:              Symbols{'a', 'b'},
-			rhs:            Symbols{'a'},
-			expectedEquals: false,
+			name:          "NotEqual",
+			s:             Symbols{'a', 'b'},
+			rhs:           Symbols{'a'},
+			expectedEqual: false,
 		},
 		{
-			name:           "NotEqual",
-			s:              Symbols{'a'},
-			rhs:            Symbols{'a', 'b'},
-			expectedEquals: false,
+			name:          "NotEqual",
+			s:             Symbols{'a'},
+			rhs:           Symbols{'a', 'b'},
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.s.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.s.Equal(tc.rhs))
 		})
 	}
 }
