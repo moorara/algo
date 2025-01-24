@@ -46,15 +46,15 @@ func TestAutomaton_GOTO(t *testing.T) {
 		expectedGOTO ItemSet
 	}{
 		{
-			name: `GOTO(I₀,E)`,
+			name: `GOTO(I₀,"(")`,
 			a: &automaton{
 				Calculator: &calculator0{
 					augG: augment(grammars[2]),
 				},
 			},
 			I:            s[0],
-			X:            grammar.NonTerminal("E"),
-			expectedGOTO: s[1],
+			X:            grammar.Terminal("("),
+			expectedGOTO: s[4],
 		},
 	}
 
@@ -100,7 +100,7 @@ func TestNewLR0Automaton(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			G:    grammars[0],
+			G:    grammars[2],
 		},
 	}
 
@@ -123,7 +123,7 @@ func TestNewLR1Automaton(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			G:    grammars[0],
+			G:    grammars[2],
 		},
 	}
 
@@ -136,6 +136,152 @@ func TestNewLR1Automaton(t *testing.T) {
 			assert.NotNil(t, calc.(*automaton).Calculator)
 			assert.NotEmpty(t, calc.(*automaton).Calculator.(*calculator1).augG)
 			assert.NotNil(t, calc.(*automaton).Calculator.(*calculator1).FIRST)
+		})
+	}
+}
+
+func TestKernelAutomaton_GOTO(t *testing.T) {
+	tests := []struct {
+		name         string
+		a            *kernelAutomaton
+		I            ItemSet
+		X            grammar.Symbol
+		expectedGOTO ItemSet
+	}{
+		{
+			name: `GOTO(I₀,"(")`,
+			a: &kernelAutomaton{
+				Calculator: &calculator0{
+					augG: augment(grammars[2]),
+				},
+			},
+			I: NewItemSet(
+				&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
+			),
+			X: grammar.Terminal("("),
+			expectedGOTO: NewItemSet(
+				&Item0{Production: prods[2][5], Start: starts[2], Dot: 1}, // F → (•E ),
+			),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			J := tc.a.GOTO(tc.I, tc.X)
+			assert.True(t, J.Equals(tc.expectedGOTO))
+		})
+	}
+}
+
+func TestKernelAutomaton_Canonical(t *testing.T) {
+	tests := []struct {
+		name              string
+		a                 *kernelAutomaton
+		expectedCanonical ItemSetCollection
+	}{
+		{
+			name: "OK",
+			a: &kernelAutomaton{
+				Calculator: &calculator0{
+					augG: augment(grammars[2]),
+				},
+			},
+			expectedCanonical: NewItemSetCollection(
+				NewItemSet(
+					&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E,
+				),
+				NewItemSet(
+					&Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
+					&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
+				),
+				NewItemSet(
+					&Item0{Production: prods[2][2], Start: starts[2], Dot: 1}, // E → T•
+					&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
+				),
+				NewItemSet(
+					&Item0{Production: prods[2][4], Start: starts[2], Dot: 1}, // T → F•
+				),
+				NewItemSet(
+					&Item0{Production: prods[2][5], Start: starts[2], Dot: 1}, // F → (•E )
+				),
+				NewItemSet(
+					&Item0{Production: prods[2][6], Start: starts[2], Dot: 1}, // F → id•
+				),
+				NewItemSet(
+					&Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
+				),
+				NewItemSet(
+					&Item0{Production: prods[2][3], Start: starts[2], Dot: 2}, // T → T *•F
+				),
+				NewItemSet(
+					&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E• + T
+					&Item0{Production: prods[2][5], Start: starts[2], Dot: 2}, // F → ( E•)
+				),
+				NewItemSet(
+					&Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
+					&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
+				),
+				NewItemSet(
+					&Item0{Production: prods[2][3], Start: starts[2], Dot: 3}, // T → T * F•
+				),
+				NewItemSet(
+					&Item0{Production: prods[2][5], Start: starts[2], Dot: 3}, // F → ( E )•
+				),
+			),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			C := tc.a.Canonical()
+			assert.True(t, C.Equals(tc.expectedCanonical))
+		})
+	}
+}
+
+func TestNewLR0KernelAutomaton(t *testing.T) {
+	tests := []struct {
+		name string
+		G    *grammar.CFG
+	}{
+		{
+			name: "OK",
+			G:    grammars[2],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.G.Verify())
+			calc := NewLR0KernelAutomaton(tc.G)
+
+			assert.NotNil(t, calc)
+			assert.NotNil(t, calc.(*kernelAutomaton).Calculator)
+			assert.NotEmpty(t, calc.(*kernelAutomaton).Calculator.(*calculator0).augG)
+		})
+	}
+}
+
+func TestNewLR1KernelAutomaton(t *testing.T) {
+	tests := []struct {
+		name string
+		G    *grammar.CFG
+	}{
+		{
+			name: "OK",
+			G:    grammars[2],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.G.Verify())
+			calc := NewLR1KernelAutomaton(tc.G)
+
+			assert.NotNil(t, calc)
+			assert.NotNil(t, calc.(*kernelAutomaton).Calculator)
+			assert.NotEmpty(t, calc.(*kernelAutomaton).Calculator.(*calculator1).augG)
+			assert.NotNil(t, calc.(*kernelAutomaton).Calculator.(*calculator1).FIRST)
 		})
 	}
 }

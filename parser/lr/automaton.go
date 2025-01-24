@@ -40,7 +40,7 @@ type Automaton interface {
 	Canonical() ItemSetCollection
 }
 
-// automaton implements the Automaton interface.
+// automaton implements the Automaton interface and considers both kernel and non-kernel items.
 type automaton struct {
 	Calculator
 }
@@ -66,11 +66,12 @@ func (a *automaton) GOTO(I ItemSet, X grammar.Symbol) ItemSet {
 }
 
 func (a *automaton) Canonical() ItemSetCollection {
-	I0 := NewItemSet(a.Initial())
-	I0 = a.CLOSURE(I0)
-
 	// Initialize C to { initial item set }
-	C := NewItemSetCollection(I0)
+	C := NewItemSetCollection(
+		a.CLOSURE(
+			NewItemSet(a.Initial()),
+		),
+	)
 
 	symbols := a.G().Symbols()
 
@@ -94,9 +95,8 @@ func (a *automaton) Canonical() ItemSetCollection {
 	return C
 }
 
-// NewLR0Automaton returns an Automaton for LR(0) items.
-// It provides an implementation of the CLOSURE function
-// based on the LR(0) items of the augmented grammar.
+// NewLR0Automaton creates an Automaton for LR(0) items that considers both kernel and non-kernel items.
+// It provides an implementation of the CLOSURE function based on the LR(0) items of the augmented grammar.
 func NewLR0Automaton(G *grammar.CFG) Automaton {
 	augG := augment(G)
 
@@ -107,14 +107,89 @@ func NewLR0Automaton(G *grammar.CFG) Automaton {
 	}
 }
 
-// NewLR1Automaton returns an Automaton for LR(1) items.
-// It provides an implementation of the CLOSURE function
-// based on the LR(1) items of the augmented grammar.
+// NewLR1Automaton creates an Automaton for LR(1) items that considers both kernel and non-kernel items.
+// It provides an implementation of the CLOSURE function based on the LR(1) items of the augmented grammar.
 func NewLR1Automaton(G *grammar.CFG) Automaton {
 	augG := augment(G)
 	FIRST := augG.ComputeFIRST()
 
 	return &automaton{
+		Calculator: &calculator1{
+			augG:  augG,
+			FIRST: FIRST,
+		},
+	}
+}
+
+// kernelAutomaton implements the Automaton interface but considers only kernel items
+type kernelAutomaton struct {
+	Calculator
+}
+
+func (a *kernelAutomaton) GOTO(I ItemSet, X grammar.Symbol) ItemSet {
+	// Initialize J to be the empty set.
+	J := NewItemSet()
+
+	// For each item "A → αX•β" in CLOSURE(I)
+	for i := range a.CLOSURE(I).All() {
+		if Y, ok := i.DotSymbol(); ok && Y.Equals(X) {
+			// Add item "A → α•Xβ" to set J
+			if next, ok := i.Next(); ok {
+				J.Add(next)
+			}
+		}
+	}
+
+	return J
+}
+
+func (a *kernelAutomaton) Canonical() ItemSetCollection {
+	// Initialize C to { initial item set }
+	C := NewItemSetCollection(
+		NewItemSet(a.Initial()),
+	)
+
+	symbols := a.G().Symbols()
+
+	for newItemSets := []ItemSet{}; newItemSets != nil; {
+		newItemSets = nil
+
+		// For each set of items I in C
+		for I := range C.All() {
+			// For each grammar symbol X
+			for X := range symbols.All() {
+				// If GOTO(I,X) is not empty and not in C, add GOTO(I,X) to C
+				if J := a.GOTO(I, X); !J.IsEmpty() && !C.Contains(J) {
+					newItemSets = append(newItemSets, J)
+				}
+			}
+		}
+
+		C.Add(newItemSets...)
+	}
+
+	return C
+}
+
+// NewLR0Automaton creates an Automaton for LR(0) items that considers only kernel items.
+// It provides an implementation of the CLOSURE function based on the LR(0) items of the augmented grammar.
+func NewLR0KernelAutomaton(G *grammar.CFG) Automaton {
+	augG := augment(G)
+
+	return &kernelAutomaton{
+		Calculator: &calculator0{
+			augG: augG,
+		},
+	}
+}
+
+// NewLR1Automaton creates an Automaton for LR(1) items that considers only kernel items.
+// It provides an implementation of the CLOSURE function based on the LR(1) items of the augmented grammar.
+func NewLR1KernelAutomaton(G *grammar.CFG) Automaton {
+	augG := augment(G)
+	FIRST := augG.ComputeFIRST()
+
+	return &kernelAutomaton{
 		Calculator: &calculator1{
 			augG:  augG,
 			FIRST: FIRST,
