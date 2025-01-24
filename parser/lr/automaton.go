@@ -26,7 +26,7 @@ func augment(G *grammar.CFG) *grammar.CFG {
 // It provides key functions for constructing LR parsing tables,
 // including state transitions (GOTO) and generating item sets (Canonical).
 type Automaton interface {
-	Calculator
+	calculator
 
 	// GOTO(I, X) computes the closure of the set of all items "A → αX•β",
 	// where "A → α•Xβ" is in the set of items I and X is a grammar symbol.
@@ -45,7 +45,7 @@ type Automaton interface {
 
 // automaton implements the Automaton interface and considers both kernel and non-kernel items.
 type automaton struct {
-	Calculator
+	calculator
 }
 
 func (a *automaton) GOTO(I ItemSet, X grammar.Symbol) ItemSet {
@@ -104,7 +104,7 @@ func NewLR0Automaton(G *grammar.CFG) Automaton {
 	augG := augment(G)
 
 	return &automaton{
-		Calculator: &calculator0{
+		calculator: &calculator0{
 			augG: augG,
 		},
 	}
@@ -117,7 +117,7 @@ func NewLR1Automaton(G *grammar.CFG) Automaton {
 	FIRST := augG.ComputeFIRST()
 
 	return &automaton{
-		Calculator: &calculator1{
+		calculator: &calculator1{
 			augG:  augG,
 			FIRST: FIRST,
 		},
@@ -126,7 +126,7 @@ func NewLR1Automaton(G *grammar.CFG) Automaton {
 
 // kernelAutomaton implements the Automaton interface but considers only kernel items
 type kernelAutomaton struct {
-	Calculator
+	calculator
 }
 
 func (a *kernelAutomaton) GOTO(I ItemSet, X grammar.Symbol) ItemSet {
@@ -180,7 +180,7 @@ func NewLR0KernelAutomaton(G *grammar.CFG) Automaton {
 	augG := augment(G)
 
 	return &kernelAutomaton{
-		Calculator: &calculator0{
+		calculator: &calculator0{
 			augG: augG,
 		},
 	}
@@ -193,7 +193,7 @@ func NewLR1KernelAutomaton(G *grammar.CFG) Automaton {
 	FIRST := augG.ComputeFIRST()
 
 	return &kernelAutomaton{
-		Calculator: &calculator1{
+		calculator: &calculator1{
 			augG:  augG,
 			FIRST: FIRST,
 		},

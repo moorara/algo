@@ -11,8 +11,8 @@ var (
 	}
 )
 
-// Calculator defines the interface required for an LR parser.
-type Calculator interface {
+// calculator defines the interface required for an LR parser.
+type calculator interface {
 	// G returns the augmented context-free grammar.
 	G() *grammar.CFG
 

@@ -48,7 +48,7 @@ func TestAutomaton_GOTO(t *testing.T) {
 		{
 			name: `GOTO(I₀,"(")`,
 			a: &automaton{
-				Calculator: &calculator0{
+				calculator: &calculator0{
 					augG: augment(grammars[2]),
 				},
 			},
@@ -77,7 +77,7 @@ func TestAutomaton_Canonical(t *testing.T) {
 		{
 			name: "OK",
 			a: &automaton{
-				Calculator: &calculator0{
+				calculator: &calculator0{
 					augG: augment(grammars[2]),
 				},
 			},
@@ -110,8 +110,8 @@ func TestNewLR0Automaton(t *testing.T) {
 			calc := NewLR0Automaton(tc.G)
 
 			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.(*automaton).Calculator)
-			assert.NotEmpty(t, calc.(*automaton).Calculator.(*calculator0).augG)
+			assert.NotNil(t, calc.(*automaton).calculator)
+			assert.NotEmpty(t, calc.(*automaton).calculator.(*calculator0).augG)
 		})
 	}
 }
@@ -133,9 +133,9 @@ func TestNewLR1Automaton(t *testing.T) {
 			calc := NewLR1Automaton(tc.G)
 
 			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.(*automaton).Calculator)
-			assert.NotEmpty(t, calc.(*automaton).Calculator.(*calculator1).augG)
-			assert.NotNil(t, calc.(*automaton).Calculator.(*calculator1).FIRST)
+			assert.NotNil(t, calc.(*automaton).calculator)
+			assert.NotEmpty(t, calc.(*automaton).calculator.(*calculator1).augG)
+			assert.NotNil(t, calc.(*automaton).calculator.(*calculator1).FIRST)
 		})
 	}
 }
@@ -151,7 +151,7 @@ func TestKernelAutomaton_GOTO(t *testing.T) {
 		{
 			name: `GOTO(I₀,"(")`,
 			a: &kernelAutomaton{
-				Calculator: &calculator0{
+				calculator: &calculator0{
 					augG: augment(grammars[2]),
 				},
 			},
@@ -182,7 +182,7 @@ func TestKernelAutomaton_Canonical(t *testing.T) {
 		{
 			name: "OK",
 			a: &kernelAutomaton{
-				Calculator: &calculator0{
+				calculator: &calculator0{
 					augG: augment(grammars[2]),
 				},
 			},
@@ -256,8 +256,8 @@ func TestNewLR0KernelAutomaton(t *testing.T) {
 			calc := NewLR0KernelAutomaton(tc.G)
 
 			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.(*kernelAutomaton).Calculator)
-			assert.NotEmpty(t, calc.(*kernelAutomaton).Calculator.(*calculator0).augG)
+			assert.NotNil(t, calc.(*kernelAutomaton).calculator)
+			assert.NotEmpty(t, calc.(*kernelAutomaton).calculator.(*calculator0).augG)
 		})
 	}
 }
@@ -279,9 +279,9 @@ func TestNewLR1KernelAutomaton(t *testing.T) {
 			calc := NewLR1KernelAutomaton(tc.G)
 
 			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.(*kernelAutomaton).Calculator)
-			assert.NotEmpty(t, calc.(*kernelAutomaton).Calculator.(*calculator1).augG)
-			assert.NotNil(t, calc.(*kernelAutomaton).Calculator.(*calculator1).FIRST)
+			assert.NotNil(t, calc.(*kernelAutomaton).calculator)
+			assert.NotEmpty(t, calc.(*kernelAutomaton).calculator.(*calculator1).augG)
+			assert.NotNil(t, calc.(*kernelAutomaton).calculator.(*calculator1).FIRST)
 		})
 	}
 }
