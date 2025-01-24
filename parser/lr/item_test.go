@@ -898,7 +898,7 @@ func TestItem1_Next(t *testing.T) {
 	}
 }
 
-func TestItem1_GetαPrefix(t *testing.T) {
+func TestItem1_GetPrefix(t *testing.T) {
 	tests := []struct {
 		name          string
 		i             *Item1
@@ -923,14 +923,14 @@ func TestItem1_GetαPrefix(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			alpha := tc.i.GetαPrefix()
+			alpha := tc.i.GetPrefix()
 
 			assert.True(t, alpha.Equals(tc.expectedAlpha))
 		})
 	}
 }
 
-func TestItem1_GetβSuffix(t *testing.T) {
+func TestItem1_GetSuffix(t *testing.T) {
 	tests := []struct {
 		name         string
 		i            *Item1
@@ -939,12 +939,12 @@ func TestItem1_GetβSuffix(t *testing.T) {
 		{
 			name:         "DotAtLeft",
 			i:            &Item1{Production: prods[0][1], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S → •CC, $
-			expectedBeta: grammar.String[grammar.Symbol]{grammar.NonTerminal("C")},
+			expectedBeta: grammar.String[grammar.Symbol]{grammar.NonTerminal("C"), grammar.NonTerminal("C")},
 		},
 		{
 			name:         "DotInMiddle",
 			i:            &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
-			expectedBeta: grammar.E,
+			expectedBeta: grammar.String[grammar.Symbol]{grammar.NonTerminal("C")},
 		},
 		{
 			name:         "DotAtRight",
@@ -955,7 +955,7 @@ func TestItem1_GetβSuffix(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			beta := tc.i.GetβSuffix()
+			beta := tc.i.GetSuffix()
 
 			assert.True(t, beta.Equals(tc.expectedBeta))
 		})

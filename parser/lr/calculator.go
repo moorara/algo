@@ -255,7 +255,8 @@ func (c *calculator1) CLOSURE(I ItemSet) ItemSet {
 					if B, ok := X.(grammar.NonTerminal); ok {
 						// For each production B → γ of G′
 						for BProd := range c.augG.Productions.Get(B).All() {
-							βa := i.GetβSuffix().Append(a)
+							β := i.GetSuffix()[1:]
+							βa := β.Append(a)
 
 							// For each terminal b in FIRST(βa)
 							for b := range c.FIRST(βa).Terminals.All() {

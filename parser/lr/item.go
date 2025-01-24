@@ -418,20 +418,16 @@ func (i *Item1) Next() (Item, bool) {
 	}, true
 }
 
-// GetαPrefix returns the α (prefix) part of an LR(1) item of the form "A → α•Bβ, a".
+// GetPrefix returns the prefix α of an LR(1) item of the form "A → α•β, a.
 // α represents the portion of the production that has already been parsed.
-// α can be the empty string (ε) if nothing has been parsed yet.
-func (i *Item1) GetαPrefix() grammar.String[grammar.Symbol] {
+// α can be the empty string ε if nothing has been parsed yet.
+func (i *Item1) GetPrefix() grammar.String[grammar.Symbol] {
 	return i.Body[:i.Dot]
 }
 
-// GetβSuffix returns the β (suffix) part of an LR(1) item of the form "A → α•Bβ, a".
+// GetSuffix returns the suffix β of an LR(1) item of the form "A → α•β, a".
 // β represents the portion of the production that has not yet been parsed.
-// β can be the empty string (ε) if there is no remaining unparsed portion.
-func (i *Item1) GetβSuffix() grammar.String[grammar.Symbol] {
-	if i.IsComplete() {
-		return grammar.E
-	}
-
-	return i.Body[i.Dot+1:]
+// β can be the empty string ε if there is no remaining unparsed portion.
+func (i *Item1) GetSuffix() grammar.String[grammar.Symbol] {
+	return i.Body[i.Dot:]
 }
