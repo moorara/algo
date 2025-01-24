@@ -12,88 +12,88 @@ import (
 func getTestLR0ItemSets() []ItemSet {
 	I0 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][0], Start: starts[1], Dot: 0}, // E′ → •E
+		&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
 		// Non-Kernels
-		&Item0{Production: prods[1][1], Start: starts[1], Dot: 0}, // E → •E + T
-		&Item0{Production: prods[1][2], Start: starts[1], Dot: 0}, // E → •T
-		&Item0{Production: prods[1][3], Start: starts[1], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[1][4], Start: starts[1], Dot: 0}, // T → •F
-		&Item0{Production: prods[1][5], Start: starts[1], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[1][6], Start: starts[1], Dot: 0}, // F → •id
+		&Item0{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
+		&Item0{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
+		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
+		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
+		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
+		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
 	)
 
 	I1 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][0], Start: starts[1], Dot: 1}, // E′ → E•
-		&Item0{Production: prods[1][1], Start: starts[1], Dot: 1}, // E → E•+ T
+		&Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
+		&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
 	)
 
 	I2 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][2], Start: starts[1], Dot: 1}, // E → T•
-		&Item0{Production: prods[1][3], Start: starts[1], Dot: 1}, // T → T•* F
+		&Item0{Production: prods[2][2], Start: starts[2], Dot: 1}, // E → T•
+		&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
 	)
 
 	I3 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][4], Start: starts[1], Dot: 1}, // T → F•
+		&Item0{Production: prods[2][4], Start: starts[2], Dot: 1}, // T → F•
 	)
 
 	I4 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][5], Start: starts[1], Dot: 1}, // F → (•E )
+		&Item0{Production: prods[2][5], Start: starts[2], Dot: 1}, // F → (•E )
 		// Non-Kernels
-		&Item0{Production: prods[1][1], Start: starts[1], Dot: 0}, // E → •E + T
-		&Item0{Production: prods[1][2], Start: starts[1], Dot: 0}, // E → •T
-		&Item0{Production: prods[1][3], Start: starts[1], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[1][4], Start: starts[1], Dot: 0}, // T → •F
-		&Item0{Production: prods[1][5], Start: starts[1], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[1][6], Start: starts[1], Dot: 0}, // F → •id
+		&Item0{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
+		&Item0{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
+		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
+		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
+		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
+		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
 	)
 
 	I5 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][6], Start: starts[1], Dot: 1}, // F → id•
+		&Item0{Production: prods[2][6], Start: starts[2], Dot: 1}, // F → id•
 	)
 
 	I6 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][1], Start: starts[1], Dot: 2}, // E → E +•T
+		&Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
 		// Non-Kernels
-		&Item0{Production: prods[1][3], Start: starts[1], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[1][4], Start: starts[1], Dot: 0}, // T → •F
-		&Item0{Production: prods[1][5], Start: starts[1], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[1][6], Start: starts[1], Dot: 0}, // F → •id
+		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
+		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
+		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
+		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
 	)
 
 	I7 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][3], Start: starts[1], Dot: 2}, // T → T *•F
+		&Item0{Production: prods[2][3], Start: starts[2], Dot: 2}, // T → T *•F
 		// Non-Kernels
-		&Item0{Production: prods[1][5], Start: starts[1], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[1][6], Start: starts[1], Dot: 0}, // F → •id
+		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
+		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
 	)
 
 	I8 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][1], Start: starts[1], Dot: 1}, // E → E• + T
-		&Item0{Production: prods[1][5], Start: starts[1], Dot: 2}, // F → ( E•)
+		&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E• + T
+		&Item0{Production: prods[2][5], Start: starts[2], Dot: 2}, // F → ( E•)
 	)
 
 	I9 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][1], Start: starts[1], Dot: 3}, // E → E + T•
-		&Item0{Production: prods[1][3], Start: starts[1], Dot: 1}, // T → T•* F
+		&Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
+		&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
 	)
 
 	I10 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][3], Start: starts[1], Dot: 3}, // T → T * F•
+		&Item0{Production: prods[2][3], Start: starts[2], Dot: 3}, // T → T * F•
 	)
 
 	I11 := NewItemSet(
 		// Kernels
-		&Item0{Production: prods[1][5], Start: starts[1], Dot: 3}, // F → ( E )•
+		&Item0{Production: prods[2][5], Start: starts[2], Dot: 3}, // F → ( E )•
 	)
 
 	return []ItemSet{I0, I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11}
@@ -206,8 +206,8 @@ func TestNewItemSet(t *testing.T) {
 		{
 			name: "OK",
 			items: []Item{
-				&Item0{Production: prods[1][0], Start: starts[1], Dot: 1}, // E′ → E•
-				&Item0{Production: prods[1][1], Start: starts[1], Dot: 1}, // E → E•+ T
+				&Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
+				&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
 			},
 		},
 	}
@@ -257,29 +257,29 @@ func TestItem0_String(t *testing.T) {
 			name: "EmptyProduction",
 			i: &Item0{
 				Production: &grammar.Production{Head: "E", Body: grammar.E},
-				Start:      starts[1],
+				Start:      starts[2],
 				Dot:        0,
 			},
 			expectedString: `E → •`,
 		},
 		{
 			name:           "Initial",
-			i:              &Item0{Production: prods[1][0], Start: starts[1], Dot: 0},
+			i:              &Item0{Production: prods[2][0], Start: starts[2], Dot: 0},
 			expectedString: `E′ → •E`,
 		},
 		{
 			name:           "DotAtLeft",
-			i:              &Item0{Production: prods[1][1], Start: starts[1], Dot: 0},
+			i:              &Item0{Production: prods[2][1], Start: starts[2], Dot: 0},
 			expectedString: `E → •E "+" T`,
 		},
 		{
 			name:           "DotInMiddle",
-			i:              &Item0{Production: prods[1][1], Start: starts[1], Dot: 2},
+			i:              &Item0{Production: prods[2][1], Start: starts[2], Dot: 2},
 			expectedString: `E → E "+"•T`,
 		},
 		{
 			name:           "DotAtRight",
-			i:              &Item0{Production: prods[1][1], Start: starts[1], Dot: 3},
+			i:              &Item0{Production: prods[2][1], Start: starts[2], Dot: 3},
 			expectedString: `E → E "+" T•`,
 		},
 	}
@@ -300,14 +300,14 @@ func TestItem0_Equals(t *testing.T) {
 	}{
 		{
 			name:           "Equal",
-			i:              &Item0{Production: prods[1][1], Start: starts[1], Dot: 1}, // E → E•+ T
-			rhs:            &Item0{Production: prods[1][1], Start: starts[1], Dot: 1}, // E → E•+ T
+			i:              &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
+			rhs:            &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
 			expectedEquals: true,
 		},
 		{
 			name:           "NotEqual",
-			i:              &Item0{Production: prods[1][1], Start: starts[1], Dot: 1}, // E → E•+ T
-			rhs:            &Item0{Production: prods[1][1], Start: starts[1], Dot: 2}, // E → E +•T
+			i:              &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
+			rhs:            &Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
 			expectedEquals: false,
 		},
 	}
@@ -328,44 +328,44 @@ func TestItem0_Compare(t *testing.T) {
 		{
 			name: "I₀",
 			items: []*Item0{
-				{Production: prods[1][0], Start: starts[1], Dot: 0}, // E′ → •E
-				{Production: prods[1][1], Start: starts[1], Dot: 0}, // E → •E + T
-				{Production: prods[1][2], Start: starts[1], Dot: 0}, // E → •T
-				{Production: prods[1][3], Start: starts[1], Dot: 0}, // T → •T * F
-				{Production: prods[1][4], Start: starts[1], Dot: 0}, // T → •F
-				{Production: prods[1][5], Start: starts[1], Dot: 0}, // F → •( E )
-				{Production: prods[1][6], Start: starts[1], Dot: 0}, // F → •id
+				{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
+				{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
+				{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
+				{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
+				{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
+				{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
+				{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
 			},
 			expectedItems: []*Item0{
-				{Production: prods[1][0], Start: starts[1], Dot: 0}, // E′ → •E
-				{Production: prods[1][1], Start: starts[1], Dot: 0}, // E → •E + T
-				{Production: prods[1][2], Start: starts[1], Dot: 0}, // E → •T
-				{Production: prods[1][5], Start: starts[1], Dot: 0}, // F → •( E )
-				{Production: prods[1][6], Start: starts[1], Dot: 0}, // F → •id
-				{Production: prods[1][3], Start: starts[1], Dot: 0}, // T → •T * F
-				{Production: prods[1][4], Start: starts[1], Dot: 0}, // T → •F
+				{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
+				{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
+				{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
+				{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
+				{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
+				{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
+				{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
 			},
 		},
 		{
 			name: "I₈",
 			items: []*Item0{
-				{Production: prods[1][1], Start: starts[1], Dot: 1}, // E → E• + T
-				{Production: prods[1][5], Start: starts[1], Dot: 2}, // F → ( E•)
+				{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E• + T
+				{Production: prods[2][5], Start: starts[2], Dot: 2}, // F → ( E•)
 			},
 			expectedItems: []*Item0{
-				{Production: prods[1][5], Start: starts[1], Dot: 2}, // F → ( E•)
-				{Production: prods[1][1], Start: starts[1], Dot: 1}, // E → E• + T
+				{Production: prods[2][5], Start: starts[2], Dot: 2}, // F → ( E•)
+				{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E• + T
 			},
 		},
 		{
 			name: "I₉",
 			items: []*Item0{
-				{Production: prods[1][1], Start: starts[1], Dot: 3}, // E → E + T•
-				{Production: prods[1][3], Start: starts[1], Dot: 1}, // T → T•* F
+				{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
+				{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
 			},
 			expectedItems: []*Item0{
-				{Production: prods[1][1], Start: starts[1], Dot: 3}, // E → E + T•
-				{Production: prods[1][3], Start: starts[1], Dot: 1}, // T → T•* F
+				{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
+				{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
 			},
 		},
 	}
@@ -389,12 +389,12 @@ func TestItem0_IsInitial(t *testing.T) {
 	}{
 		{
 			name:             "Initial",
-			i:                &Item0{Production: prods[1][0], Start: starts[1], Dot: 0}, // E′ → •E
+			i:                &Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
 			expectedIsKernel: true,
 		},
 		{
 			name:             "NotInitial",
-			i:                &Item0{Production: prods[1][0], Start: starts[1], Dot: 1}, // E′ → E•
+			i:                &Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
 			expectedIsKernel: false,
 		},
 	}
@@ -414,17 +414,17 @@ func TestItem0_IsKernel(t *testing.T) {
 	}{
 		{
 			name:             "Initial",
-			i:                &Item0{Production: prods[1][0], Start: starts[1], Dot: 0}, // E′ → •E
+			i:                &Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
 			expectedIsKernel: true,
 		},
 		{
 			name:             "Kernel",
-			i:                &Item0{Production: prods[1][1], Start: starts[1], Dot: 2}, // E → E +•T
+			i:                &Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
 			expectedIsKernel: true,
 		},
 		{
 			name:             "NonKernel",
-			i:                &Item0{Production: prods[1][1], Start: starts[1], Dot: 0}, // E → •E + T
+			i:                &Item0{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
 			expectedIsKernel: false,
 		},
 	}
@@ -444,12 +444,12 @@ func TestItem0_IsComplete(t *testing.T) {
 	}{
 		{
 			name:               "Complete",
-			i:                  &Item0{Production: prods[1][1], Start: starts[1], Dot: 3}, // E → E + T•
+			i:                  &Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
 			expectedIsComplete: true,
 		},
 		{
 			name:               "NotComplete",
-			i:                  &Item0{Production: prods[1][1], Start: starts[1], Dot: 2}, // E → E +•T
+			i:                  &Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
 			expectedIsComplete: false,
 		},
 	}
@@ -469,12 +469,12 @@ func TestItem0_IsFinal(t *testing.T) {
 	}{
 		{
 			name:            "Final",
-			i:               &Item0{Production: prods[1][0], Start: starts[1], Dot: 1}, // E′ → E•
+			i:               &Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
 			expectedIsFinal: true,
 		},
 		{
 			name:            "NotFinal",
-			i:               &Item0{Production: prods[1][0], Start: starts[1], Dot: 0}, // E′ → •E
+			i:               &Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
 			expectedIsFinal: false,
 		},
 	}
@@ -495,13 +495,13 @@ func TestItem0_DotSymbol(t *testing.T) {
 	}{
 		{
 			name:              "Initial",
-			i:                 &Item0{Production: prods[1][0], Start: starts[1], Dot: 0}, // E′ → •E
+			i:                 &Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
 			expectedDotSymbol: grammar.NonTerminal("E"),
 			expectedOK:        true,
 		},
 		{
 			name:              "Complete",
-			i:                 &Item0{Production: prods[1][1], Start: starts[1], Dot: 3}, // E → E + T•
+			i:                 &Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
 			expectedDotSymbol: nil,
 			expectedOK:        false,
 		},
@@ -531,13 +531,13 @@ func TestItem0_Next(t *testing.T) {
 	}{
 		{
 			name:         "Initial",
-			i:            &Item0{Production: prods[1][0], Start: starts[1], Dot: 0}, // E′ → •E
+			i:            &Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
 			expectedOK:   true,
-			expectedNext: &Item0{Production: prods[1][0], Start: starts[1], Dot: 1}, // E′ → E•
+			expectedNext: &Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
 		},
 		{
 			name:         "Complete",
-			i:            &Item0{Production: prods[1][1], Start: starts[1], Dot: 3}, // E → E + T•
+			i:            &Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
 			expectedOK:   false,
 			expectedNext: nil,
 		},

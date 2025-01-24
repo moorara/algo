@@ -13,6 +13,7 @@ import (
 
 var starts = []grammar.NonTerminal{
 	"S′",
+	"S′",
 	"E′",
 	"E′",
 	"grammar′",
@@ -24,6 +25,14 @@ var prods = [][]*grammar.Production{
 		{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("C"), grammar.NonTerminal("C")}}, // S → CC
 		{Head: "C", Body: grammar.String[grammar.Symbol]{grammar.Terminal("c"), grammar.NonTerminal("C")}},    // C → cC
 		{Head: "C", Body: grammar.String[grammar.Symbol]{grammar.Terminal("d")}},                              // C → d
+	},
+	{
+		{Head: "S′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("S")}},                                                 // S′ → S
+		{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("L"), grammar.Terminal("="), grammar.NonTerminal("R")}}, // S → L = R
+		{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("R")}},                                                  // S → R
+		{Head: "L", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("R")}},                           // L → *R
+		{Head: "L", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                    // L → id
+		{Head: "R", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("L")}},                                                  // R → L
 	},
 	{
 		{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E")}},                                                 // E′ → E
@@ -76,21 +85,27 @@ var grammars = []*grammar.CFG{
 		"S",
 	),
 	grammar.NewCFG(
+		[]grammar.Terminal{"=", "*", "id"},
+		[]grammar.NonTerminal{"S", "L", "R"},
+		prods[1][1:],
+		"S",
+	),
+	grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "T", "F"},
-		prods[1][1:],
+		prods[2][1:],
 		"E",
 	),
 	grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E"},
-		prods[2][1:],
+		prods[3][1:],
 		"E",
 	),
 	grammar.NewCFG(
 		[]grammar.Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 		[]grammar.NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
-		prods[3][1:],
+		prods[4][1:],
 		"grammar",
 	),
 }

@@ -16,11 +16,11 @@ func TestAugment(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			G:    grammars[1],
+			G:    grammars[2],
 			expectedCFG: grammar.NewCFG(
 				[]grammar.Terminal{"+", "*", "(", ")", "id"},
 				[]grammar.NonTerminal{"E′", "E", "T", "F"},
-				prods[1],
+				prods[2],
 				"E′",
 			),
 		},
@@ -49,7 +49,7 @@ func TestAutomatonCalculator_GOTO(t *testing.T) {
 			name: `GOTO(I₀,E)`,
 			a: &AutomatonCalculator{
 				Calculator: &calculator0{
-					augG: Augment(grammars[1]),
+					augG: Augment(grammars[2]),
 				},
 			},
 			I:            s[0],
@@ -60,7 +60,7 @@ func TestAutomatonCalculator_GOTO(t *testing.T) {
 			name: `GOTO(I₀,T)`,
 			a: &AutomatonCalculator{
 				Calculator: &calculator0{
-					augG: Augment(grammars[1]),
+					augG: Augment(grammars[2]),
 				},
 			},
 			I:            s[0],
@@ -71,7 +71,7 @@ func TestAutomatonCalculator_GOTO(t *testing.T) {
 			name: `GOTO(I₀,F)`,
 			a: &AutomatonCalculator{
 				Calculator: &calculator0{
-					augG: Augment(grammars[1]),
+					augG: Augment(grammars[2]),
 				},
 			},
 			I:            s[0],
@@ -100,7 +100,7 @@ func TestAutomatonCalculator_Canonical(t *testing.T) {
 			name: "OK",
 			a: &AutomatonCalculator{
 				Calculator: &calculator0{
-					augG: Augment(grammars[1]),
+					augG: Augment(grammars[2]),
 				},
 			},
 			expectedCanonical: NewItemSetCollection(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]),
@@ -146,7 +146,7 @@ func TestCalculator0_G(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator0{
-				augG: Augment(grammars[1]),
+				augG: Augment(grammars[2]),
 			},
 		},
 	}
@@ -170,11 +170,11 @@ func TestCalculator0_Initial(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator0{
-				augG: Augment(grammars[1]),
+				augG: Augment(grammars[2]),
 			},
 			expectedInitial: &Item0{
-				Production: prods[1][0],
-				Start:      starts[1],
+				Production: prods[2][0],
+				Start:      starts[2],
 				Dot:        0,
 			},
 		},
@@ -202,10 +202,10 @@ func TestCalculator0_CLOSURE(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator0{
-				augG: Augment(grammars[1]),
+				augG: Augment(grammars[2]),
 			},
 			I: NewItemSet(
-				&Item0{Production: prods[1][0], Start: starts[1], Dot: 0}, // E′ → •E
+				&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
 			),
 			expectedCLOSURE: s[0],
 		},
