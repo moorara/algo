@@ -14,7 +14,7 @@ var starts = []grammar.NonTerminal{
 	"grammar′",
 }
 
-var prods = [][]grammar.Production{
+var prods = [][]*grammar.Production{
 	{
 		{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E")}},                                                 // E′ → E
 		{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T
@@ -27,7 +27,7 @@ var prods = [][]grammar.Production{
 	{
 		{Head: "grammar′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("grammar")}},                           // grammar′ → grammar
 		{Head: "grammar", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("name"), grammar.NonTerminal("decls")}}, // grammar → name decls
-		{Head: "name", Body: grammar.String[grammar.Symbol]{grammar.Terminal("GRAMMAR"), grammar.Terminal("IDENT")}},       // name → GRAMMAR IDENT
+		{Head: "name", Body: grammar.String[grammar.Symbol]{grammar.Terminal("grammar"), grammar.Terminal("IDENT")}},       // name → "grammar" IDENT
 		{Head: "decls", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("decls"), grammar.NonTerminal("decl")}},   // decls → decls decl
 		{Head: "decls", Body: grammar.E}, // decls → ε
 		{Head: "decl", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("token")}},                                                  // decl → token
@@ -51,7 +51,7 @@ var prods = [][]grammar.Production{
 	},
 }
 
-var grammars = []grammar.CFG{
+var grammars = []*grammar.CFG{
 	grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "T", "F"},
@@ -59,7 +59,7 @@ var grammars = []grammar.CFG{
 		"E",
 	),
 	grammar.NewCFG(
-		[]grammar.Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "GRAMMAR", "IDENT", "TOKEN", "STRING", "REGEX"},
+		[]grammar.Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 		[]grammar.NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
 		prods[1][1:],
 		"grammar",
@@ -70,18 +70,18 @@ func TestNew(t *testing.T) {
 	tests := []struct {
 		name                 string
 		L                    lexer.Lexer
-		G                    grammar.CFG
+		G                    *grammar.CFG
 		expectedErrorStrings []string
 	}{
 		{
 			name:                 "Success",
-			L:                    new(MockLexer),
+			L:                    nil,
 			G:                    grammars[0],
 			expectedErrorStrings: nil,
 		},
 		{
 			name: "None_SLR(1)_Grammar",
-			L:    new(MockLexer),
+			L:    nil,
 			G:    grammars[1],
 			expectedErrorStrings: []string{
 				`failed to construct the SLR parsing table: 20 errors occurred:`,

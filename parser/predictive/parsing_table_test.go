@@ -15,19 +15,19 @@ func getTestParsingTables() []*parsingTable {
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
 	)
 
-	pt0.addProduction("E", "id", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
-	pt0.addProduction("E", "(", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
-	pt0.addProduction("E′", "+", grammar.Production{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
-	pt0.addProduction("E′", ")", grammar.Production{Head: "E′", Body: grammar.E})
-	pt0.addProduction("E′", grammar.Endmarker, grammar.Production{Head: "E′", Body: grammar.E})
-	pt0.addProduction("T", "id", grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
-	pt0.addProduction("T", "(", grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
-	pt0.addProduction("T′", "+", grammar.Production{Head: "T′", Body: grammar.E})
-	pt0.addProduction("T′", "*", grammar.Production{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
-	pt0.addProduction("T′", ")", grammar.Production{Head: "T′", Body: grammar.E})
-	pt0.addProduction("T′", grammar.Endmarker, grammar.Production{Head: "T′", Body: grammar.E})
-	pt0.addProduction("F", "id", grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}})
-	pt0.addProduction("F", "(", grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}})
+	pt0.addProduction("E", "id", &grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
+	pt0.addProduction("E", "(", &grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
+	pt0.addProduction("E′", "+", &grammar.Production{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
+	pt0.addProduction("E′", ")", &grammar.Production{Head: "E′", Body: grammar.E})
+	pt0.addProduction("E′", grammar.Endmarker, &grammar.Production{Head: "E′", Body: grammar.E})
+	pt0.addProduction("T", "id", &grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
+	pt0.addProduction("T", "(", &grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
+	pt0.addProduction("T′", "+", &grammar.Production{Head: "T′", Body: grammar.E})
+	pt0.addProduction("T′", "*", &grammar.Production{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
+	pt0.addProduction("T′", ")", &grammar.Production{Head: "T′", Body: grammar.E})
+	pt0.addProduction("T′", grammar.Endmarker, &grammar.Production{Head: "T′", Body: grammar.E})
+	pt0.addProduction("F", "id", &grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}})
+	pt0.addProduction("F", "(", &grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}})
 
 	pt0.setSync("E", ")", true)
 	pt0.setSync("E", grammar.Endmarker, true)
@@ -44,12 +44,12 @@ func getTestParsingTables() []*parsingTable {
 		[]grammar.NonTerminal{"S", "S′", "E"},
 	)
 
-	pt1.addProduction("S", "a", grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("a")}})
-	pt1.addProduction("S", "i", grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("i"), grammar.NonTerminal("E"), grammar.Terminal("t"), grammar.NonTerminal("S"), grammar.NonTerminal("S′")}})
-	pt1.addProduction("S′", "e", grammar.Production{Head: "S′", Body: grammar.E})
-	pt1.addProduction("S′", "e", grammar.Production{Head: "S′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("e"), grammar.NonTerminal("S")}})
-	pt1.addProduction("S′", grammar.Endmarker, grammar.Production{Head: "S′", Body: grammar.E})
-	pt1.addProduction("E", "b", grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("b")}})
+	pt1.addProduction("S", "a", &grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("a")}})
+	pt1.addProduction("S", "i", &grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("i"), grammar.NonTerminal("E"), grammar.Terminal("t"), grammar.NonTerminal("S"), grammar.NonTerminal("S′")}})
+	pt1.addProduction("S′", "e", &grammar.Production{Head: "S′", Body: grammar.E})
+	pt1.addProduction("S′", "e", &grammar.Production{Head: "S′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("e"), grammar.NonTerminal("S")}})
+	pt1.addProduction("S′", grammar.Endmarker, &grammar.Production{Head: "S′", Body: grammar.E})
+	pt1.addProduction("E", "b", &grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("b")}})
 
 	pt2 := newParsingTable(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
@@ -64,7 +64,7 @@ func TestBuildParsingTable(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		G                    grammar.CFG
+		G                    *grammar.CFG
 		expectedTable        ParsingTable
 		expectedErrorStrings []string
 	}{
@@ -139,7 +139,7 @@ func TestParsingTable_addProduction(t *testing.T) {
 		pt         *parsingTable
 		A          grammar.NonTerminal
 		a          grammar.Terminal
-		prod       grammar.Production
+		prod       *grammar.Production
 		expectedOK bool
 	}{
 		{
@@ -147,7 +147,7 @@ func TestParsingTable_addProduction(t *testing.T) {
 			pt:   pt[2],
 			A:    grammar.NonTerminal("F"),
 			a:    grammar.Terminal("("),
-			prod: grammar.Production{
+			prod: &grammar.Production{
 				Head: "F",
 				Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")},
 			},
@@ -158,7 +158,7 @@ func TestParsingTable_addProduction(t *testing.T) {
 			pt:   pt[0],
 			A:    grammar.NonTerminal("F"),
 			a:    grammar.Terminal(")"),
-			prod: grammar.Production{
+			prod: &grammar.Production{
 				Head: "F",
 				Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")},
 			},
@@ -411,7 +411,7 @@ func TestParsingTable_GetProduction(t *testing.T) {
 		A                  grammar.NonTerminal
 		a                  grammar.Terminal
 		expectedOK         bool
-		expectedProduction grammar.Production
+		expectedProduction *grammar.Production
 	}{
 		{
 			name:               "Empty",
@@ -419,7 +419,7 @@ func TestParsingTable_GetProduction(t *testing.T) {
 			A:                  grammar.NonTerminal("E"),
 			a:                  grammar.Terminal("+"),
 			expectedOK:         false,
-			expectedProduction: grammar.Production{},
+			expectedProduction: nil,
 		},
 		{
 			name:       "OK",
@@ -427,7 +427,7 @@ func TestParsingTable_GetProduction(t *testing.T) {
 			A:          grammar.NonTerminal("E′"),
 			a:          grammar.Terminal("+"),
 			expectedOK: true,
-			expectedProduction: grammar.Production{
+			expectedProduction: &grammar.Production{
 				Head: "E′",
 				Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")},
 			},
@@ -438,8 +438,13 @@ func TestParsingTable_GetProduction(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			prod, ok := tc.pt.GetProduction(tc.A, tc.a)
 
-			assert.Equal(t, tc.expectedOK, ok)
-			assert.True(t, prod.Equals(tc.expectedProduction))
+			if tc.expectedOK {
+				assert.True(t, ok)
+				assert.True(t, prod.Equals(tc.expectedProduction))
+			} else {
+				assert.False(t, ok)
+				assert.Nil(t, prod)
+			}
 		})
 	}
 }
@@ -456,11 +461,11 @@ func TestParsingTableError(t *testing.T) {
 				NonTerminal: grammar.NonTerminal("decls"),
 				Terminal:    grammar.Terminal("IDENT"),
 				Productions: set.New(grammar.EqProduction,
-					grammar.Production{
+					&grammar.Production{
 						Head: "decls",
 						Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("decls"), grammar.NonTerminal("decl")},
 					},
-					grammar.Production{
+					&grammar.Production{
 						Head: "decls",
 						Body: grammar.E,
 					},

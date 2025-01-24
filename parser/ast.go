@@ -171,7 +171,7 @@ func equalProductions(lhs, rhs *grammar.Production) bool {
 	if lhs == nil || rhs == nil {
 		return lhs == rhs
 	}
-	return lhs.Equals(*rhs)
+	return lhs.Equals(rhs)
 }
 
 // Symbol returns the non-terminal symbol associated with this internal node

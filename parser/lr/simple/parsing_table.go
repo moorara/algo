@@ -7,37 +7,39 @@ import (
 
 // calculator implemented the lr.Calculator interface for LR(0) items.
 type calculator struct {
-	augG grammar.CFG
+	augG *grammar.CFG
 }
 
 // NewCalculator returns an lr.Calculator for LR(0) items.
 // It provides an implementation of the CLOSURE function
 // based on the LR(0) items of the augmented grammar.
-func NewCalculator(G grammar.CFG) lr.Calculator {
+func NewCalculator(G *grammar.CFG) *lr.AutomatonCalculator {
 	augG := lr.Augment(G)
 
-	return &calculator{
-		augG: augG,
+	return &lr.AutomatonCalculator{
+		Calculator: &calculator{
+			augG: augG,
+		},
 	}
 }
 
 // G returns the augmented context-free grammar.
-func (c *calculator) G() grammar.CFG {
+func (c *calculator) G() *grammar.CFG {
 	return c.augG
 }
 
 // Initial returns the initial LR(0) item "S′ → •S" for an augmented grammar.
 func (c *calculator) Initial() lr.Item {
 	for p := range c.augG.Productions.Get(c.augG.Start).All() {
-		return LR0Item{
-			Production: &p,
-			Start:      &c.augG.Start,
+		return &LR0Item{
+			Production: p,
+			Start:      c.augG.Start,
 			Dot:        0,
 		}
 	}
 
 	// This will never be the case.
-	return LR0Item{}
+	return nil
 }
 
 // CLOSURE computes the closure of a given LR(0) item set.
@@ -59,14 +61,14 @@ func (c *calculator) CLOSURE(I lr.ItemSet) lr.ItemSet {
 
 		// For each item A → α•Bβ in J
 		for i := range J.All() {
-			if i, ok := i.(LR0Item); ok {
+			if i, ok := i.(*LR0Item); ok {
 				if X, ok := i.DotSymbol(); ok {
 					if B, ok := X.(grammar.NonTerminal); ok {
 						// For each production B → γ of G′
 						for BProd := range c.augG.Productions.Get(B).All() {
-							j := LR0Item{
-								Production: &BProd,
-								Start:      &c.augG.Start,
+							j := &LR0Item{
+								Production: BProd,
+								Start:      c.augG.Start,
 								Dot:        0,
 							}
 
@@ -90,16 +92,13 @@ func (c *calculator) CLOSURE(I lr.ItemSet) lr.ItemSet {
 //
 // This method constructs an LR(0) parsing table for any context-free grammar.
 // To identify errors in the table, use the Error method.
-func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
+func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 	/*
 	 * INPUT:  An augmented grammar G′.
 	 * OUTPUT: The SLR-parsing table functions ACTION and GOTO for G′.
 	 */
 
-	calc := &lr.AutomatonCalculator{
-		Calculator: NewCalculator(G),
-	}
-
+	calc := NewCalculator(G)
 	FIRST := calc.G().ComputeFIRST()
 	FOLLOW := calc.G().ComputeFOLLOW(FIRST)
 
@@ -116,7 +115,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 		// The parsing action for state i is determined as follows:
 
 		for item := range I.All() {
-			if item, ok := item.(LR0Item); ok {
+			if item, ok := item.(*LR0Item); ok {
 				// If "A → α•aβ" is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
 				if X, ok := item.DotSymbol(); ok {
 					if a, ok := X.(grammar.Terminal); ok {
@@ -124,7 +123,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 						j := states.For(J)
 
 						// Set ACTION[i,a] to SHIFT j
-						table.AddACTION(lr.State(i), a, lr.Action{
+						table.AddACTION(lr.State(i), a, &lr.Action{
 							Type:  lr.SHIFT,
 							State: j,
 						})
@@ -138,7 +137,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 					// For all a in FOLLOW(A)
 					for a := range FOLLOWA.Terminals.All() {
 						// Set ACTION[i,a] to REDUCE A → α
-						table.AddACTION(lr.State(i), a, lr.Action{
+						table.AddACTION(lr.State(i), a, &lr.Action{
 							Type:       lr.REDUCE,
 							Production: item.Production,
 						})
@@ -146,7 +145,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 
 					if FOLLOWA.IncludesEndmarker {
 						// Set ACTION[i,$] to REDUCE A → α
-						table.AddACTION(lr.State(i), grammar.Endmarker, lr.Action{
+						table.AddACTION(lr.State(i), grammar.Endmarker, &lr.Action{
 							Type:       lr.REDUCE,
 							Production: item.Production,
 						})
@@ -156,7 +155,7 @@ func BuildParsingTable(G grammar.CFG) (*lr.ParsingTable, error) {
 				// If "S′ → S•" is in Iᵢ
 				if item.IsFinal() {
 					// Set ACTION[i,$] to ACCEPT
-					table.AddACTION(lr.State(i), grammar.Endmarker, lr.Action{
+					table.AddACTION(lr.State(i), grammar.Endmarker, &lr.Action{
 						Type: lr.ACCEPT,
 					})
 				}

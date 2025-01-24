@@ -190,7 +190,7 @@ func Example_parse() {
 	G := grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
-		[]grammar.Production{
+		[]*grammar.Production{
 			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}},                         // E → T E′
 			{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}}, // E′ → + T E′
 			{Head: "E′", Body: grammar.E}, // E′ → ε
@@ -235,7 +235,7 @@ func Example_parseAST() {
 	G := grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
-		[]grammar.Production{
+		[]*grammar.Production{
 			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}},                         // E → T E′
 			{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}}, // E′ → + T E′
 			{Head: "E′", Body: grammar.E}, // E′ → ε
@@ -262,7 +262,7 @@ func Example_parsingTable() {
 	G := grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
-		[]grammar.Production{
+		[]*grammar.Production{
 			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}},                         // E → T E′
 			{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}}, // E′ → + T E′
 			{Head: "E′", Body: grammar.E}, // E′ → ε

@@ -8,7 +8,7 @@ import (
 	"github.com/moorara/algo/grammar"
 )
 
-var actions = []Action{
+var actions = []*Action{
 	{
 		Type:  SHIFT,
 		State: 5,
@@ -42,8 +42,8 @@ var actions = []Action{
 func TestEqAction(t *testing.T) {
 	tests := []struct {
 		name           string
-		lhs            Action
-		rhs            Action
+		lhs            *Action
+		rhs            *Action
 		expectedEquals bool
 	}{
 		{
@@ -80,7 +80,7 @@ func TestEqAction(t *testing.T) {
 func TestAction_String(t *testing.T) {
 	tests := []struct {
 		name           string
-		a              Action
+		a              *Action
 		expectedString string
 	}{
 		{
@@ -105,7 +105,7 @@ func TestAction_String(t *testing.T) {
 		},
 		{
 			name:           "INVALID",
-			a:              Action{},
+			a:              &Action{},
 			expectedString: "INVALID ACTION(0)",
 		},
 	}
@@ -118,8 +118,8 @@ func TestAction_String(t *testing.T) {
 func TestAction_Equals(t *testing.T) {
 	tests := []struct {
 		name           string
-		a              Action
-		rhs            Action
+		a              *Action
+		rhs            *Action
 		expectedEquals bool
 	}{
 		{
@@ -156,8 +156,8 @@ func TestAction_Equals(t *testing.T) {
 func TestCmpAction(t *testing.T) {
 	tests := []struct {
 		name            string
-		lhs             Action
-		rhs             Action
+		lhs             *Action
+		rhs             *Action
 		expectedCompare int
 	}{
 		{

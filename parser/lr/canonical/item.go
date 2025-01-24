@@ -22,13 +22,13 @@ import (
 // The lookahead does not impact an item of the form "A → α.β, a" when β is not ε.
 type LR1Item struct {
 	*grammar.Production
-	Start     *grammar.NonTerminal // The start symbol S′ in the augmented grammar.
-	Dot       int                  // Position of the dot in the production body.
+	Start     grammar.NonTerminal // The start symbol S′ in the augmented grammar.
+	Dot       int                 // Position of the dot in the production body.
 	Lookahead grammar.Terminal
 }
 
 // String returns a string representation of an LR(1) item.
-func (i LR1Item) String() string {
+func (i *LR1Item) String() string {
 	var b bytes.Buffer
 
 	fmt.Fprintf(&b, "%s → ", i.Head)
@@ -49,11 +49,11 @@ func (i LR1Item) String() string {
 }
 
 // Equals determines whether or not two LR(1) items are the same.
-func (i LR1Item) Equals(rhs lr.Item) bool {
-	ii, ok := rhs.(LR1Item)
+func (i *LR1Item) Equals(rhs lr.Item) bool {
+	ii, ok := rhs.(*LR1Item)
 	return ok &&
-		i.Production.Equals(*ii.Production) &&
-		i.Start.Equals(*ii.Start) &&
+		i.Production.Equals(ii.Production) &&
+		i.Start.Equals(ii.Start) &&
 		i.Dot == ii.Dot &&
 		i.Lookahead.Equals(ii.Lookahead)
 }
@@ -71,8 +71,8 @@ func (i LR1Item) Equals(rhs lr.Item) bool {
 //     the order is determined by comparing lookahead symbols.
 //
 // This function is useful for sorting LR(1) items, ensuring stability and predictability in their ordering.
-func (i LR1Item) Compare(rhs lr.Item) int {
-	ii, ok := rhs.(LR1Item)
+func (i *LR1Item) Compare(rhs lr.Item) int {
+	ii, ok := rhs.(*LR1Item)
 	if !ok {
 		panic("Compare: rhs must be of type LR1Item")
 	}
@@ -89,9 +89,9 @@ func (i LR1Item) Compare(rhs lr.Item) int {
 		return 1
 	}
 
-	if i.Production.Head.Equals(*i.Start) && !ii.Production.Head.Equals(*ii.Start) {
+	if i.Production.Head.Equals(i.Start) && !ii.Production.Head.Equals(ii.Start) {
 		return -1
-	} else if !i.Production.Head.Equals(*i.Start) && ii.Production.Head.Equals(*ii.Start) {
+	} else if !i.Production.Head.Equals(i.Start) && ii.Production.Head.Equals(ii.Start) {
 		return 1
 	}
 
@@ -101,7 +101,7 @@ func (i LR1Item) Compare(rhs lr.Item) int {
 		return 1
 	}
 
-	if cmp := grammar.CmpProduction(*i.Production, *ii.Production); cmp < 0 {
+	if cmp := grammar.CmpProduction(i.Production, ii.Production); cmp < 0 {
 		return -1
 	} else if cmp > 0 {
 		return 1
@@ -111,8 +111,8 @@ func (i LR1Item) Compare(rhs lr.Item) int {
 }
 
 // IsInitial checks if an LR(1) item is the initial item "S′ → •S, $" in the augmented grammar.
-func (i LR1Item) IsInitial() bool {
-	return i.Production.Head.Equals(*i.Start) &&
+func (i *LR1Item) IsInitial() bool {
+	return i.Production.Head.Equals(i.Start) &&
 		i.Dot == 0 &&
 		i.Lookahead.Equals(grammar.Endmarker)
 }
@@ -125,18 +125,18 @@ func (i LR1Item) IsInitial() bool {
 //   - All items where the dot is not at the beginning (left end) of the item's body.
 //
 // Non-kernel items are those where the dot is at the beginning, except for the initial item.
-func (i LR1Item) IsKernel() bool {
+func (i *LR1Item) IsKernel() bool {
 	return i.IsInitial() || i.Dot > 0
 }
 
 // IsComplete checks if the dot has reached the end of the item's body.
-func (i LR1Item) IsComplete() bool {
+func (i *LR1Item) IsComplete() bool {
 	return i.Dot == len(i.Body)
 }
 
 // IsInitial checks if an LR(1) item is the final item "S′ → S•, $" in the augmented grammar.
-func (i LR1Item) IsFinal() bool {
-	return i.Production.Head.Equals(*i.Start) &&
+func (i *LR1Item) IsFinal() bool {
+	return i.Production.Head.Equals(i.Start) &&
 		i.IsComplete() &&
 		i.Lookahead.Equals(grammar.Endmarker)
 }
@@ -144,7 +144,7 @@ func (i LR1Item) IsFinal() bool {
 // Dot returns the grammar symbol at the dot position in the item's body.
 // If the dot is at the end of the body, it returns nil and false.
 // For example, in the LR(1) item A → α•Bβ, it returns B.
-func (i LR1Item) DotSymbol() (grammar.Symbol, bool) {
+func (i *LR1Item) DotSymbol() (grammar.Symbol, bool) {
 	if i.IsComplete() {
 		return nil, false
 	}
@@ -155,12 +155,12 @@ func (i LR1Item) DotSymbol() (grammar.Symbol, bool) {
 // NextItem generates a new LR(1) item by advancing the dot one position forward in the item's body.
 // If the dot is at the end of the body, it returns an empty LR(1) item and false.
 // For example, for the LR(1) item A → α•Bβ, it returns A → αB•β.
-func (i LR1Item) Next() (lr.Item, bool) {
+func (i *LR1Item) Next() (lr.Item, bool) {
 	if i.IsComplete() {
-		return LR1Item{}, false
+		return nil, false
 	}
 
-	return LR1Item{
+	return &LR1Item{
 		Production: i.Production,
 		Start:      i.Start,
 		Dot:        i.Dot + 1,
@@ -171,14 +171,14 @@ func (i LR1Item) Next() (lr.Item, bool) {
 // GetαPrefix returns the α (prefix) part of an LR(1) item of the form "A → α•Bβ, a".
 // α represents the portion of the production that has already been parsed.
 // α can be the empty string (ε) if nothing has been parsed yet.
-func (i LR1Item) GetαPrefix() grammar.String[grammar.Symbol] {
+func (i *LR1Item) GetαPrefix() grammar.String[grammar.Symbol] {
 	return i.Body[:i.Dot]
 }
 
 // GetβSuffix returns the β (suffix) part of an LR(1) item of the form "A → α•Bβ, a".
 // β represents the portion of the production that has not yet been parsed.
 // β can be the empty string (ε) if there is no remaining unparsed portion.
-func (i LR1Item) GetβSuffix() grammar.String[grammar.Symbol] {
+func (i *LR1Item) GetβSuffix() grammar.String[grammar.Symbol] {
 	if i.IsComplete() {
 		return grammar.E
 	}
