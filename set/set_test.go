@@ -167,6 +167,71 @@ func TestSet_Equal(t *testing.T) {
 	}
 }
 
+func TestSet_Clone(t *testing.T) {
+	eqFunc := generic.NewEqualFunc[string]()
+
+	tests := []struct {
+		name string
+		s    *set[string]
+	}{
+		{
+			name: "Empty",
+			s: &set[string]{
+				members: []string{},
+				equal:   eqFunc,
+			},
+		},
+		{
+			name: "NonEmpty",
+			s: &set[string]{
+				members: []string{"a", "b", "c", "d"},
+				equal:   eqFunc,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			set := tc.s.Clone()
+			assert.True(t, set.Equal(tc.s))
+		})
+	}
+}
+
+func TestSet_CloneEmpty(t *testing.T) {
+	eqFunc := generic.NewEqualFunc[string]()
+
+	tests := []struct {
+		name     string
+		s        *set[string]
+		expected Set[string]
+	}{
+		{
+			name: "Empty",
+			s: &set[string]{
+				members: []string{},
+				equal:   eqFunc,
+			},
+			expected: New[string](eqFunc),
+		},
+		{
+			name: "NonEmpty",
+			s: &set[string]{
+				members: []string{"a", "b", "c", "d"},
+				equal:   eqFunc,
+			},
+			expected: New[string](eqFunc),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			set := tc.s.CloneEmpty()
+			assert.True(t, set.Equal(tc.expected))
+		})
+	}
+}
+
 func TestSet_Size(t *testing.T) {
 	eqFunc := generic.NewEqualFunc[string]()
 
@@ -578,71 +643,6 @@ func TestSet_SelectMatch(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			set := tc.s.SelectMatch(tc.p).(*set[string])
-			assert.True(t, set.Equal(tc.expected))
-		})
-	}
-}
-
-func TestSet_Clone(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name string
-		s    *set[string]
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-		},
-		{
-			name: "NonEmpty",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			set := tc.s.Clone()
-			assert.True(t, set.Equal(tc.s))
-		})
-	}
-}
-
-func TestSet_CloneEmpty(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name     string
-		s        *set[string]
-		expected Set[string]
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			expected: New[string](eqFunc),
-		},
-		{
-			name: "NonEmpty",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			expected: New[string](eqFunc),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			set := tc.s.CloneEmpty()
 			assert.True(t, set.Equal(tc.expected))
 		})
 	}

@@ -90,6 +90,28 @@ func (s *set[T]) Equal(rhs Set[T]) bool {
 	return true
 }
 
+func (s *set[T]) Clone() Set[T] {
+	t := &set[T]{
+		members: make([]T, len(s.members)),
+		equal:   s.equal,
+		format:  s.format,
+	}
+
+	copy(t.members, s.members)
+
+	return t
+}
+
+func (s *set[T]) CloneEmpty() Set[T] {
+	t := &set[T]{
+		members: make([]T, 0),
+		equal:   s.equal,
+		format:  s.format,
+	}
+
+	return t
+}
+
 func (s *set[T]) Size() int {
 	return len(s.members)
 }
@@ -179,26 +201,6 @@ func (s *set[T]) SelectMatch(p generic.Predicate1[T]) generic.Collection1[T] {
 	}
 
 	return newS
-}
-
-func (s *set[T]) Clone() Set[T] {
-	t := &set[T]{
-		members: make([]T, len(s.members)),
-		equal:   s.equal,
-	}
-
-	copy(t.members, s.members)
-
-	return t
-}
-
-func (s *set[T]) CloneEmpty() Set[T] {
-	t := &set[T]{
-		members: make([]T, 0),
-		equal:   s.equal,
-	}
-
-	return t
 }
 
 func (s *set[T]) IsSubset(superset Set[T]) bool {
