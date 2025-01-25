@@ -177,12 +177,77 @@ func TestNewItemSetCollection(t *testing.T) {
 	s := getTestLR0ItemSets()
 
 	tests := []struct {
-		name string
-		sets []ItemSet
+		name               string
+		sets               []ItemSet
+		expectedSubstrings []string
 	}{
 		{
 			name: "OK",
 			sets: []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+			expectedSubstrings: []string{
+				`┌──────[0]───────┐`,
+				`│ E′ → •E        │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ E → •E "+" T   │`,
+				`│ E → •T         │`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+				`┌──────[1]───────┐`,
+				`│ E′ → E•        │`,
+				`│ E → E•"+" T    │`,
+				`└────────────────┘`,
+				`┌──────[2]───────┐`,
+				`│ E → T•         │`,
+				`│ T → T•"*" F    │`,
+				`└────────────────┘`,
+				`┌──────[3]───────┐`,
+				`│ T → F•         │`,
+				`└────────────────┘`,
+				`┌──────[4]───────┐`,
+				`│ F → "("•E ")"  │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ E → •E "+" T   │`,
+				`│ E → •T         │`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+				`┌──────[5]───────┐`,
+				`│ F → "id"•      │`,
+				`└────────────────┘`,
+				`┌──────[6]───────┐`,
+				`│ E → E "+"•T    │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+				`┌──────[7]───────┐`,
+				`│ T → T "*"•F    │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`└────────────────┘`,
+				`┌──────[8]───────┐`,
+				`│ F → "(" E•")"  │`,
+				`│ E → E•"+" T    │`,
+				`└────────────────┘`,
+				`┌──────[9]───────┐`,
+				`│ E → E "+" T•   │`,
+				`│ T → T•"*" F    │`,
+				`└────────────────┘`,
+				`┌──────[10]──────┐`,
+				`│ T → T "*" F•   │`,
+				`└────────────────┘`,
+				`┌──────[11]──────┐`,
+				`│ F → "(" E ")"• │`,
+				`└────────────────┘`,
+			},
 		},
 	}
 
@@ -191,8 +256,14 @@ func TestNewItemSetCollection(t *testing.T) {
 			s := NewItemSetCollection(tc.sets...)
 
 			assert.NotNil(t, s)
+
 			for _, expectedItemSet := range tc.sets {
 				assert.True(t, s.Contains(expectedItemSet))
+			}
+
+			str := s.String()
+			for _, expectedSubstring := range tc.expectedSubstrings {
+				assert.Contains(t, str, expectedSubstring)
 			}
 		})
 	}
@@ -200,14 +271,21 @@ func TestNewItemSetCollection(t *testing.T) {
 
 func TestNewItemSet(t *testing.T) {
 	tests := []struct {
-		name  string
-		items []Item
+		name               string
+		items              []Item
+		expectedSubstrings []string
 	}{
 		{
 			name: "OK",
 			items: []Item{
 				&Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
 				&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
+			},
+			expectedSubstrings: []string{
+				`┌─────────────┐`,
+				`│ E′ → E•     │`,
+				`│ E → E•"+" T │`,
+				`└─────────────┘`,
 			},
 		},
 	}
@@ -217,8 +295,14 @@ func TestNewItemSet(t *testing.T) {
 			s := NewItemSet(tc.items...)
 
 			assert.NotNil(t, s)
+
 			for _, expectedItem := range tc.items {
 				assert.True(t, s.Contains(expectedItem))
+			}
+
+			str := s.String()
+			for _, expectedSubstring := range tc.expectedSubstrings {
+				assert.Contains(t, str, expectedSubstring)
 			}
 		})
 	}

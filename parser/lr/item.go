@@ -29,7 +29,14 @@ type ItemSetCollection set.Set[ItemSet]
 
 // NewItemSetCollection creates a new collection of item sets.
 func NewItemSetCollection(sets ...ItemSet) ItemSetCollection {
-	return set.New(eqItemSet, sets...)
+	return set.NewWithFormat(
+		eqItemSet,
+		func(sets []ItemSet) string {
+			cs := &itemSetCollectionStringer{sets: sets}
+			return cs.String()
+		},
+		sets...,
+	)
 }
 
 // ItemSet represents a set of items for a context-free grammar.
@@ -37,7 +44,14 @@ type ItemSet set.Set[Item]
 
 // NewItemSet creates a new set of items.
 func NewItemSet(items ...Item) ItemSet {
-	return set.New(eqItem, items...)
+	return set.NewWithFormat(
+		eqItem,
+		func(items []Item) string {
+			ss := &itemSetStringer{items: items}
+			return ss.String()
+		},
+		items...,
+	)
 }
 
 // cmpItemSet compares two collections of item sets to establish a consistent and deterministic order.
