@@ -21,8 +21,8 @@ func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 	C := auto1.Canonical()
 
 	states := lr.BuildStateMap(C)
-	terminals := G.OrderTerminals()
-	_, _, nonTerminals := G.OrderNonTerminals()
+	terminals := auto1.G().OrderTerminals()
+	_, _, nonTerminals := auto1.G().OrderNonTerminals()
 	table := lr.NewParsingTable(states.All(), terminals, nonTerminals)
 
 	// 2. State i is constructed from I.
