@@ -43,6 +43,7 @@ func TestDefaultErrorFormat(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			s := DefaultErrorFormat(tc.errs)
+
 			assert.Equal(t, tc.expectedString, s)
 		})
 	}
@@ -85,6 +86,7 @@ func TestBulletErrorFormat(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			s := BulletErrorFormat(tc.errs)
+
 			assert.Equal(t, tc.expectedString, s)
 		})
 	}

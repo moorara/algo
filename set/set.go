@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"iter"
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/moorara/algo/generic"
@@ -32,6 +31,7 @@ type Set[T any] interface {
 type set[T any] struct {
 	members []T
 	equal   generic.EqualFunc[T]
+	format  StringFormat[T]
 }
 
 // New creates a new set.
@@ -39,6 +39,20 @@ func New[T any](equal generic.EqualFunc[T], vals ...T) Set[T] {
 	s := &set[T]{
 		members: make([]T, 0),
 		equal:   equal,
+		format:  defaultStringFormat[T],
+	}
+
+	s.Add(vals...)
+
+	return s
+}
+
+// NewWithFormat creates a new set with a custom format for String method.
+func NewWithFormat[T any](equal generic.EqualFunc[T], format StringFormat[T], vals ...T) Set[T] {
+	s := &set[T]{
+		members: make([]T, 0),
+		equal:   equal,
+		format:  format,
 	}
 
 	s.Add(vals...)
@@ -57,14 +71,7 @@ func (s *set[T]) find(v T) int {
 }
 
 func (s *set[T]) String() string {
-	var i int
-	members := make([]string, len(s.members))
-	for m := range s.All() {
-		members[i] = fmt.Sprintf("%v", m)
-		i++
-	}
-
-	return fmt.Sprintf("{%s}", strings.Join(members, ", "))
+	return s.format(s.members)
 }
 
 func (s *set[T]) Equal(rhs Set[T]) bool {

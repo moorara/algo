@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// errorFormat is a function type for formatting a slice of errors into a single string representation.
+// ErrorFormat is a function type for formatting a slice of errors into a single string representation.
 type ErrorFormat func([]error) string
 
 var (

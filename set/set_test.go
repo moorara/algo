@@ -30,6 +30,37 @@ func TestNew(t *testing.T) {
 
 			assert.NotNil(t, s)
 			assert.Equal(t, tc.expectedMembers, s.(*set[string]).members)
+			assert.NotNil(t, s.(*set[string]).equal)
+			assert.NotNil(t, s.(*set[string]).format)
+		})
+	}
+}
+
+func TestNewWithFormat(t *testing.T) {
+	tests := []struct {
+		name            string
+		equal           generic.EqualFunc[string]
+		format          StringFormat[string]
+		vals            []string
+		expectedMembers []string
+	}{
+		{
+			name:            "OK",
+			equal:           generic.NewEqualFunc[string](),
+			format:          defaultStringFormat[string],
+			vals:            []string{"a", "b", "c", "d"},
+			expectedMembers: []string{"a", "b", "c", "d"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewWithFormat(tc.equal, tc.format, tc.vals...)
+
+			assert.NotNil(t, s)
+			assert.Equal(t, tc.expectedMembers, s.(*set[string]).members)
+			assert.NotNil(t, s.(*set[string]).equal)
+			assert.NotNil(t, s.(*set[string]).format)
 		})
 	}
 }
@@ -38,34 +69,33 @@ func TestSet_String(t *testing.T) {
 	eqFunc := generic.NewEqualFunc[string]()
 
 	tests := []struct {
-		name               string
-		s                  *set[string]
-		expectedSubstrings []string
+		name           string
+		s              *set[string]
+		expectedString string
 	}{
 		{
 			name: "Empty",
 			s: &set[string]{
 				members: []string{},
 				equal:   eqFunc,
+				format:  defaultStringFormat[string],
 			},
-			expectedSubstrings: []string{},
+			expectedString: "{}",
 		},
 		{
 			name: "NonEmpty",
 			s: &set[string]{
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
+				format:  defaultStringFormat[string],
 			},
-			expectedSubstrings: []string{"a", "b", "c", "d"},
+			expectedString: "{a, b, c, d}",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			str := tc.s.String()
-			for _, expectedSubstring := range tc.expectedSubstrings {
-				assert.Contains(t, str, expectedSubstring)
-			}
+			assert.Equal(t, tc.expectedString, tc.s.String())
 		})
 	}
 }
