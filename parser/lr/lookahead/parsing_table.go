@@ -11,12 +11,12 @@ import (
 // This method constructs an LALR(1) parsing table for any context-free grammar.
 // To identify errors in the table, use the Error method.
 func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
-	// TODO:
+	// TODO
 	return nil, nil
 }
 
-// LALRCollection computes and returns the kernels of the LALR(1) collection of sets of items for a context-free grammar.
-func LALRCollection(G *grammar.CFG) lr.ItemSetCollection {
+// ComputeLALR1Kernels computes and returns the kernels of the LALR(1) collection of sets of items for a context-free grammar.
+func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 	/*
 	 * INPUT:  An augmented grammar G′.
 	 * OUTPUT: The kernels of the LALR(1) collection of sets of items for G′.
@@ -56,19 +56,19 @@ func LALRCollection(G *grammar.CFG) lr.ItemSetCollection {
 	auto1 := lr.NewLR1KernelAutomaton(G)
 
 	// Construct the kernels of the sets of LR(0) items for G′.
-	C := auto0.Canonical()
+	K0 := auto0.Canonical()
 
 	// Map Kernel sets of LR(0) items to state numbers.
-	S := lr.BuildStateMap(C)
+	S0 := lr.BuildStateMap(K0)
 
 	// This table memoize which states propagate their lookaheads to which other states.
-	propagations := make([]set.Set[lr.State], len(S))
+	propagations := make([]set.Set[lr.State], len(S0))
 	for s := range propagations {
 		propagations[s] = set.New(lr.EqState)
 	}
 
 	// This table is used for computing lookaheads for all states.
-	lookaheads := make([]set.Set[grammar.Terminal], len(S))
+	lookaheads := make([]set.Set[grammar.Terminal], len(S0))
 	for s := range lookaheads {
 		lookaheads[s] = set.New(grammar.EqTerminal)
 	}
@@ -85,8 +85,8 @@ func LALRCollection(G *grammar.CFG) lr.ItemSetCollection {
 	//
 	//   • Determine which lookaheads are generated spontaneously for which states.
 	//   • Build a table to memoize which states propagate their lookaheads to which other states.
-	for I := range C.All() {
-		currS := S.Find(I)
+	for I := range K0.All() {
+		currS := S0.Find(I)
 
 		for i := range I.All() {
 			if i, ok := i.(*lr.Item0); ok {
@@ -95,7 +95,7 @@ func LALRCollection(G *grammar.CFG) lr.ItemSetCollection {
 				for j := range J.All() {
 					if X, ok := j.DotSymbol(); ok {
 						next := auto0.GOTO(I, X)
-						nextS := S.Find(next)
+						nextS := S0.Find(next)
 
 						if j, ok := j.(*lr.Item1); ok {
 							if l := j.Lookahead; l.Equal(grammar.Endmarker) {
@@ -127,5 +127,22 @@ func LALRCollection(G *grammar.CFG) lr.ItemSetCollection {
 		}
 	}
 
-	return nil
+	// Build the kernels of the LALR(1) collection of item sets.
+	K1 := lr.NewItemSetCollection()
+
+	for s, I := range S0 {
+		J := lr.NewItemSet()
+
+		for i := range I.All() {
+			if i, ok := i.(*lr.Item0); ok {
+				for lookahead := range lookaheads[s].All() {
+					J.Add(i.Item1(lookahead))
+				}
+			}
+		}
+
+		K1.Add(J)
+	}
+
+	return K1
 }
