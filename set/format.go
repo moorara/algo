@@ -12,7 +12,6 @@ func defaultStringFormat[T any](members []T) string {
 	vals := make([]string, len(members))
 	for i, m := range members {
 		vals[i] = fmt.Sprintf("%v", m)
-		i++
 	}
 
 	return fmt.Sprintf("{%s}", strings.Join(vals, ", "))

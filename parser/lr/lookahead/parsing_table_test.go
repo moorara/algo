@@ -9,6 +9,7 @@ import (
 	"github.com/moorara/algo/parser/lr"
 )
 
+// nolint: unused
 var prods = [][]*grammar.Production{
 	{
 		{Head: "S′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("S")}},                                                 // S′ → S
@@ -54,6 +55,7 @@ var prods = [][]*grammar.Production{
 	},
 }
 
+// nolint: unused
 var grammars = []*grammar.CFG{
 	grammar.NewCFG(
 		[]grammar.Terminal{"=", "*", "id"},
@@ -75,6 +77,7 @@ var grammars = []*grammar.CFG{
 	),
 }
 
+// nolint: unused
 func getTestParsingTables() []lr.ParsingTable {
 	pt0 := lr.NewParsingTable(
 		[]lr.State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
