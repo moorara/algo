@@ -22,7 +22,7 @@ func New(L lexer.Lexer, G *grammar.CFG) (parser.Parser, error) {
 	T, err := BuildParsingTable(G)
 	if err != nil {
 		return nil, &parser.ParseError{
-			Description: "failed to construct the SLR parsing table",
+			Description: "failed to construct the Canonical LR parsing table",
 			Cause:       err,
 		}
 	}
