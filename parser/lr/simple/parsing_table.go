@@ -22,13 +22,13 @@ func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 	// 1. Construct C = {I₀, I₁, ..., Iₙ}, the collection of sets of LR(0) items for G′.
 	C := auto0.Canonical()
 
-	states := lr.BuildStateMap(C)
+	S := lr.BuildStateMap(C)
 	terminals := auto0.G().OrderTerminals()
 	_, _, nonTerminals := auto0.G().OrderNonTerminals()
-	table := lr.NewParsingTable(states.All(), terminals, nonTerminals)
+	table := lr.NewParsingTable(S.States(), terminals, nonTerminals)
 
 	// 2. State i is constructed from I.
-	for i, I := range states {
+	for i, I := range S {
 		// The parsing action for state i is determined as follows:
 
 		for item := range I.All() {
@@ -37,7 +37,7 @@ func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 				if X, ok := item.DotSymbol(); ok {
 					if a, ok := X.(grammar.Terminal); ok {
 						J := auto0.GOTO(I, a)
-						j := states.Find(J)
+						j := S.Find(J)
 
 						// Set ACTION[i,a] to SHIFT j
 						table.AddACTION(lr.State(i), a, &lr.Action{
@@ -87,7 +87,7 @@ func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 		for A := range auto0.G().NonTerminals.All() {
 			if !A.Equal(auto0.G().Start) {
 				J := auto0.GOTO(I, A)
-				j := states.Find(J)
+				j := S.Find(J)
 
 				// Set GOTO[i,A] = j
 				table.SetGOTO(lr.State(i), A, j)

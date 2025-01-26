@@ -44,8 +44,8 @@ func (m StateMap) Find(I ItemSet) State {
 	return ErrState
 }
 
-// All returns all states in the map.
-func (m StateMap) All() []State {
+// States returns all states in the map.
+func (m StateMap) States() []State {
 	states := make([]State, len(m))
 	for i := range m {
 		states[i] = State(i)

@@ -59,7 +59,7 @@ func TestStateMap_Find(t *testing.T) {
 	}
 }
 
-func TestStateMap_All(t *testing.T) {
+func TestStateMap_States(t *testing.T) {
 	s := getTestLR0ItemSets()
 
 	tests := []struct {
@@ -75,7 +75,7 @@ func TestStateMap_All(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc.expectedStates, tc.m.All())
+		assert.Equal(t, tc.expectedStates, tc.m.States())
 	}
 }
 
