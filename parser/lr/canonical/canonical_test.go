@@ -27,7 +27,7 @@ func TestNew(t *testing.T) {
 			L:    nil,
 			G:    grammars[1],
 			expectedErrorStrings: []string{
-				`failed to construct the SLR parsing table: 8 errors occurred:`,
+				`failed to construct Canonical LR parsing table: 8 errors occurred:`,
 				`shift/reduce conflict at ACTION[2, "*"]`,
 				`shift/reduce conflict at ACTION[2, "+"]`,
 				`shift/reduce conflict at ACTION[3, "*"]`,
