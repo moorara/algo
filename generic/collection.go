@@ -2,6 +2,13 @@ package generic
 
 import "iter"
 
+// KeyValue is a generic struct that holds a key-value pair.
+// K and V represent the types of the key and value, respectively
+type KeyValue[K, V any] struct {
+	Key K
+	Val V
+}
+
 type (
 	// Predicate1 is a generic function type that takes a value
 	//   and returns a boolean value, used for evaluating a condition.
@@ -93,13 +100,6 @@ type (
 		SelectMatch(Predicate2[K, V]) Collection2[K, V]
 	}
 )
-
-// KeyValue is a generic struct that holds a key-value pair.
-// K and V represent the types of the key and value, respectively
-type KeyValue[K, V any] struct {
-	Key K
-	Val V
-}
 
 // Collect1 collects items in a collection from seq into a new slice and returns it.
 func Collect1[T any](seq iter.Seq[T]) []T {
