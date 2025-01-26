@@ -9,7 +9,6 @@ import (
 	"github.com/moorara/algo/parser/lr"
 )
 
-// nolint: unused
 var prods = [][]*grammar.Production{
 	{
 		{Head: "S′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("S")}},                                                 // S′ → S
@@ -55,7 +54,6 @@ var prods = [][]*grammar.Production{
 	},
 }
 
-// nolint: unused
 var grammars = []*grammar.CFG{
 	grammar.NewCFG(
 		[]grammar.Terminal{"=", "*", "id"},
@@ -77,7 +75,6 @@ var grammars = []*grammar.CFG{
 	),
 }
 
-// nolint: unused
 func getTestParsingTables() []lr.ParsingTable {
 	pt0 := lr.NewParsingTable(
 		[]lr.State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
@@ -101,12 +98,32 @@ func getTestParsingTables() []lr.ParsingTable {
 }
 
 func TestBuildParsingTable(t *testing.T) {
+	pt := getTestParsingTables()
+
 	tests := []struct {
 		name                 string
 		G                    *grammar.CFG
 		expectedTable        lr.ParsingTable
 		expectedErrorStrings []string
-	}{}
+	}{
+		{
+			name:          "1st",
+			G:             grammars[0],
+			expectedTable: pt[0],
+		},
+		/* {
+			name:          "2nd",
+			G:             grammars[1],
+			expectedTable: pt[1],
+		},
+		{
+			name: "3rd",
+			G:    grammars[2],
+			expectedErrorStrings: []string{
+				`placeholder`,
+			},
+		}, */
+	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

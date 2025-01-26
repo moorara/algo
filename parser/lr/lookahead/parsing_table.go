@@ -1,9 +1,9 @@
 package lookahead
 
 import (
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/parser/lr"
-	"github.com/moorara/algo/set"
 )
 
 // BuildParsingTable constructs a parsing table for an LALR parser.
@@ -55,26 +55,15 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 	auto0 := lr.NewLR0KernelAutomaton(G)
 	auto1 := lr.NewLR1KernelAutomaton(G)
 
-	// Construct the kernels of the sets of LR(0) items for G′.
-	K0 := auto0.Canonical()
+	K0 := auto0.Canonical()    // Construct the kernels of the sets of LR(0) items for G′.
+	S0 := lr.BuildStateMap(K0) // Map Kernel sets of LR(0) items to state numbers.
 
-	// Map Kernel sets of LR(0) items to state numbers.
-	S0 := lr.BuildStateMap(K0)
-
-	// This table memoize which states propagate their lookaheads to which other states.
-	propagations := make([]set.Set[lr.State], len(S0))
-	for s := range propagations {
-		propagations[s] = set.New(lr.EqState)
-	}
-
-	// This table is used for computing lookaheads for all states.
-	lookaheads := make([]set.Set[grammar.Terminal], len(S0))
-	for s := range lookaheads {
-		lookaheads[s] = set.New(grammar.EqTerminal)
-	}
+	propagations := NewPropagationTable() // This table memoize which items propagate their lookaheads to which other items.
+	lookaheads := NewLookaheadTable()     // This table is used for computing lookaheads for all states.
 
 	// Initialize the table with the spontaneous lookahead $ for the initial item "S′ → •S".
-	lookaheads[0].Add(grammar.Endmarker)
+	init := &scopedItem{ItemSet: 0, Item: 0}
+	lookaheads.Add(init, grammar.Endmarker)
 
 	// For each state, kernel set of LR(0) items, determine:
 	//
@@ -85,25 +74,38 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 	//
 	//   • Determine which lookaheads are generated spontaneously for which states.
 	//   • Build a table to memoize which states propagate their lookaheads to which other states.
-	for I := range K0.All() {
-		currS := S0.Find(I)
+	for s, items := range S0 {
+		s := lr.State(s)
+		I := S0.ItemSet(s)
 
-		for i := range I.All() {
-			if i, ok := i.(*lr.Item0); ok {
-				J := auto1.CLOSURE(lr.NewItemSet(i.Item1(grammar.Endmarker)))
+		for i, item := range items {
+			from := &scopedItem{ItemSet: s, Item: i}
 
-				for j := range J.All() {
-					if X, ok := j.DotSymbol(); ok {
-						next := auto0.GOTO(I, X)
-						nextS := S0.Find(next)
+			// J = CLOSURE({[A → α.β, $]})
+			J := auto1.CLOSURE(
+				lr.NewItemSet(
+					item.(*lr.Item0).Item1(grammar.Endmarker),
+				),
+			)
 
-						if j, ok := j.(*lr.Item1); ok {
-							if l := j.Lookahead; l.Equal(grammar.Endmarker) {
-								propagations[currS].Add(nextS)
-							} else {
-								lookaheads[nextS].Add(l)
-							}
-						}
+			for j := range J.All() {
+				if X, ok := j.DotSymbol(); ok {
+					nextI := auto0.GOTO(I, X) // GOTO(I,X)
+					nextj, _ := j.Next()      // B → γX.δ
+
+					// Find B → γX.δ in GOTO(I,X)
+					to := new(scopedItem)
+					to.ItemSet = S0.FindItemSet(nextI)
+					to.Item = S0.FindItem(to.ItemSet, nextj.(*lr.Item1).Item0())
+
+					if lookahead := j.(*lr.Item1).Lookahead; lookahead.Equal(grammar.Endmarker) {
+						// If [B → γ.Xδ, $] is in J,
+						// conclude that lookaheads propagate from A → α.β in I to B → γX.δ in GOTO(I,X).
+						propagations.Add(from, to)
+					} else {
+						// If [B → γ.Xδ, a] is in J, and a is not $,
+						// conclude that lookahead is generated spontaneously for item B → γX.δ in GOTO(I,X).
+						lookaheads.Add(to, lookahead)
 					}
 				}
 			}
@@ -115,12 +117,11 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 	for updated := true; updated; {
 		updated = false
 
-		for from := range lookaheads {
-			if lookaheads[from].Size() > 0 {
-				for to := range propagations[from].All() {
-					if union := lookaheads[to].Union(lookaheads[from]); union.Size() > lookaheads[to].Size() {
-						lookaheads[to] = union
-						updated = true
+		for from := range lookaheads.All() {
+			if fromL := generic.Collect1(lookaheads.Get(from).All()); len(fromL) > 0 {
+				if set := propagations.Get(from); set != nil {
+					for to := range set.All() {
+						updated = lookaheads.Add(to, fromL...)
 					}
 				}
 			}
@@ -130,14 +131,13 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 	// Build the kernels of the LALR(1) collection of item sets.
 	K1 := lr.NewItemSetCollection()
 
-	for s, I := range S0 {
+	for s, items := range S0 {
 		J := lr.NewItemSet()
 
-		for i := range I.All() {
-			if i, ok := i.(*lr.Item0); ok {
-				for lookahead := range lookaheads[s].All() {
-					J.Add(i.Item1(lookahead))
-				}
+		for i := range items {
+			item := &scopedItem{ItemSet: lr.State(s), Item: i}
+			for lookahead := range lookaheads.Get(item).All() {
+				J.Add(items[i].(*lr.Item0).Item1(lookahead))
 			}
 		}
 

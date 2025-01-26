@@ -15,7 +15,22 @@ func TestNew(t *testing.T) {
 		L                    lexer.Lexer
 		G                    *grammar.CFG
 		expectedErrorStrings []string
-	}{}
+	}{
+		/* {
+			name:                 "Success",
+			L:                    nil,
+			G:                    grammars[1],
+			expectedErrorStrings: nil,
+		},
+		{
+			name: "None_LALR(1)_Grammar",
+			L:    nil,
+			G:    grammars[2],
+			expectedErrorStrings: []string{
+				`placeholder`,
+			},
+		}, */
+	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
