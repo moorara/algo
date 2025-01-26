@@ -12,3 +12,27 @@
 // For more details on parsing theory,
 // refer to "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 package lookahead
+
+import (
+	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/lexer"
+	"github.com/moorara/algo/parser"
+	"github.com/moorara/algo/parser/lr"
+)
+
+// New creates a new LALR parser for a given context-free grammar (CFG).
+// It requires a lexer for lexical analysis, which reads the input tokens (terminal symbols).
+func New(L lexer.Lexer, G *grammar.CFG) (parser.Parser, error) {
+	T, err := BuildParsingTable(G)
+	if err != nil {
+		return nil, &parser.ParseError{
+			Description: "failed to construct LALR parsing table",
+			Cause:       err,
+		}
+	}
+
+	return &lr.Parser{
+		L: L,
+		T: T,
+	}, nil
+}

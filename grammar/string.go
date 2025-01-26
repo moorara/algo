@@ -17,11 +17,11 @@ var (
 	HashString = hashFuncForString()
 
 	EqString = func(lhs, rhs String[Symbol]) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 
 	eqStringSet = func(lhs, rhs set.Set[String[Symbol]]) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 )
 
@@ -42,14 +42,14 @@ func (s String[T]) String() string {
 	return strings.Join(names, " ")
 }
 
-// Equals determines whether or not two strings are the same.
-func (s String[T]) Equals(rhs String[T]) bool {
+// Equal determines whether or not two strings are the same.
+func (s String[T]) Equal(rhs String[T]) bool {
 	if len(s) != len(rhs) {
 		return false
 	}
 
 	for i := range s {
-		if !s[i].Equals(rhs[i]) {
+		if !s[i].Equal(rhs[i]) {
 			return false
 		}
 	}
@@ -60,7 +60,7 @@ func (s String[T]) Equals(rhs String[T]) bool {
 // ContainsSymbol checks whether a string contains the given symbol.
 func (s String[T]) ContainsSymbol(symbol T) bool {
 	for _, sym := range s {
-		if sym.Equals(symbol) {
+		if sym.Equal(symbol) {
 			return true
 		}
 	}
@@ -71,13 +71,13 @@ func (s String[T]) ContainsSymbol(symbol T) bool {
 // HasPrefix checks whether a string starts with the given prefix.
 func (s String[T]) HasPrefix(prefix String[T]) bool {
 	ls, lp := len(s), len(prefix)
-	return ls >= lp && s[:lp].Equals(prefix)
+	return ls >= lp && s[:lp].Equal(prefix)
 }
 
 // HasSuffix checks whether a string ends with the given suffix.
 func (s String[T]) HasSuffix(prefix String[T]) bool {
 	ls, lp := len(s), len(prefix)
-	return ls >= lp && s[ls-lp:].Equals(prefix)
+	return ls >= lp && s[ls-lp:].Equal(prefix)
 }
 
 // AnyMatch returns true if at least one symbol satisfies the provided predicate.

@@ -9,49 +9,49 @@ import (
 	"github.com/moorara/algo/set"
 )
 
-func getTestParsingTables() []*ParsingTable {
+func getTestParsingTables() []*parsingTable {
 	pt0 := NewParsingTable(
 		[]State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "T", "F"},
-	)
+	).(*parsingTable)
 
 	pt0.AddACTION(0, "id", &Action{Type: SHIFT, State: 5})
 	pt0.AddACTION(0, "(", &Action{Type: SHIFT, State: 4})
 	pt0.AddACTION(1, "+", &Action{Type: SHIFT, State: 6})
 	pt0.AddACTION(1, grammar.Endmarker, &Action{Type: ACCEPT})
-	pt0.AddACTION(2, "+", &Action{Type: REDUCE, Production: prods[0][1]})
+	pt0.AddACTION(2, "+", &Action{Type: REDUCE, Production: prods[2][2]})
 	pt0.AddACTION(2, "*", &Action{Type: SHIFT, State: 7})
-	pt0.AddACTION(2, ")", &Action{Type: REDUCE, Production: prods[0][1]})
-	pt0.AddACTION(2, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][1]})
-	pt0.AddACTION(3, "+", &Action{Type: REDUCE, Production: prods[0][3]})
-	pt0.AddACTION(3, "*", &Action{Type: REDUCE, Production: prods[0][3]})
-	pt0.AddACTION(3, ")", &Action{Type: REDUCE, Production: prods[0][3]})
-	pt0.AddACTION(3, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][3]})
+	pt0.AddACTION(2, ")", &Action{Type: REDUCE, Production: prods[2][2]})
+	pt0.AddACTION(2, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][2]})
+	pt0.AddACTION(3, "+", &Action{Type: REDUCE, Production: prods[2][4]})
+	pt0.AddACTION(3, "*", &Action{Type: REDUCE, Production: prods[2][4]})
+	pt0.AddACTION(3, ")", &Action{Type: REDUCE, Production: prods[2][4]})
+	pt0.AddACTION(3, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][4]})
 	pt0.AddACTION(4, "id", &Action{Type: SHIFT, State: 5})
 	pt0.AddACTION(4, "(", &Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(5, "+", &Action{Type: REDUCE, Production: prods[0][5]})
-	pt0.AddACTION(5, "*", &Action{Type: REDUCE, Production: prods[0][5]})
-	pt0.AddACTION(5, ")", &Action{Type: REDUCE, Production: prods[0][5]})
-	pt0.AddACTION(5, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][5]})
+	pt0.AddACTION(5, "+", &Action{Type: REDUCE, Production: prods[2][6]})
+	pt0.AddACTION(5, "*", &Action{Type: REDUCE, Production: prods[2][6]})
+	pt0.AddACTION(5, ")", &Action{Type: REDUCE, Production: prods[2][6]})
+	pt0.AddACTION(5, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][6]})
 	pt0.AddACTION(6, "id", &Action{Type: SHIFT, State: 5})
 	pt0.AddACTION(6, "(", &Action{Type: SHIFT, State: 4})
 	pt0.AddACTION(7, "id", &Action{Type: SHIFT, State: 5})
 	pt0.AddACTION(7, "(", &Action{Type: SHIFT, State: 4})
 	pt0.AddACTION(8, "+", &Action{Type: SHIFT, State: 6})
 	pt0.AddACTION(8, ")", &Action{Type: SHIFT, State: 11})
-	pt0.AddACTION(9, "+", &Action{Type: REDUCE, Production: prods[0][0]})
+	pt0.AddACTION(9, "+", &Action{Type: REDUCE, Production: prods[2][1]})
 	pt0.AddACTION(9, "*", &Action{Type: SHIFT, State: 7})
-	pt0.AddACTION(9, ")", &Action{Type: REDUCE, Production: prods[0][0]})
-	pt0.AddACTION(9, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][0]})
-	pt0.AddACTION(10, "+", &Action{Type: REDUCE, Production: prods[0][2]})
-	pt0.AddACTION(10, "*", &Action{Type: REDUCE, Production: prods[0][2]})
-	pt0.AddACTION(10, ")", &Action{Type: REDUCE, Production: prods[0][2]})
-	pt0.AddACTION(10, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][2]})
-	pt0.AddACTION(11, "+", &Action{Type: REDUCE, Production: prods[0][4]})
-	pt0.AddACTION(11, "*", &Action{Type: REDUCE, Production: prods[0][4]})
-	pt0.AddACTION(11, ")", &Action{Type: REDUCE, Production: prods[0][4]})
-	pt0.AddACTION(11, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[0][4]})
+	pt0.AddACTION(9, ")", &Action{Type: REDUCE, Production: prods[2][1]})
+	pt0.AddACTION(9, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][1]})
+	pt0.AddACTION(10, "+", &Action{Type: REDUCE, Production: prods[2][3]})
+	pt0.AddACTION(10, "*", &Action{Type: REDUCE, Production: prods[2][3]})
+	pt0.AddACTION(10, ")", &Action{Type: REDUCE, Production: prods[2][3]})
+	pt0.AddACTION(10, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][3]})
+	pt0.AddACTION(11, "+", &Action{Type: REDUCE, Production: prods[2][5]})
+	pt0.AddACTION(11, "*", &Action{Type: REDUCE, Production: prods[2][5]})
+	pt0.AddACTION(11, ")", &Action{Type: REDUCE, Production: prods[2][5]})
+	pt0.AddACTION(11, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][5]})
 
 	pt0.SetGOTO(0, "E", 1)
 	pt0.SetGOTO(0, "T", 2)
@@ -65,9 +65,9 @@ func getTestParsingTables() []*ParsingTable {
 
 	pt1 := NewParsingTable(
 		[]State{0, 1, 2, 3, 4, 5, 6},
-		[]grammar.Terminal{"a", "b", "c", "d"},
+		[]grammar.Terminal{"a", "b", "c", "d", grammar.Endmarker},
 		[]grammar.NonTerminal{"A", "B", "C", "D"},
-	)
+	).(*parsingTable)
 
 	pt1.AddACTION(0, "a", &Action{
 		Type:  SHIFT,
@@ -98,7 +98,7 @@ func getTestParsingTables() []*ParsingTable {
 		},
 	})
 
-	return []*ParsingTable{pt0, pt1}
+	return []*parsingTable{pt0, pt1}
 }
 
 func TestNewParsingTable(t *testing.T) {
@@ -121,8 +121,8 @@ func TestNewParsingTable(t *testing.T) {
 			pt := NewParsingTable(tc.states, tc.terminals, tc.nonTerminals)
 
 			assert.NotNil(t, pt)
-			assert.NotNil(t, pt.actions)
-			assert.NotNil(t, pt.gotos)
+			assert.NotNil(t, pt.(*parsingTable).actions)
+			assert.NotNil(t, pt.(*parsingTable).gotos)
 		})
 	}
 }
@@ -132,7 +132,7 @@ func TestParsingTable_String(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		pt                 *ParsingTable
+		pt                 *parsingTable
 		expectedSubstrings []string
 	}{
 		{
@@ -183,32 +183,32 @@ func TestParsingTable_String(t *testing.T) {
 	}
 }
 
-func TestParsingTable_Equals(t *testing.T) {
+func TestParsingTable_Equal(t *testing.T) {
 	pt := getTestParsingTables()
 
 	tests := []struct {
-		name           string
-		pt             *ParsingTable
-		rhs            *ParsingTable
-		expectedEquals bool
+		name          string
+		pt            *parsingTable
+		rhs           ParsingTable
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			pt:             pt[0],
-			rhs:            pt[0],
-			expectedEquals: true,
+			name:          "Equal",
+			pt:            pt[0],
+			rhs:           pt[0],
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			pt:             pt[0],
-			rhs:            pt[1],
-			expectedEquals: false,
+			name:          "NotEqual",
+			pt:            pt[0],
+			rhs:           pt[1],
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.pt.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.pt.Equal(tc.rhs))
 		})
 	}
 }
@@ -218,7 +218,7 @@ func TestParsingTable_AddACTION(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		pt         *ParsingTable
+		pt         *parsingTable
 		s          State
 		a          grammar.Terminal
 		action     *Action
@@ -256,7 +256,7 @@ func TestParsingTable_SetGOTO(t *testing.T) {
 
 	tests := []struct {
 		name string
-		pt   *ParsingTable
+		pt   *parsingTable
 		s    State
 		A    grammar.NonTerminal
 		next State
@@ -288,7 +288,7 @@ func TestParsingTable_Error(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		pt                   *ParsingTable
+		pt                   *parsingTable
 		expectedErrorStrings []string
 	}{
 		{
@@ -333,7 +333,7 @@ func TestParsingTable_ACTION(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		pt             *ParsingTable
+		pt             *parsingTable
 		s              State
 		a              grammar.Terminal
 		expectedAction *Action
@@ -373,10 +373,10 @@ func TestParsingTable_ACTION(t *testing.T) {
 			action, err := tc.pt.ACTION(tc.s, tc.a)
 
 			if len(tc.expectedError) == 0 {
-				assert.True(t, action.Equals(tc.expectedAction))
+				assert.True(t, action.Equal(tc.expectedAction))
 				assert.NoError(t, err)
 			} else {
-				assert.True(t, action.Equals(tc.expectedAction))
+				assert.True(t, action.Equal(tc.expectedAction))
 				assert.EqualError(t, err, tc.expectedError)
 			}
 		})
@@ -388,7 +388,7 @@ func TestParsingTable_GOTO(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		pt            *ParsingTable
+		pt            *parsingTable
 		s             State
 		A             grammar.NonTerminal
 		expectedState State

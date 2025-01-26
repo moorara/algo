@@ -413,17 +413,17 @@ func TestCFG_Clone(t *testing.T) {
 			newG := tc.g.Clone()
 			assert.NoError(t, newG.Verify())
 			assert.False(t, newG == tc.g)
-			assert.True(t, newG.Equals(tc.g))
+			assert.True(t, newG.Equal(tc.g))
 		})
 	}
 }
 
-func TestCFG_Equals(t *testing.T) {
+func TestCFG_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		lhs            *CFG
-		rhs            *CFG
-		expectedEquals bool
+		name          string
+		lhs           *CFG
+		rhs           *CFG
+		expectedEqual bool
 	}{
 		{
 			name: "TerminalsNotEqual",
@@ -439,7 +439,7 @@ func TestCFG_Equals(t *testing.T) {
 				[]*Production{},
 				"S",
 			),
-			expectedEquals: false,
+			expectedEqual: false,
 		},
 		{
 			name: "NonTerminalsNotEqual",
@@ -455,7 +455,7 @@ func TestCFG_Equals(t *testing.T) {
 				[]*Production{},
 				"S",
 			),
-			expectedEquals: false,
+			expectedEqual: false,
 		},
 		{
 			name: "ProductionsNotEqual",
@@ -488,7 +488,7 @@ func TestCFG_Equals(t *testing.T) {
 				},
 				"S",
 			),
-			expectedEquals: false,
+			expectedEqual: false,
 		},
 		{
 			name: "StartSymbolsNotEqual",
@@ -522,7 +522,7 @@ func TestCFG_Equals(t *testing.T) {
 				},
 				"A",
 			),
-			expectedEquals: false,
+			expectedEqual: false,
 		},
 		{
 			name: "Equal",
@@ -558,13 +558,13 @@ func TestCFG_Equals(t *testing.T) {
 				},
 				"S",
 			),
-			expectedEquals: true,
+			expectedEqual: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.lhs.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.lhs.Equal(tc.rhs))
 		})
 	}
 }
@@ -663,7 +663,7 @@ func TestCFG_Symbols(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
 			symbols := tc.g.Symbols()
-			assert.True(t, symbols.Equals(tc.expectedSymbols))
+			assert.True(t, symbols.Equal(tc.expectedSymbols))
 		})
 	}
 }
@@ -1146,7 +1146,7 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
 			g := tc.g.EliminateEmptyProductions()
 			assert.NoError(t, g.Verify())
-			assert.True(t, g.Equals(tc.expectedGrammar))
+			assert.True(t, g.Equal(tc.expectedGrammar))
 		})
 	}
 }
@@ -1317,7 +1317,7 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
 			g := tc.g.EliminateSingleProductions()
 			assert.NoError(t, g.Verify())
-			assert.True(t, g.Equals(tc.expectedGrammar))
+			assert.True(t, g.Equal(tc.expectedGrammar))
 		})
 	}
 }
@@ -1409,7 +1409,7 @@ func TestCFG_EliminateUnreachableProductions(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
 			g := tc.g.EliminateUnreachableProductions()
 			assert.NoError(t, g.Verify())
-			assert.True(t, g.Equals(tc.expectedGrammar))
+			assert.True(t, g.Equal(tc.expectedGrammar))
 		})
 	}
 }
@@ -1657,7 +1657,7 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
 			g := tc.g.EliminateCycles()
 			assert.NoError(t, g.Verify())
-			assert.True(t, g.Equals(tc.expectedGrammar))
+			assert.True(t, g.Equal(tc.expectedGrammar))
 		})
 	}
 }
@@ -1911,7 +1911,7 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
 			g := tc.g.EliminateLeftRecursion()
 			assert.NoError(t, g.Verify())
-			assert.True(t, g.Equals(tc.expectedGrammar))
+			assert.True(t, g.Equal(tc.expectedGrammar))
 		})
 	}
 }
@@ -2054,7 +2054,7 @@ func TestCFG_LeftFactor(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
 			g := tc.g.LeftFactor()
 			assert.NoError(t, g.Verify())
-			assert.True(t, g.Equals(tc.expectedGrammar))
+			assert.True(t, g.Equal(tc.expectedGrammar))
 		})
 	}
 }
@@ -2471,7 +2471,7 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 			assert.NoError(t, tc.g.Verify())
 			g := tc.g.ChomskyNormalForm()
 			assert.NoError(t, g.Verify())
-			assert.True(t, g.Equals(tc.expectedGrammar))
+			assert.True(t, g.Equal(tc.expectedGrammar))
 		})
 	}
 }
@@ -2881,7 +2881,7 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 			for i, s := range tc.firsts {
 				t.Run(strconv.Itoa(i), func(t *testing.T) {
 					f := first(s)
-					assert.True(t, tc.expectedFirsts[i].Terminals.Equals(f.Terminals))
+					assert.True(t, tc.expectedFirsts[i].Terminals.Equal(f.Terminals))
 					assert.Equal(t, tc.expectedFirsts[i].IncludesEmpty, f.IncludesEmpty)
 				})
 			}
@@ -3073,7 +3073,7 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 			for i, n := range tc.follows {
 				t.Run(strconv.Itoa(i), func(t *testing.T) {
 					f := follow(n)
-					assert.True(t, tc.expectedFollows[i].Terminals.Equals(f.Terminals))
+					assert.True(t, tc.expectedFollows[i].Terminals.Equal(f.Terminals))
 					assert.Equal(t, tc.expectedFollows[i].IncludesEndmarker, f.IncludesEndmarker)
 				})
 			}

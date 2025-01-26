@@ -11,7 +11,7 @@ import (
 
 func getTestParsingTables() []*parsingTable {
 	pt0 := newParsingTable(
-		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
 	)
 
@@ -52,7 +52,7 @@ func getTestParsingTables() []*parsingTable {
 	pt1.addProduction("E", "b", &grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("b")}})
 
 	pt2 := newParsingTable(
-		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "T", "F"},
 	)
 
@@ -119,7 +119,7 @@ func TestBuildParsingTable(t *testing.T) {
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)
-				assert.True(t, table.Equals(tc.expectedTable))
+				assert.True(t, table.Equal(tc.expectedTable))
 			} else {
 				assert.Error(t, err)
 				s := err.Error()
@@ -265,32 +265,32 @@ func TestParsingTable_String(t *testing.T) {
 	}
 }
 
-func TestParsingTable_Equals(t *testing.T) {
+func TestParsingTable_Equal(t *testing.T) {
 	pt := getTestParsingTables()
 
 	tests := []struct {
-		name           string
-		pt             *parsingTable
-		rhs            *parsingTable
-		expectedEquals bool
+		name          string
+		pt            *parsingTable
+		rhs           *parsingTable
+		expectedEqual bool
 	}{
 		{
-			name:           "Equal",
-			pt:             pt[0],
-			rhs:            pt[0],
-			expectedEquals: true,
+			name:          "Equal",
+			pt:            pt[0],
+			rhs:           pt[0],
+			expectedEqual: true,
 		},
 		{
-			name:           "NotEqual",
-			pt:             pt[1],
-			rhs:            pt[2],
-			expectedEquals: false,
+			name:          "NotEqual",
+			pt:            pt[1],
+			rhs:           pt[2],
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.pt.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.pt.Equal(tc.rhs))
 		})
 	}
 }
@@ -440,7 +440,7 @@ func TestParsingTable_GetProduction(t *testing.T) {
 
 			if tc.expectedOK {
 				assert.True(t, ok)
-				assert.True(t, prod.Equals(tc.expectedProduction))
+				assert.True(t, prod.Equal(tc.expectedProduction))
 			} else {
 				assert.False(t, ok)
 				assert.Nil(t, prod)

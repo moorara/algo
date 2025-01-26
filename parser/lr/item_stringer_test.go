@@ -4,92 +4,82 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moorara/algo/generic"
 )
 
-func TestBuildStateMap(t *testing.T) {
+func TestItemSetStringer(t *testing.T) {
 	s := getTestLR0ItemSets()
+	state := State(0)
 
 	tests := []struct {
-		name             string
-		C                ItemSetCollection
-		expectedStateMap StateMap
+		name               string
+		ss                 *itemSetStringer
+		expectedSubstrings []string
 	}{
 		{
-			name:             "OK",
-			C:                NewItemSetCollection(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]),
-			expectedStateMap: []ItemSet{s[0], s[1], s[9], s[11], s[10], s[6], s[8], s[7], s[2], s[4], s[5], s[3]},
+			name: "WithoutState",
+			ss: &itemSetStringer{
+				items: generic.Collect1(s[0].All()),
+			},
+			expectedSubstrings: []string{
+				`┌────────────────┐`,
+				`│ E′ → •E        │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ E → •E "+" T   │`,
+				`│ E → •T         │`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+			},
+		},
+		{
+			name: "WithState",
+			ss: &itemSetStringer{
+				state: &state,
+				items: generic.Collect1(s[0].All()),
+			},
+			expectedSubstrings: []string{
+				`┌──────[0]───────┐`,
+				`│ E′ → •E        │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ E → •E "+" T   │`,
+				`│ E → •T         │`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			stateMap := BuildStateMap(tc.C)
-			assert.Equal(t, tc.expectedStateMap, stateMap)
+			str := tc.ss.String()
+
+			for _, expectedSubstring := range tc.expectedSubstrings {
+				assert.Contains(t, str, expectedSubstring)
+			}
 		})
 	}
 }
 
-func TestStateMap_Find(t *testing.T) {
-	s := getTestLR0ItemSets()
-
-	tests := []struct {
-		name          string
-		m             StateMap
-		I             ItemSet
-		expectedState State
-	}{
-		{
-			name:          "OK",
-			m:             []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
-			I:             s[7],
-			expectedState: State(7),
-		},
-		{
-			name: "Error",
-			m:    []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
-			I: NewItemSet(
-				&Item0{Production: prods[1][0], Start: starts[1], Dot: 1}, // E′ → E•
-			),
-			expectedState: ErrState,
-		},
-	}
-
-	for _, tc := range tests {
-		assert.Equal(t, tc.expectedState, tc.m.Find(tc.I))
-	}
-}
-
-func TestStateMap_All(t *testing.T) {
-	s := getTestLR0ItemSets()
-
-	tests := []struct {
-		name           string
-		m              StateMap
-		expectedStates []State
-	}{
-		{
-			name:           "OK",
-			m:              []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
-			expectedStates: []State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-		},
-	}
-
-	for _, tc := range tests {
-		assert.Equal(t, tc.expectedStates, tc.m.All())
-	}
-}
-
-func TestStateMap_String(t *testing.T) {
+func TestItemSetCollectionStringer(t *testing.T) {
 	s := getTestLR0ItemSets()
 
 	tests := []struct {
 		name               string
-		m                  StateMap
+		cs                 *itemSetCollectionStringer
 		expectedSubstrings []string
 	}{
 		{
 			name: "OK",
-			m:    []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+			cs: &itemSetCollectionStringer{
+				sets: []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+			},
 			expectedSubstrings: []string{
 				`┌──────[0]───────┐`,
 				`│ E′ → •E        │`,
@@ -158,10 +148,12 @@ func TestStateMap_String(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		s := tc.m.String()
+		t.Run(tc.name, func(t *testing.T) {
+			str := tc.cs.String()
 
-		for _, expectedSubstring := range tc.expectedSubstrings {
-			assert.Contains(t, s, expectedSubstring)
-		}
+			for _, expectedSubstring := range tc.expectedSubstrings {
+				assert.Contains(t, str, expectedSubstring)
+			}
+		})
 	}
 }

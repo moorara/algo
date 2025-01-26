@@ -100,7 +100,7 @@ type patricia[V any] struct {
 // Decent implementations of Patricia trie can often outperform balanced binary trees, and even hash tables.
 // Patricia trie performs admirably when its bit-testing loops are well tuned.
 //
-// The second parameter (eqVal) is needed only if you want to use the Equals method.
+// The second parameter (eqVal) is needed only if you want to use the Equal method.
 func NewPatricia[V any](eqVal EqualFunc[V]) Trie[V] {
 	return &patricia[V]{
 		size:  0,
@@ -284,7 +284,7 @@ func (t *patricia[V]) _put(key *bitString, val V) {
 	}
 
 	last := t.search(key)
-	if last.key.Equals(key) {
+	if last.key.Equal(key) {
 		last.val = val // Update value for the existing key
 		return
 	}
@@ -327,7 +327,7 @@ func (t *patricia[V]) Get(key string) (V, bool) {
 }
 
 func (t *patricia[V]) _get(key *bitString) (V, bool) {
-	if n := t.search(key); n != nil && n.key.Equals(key) {
+	if n := t.search(key); n != nil && n.key.Equal(key) {
 		return n.val, true
 	}
 
@@ -357,7 +357,7 @@ func (t *patricia[V]) _delete(key *bitString) (V, bool) {
 		}
 	}
 
-	if !n.key.Equals(key) {
+	if !n.key.Equal(key) {
 		var zeroV V
 		return zeroV, false
 	}
@@ -624,7 +624,7 @@ func (t *patricia[V]) WithPrefix(key string) []KeyValue[string, V] {
 	kvs := []KeyValue[string, V]{}
 	bitKey := newBitString(key)
 
-	if n := t.search(bitKey); n != nil && n.key.Equals(bitKey) {
+	if n := t.search(bitKey); n != nil && n.key.Equal(bitKey) {
 		kvs = append(kvs, KeyValue[string, V]{Key: n.key.String(), Val: n.val})
 	} else {
 		t._traverse(n, Ascending, func(n *patriciaNode[V]) bool {
@@ -662,8 +662,8 @@ func (t *patricia[V]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 }
 
-// Equals determines whether or not two Patricia tries have the same key-values.
-func (t *patricia[V]) Equals(rhs Trie[V]) bool {
+// Equal determines whether or not two Patricia tries have the same key-values.
+func (t *patricia[V]) Equal(rhs Trie[V]) bool {
 	t2, ok := rhs.(*patricia[V])
 	if !ok {
 		return false

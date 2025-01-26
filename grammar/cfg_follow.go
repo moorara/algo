@@ -11,7 +11,7 @@ import (
 )
 
 var EqTerminalsAndEndmarker = func(lhs, rhs *TerminalsAndEndmarker) bool {
-	return lhs.Terminals.Equals(rhs.Terminals) && lhs.IncludesEndmarker == rhs.IncludesEndmarker
+	return lhs.Terminals.Equal(rhs.Terminals) && lhs.IncludesEndmarker == rhs.IncludesEndmarker
 }
 
 // FOLLOW is the FIRST function associated with a context-free grammar.

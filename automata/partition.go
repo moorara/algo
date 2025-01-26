@@ -12,9 +12,9 @@ type group struct {
 	states States
 }
 
-// Equals determines whether or not two partition groups are equal.
-func (g group) Equals(rhs group) bool {
-	return g.states.Equals(rhs.states)
+// Equal determines whether or not two partition groups are equal.
+func (g group) Equal(rhs group) bool {
+	return g.states.Equal(rhs.states)
 }
 
 // groups represents a list of partition groups.
@@ -23,7 +23,7 @@ type groups []group
 // Contains determines whether or not a list of partition groups contains a given group.
 func (g groups) Contains(h group) bool {
 	for _, group := range g {
-		if group.Equals(h) {
+		if group.Equal(h) {
 			return true
 		}
 	}
@@ -31,8 +31,8 @@ func (g groups) Contains(h group) bool {
 	return false
 }
 
-// Equals determines whether or not two lists of partition groups are equal.
-func (g groups) Equals(rhs groups) bool {
+// Equal determines whether or not two lists of partition groups are equal.
+func (g groups) Equal(rhs groups) bool {
 	for _, group := range g {
 		if !rhs.Contains(group) {
 			return false
@@ -63,9 +63,9 @@ func newPartition() *partition {
 	}
 }
 
-// Equals determines whether or not two partitions are equal.
-func (p *partition) Equals(rhs *partition) bool {
-	return p.groups.Equals(rhs.groups)
+// Equal determines whether or not two partitions are equal.
+func (p *partition) Equal(rhs *partition) bool {
+	return p.groups.Equal(rhs.groups)
 }
 
 // Add adds new groups into the partition set.
@@ -138,7 +138,7 @@ func (p *partition) PartitionAndAddGroups(Gtrans doubleKeyMap[State, Symbol, Sta
 			for j := 1; j < len(pairs); j++ {
 				t, ttrans := pairs[j].Key, pairs[j].Val
 
-				if strans.Equals(ttrans) && !H.Contains(t) {
+				if strans.Equal(ttrans) && !H.Contains(t) {
 					H = append(H, t)
 				}
 			}

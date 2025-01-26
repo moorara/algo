@@ -273,7 +273,7 @@ func (n *NFA) ToDFA() *DFA {
 
 	dfa := NewDFA(0, nil)
 	Dstates := list.NewSoftQueue[States](func(s, t States) bool {
-		return s.Equals(t)
+		return s.Equal(t)
 	})
 
 	// Initially, ε-closure(s0) is the only state in Dstates
@@ -308,14 +308,14 @@ func (n *NFA) ToDFA() *DFA {
 	return dfa
 }
 
-// Equals determines whether or not two NFAs are identical in structure and labeling.
+// Equal determines whether or not two NFAs are identical in structure and labeling.
 // Two NFAs are considered equal if they have the same start state, final states, and transitions.
 //
 // For isomorphic equality, structural equivalence with potentially different state names, use the Isomorphic method.
-func (n *NFA) Equals(rhs *NFA) bool {
+func (n *NFA) Equal(rhs *NFA) bool {
 	return n.Start == rhs.Start &&
-		n.Final.Equals(rhs.Final) &&
-		n.trans.Equals(rhs.trans)
+		n.Final.Equal(rhs.Final) &&
+		n.trans.Equal(rhs.trans)
 }
 
 // Isomorphic determines whether or not two NFAs are isomorphically the same.
@@ -340,7 +340,7 @@ func (n *NFA) Isomorphic(rhs *NFA) bool {
 
 	// N₁ and N₂ must have the same input alphabet.
 	symbols1, symbols2 := n.Symbols(), rhs.Symbols()
-	if !symbols1.Equals(symbols2) {
+	if !symbols1.Equal(symbols2) {
 		return false
 	}
 
@@ -390,7 +390,7 @@ func (n *NFA) Isomorphic(rhs *NFA) bool {
 
 		// If the current permutation of N₁ is equal to N₂, we stop checking more permutations by returning false.
 		// If the current permutation of N₁ is not equal to N₂, we continue with checking more permutations by returning true.
-		return !permutedNFA.Equals(rhs)
+		return !permutedNFA.Equal(rhs)
 	})
 }
 

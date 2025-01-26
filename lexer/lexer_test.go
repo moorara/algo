@@ -36,12 +36,12 @@ func TestToken_String(t *testing.T) {
 	}
 }
 
-func TestToken_Equals(t *testing.T) {
+func TestToken_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		t              Token
-		rhs            Token
-		expectedEquals bool
+		name          string
+		t             Token
+		rhs           Token
+		expectedEqual bool
 	}{
 		{
 			name: "Equal",
@@ -65,7 +65,7 @@ func TestToken_Equals(t *testing.T) {
 					Column:   27,
 				},
 			},
-			expectedEquals: true,
+			expectedEqual: true,
 		},
 		{
 			name: "NotEqual",
@@ -89,13 +89,13 @@ func TestToken_Equals(t *testing.T) {
 					Column:   27,
 				},
 			},
-			expectedEquals: false,
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.t.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.t.Equal(tc.rhs))
 		})
 	}
 }
@@ -138,12 +138,12 @@ func TestPosition_Strong(t *testing.T) {
 	}
 }
 
-func TestPosition_Equals(t *testing.T) {
+func TestPosition_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		p              Position
-		rhs            Position
-		expectedEquals bool
+		name          string
+		p             Position
+		rhs           Position
+		expectedEqual bool
 	}{
 		{
 			name: "Equal",
@@ -159,7 +159,7 @@ func TestPosition_Equals(t *testing.T) {
 				Line:     8,
 				Column:   27,
 			},
-			expectedEquals: true,
+			expectedEqual: true,
 		},
 		{
 			name: "NotEqual",
@@ -175,13 +175,13 @@ func TestPosition_Equals(t *testing.T) {
 				Line:     8,
 				Column:   27,
 			},
-			expectedEquals: false,
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.p.Equals(tc.rhs))
+			assert.Equal(t, tc.expectedEqual, tc.p.Equal(tc.rhs))
 		})
 	}
 }

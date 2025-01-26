@@ -231,8 +231,8 @@ func (ht *linearHashTable[K, V]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 }
 
-// Equals determines whether or not two hash tables have the same key-values.
-func (ht *linearHashTable[K, V]) Equals(rhs SymbolTable[K, V]) bool {
+// Equal determines whether or not two hash tables have the same key-values.
+func (ht *linearHashTable[K, V]) Equal(rhs SymbolTable[K, V]) bool {
 	ht2, ok := rhs.(*linearHashTable[K, V])
 	if !ok {
 		return false

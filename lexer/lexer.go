@@ -49,11 +49,11 @@ func (t Token) String() string {
 	return fmt.Sprintf("%s <%s, %s>", t.Terminal, t.Lexeme, t.Pos)
 }
 
-// Equals determines whether or not two tokens are the same.
-func (t Token) Equals(rhs Token) bool {
-	return t.Terminal.Equals(rhs.Terminal) &&
+// Equal determines whether or not two tokens are the same.
+func (t Token) Equal(rhs Token) bool {
+	return t.Terminal.Equal(rhs.Terminal) &&
 		t.Lexeme == rhs.Lexeme &&
-		t.Pos.Equals(rhs.Pos)
+		t.Pos.Equal(rhs.Pos)
 }
 
 // Position represents a specific location in an input source.
@@ -83,8 +83,8 @@ func (p Position) String() string {
 	return b.String()
 }
 
-// Equals determines whether or not two positions are the same.
-func (p Position) Equals(rhs Position) bool {
+// Equal determines whether or not two positions are the same.
+func (p Position) Equal(rhs Position) bool {
 	return p.Filename == rhs.Filename &&
 		p.Offset == rhs.Offset &&
 		p.Line == rhs.Line &&

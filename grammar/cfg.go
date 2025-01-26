@@ -101,7 +101,7 @@ func (g *CFG) Verify() error {
 
 	getPredicate := func(n NonTerminal) generic.Predicate1[*Production] {
 		return func(p *Production) bool {
-			return p.Head.Equals(n)
+			return p.Head.Equal(n)
 		}
 	}
 
@@ -186,12 +186,12 @@ func (g *CFG) Clone() *CFG {
 	}
 }
 
-// Equals determines whether or not two context-free grammars are the same.
-func (g *CFG) Equals(rhs *CFG) bool {
-	return g.Terminals.Equals(rhs.Terminals) &&
-		g.NonTerminals.Equals(rhs.NonTerminals) &&
-		g.Productions.Equals(rhs.Productions) &&
-		g.Start.Equals(rhs.Start)
+// Equal determines whether or not two context-free grammars are the same.
+func (g *CFG) Equal(rhs *CFG) bool {
+	return g.Terminals.Equal(rhs.Terminals) &&
+		g.NonTerminals.Equal(rhs.NonTerminals) &&
+		g.Productions.Equal(rhs.Productions) &&
+		g.Start.Equal(rhs.Start)
 }
 
 // Symbols returns the set of all symbols in the grammar, including both terminal and non-terminal symbols.
@@ -232,7 +232,7 @@ func (g *CFG) IsCNF() error {
 
 	g.Productions.AllMatch(func(p *Production) bool {
 		isBinary, isTerminal := p.IsCNF()
-		isStartEmpty := p.IsEmpty() && p.Head.Equals(g.Start)
+		isStartEmpty := p.IsEmpty() && p.Head.Equal(g.Start)
 
 		if !isBinary && !isTerminal && !isStartEmpty {
 			err = errors.Append(err, &CNFError{P: p})
@@ -605,7 +605,7 @@ func (g *CFG) EliminateLeftRecursion() *CFG {
 			AiProds, AjProds := newG.Productions.Get(Ai), newG.Productions.Get(Aj)
 
 			AiAjProds := AiProds.SelectMatch(func(p *Production) bool {
-				return len(p.Body) > 0 && p.Body[0].Equals(Aj)
+				return len(p.Body) > 0 && p.Body[0].Equal(Aj)
 			})
 
 			for AiAjProd := range AiAjProds.All() {
@@ -758,7 +758,7 @@ func groupByCommonPrefix(prods set.Set[*Production]) symboltable.SymbolTable[Str
 		for prefix := range groups.All() {
 			// Compute the longest common prefix between the current production body and an existing prefix in the groups.
 			commonPrefix := String[Symbol]{}
-			for i := 0; i < len(prefix) && i < len(prod.Body) && prefix[i].Equals(prod.Body[i]); i++ {
+			for i := 0; i < len(prefix) && i < len(prod.Body) && prefix[i].Equal(prod.Body[i]); i++ {
 				commonPrefix = commonPrefix.Append(prefix[i])
 			}
 
@@ -961,9 +961,6 @@ func (g *CFG) ComputeFIRST() FIRST {
 		firstBySymbol.Put(X, newTerminalsAndEmpty(X))
 	}
 
-	// Add FIRST($) = {$}
-	firstBySymbol.Put(Endmarker, newTerminalsAndEmpty(Endmarker))
-
 	// Initialize FIRST(X) for all non-terminals.
 	for X := range g.NonTerminals.All() {
 		firstBySymbol.Put(X, newTerminalsAndEmpty())
@@ -1144,7 +1141,7 @@ func (g *CFG) OrderNonTerminals() (String[NonTerminal], String[NonTerminal], Str
 	visited := make(String[NonTerminal], 0)
 	isVisited := func(n NonTerminal) bool {
 		for _, v := range visited {
-			if v.Equals(n) {
+			if v.Equal(n) {
 				return true
 			}
 		}

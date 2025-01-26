@@ -175,47 +175,47 @@ func TestBitString_DiffPos(t *testing.T) {
 	}
 }
 
-func TestBitString_Equals(t *testing.T) {
+func TestBitString_Equal(t *testing.T) {
 	tests := []struct {
-		name           string
-		b, c           *bitString
-		expectedEquals bool
+		name          string
+		b, c          *bitString
+		expectedEqual bool
 	}{
 		{
-			name:           "Alice_Alice",
-			b:              newBitString("Alice"),
-			c:              newBitString("Alice"),
-			expectedEquals: true,
+			name:          "Alice_Alice",
+			b:             newBitString("Alice"),
+			c:             newBitString("Alice"),
+			expectedEqual: true,
 		},
 		{
-			name:           "Alice_Alex",
-			b:              newBitString("Alice"),
-			c:              newBitString("Alex"),
-			expectedEquals: false,
+			name:          "Alice_Alex",
+			b:             newBitString("Alice"),
+			c:             newBitString("Alex"),
+			expectedEqual: false,
 		},
 		{
-			name:           "Alice_Bob",
-			b:              newBitString("Alice"),
-			c:              newBitString("Bob"),
-			expectedEquals: false,
+			name:          "Alice_Bob",
+			b:             newBitString("Alice"),
+			c:             newBitString("Bob"),
+			expectedEqual: false,
 		},
 		{
-			name:           "Alice_Charlie",
-			b:              newBitString("Alice"),
-			c:              newBitString("Charlie"),
-			expectedEquals: false,
+			name:          "Alice_Charlie",
+			b:             newBitString("Alice"),
+			c:             newBitString("Charlie"),
+			expectedEqual: false,
 		},
 		{
-			name:           "Alice_David",
-			b:              newBitString("Alice"),
-			c:              newBitString("David"),
-			expectedEquals: false,
+			name:          "Alice_David",
+			b:             newBitString("Alice"),
+			c:             newBitString("David"),
+			expectedEqual: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEquals, tc.b.Equals(tc.c))
+			assert.Equal(t, tc.expectedEqual, tc.b.Equal(tc.c))
 		})
 	}
 }

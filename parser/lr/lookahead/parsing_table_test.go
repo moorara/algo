@@ -1,4 +1,4 @@
-package simple
+package lookahead
 
 import (
 	"testing"
@@ -9,7 +9,16 @@ import (
 	"github.com/moorara/algo/parser/lr"
 )
 
+// nolint: unused
 var prods = [][]*grammar.Production{
+	{
+		{Head: "S′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("S")}},                                                 // S′ → S
+		{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("L"), grammar.Terminal("="), grammar.NonTerminal("R")}}, // S → L = R
+		{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("R")}},                                                  // S → R
+		{Head: "L", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("R")}},                           // L → *R
+		{Head: "L", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                    // L → id
+		{Head: "R", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("L")}},                                                  // R → L
+	},
 	{
 		{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E")}},                                                 // E′ → E
 		{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T
@@ -46,126 +55,58 @@ var prods = [][]*grammar.Production{
 	},
 }
 
+// nolint: unused
 var grammars = []*grammar.CFG{
+	grammar.NewCFG(
+		[]grammar.Terminal{"=", "*", "id"},
+		[]grammar.NonTerminal{"S", "L", "R"},
+		prods[0][1:],
+		"S",
+	),
 	grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "T", "F"},
-		prods[0][1:],
+		prods[1][1:],
 		"E",
 	),
 	grammar.NewCFG(
 		[]grammar.Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
 		[]grammar.NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
-		prods[1][1:],
+		prods[2][1:],
 		"grammar",
 	),
 }
 
+// nolint: unused
 func getTestParsingTables() []lr.ParsingTable {
 	pt0 := lr.NewParsingTable(
+		[]lr.State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+		[]grammar.Terminal{"=", "*", "id", grammar.Endmarker},
+		[]grammar.NonTerminal{"S", "L", "R"},
+	)
+
+	pt1 := lr.NewParsingTable(
 		[]lr.State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-		[]grammar.Terminal{"(", ")", "*", "+", "id", grammar.Endmarker},
+		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "T", "F"},
 	)
 
-	pt0.AddACTION(0, "(", &lr.Action{Type: lr.SHIFT, State: 9})
-	pt0.AddACTION(0, "id", &lr.Action{Type: lr.SHIFT, State: 10})
-	pt0.AddACTION(1, "+", &lr.Action{Type: lr.SHIFT, State: 5})
-	pt0.AddACTION(1, grammar.Endmarker, &lr.Action{Type: lr.ACCEPT})
-	pt0.AddACTION(2, ")", &lr.Action{Type: lr.REDUCE, Production: prods[0][1]})
-	pt0.AddACTION(2, "*", &lr.Action{Type: lr.SHIFT, State: 7})
-	pt0.AddACTION(2, "+", &lr.Action{Type: lr.REDUCE, Production: prods[0][1]})
-	pt0.AddACTION(2, grammar.Endmarker, &lr.Action{Type: lr.REDUCE, Production: prods[0][1]})
-	pt0.AddACTION(3, ")", &lr.Action{Type: lr.REDUCE, Production: prods[0][5]})
-	pt0.AddACTION(3, "*", &lr.Action{Type: lr.REDUCE, Production: prods[0][5]})
-	pt0.AddACTION(3, "+", &lr.Action{Type: lr.REDUCE, Production: prods[0][5]})
-	pt0.AddACTION(3, grammar.Endmarker, &lr.Action{Type: lr.REDUCE, Production: prods[0][5]})
-	pt0.AddACTION(4, ")", &lr.Action{Type: lr.REDUCE, Production: prods[0][3]})
-	pt0.AddACTION(4, "*", &lr.Action{Type: lr.REDUCE, Production: prods[0][3]})
-	pt0.AddACTION(4, "+", &lr.Action{Type: lr.REDUCE, Production: prods[0][3]})
-	pt0.AddACTION(4, grammar.Endmarker, &lr.Action{Type: lr.REDUCE, Production: prods[0][3]})
-	pt0.AddACTION(5, "(", &lr.Action{Type: lr.SHIFT, State: 9})
-	pt0.AddACTION(5, "id", &lr.Action{Type: lr.SHIFT, State: 10})
-	pt0.AddACTION(6, ")", &lr.Action{Type: lr.SHIFT, State: 3})
-	pt0.AddACTION(6, "+", &lr.Action{Type: lr.SHIFT, State: 5})
-	pt0.AddACTION(7, "(", &lr.Action{Type: lr.SHIFT, State: 9})
-	pt0.AddACTION(7, "id", &lr.Action{Type: lr.SHIFT, State: 10})
-	pt0.AddACTION(8, ")", &lr.Action{Type: lr.REDUCE, Production: prods[0][2]})
-	pt0.AddACTION(8, "*", &lr.Action{Type: lr.SHIFT, State: 7})
-	pt0.AddACTION(8, "+", &lr.Action{Type: lr.REDUCE, Production: prods[0][2]})
-	pt0.AddACTION(8, grammar.Endmarker, &lr.Action{Type: lr.REDUCE, Production: prods[0][2]})
-	pt0.AddACTION(9, "(", &lr.Action{Type: lr.SHIFT, State: 9})
-	pt0.AddACTION(9, "id", &lr.Action{Type: lr.SHIFT, State: 10})
-	pt0.AddACTION(10, ")", &lr.Action{Type: lr.REDUCE, Production: prods[0][6]})
-	pt0.AddACTION(10, "*", &lr.Action{Type: lr.REDUCE, Production: prods[0][6]})
-	pt0.AddACTION(10, "+", &lr.Action{Type: lr.REDUCE, Production: prods[0][6]})
-	pt0.AddACTION(10, grammar.Endmarker, &lr.Action{Type: lr.REDUCE, Production: prods[0][6]})
-	pt0.AddACTION(11, ")", &lr.Action{Type: lr.REDUCE, Production: prods[0][4]})
-	pt0.AddACTION(11, "*", &lr.Action{Type: lr.REDUCE, Production: prods[0][4]})
-	pt0.AddACTION(11, "+", &lr.Action{Type: lr.REDUCE, Production: prods[0][4]})
-	pt0.AddACTION(11, grammar.Endmarker, &lr.Action{Type: lr.REDUCE, Production: prods[0][4]})
-
-	pt0.SetGOTO(0, "E", 1)
-	pt0.SetGOTO(0, "T", 8)
-	pt0.SetGOTO(0, "F", 11)
-	pt0.SetGOTO(5, "T", 2)
-	pt0.SetGOTO(5, "F", 11)
-	pt0.SetGOTO(7, "F", 4)
-	pt0.SetGOTO(9, "E", 6)
-	pt0.SetGOTO(9, "T", 8)
-	pt0.SetGOTO(9, "F", 11)
-
-	pt1 := lr.NewParsingTable(
-		[]lr.State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36},
+	pt2 := lr.NewParsingTable(
+		[]lr.State{},
 		[]grammar.Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX", grammar.Endmarker},
 		[]grammar.NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
 	)
 
-	return []lr.ParsingTable{pt0, pt1}
+	return []lr.ParsingTable{pt0, pt1, pt2}
 }
 
 func TestBuildParsingTable(t *testing.T) {
-	pt := getTestParsingTables()
-
 	tests := []struct {
 		name                 string
 		G                    *grammar.CFG
 		expectedTable        lr.ParsingTable
 		expectedErrorStrings []string
-	}{
-		{
-			name:          "1st",
-			G:             grammars[0],
-			expectedTable: pt[0],
-		},
-		{
-			name: "2nd",
-			G:    grammars[1],
-			expectedErrorStrings: []string{
-				`20 errors occurred:`,
-				`shift/reduce conflict at ACTION[2, "("]`,
-				`shift/reduce conflict at ACTION[2, "IDENT"]`,
-				`shift/reduce conflict at ACTION[2, "STRING"]`,
-				`shift/reduce conflict at ACTION[2, "TOKEN"]`,
-				`shift/reduce conflict at ACTION[2, "["]`,
-				`shift/reduce conflict at ACTION[2, "{"]`,
-				`shift/reduce conflict at ACTION[2, "{{"]`,
-				`shift/reduce conflict at ACTION[2, "|"]`,
-				`shift/reduce conflict at ACTION[7, "IDENT"]`,
-				`shift/reduce conflict at ACTION[7, "TOKEN"]`,
-				`shift/reduce conflict at ACTION[14, "("]`,
-				`shift/reduce conflict at ACTION[14, "IDENT"]`,
-				`shift/reduce conflict at ACTION[14, "STRING"]`,
-				`shift/reduce conflict at ACTION[14, "TOKEN"]`,
-				`shift/reduce conflict at ACTION[14, "["]`,
-				`shift/reduce conflict at ACTION[14, "{"]`,
-				`shift/reduce conflict at ACTION[14, "{{"]`,
-				`shift/reduce conflict at ACTION[14, "|"]`,
-				`shift/reduce conflict at ACTION[19, "IDENT"]`,
-				`shift/reduce conflict at ACTION[19, "TOKEN"]`,
-			},
-		},
-	}
+	}{}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

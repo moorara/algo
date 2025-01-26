@@ -21,7 +21,7 @@ const Endmarker = Terminal("\uEEEE")
 
 var (
 	EqSymbol = func(lhs, rhs Symbol) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 
 	CmpSymbol  = compareFuncForSymbol()
@@ -39,9 +39,9 @@ var (
 // Symbol represents a grammar symbol (terminal or non-terminal).
 type Symbol interface {
 	fmt.Stringer
+	generic.Equaler[Symbol]
 
 	Name() string
-	Equals(Symbol) bool
 	IsTerminal() bool
 }
 
@@ -86,30 +86,30 @@ type Terminal string
 func (t Terminal) String() string {
 	// The special endmarker symbol is taken from a Private Use Area (PUA) in Unicode,
 	// and it is rendered as $.
-	if t.Equals(Endmarker) {
+	if t.Equal(Endmarker) {
 		return "$"
 	}
 
 	return fmt.Sprintf("%q", t.Name())
 }
 
-// Name returns the name of terminal symbol.
-func (t Terminal) Name() string {
-	// The special endmarker symbol is taken from a Private Use Area (PUA) in Unicode,
-	// and it is named as $.
-	if t.Equals(Endmarker) {
-		return "$"
-	}
-
-	return string(t)
-}
-
-// Equals determines whether or not two terminal symbols are the same.
-func (t Terminal) Equals(rhs Symbol) bool {
+// Equal determines whether or not two terminal symbols are the same.
+func (t Terminal) Equal(rhs Symbol) bool {
 	if v, ok := rhs.(Terminal); ok {
 		return t == v
 	}
 	return false
+}
+
+// Name returns the name of terminal symbol.
+func (t Terminal) Name() string {
+	// The special endmarker symbol is taken from a Private Use Area (PUA) in Unicode,
+	// and it is named as $.
+	if t.Equal(Endmarker) {
+		return "$"
+	}
+
+	return string(t)
 }
 
 // IsTerminal always returns true for terminal symbols.
@@ -127,17 +127,17 @@ func (n NonTerminal) String() string {
 	return n.Name()
 }
 
-// Name returns the name of non-terminal symbol.
-func (n NonTerminal) Name() string {
-	return string(n)
-}
-
-// Equals determines whether or not two non-terminal symbols are the same.
-func (n NonTerminal) Equals(rhs Symbol) bool {
+// Equal determines whether or not two non-terminal symbols are the same.
+func (n NonTerminal) Equal(rhs Symbol) bool {
 	if v, ok := rhs.(NonTerminal); ok {
 		return n == v
 	}
 	return false
+}
+
+// Name returns the name of non-terminal symbol.
+func (n NonTerminal) Name() string {
+	return string(n)
 }
 
 // IsTerminal always returns false for non-terminal symbols.

@@ -13,11 +13,11 @@ import (
 
 var (
 	eqParsingTableRow = func(lhs, rhs symboltable.SymbolTable[grammar.Terminal, *parsingTableEntry]) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 
 	eqParsingTableEntry = func(lhs, rhs *parsingTableEntry) bool {
-		return lhs.Equals(rhs)
+		return lhs.Equal(rhs)
 	}
 )
 
@@ -60,6 +60,9 @@ func BuildParsingTable(G *grammar.CFG) ParsingTable {
 	 *   3. If, after performing the above, there is no production at all in M[A,a],
 	 *      then set M[A,a] to error (can be represented by an empty entry in the table).
 	 */
+
+	// A special symbol used to indicate the end of a string.
+	G.Terminals.Add(grammar.Endmarker)
 
 	FIRST := G.ComputeFIRST()
 	FOLLOW := G.ComputeFOLLOW(FIRST)
@@ -135,7 +138,7 @@ type parsingTable struct {
 func newParsingTable(terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal) *parsingTable {
 	return &parsingTable{
 		nonTerminals: nonTerminals,
-		terminals:    append(terminals, grammar.Endmarker),
+		terminals:    terminals,
 		table: symboltable.NewQuadraticHashTable(
 			grammar.HashNonTerminal,
 			grammar.EqNonTerminal,
@@ -222,9 +225,9 @@ func (t *parsingTable) String() string {
 	return ts.String()
 }
 
-func (t *parsingTable) Equals(rhs ParsingTable) bool {
+func (t *parsingTable) Equal(rhs ParsingTable) bool {
 	tt, ok := rhs.(*parsingTable)
-	return ok && t.table.Equals(tt.table)
+	return ok && t.table.Equal(tt.table)
 }
 
 func (t *parsingTable) Error() error {
@@ -303,8 +306,8 @@ func (e *parsingTableEntry) String() string {
 	return b.String()
 }
 
-func (e *parsingTableEntry) Equals(rhs *parsingTableEntry) bool {
-	return e.Productions.Equals(rhs.Productions) && e.Sync == rhs.Sync
+func (e *parsingTableEntry) Equal(rhs *parsingTableEntry) bool {
+	return e.Productions.Equal(rhs.Productions) && e.Sync == rhs.Sync
 }
 
 // ParsingTableError represents an error encountered in a predictive parsing table.

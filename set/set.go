@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"iter"
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/moorara/algo/generic"
@@ -32,6 +31,7 @@ type Set[T any] interface {
 type set[T any] struct {
 	members []T
 	equal   generic.EqualFunc[T]
+	format  StringFormat[T]
 }
 
 // New creates a new set.
@@ -39,6 +39,20 @@ func New[T any](equal generic.EqualFunc[T], vals ...T) Set[T] {
 	s := &set[T]{
 		members: make([]T, 0),
 		equal:   equal,
+		format:  defaultStringFormat[T],
+	}
+
+	s.Add(vals...)
+
+	return s
+}
+
+// NewWithFormat creates a new set with a custom format for String method.
+func NewWithFormat[T any](equal generic.EqualFunc[T], format StringFormat[T], vals ...T) Set[T] {
+	s := &set[T]{
+		members: make([]T, 0),
+		equal:   equal,
+		format:  format,
 	}
 
 	s.Add(vals...)
@@ -57,17 +71,10 @@ func (s *set[T]) find(v T) int {
 }
 
 func (s *set[T]) String() string {
-	var i int
-	members := make([]string, len(s.members))
-	for m := range s.All() {
-		members[i] = fmt.Sprintf("%v", m)
-		i++
-	}
-
-	return fmt.Sprintf("{%s}", strings.Join(members, ", "))
+	return s.format(s.members)
 }
 
-func (s *set[T]) Equals(rhs Set[T]) bool {
+func (s *set[T]) Equal(rhs Set[T]) bool {
 	for _, m := range s.members {
 		if !rhs.Contains(m) {
 			return false
@@ -81,6 +88,28 @@ func (s *set[T]) Equals(rhs Set[T]) bool {
 	}
 
 	return true
+}
+
+func (s *set[T]) Clone() Set[T] {
+	t := &set[T]{
+		members: make([]T, len(s.members)),
+		equal:   s.equal,
+		format:  s.format,
+	}
+
+	copy(t.members, s.members)
+
+	return t
+}
+
+func (s *set[T]) CloneEmpty() Set[T] {
+	t := &set[T]{
+		members: make([]T, 0),
+		equal:   s.equal,
+		format:  s.format,
+	}
+
+	return t
 }
 
 func (s *set[T]) Size() int {
@@ -174,26 +203,6 @@ func (s *set[T]) SelectMatch(p generic.Predicate1[T]) generic.Collection1[T] {
 	return newS
 }
 
-func (s *set[T]) Clone() Set[T] {
-	t := &set[T]{
-		members: make([]T, len(s.members)),
-		equal:   s.equal,
-	}
-
-	copy(t.members, s.members)
-
-	return t
-}
-
-func (s *set[T]) CloneEmpty() Set[T] {
-	t := &set[T]{
-		members: make([]T, 0),
-		equal:   s.equal,
-	}
-
-	return t
-}
-
 func (s *set[T]) IsSubset(superset Set[T]) bool {
 	for m := range s.All() {
 		if !superset.Contains(m) {
@@ -267,7 +276,7 @@ func (s *set[T]) Difference(sets ...Set[T]) Set[T] {
 //	Set[T]      A set
 //	Set[Set[T]  The power set (the set of all subsets)
 func Powerset[T any](s Set[T]) Set[Set[T]] {
-	setEqFunc := func(a, b Set[T]) bool { return a.Equals(b) }
+	setEqFunc := func(a, b Set[T]) bool { return a.Equal(b) }
 
 	// The power set
 	PS := New[Set[T]](setEqFunc)
@@ -302,8 +311,8 @@ func Powerset[T any](s Set[T]) Set[Set[T]] {
 //	Set[Set[T]        A partition (a set of non-empty disjoint subsets with every element included)
 //	Set[Set[Set[T]]]  The set of all partitions
 func Partitions[T any](s Set[T]) Set[Set[Set[T]]] {
-	setEqFunc := func(a, b Set[T]) bool { return a.Equals(b) }
-	partEqFunc := func(a, b Set[Set[T]]) bool { return a.Equals(b) }
+	setEqFunc := func(a, b Set[T]) bool { return a.Equal(b) }
+	partEqFunc := func(a, b Set[Set[T]]) bool { return a.Equal(b) }
 
 	// The set of all partitions
 	Ps := New[Set[Set[T]]](partEqFunc)

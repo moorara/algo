@@ -51,7 +51,7 @@ type binary[V any] struct {
 //
 // Includes words baby, bad, bank, box, dad, and dance.
 //
-// The second parameter (eqVal) is needed only if you want to use the Equals method.
+// The second parameter (eqVal) is needed only if you want to use the Equal method.
 func NewBinary[V any](eqVal EqualFunc[V]) Trie[V] {
 	return &binary[V]{
 		size:  0,
@@ -531,8 +531,8 @@ func (t *binary[V]) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 }
 
-// Equals determines whether or not two binary tries have the same key-values.
-func (t *binary[V]) Equals(rhs Trie[V]) bool {
+// Equal determines whether or not two binary tries have the same key-values.
+func (t *binary[V]) Equal(rhs Trie[V]) bool {
 	t2, ok := rhs.(*binary[V])
 	if !ok {
 		return false

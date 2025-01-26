@@ -113,8 +113,8 @@ func (b *bitString) DiffPos(c *bitString) int {
 	return i*8 - j + 1
 }
 
-// Equals determines whether or not two bitstrings are equal.
-func (b *bitString) Equals(c *bitString) bool {
+// Equal determines whether or not two bitstrings are equal.
+func (b *bitString) Equal(c *bitString) bool {
 	if b.len != c.len {
 		return false
 	}
