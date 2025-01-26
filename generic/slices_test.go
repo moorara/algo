@@ -49,10 +49,29 @@ func TestCollect1(t *testing.T) {
 	c := new(testCollection1[string])
 	c.Add("foo", "bar")
 
-	expectedSlice := []string{"foo", "bar"}
+	tests := []struct {
+		name          string
+		seq           iter.Seq[string]
+		expectedSlice []string
+	}{
+		{
+			name:          "Nil",
+			seq:           nil,
+			expectedSlice: nil,
+		},
+		{
+			name:          "OK",
+			seq:           c.All(),
+			expectedSlice: []string{"foo", "bar"},
+		},
+	}
 
-	slice := Collect1(c.All())
-	assert.Equal(t, expectedSlice, slice)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			slice := Collect1(tc.seq)
+			assert.Equal(t, tc.expectedSlice, slice)
+		})
+	}
 }
 
 func TestCollect2(t *testing.T) {
@@ -60,13 +79,33 @@ func TestCollect2(t *testing.T) {
 	c.Put("foo", 1)
 	c.Put("bar", 2)
 
-	expectedSlice := []KeyValue[string, int]{
-		{"foo", 1},
-		{"bar", 2},
+	tests := []struct {
+		name          string
+		seq2          iter.Seq2[string, int]
+		expectedSlice []KeyValue[string, int]
+	}{
+		{
+			name:          "Nil",
+			seq2:          nil,
+			expectedSlice: nil,
+		},
+		{
+			name: "OK",
+			seq2: c.All(),
+			expectedSlice: []KeyValue[string, int]{
+				{"foo", 1},
+				{"bar", 2},
+			},
+		},
 	}
 
-	slice := Collect2(c.All())
-	assert.Equal(t, expectedSlice, slice)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			slice := Collect2(tc.seq2)
+			assert.Equal(t, tc.expectedSlice, slice)
+		})
+	}
+
 }
 
 func TestAnyMatch(t *testing.T) {

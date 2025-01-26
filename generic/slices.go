@@ -11,6 +11,10 @@ type KeyValue[K, V any] struct {
 
 // Collect1 collects items in a collection from seq into a new slice and returns it.
 func Collect1[T any](seq iter.Seq[T]) []T {
+	if seq == nil {
+		return nil
+	}
+
 	items := make([]T, 0)
 	for v := range seq {
 		items = append(items, v)
@@ -21,6 +25,10 @@ func Collect1[T any](seq iter.Seq[T]) []T {
 
 // Collect2 collects key-values in a collection from seq2 into a new slice and returns it.
 func Collect2[K, V any](seq2 iter.Seq2[K, V]) []KeyValue[K, V] {
+	if seq2 == nil {
+		return nil
+	}
+
 	kvs := make([]KeyValue[K, V], 0)
 	for k, v := range seq2 {
 		kvs = append(kvs, KeyValue[K, V]{k, v})
