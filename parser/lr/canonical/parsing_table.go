@@ -26,7 +26,7 @@ func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 	table := lr.NewParsingTable(S.States(), terminals, nonTerminals)
 
 	// 2. State i is constructed from I.
-	for i, I := range S {
+	for i, I := range S.All() {
 		// The parsing action for state i is determined as follows:
 
 		for item := range I.All() {
@@ -35,10 +35,10 @@ func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 				if X, ok := item.DotSymbol(); ok {
 					if a, ok := X.(grammar.Terminal); ok {
 						J := auto1.GOTO(I, a)
-						j := S.Find(J)
+						j := S.FindItemSet(J)
 
 						// Set ACTION[i,a] to SHIFT j
-						table.AddACTION(lr.State(i), a, &lr.Action{
+						table.AddACTION(i, a, &lr.Action{
 							Type:  lr.SHIFT,
 							State: j,
 						})
@@ -50,7 +50,7 @@ func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 					a := item.Lookahead
 
 					// Set ACTION[i,a] to REDUCE A → α
-					table.AddACTION(lr.State(i), a, &lr.Action{
+					table.AddACTION(i, a, &lr.Action{
 						Type:       lr.REDUCE,
 						Production: item.Production,
 					})
@@ -59,7 +59,7 @@ func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 				// If "S′ → S•, $" is in Iᵢ
 				if item.IsFinal() {
 					// Set ACTION[i,$] to ACCEPT
-					table.AddACTION(lr.State(i), grammar.Endmarker, &lr.Action{
+					table.AddACTION(i, grammar.Endmarker, &lr.Action{
 						Type: lr.ACCEPT,
 					})
 				}
@@ -74,10 +74,10 @@ func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 		for A := range auto1.G().NonTerminals.All() {
 			if !A.Equal(auto1.G().Start) {
 				J := auto1.GOTO(I, A)
-				j := S.Find(J)
+				j := S.FindItemSet(J)
 
 				// Set GOTO[i,A] = j
-				table.SetGOTO(lr.State(i), A, j)
+				table.SetGOTO(i, A, j)
 			}
 		}
 
