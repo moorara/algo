@@ -37,7 +37,7 @@ func BuildStateMap(C ItemSetCollection) StateMap {
 
 	for i, set := range sets {
 		m[i] = generic.Collect1(set.All())
-		sort.Quick(m[i], cmpItem)
+		sort.Quick(m[i], CmpItem)
 	}
 
 	return m

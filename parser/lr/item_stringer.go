@@ -26,7 +26,7 @@ func (s *itemSetStringer) String() string {
 	// Calculate the width of item set.
 	s.calculateWidth()
 
-	sort.Quick(s.items, cmpItem)
+	sort.Quick(s.items, CmpItem)
 
 	s.printTopLine() // ┌────────[s]─────────┐
 
