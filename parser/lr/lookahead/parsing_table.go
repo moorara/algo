@@ -148,8 +148,8 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 	K0 := auto0.Canonical()    // Construct the kernels of the sets of LR(0) items for G′.
 	S0 := lr.BuildStateMap(K0) // Map Kernel sets of LR(0) items to state numbers.
 
-	propagations := NewPropagationTable(S0) // This table memoize which items propagate their lookaheads to which other items.
-	lookaheads := NewLookaheadTable(S0)     // This table is used for computing lookaheads for all states.
+	propagations := newPropagationTable(S0) // This table memoize which items propagate their lookaheads to which other items.
+	lookaheads := newLookaheadTable(S0)     // This table is used for computing lookaheads for all states.
 
 	// Initialize the table with the spontaneous lookahead $ for the initial item "S′ → •S".
 	init := &scopedItem{ItemSet: 0, Item: 0}

@@ -47,7 +47,7 @@ type propagationTable struct {
 	table symboltable.SymbolTable[*scopedItem, set.Set[*scopedItem]]
 }
 
-func NewPropagationTable(S lr.StateMap) *propagationTable {
+func newPropagationTable(S lr.StateMap) *propagationTable {
 	return &propagationTable{
 		S: S,
 		table: symboltable.NewRedBlack(
@@ -135,7 +135,7 @@ type lookaheadTable struct {
 	table symboltable.SymbolTable[*scopedItem, set.Set[grammar.Terminal]]
 }
 
-func NewLookaheadTable(S lr.StateMap) *lookaheadTable {
+func newLookaheadTable(S lr.StateMap) *lookaheadTable {
 	return &lookaheadTable{
 		S: S,
 		table: symboltable.NewRedBlack(
