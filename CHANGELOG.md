@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.10.4](https://github.com/moorara/algo/tree/v0.10.4) (2025-01-27)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.10.3...v0.10.4)
+
+**Merged Changes:**
+
+  - Hide unexported types [#263](https://github.com/moorara/algo/pull/263) ([moorara](https://github.com/moorara))
+  - Update README.md [#262](https://github.com/moorara/algo/pull/262) ([moorara](https://github.com/moorara))
+
+
 ## [v0.10.3](https://github.com/moorara/algo/tree/v0.10.3) (2025-01-27)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.10.2...v0.10.3)
