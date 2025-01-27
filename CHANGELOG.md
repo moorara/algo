@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.10.3](https://github.com/moorara/algo/tree/v0.10.3) (2025-01-27)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.10.2...v0.10.3)
+
+**Merged Changes:**
+
+  - Lalr parser [#261](https://github.com/moorara/algo/pull/261) ([moorara](https://github.com/moorara))
+  - Work on parser [#260](https://github.com/moorara/algo/pull/260) ([moorara](https://github.com/moorara))
+  - Refactoring grammar parser [#259](https://github.com/moorara/algo/pull/259) ([moorara](https://github.com/moorara))
+  - Implement Canonical LR parser [#258](https://github.com/moorara/algo/pull/258) ([moorara](https://github.com/moorara))
+  - Fix typo [#257](https://github.com/moorara/algo/pull/257) ([moorara](https://github.com/moorara))
+
+
 ## [v0.10.2](https://github.com/moorara/algo/tree/v0.10.2) (2025-01-22)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.10.1...v0.10.2)
