@@ -12,17 +12,16 @@ import (
 func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 	/*
 	 * INPUT:  An augmented grammar G′.
-	 * OUTPUT: The SLR-parsing table functions ACTION and GOTO for G′.
+	 * OUTPUT: The SLR parsing table functions ACTION and GOTO for G′.
 	 */
 
 	auto0 := lr.NewLR0Automaton(G)
 	FIRST := auto0.G().ComputeFIRST()
 	FOLLOW := auto0.G().ComputeFOLLOW(FIRST)
 
-	// 1. Construct C = {I₀, I₁, ..., Iₙ}, the collection of sets of LR(0) items for G′.
-	C := auto0.Canonical()
+	C := auto0.Canonical()   // 1. Construct C = {I₀, I₁, ..., Iₙ}, the collection of sets of LR(0) items for G′.
+	S := lr.BuildStateMap(C) // Map sets of LR(0) items to state numbers.
 
-	S := lr.BuildStateMap(C)
 	terminals := auto0.G().OrderTerminals()
 	_, _, nonTerminals := auto0.G().OrderNonTerminals()
 	table := lr.NewParsingTable(S.States(), terminals, nonTerminals)
@@ -32,54 +31,54 @@ func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
 		// The parsing action for state i is determined as follows:
 
 		for item := range I.All() {
-			if item, ok := item.(*lr.Item0); ok {
-				// If "A → α•aβ" is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
-				if X, ok := item.DotSymbol(); ok {
-					if a, ok := X.(grammar.Terminal); ok {
-						J := auto0.GOTO(I, a)
-						j := S.FindItemSet(J)
+			item := item.(*lr.Item0)
 
-						// Set ACTION[i,a] to SHIFT j
-						table.AddACTION(i, a, &lr.Action{
-							Type:  lr.SHIFT,
-							State: j,
-						})
-					}
+			// If "A → α•aβ" is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
+			if X, ok := item.DotSymbol(); ok {
+				if a, ok := X.(grammar.Terminal); ok {
+					J := auto0.GOTO(I, a)
+					j := S.FindItemSet(J)
+
+					// Set ACTION[i,a] to SHIFT j
+					table.AddACTION(i, a, &lr.Action{
+						Type:  lr.SHIFT,
+						State: j,
+					})
 				}
+			}
 
-				// If "A → α•" is in Iᵢ (A ≠ S′)
-				if item.IsComplete() && !item.IsFinal() {
-					FOLLOWA := FOLLOW(item.Head)
+			// If "A → α•" is in Iᵢ (A ≠ S′)
+			if item.IsComplete() && !item.IsFinal() {
+				FOLLOWA := FOLLOW(item.Head)
 
-					// For all a in FOLLOW(A)
-					for a := range FOLLOWA.Terminals.All() {
-						// Set ACTION[i,a] to REDUCE A → α
-						table.AddACTION(i, a, &lr.Action{
-							Type:       lr.REDUCE,
-							Production: item.Production,
-						})
-					}
-
-					if FOLLOWA.IncludesEndmarker {
-						// Set ACTION[i,$] to REDUCE A → α
-						table.AddACTION(i, grammar.Endmarker, &lr.Action{
-							Type:       lr.REDUCE,
-							Production: item.Production,
-						})
-					}
-				}
-
-				// If "S′ → S•" is in Iᵢ
-				if item.IsFinal() {
-					// Set ACTION[i,$] to ACCEPT
-					table.AddACTION(i, grammar.Endmarker, &lr.Action{
-						Type: lr.ACCEPT,
+				// For all a in FOLLOW(A)
+				for a := range FOLLOWA.Terminals.All() {
+					// Set ACTION[i,a] to REDUCE A → α
+					table.AddACTION(i, a, &lr.Action{
+						Type:       lr.REDUCE,
+						Production: item.Production,
 					})
 				}
 
-				// If any conflicting actions result from the above rules, the grammar is not SLR(1).
-				// The table.Error() method will list all conflicts, if any exist.
+				if FOLLOWA.IncludesEndmarker {
+					// Set ACTION[i,$] to REDUCE A → α
+					table.AddACTION(i, grammar.Endmarker, &lr.Action{
+						Type:       lr.REDUCE,
+						Production: item.Production,
+					})
+				}
 			}
+
+			// If "S′ → S•" is in Iᵢ
+			if item.IsFinal() {
+				// Set ACTION[i,$] to ACCEPT
+				table.AddACTION(i, grammar.Endmarker, &lr.Action{
+					Type: lr.ACCEPT,
+				})
+			}
+
+			// If any conflicting actions result from the above rules, the grammar is not SLR(1).
+			// The table.Error() method will list all conflicts, if any exist.
 		}
 
 		// 3. The goto transitions for state i are constructed for all non-terminals A using the rule:
