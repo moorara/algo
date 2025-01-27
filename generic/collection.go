@@ -40,12 +40,11 @@ type (
 		All() iter.Seq[T]
 
 		// AnyMatch returns true if at least one item in the collection satisfies the provided predicate function.
-		// If no items satisfy the predicate or the collection is empty,
-		// it returns false.
+		// If no items satisfy the predicate or the collection is empty, it returns false.
 		AnyMatch(Predicate1[T]) bool
 
 		// AllMatch returns true if all items in the collection satisfy the provided predicate function.
-		// If the collection is empty, it returns false.
+		// If the collection is empty, it returns true.
 		AllMatch(Predicate1[T]) bool
 
 		// SelectMatch selects a subset of items from the collection that satisfy the given predicate.
@@ -93,30 +92,3 @@ type (
 		SelectMatch(Predicate2[K, V]) Collection2[K, V]
 	}
 )
-
-// KeyValue is a generic struct that holds a key-value pair.
-// K and V represent the types of the key and value, respectively
-type KeyValue[K, V any] struct {
-	Key K
-	Val V
-}
-
-// Collect1 collects items in a collection from seq into a new slice and returns it.
-func Collect1[T any](seq iter.Seq[T]) []T {
-	items := make([]T, 0)
-	for v := range seq {
-		items = append(items, v)
-	}
-
-	return items
-}
-
-// Collect2 collects key-values in a collection from seq2 into a new slice and returns it.
-func Collect2[K, V any](seq2 iter.Seq2[K, V]) []KeyValue[K, V] {
-	kvs := make([]KeyValue[K, V], 0)
-	for k, v := range seq2 {
-		kvs = append(kvs, KeyValue[K, V]{k, v})
-	}
-
-	return kvs
-}

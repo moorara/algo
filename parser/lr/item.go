@@ -11,15 +11,15 @@ import (
 )
 
 var (
-	eqItem = func(lhs, rhs Item) bool {
+	EqItem = func(lhs, rhs Item) bool {
 		return lhs.Equal(rhs)
 	}
 
-	cmpItem = func(lhs, rhs Item) int {
+	CmpItem = func(lhs, rhs Item) int {
 		return lhs.Compare(rhs)
 	}
 
-	eqItemSet = func(lhs, rhs ItemSet) bool {
+	EqItemSet = func(lhs, rhs ItemSet) bool {
 		return lhs.Equal(rhs)
 	}
 )
@@ -30,7 +30,7 @@ type ItemSetCollection set.Set[ItemSet]
 // NewItemSetCollection creates a new collection of item sets.
 func NewItemSetCollection(sets ...ItemSet) ItemSetCollection {
 	return set.NewWithFormat(
-		eqItemSet,
+		EqItemSet,
 		func(sets []ItemSet) string {
 			cs := &itemSetCollectionStringer{sets: sets}
 			return cs.String()
@@ -45,7 +45,7 @@ type ItemSet set.Set[Item]
 // NewItemSet creates a new set of items.
 func NewItemSet(items ...Item) ItemSet {
 	return set.NewWithFormat(
-		eqItem,
+		EqItem,
 		func(items []Item) string {
 			ss := &itemSetStringer{items: items}
 			return ss.String()
@@ -65,13 +65,13 @@ func NewItemSet(items ...Item) ItemSet {
 // ensuring stability and predictability in their ordering.
 func cmpItemSet(lhs, rhs ItemSet) int {
 	ls := generic.Collect1(lhs.All())
-	sort.Quick(ls, cmpItem)
+	sort.Quick(ls, CmpItem)
 
 	rs := generic.Collect1(rhs.All())
-	sort.Quick(rs, cmpItem)
+	sort.Quick(rs, CmpItem)
 
 	for i := 0; i < len(ls) && i < len(rs); i++ {
-		if cmp := cmpItem(ls[i], rs[i]); cmp != 0 {
+		if cmp := CmpItem(ls[i], rs[i]); cmp != 0 {
 			return cmp
 		}
 	}

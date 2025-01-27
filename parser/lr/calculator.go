@@ -59,21 +59,21 @@ func (c *calculator0) CLOSURE(I ItemSet) ItemSet {
 
 		// For each item A → α•Bβ in J
 		for i := range J.All() {
-			if i, ok := i.(*Item0); ok {
-				if X, ok := i.DotSymbol(); ok {
-					if B, ok := X.(grammar.NonTerminal); ok {
-						// For each production B → γ of G′
-						for BProd := range c.augG.Productions.Get(B).All() {
-							j := &Item0{
-								Production: BProd,
-								Start:      c.augG.Start,
-								Dot:        0,
-							}
+			i := i.(*Item0)
 
-							// If B → •γ is not in J
-							if !J.Contains(j) {
-								newItems = append(newItems, j)
-							}
+			if X, ok := i.DotSymbol(); ok {
+				if B, ok := X.(grammar.NonTerminal); ok {
+					// For each production B → γ of G′
+					for BProd := range c.augG.Productions.Get(B).All() {
+						j := &Item0{
+							Production: BProd,
+							Start:      c.augG.Start,
+							Dot:        0,
+						}
+
+						// If B → •γ is not in J
+						if !J.Contains(j) {
+							newItems = append(newItems, j)
 						}
 					}
 				}
@@ -121,28 +121,28 @@ func (c *calculator1) CLOSURE(I ItemSet) ItemSet {
 
 		// For each item [A → α•Bβ, a] in J
 		for i := range J.All() {
-			if i, ok := i.(*Item1); ok {
-				a := i.Lookahead
-				if X, ok := i.DotSymbol(); ok {
-					if B, ok := X.(grammar.NonTerminal); ok {
-						// For each production B → γ of G′
-						for BProd := range c.augG.Productions.Get(B).All() {
-							β := i.GetSuffix()[1:]
-							βa := β.Append(a)
+			i := i.(*Item1)
+			a := i.Lookahead
 
-							// For each terminal b in FIRST(βa)
-							for b := range c.FIRST(βa).Terminals.All() {
-								j := &Item1{
-									Production: BProd,
-									Start:      c.augG.Start,
-									Dot:        0,
-									Lookahead:  b,
-								}
+			if X, ok := i.DotSymbol(); ok {
+				if B, ok := X.(grammar.NonTerminal); ok {
+					// For each production B → γ of G′
+					for BProd := range c.augG.Productions.Get(B).All() {
+						β := i.GetSuffix()[1:]
+						βa := β.Append(a)
 
-								// If [B → •γ, b] is not in J
-								if !J.Contains(j) {
-									newItems = append(newItems, j)
-								}
+						// For each terminal b in FIRST(βa)
+						for b := range c.FIRST(βa).Terminals.All() {
+							j := &Item1{
+								Production: BProd,
+								Start:      c.augG.Start,
+								Dot:        0,
+								Lookahead:  b,
+							}
+
+							// If [B → •γ, b] is not in J
+							if !J.Contains(j) {
+								newItems = append(newItems, j)
 							}
 						}
 					}

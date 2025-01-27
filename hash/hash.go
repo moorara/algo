@@ -12,6 +12,11 @@ import (
 	"unsafe"
 )
 
+// Hasher is a generic interface that defines a method for computing a hash value for any type T.
+type Hasher interface {
+	Hash() uint64
+}
+
 // HashFunc defines a generic function type for hashing a key of type K.
 type HashFunc[T any] func(T) uint64
 

@@ -1,9 +1,9 @@
 package lookahead
 
 import (
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/parser/lr"
-	"github.com/moorara/algo/set"
 )
 
 // BuildParsingTable constructs a parsing table for an LALR parser.
@@ -11,8 +11,98 @@ import (
 // This method constructs an LALR(1) parsing table for any context-free grammar.
 // To identify errors in the table, use the Error method.
 func BuildParsingTable(G *grammar.CFG) (lr.ParsingTable, error) {
-	// TODO
-	return nil, nil
+	/*
+	 * INPUT:  An augmented grammar G′.
+	 * OUTPUT: The LALR parsing table functions ACTION and GOTO for G′.
+	 */
+
+	auto1 := lr.NewLR1KernelAutomaton(G)
+
+	K := ComputeLALR1Kernels(G) // 1. Construct the kernels of the LALR(1) collection of sets of items for G′.
+	S := lr.BuildStateMap(K)    // Map sets of LALR(1) items to state numbers.
+
+	terminals := auto1.G().OrderTerminals()
+	_, _, nonTerminals := auto1.G().OrderNonTerminals()
+	table := lr.NewParsingTable(S.States(), terminals, nonTerminals)
+
+	// 2. State i is constructed from I.
+	for i, I := range S.All() {
+		// The parsing action for state i is determined as follows:
+
+		for item := range auto1.CLOSURE(I).All() {
+			item := item.(*lr.Item1)
+
+			// If "A → α•aβ, b" is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
+			if X, ok := item.DotSymbol(); ok {
+				if a, ok := X.(grammar.Terminal); ok {
+					// J is the union of multiple sets of LR(1) items (J = I₁ ∪ I₂ ∪ ... ∪ Iₖ).
+					// By definition, I₁, I₂, ..., Iₖ all share the same core, which consists of the production and dot positions, excluding the lookahead.
+					// The cores of GOTO(I₁, X), GOTO(I₂, X), ..., GOTO(Iₖ, X) are also the same because the sets I₁, I₂, ..., Iₖ have identical cores.
+					// Let K be the union of all item sets that have the same core as GOTO(I₁, X). Then, GOTO(J, X) = K.
+					// This means that the regular GOTO function returns an item set whose core matches one of the LALR(1) item sets, but it may have missing lookaheads.
+					// Therefore, to find K, we need to identify an item set whose core is a superset of the set returned by the regular GOTO function.
+					J := auto1.GOTO(I, a)
+					j := findSuperset(S, J)
+
+					// Set ACTION[i,a] to SHIFT j
+					table.AddACTION(i, a, &lr.Action{
+						Type:  lr.SHIFT,
+						State: j,
+					})
+				}
+			}
+
+			// If "A → α•, a" is in Iᵢ (A ≠ S′)
+			if item.IsComplete() && !item.IsFinal() {
+				a := item.Lookahead
+
+				// Set ACTION[i,a] to REDUCE A → α
+				table.AddACTION(i, a, &lr.Action{
+					Type:       lr.REDUCE,
+					Production: item.Production,
+				})
+			}
+
+			// If "S′ → S•, $" is in Iᵢ
+			if item.IsFinal() {
+				// Set ACTION[i,$] to ACCEPT
+				table.AddACTION(i, grammar.Endmarker, &lr.Action{
+					Type: lr.ACCEPT,
+				})
+			}
+
+			// If any conflicting actions result from the above rules, the grammar is not LALR(1).
+			// The table.Error() method will list all conflicts, if any exist.
+		}
+
+		// 3. The goto transitions for state i are constructed for all non-terminals A using the rule:
+		// If GOTO(Iᵢ,A) = Iⱼ
+		for A := range auto1.G().NonTerminals.All() {
+			if !A.Equal(auto1.G().Start) {
+				// J is the union of multiple sets of LR(1) items (J = I₁ ∪ I₂ ∪ ... ∪ Iₖ).
+				// By definition, I₁, I₂, ..., Iₖ all share the same core, which consists of the production and dot positions, excluding the lookahead.
+				// The cores of GOTO(I₁, X), GOTO(I₂, X), ..., GOTO(Iₖ, X) are also the same because the sets I₁, I₂, ..., Iₖ have identical cores.
+				// Let K be the union of all item sets that have the same core as GOTO(I₁, X). Then, GOTO(J, X) = K.
+				// This means that the regular GOTO function returns an item set whose core matches one of the LALR(1) item sets, but it may have missing lookaheads.
+				// Therefore, to find K, we need to identify an item set whose core is a superset of the set returned by the regular GOTO function.
+				J := auto1.GOTO(I, A)
+				j := findSuperset(S, J)
+
+				// Set GOTO[i,A] = j
+				table.SetGOTO(i, A, j)
+			}
+		}
+
+		// 4. All entries not defined by rules (2) and (3) are made ERROR.
+	}
+
+	// 5. The initial state of the parser is the one constructed from the set of items containing "S′ → •S, $".
+
+	if err := table.Error(); err != nil {
+		return nil, err
+	}
+
+	return table, nil
 }
 
 // ComputeLALR1Kernels computes and returns the kernels of the LALR(1) collection of sets of items for a context-free grammar.
@@ -55,26 +145,15 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 	auto0 := lr.NewLR0KernelAutomaton(G)
 	auto1 := lr.NewLR1KernelAutomaton(G)
 
-	// Construct the kernels of the sets of LR(0) items for G′.
-	K0 := auto0.Canonical()
+	K0 := auto0.Canonical()    // Construct the kernels of the sets of LR(0) items for G′.
+	S0 := lr.BuildStateMap(K0) // Map Kernel sets of LR(0) items to state numbers.
 
-	// Map Kernel sets of LR(0) items to state numbers.
-	S0 := lr.BuildStateMap(K0)
-
-	// This table memoize which states propagate their lookaheads to which other states.
-	propagations := make([]set.Set[lr.State], len(S0))
-	for s := range propagations {
-		propagations[s] = set.New(lr.EqState)
-	}
-
-	// This table is used for computing lookaheads for all states.
-	lookaheads := make([]set.Set[grammar.Terminal], len(S0))
-	for s := range lookaheads {
-		lookaheads[s] = set.New(grammar.EqTerminal)
-	}
+	propagations := NewPropagationTable(S0) // This table memoize which items propagate their lookaheads to which other items.
+	lookaheads := NewLookaheadTable(S0)     // This table is used for computing lookaheads for all states.
 
 	// Initialize the table with the spontaneous lookahead $ for the initial item "S′ → •S".
-	lookaheads[0].Add(grammar.Endmarker)
+	init := &scopedItem{ItemSet: 0, Item: 0}
+	lookaheads.Add(init, grammar.Endmarker)
 
 	// For each state, kernel set of LR(0) items, determine:
 	//
@@ -85,25 +164,38 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 	//
 	//   • Determine which lookaheads are generated spontaneously for which states.
 	//   • Build a table to memoize which states propagate their lookaheads to which other states.
-	for I := range K0.All() {
-		currS := S0.Find(I)
+	for s, items := range S0 {
+		s := lr.State(s)
+		I := S0.ItemSet(s)
 
-		for i := range I.All() {
-			if i, ok := i.(*lr.Item0); ok {
-				J := auto1.CLOSURE(lr.NewItemSet(i.Item1(grammar.Endmarker)))
+		for i, item := range items {
+			from := &scopedItem{ItemSet: s, Item: i}
 
-				for j := range J.All() {
-					if X, ok := j.DotSymbol(); ok {
-						next := auto0.GOTO(I, X)
-						nextS := S0.Find(next)
+			// J = CLOSURE({[A → α.β, $]})
+			J := auto1.CLOSURE(
+				lr.NewItemSet(
+					item.(*lr.Item0).Item1(grammar.Endmarker),
+				),
+			)
 
-						if j, ok := j.(*lr.Item1); ok {
-							if l := j.Lookahead; l.Equal(grammar.Endmarker) {
-								propagations[currS].Add(nextS)
-							} else {
-								lookaheads[nextS].Add(l)
-							}
-						}
+			for j := range J.All() {
+				if X, ok := j.DotSymbol(); ok {
+					nextI := auto0.GOTO(I, X) // GOTO(I,X)
+					nextj, _ := j.Next()      // B → γX.δ
+
+					// Find B → γX.δ in GOTO(I,X)
+					to := new(scopedItem)
+					to.ItemSet = S0.FindItemSet(nextI)
+					to.Item = S0.FindItem(to.ItemSet, nextj.(*lr.Item1).Item0())
+
+					if lookahead := j.(*lr.Item1).Lookahead; lookahead.Equal(grammar.Endmarker) {
+						// If [B → γ.Xδ, $] is in J,
+						// conclude that lookaheads propagate from A → α.β in I to B → γX.δ in GOTO(I,X).
+						propagations.Add(from, to)
+					} else {
+						// If [B → γ.Xδ, a] is in J, and a is not $,
+						// conclude that lookahead is generated spontaneously for item B → γX.δ in GOTO(I,X).
+						lookaheads.Add(to, lookahead)
 					}
 				}
 			}
@@ -115,29 +207,28 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 	for updated := true; updated; {
 		updated = false
 
-		for from := range lookaheads {
-			if lookaheads[from].Size() > 0 {
-				for to := range propagations[from].All() {
-					if union := lookaheads[to].Union(lookaheads[from]); union.Size() > lookaheads[to].Size() {
-						lookaheads[to] = union
-						updated = true
+		for from := range lookaheads.All() {
+			if fromL := generic.Collect1(lookaheads.Get(from).All()); len(fromL) > 0 {
+				if set := propagations.Get(from); set != nil {
+					for to := range set.All() {
+						updated = updated || lookaheads.Add(to, fromL...)
 					}
 				}
 			}
 		}
 	}
 
-	// Build the kernels of the LALR(1) collection of item sets.
 	K1 := lr.NewItemSetCollection()
 
-	for s, I := range S0 {
+	// Build the kernels of the LALR(1) collection of item sets.
+	for s, items := range S0 {
+		s := lr.State(s)
 		J := lr.NewItemSet()
 
-		for i := range I.All() {
-			if i, ok := i.(*lr.Item0); ok {
-				for lookahead := range lookaheads[s].All() {
-					J.Add(i.Item1(lookahead))
-				}
+		for i := range items {
+			item := &scopedItem{ItemSet: s, Item: i}
+			for lookahead := range lookaheads.Get(item).All() {
+				J.Add(items[i].(*lr.Item0).Item1(lookahead))
 			}
 		}
 
@@ -145,4 +236,22 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 	}
 
 	return K1
+}
+
+// findSuperset searches the state map for a state whose item set is a superset of the given item set.
+// A superset means that all items in the given item set are contained within the state's item set.
+// If such a state is found, its index is returned.
+// If no such state exists, or if the provided item set is empty, ErrState is returned.
+func findSuperset(S lr.StateMap, I lr.ItemSet) lr.State {
+	if I.Size() == 0 {
+		return lr.ErrState
+	}
+
+	for i := range S {
+		if s := lr.State(i); S.ItemSet(s).IsSuperset(I) {
+			return s
+		}
+	}
+
+	return lr.ErrState
 }

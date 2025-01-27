@@ -16,8 +16,8 @@ var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 // Set represents a set abstract data type.
 type Set[T any] interface {
 	fmt.Stringer
-	generic.Cloner[Set[T]]
 	generic.Equaler[Set[T]]
+	generic.Cloner[Set[T]]
 	generic.Collection1[T]
 
 	CloneEmpty() Set[T]
