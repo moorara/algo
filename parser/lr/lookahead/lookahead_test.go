@@ -16,7 +16,7 @@ func TestNew(t *testing.T) {
 		G                    *grammar.CFG
 		expectedErrorStrings []string
 	}{
-		/* {
+		{
 			name:                 "Success",
 			L:                    nil,
 			G:                    grammars[1],
@@ -27,9 +27,13 @@ func TestNew(t *testing.T) {
 			L:    nil,
 			G:    grammars[2],
 			expectedErrorStrings: []string{
-				`placeholder`,
+				`failed to construct LALR parsing table: 4 errors occurred:`,
+				`shift/reduce conflict at ACTION[2, "*"]`,
+				`shift/reduce conflict at ACTION[2, "+"]`,
+				`shift/reduce conflict at ACTION[3, "*"]`,
+				`shift/reduce conflict at ACTION[3, "+"]`,
 			},
-		}, */
+		},
 	}
 
 	for _, tc := range tests {

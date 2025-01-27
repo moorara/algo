@@ -101,13 +101,7 @@ func getTestParsingTables() []lr.ParsingTable {
 	pt0.SetGOTO(5, "C", 2)
 	pt0.SetGOTO(6, "C", 3)
 
-	pt1 := lr.NewParsingTable(
-		[]lr.State{},
-		[]grammar.Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX", grammar.Endmarker},
-		[]grammar.NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
-	)
-
-	return []lr.ParsingTable{pt0, pt1}
+	return []lr.ParsingTable{pt0}
 }
 
 func TestBuildParsingTable(t *testing.T) {
