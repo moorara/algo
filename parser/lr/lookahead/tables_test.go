@@ -95,7 +95,7 @@ func TestNewPropagationTable(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			pt := NewPropagationTable(tc.S)
+			pt := newPropagationTable(tc.S)
 
 			assert.NotNil(t, pt)
 			assert.NotNil(t, pt.table)
@@ -104,7 +104,7 @@ func TestNewPropagationTable(t *testing.T) {
 }
 
 func TestPropagationTable_Add(t *testing.T) {
-	pt := NewPropagationTable(nil)
+	pt := newPropagationTable(nil)
 
 	tests := []struct {
 		name       string
@@ -143,7 +143,7 @@ func TestPropagationTable_Add(t *testing.T) {
 }
 
 func TestPropagationTable_Get(t *testing.T) {
-	pt := NewPropagationTable(nil)
+	pt := newPropagationTable(nil)
 	pt.Add(
 		&scopedItem{ItemSet: 2, Item: 4},
 		&scopedItem{ItemSet: 6, Item: 1},
@@ -183,7 +183,7 @@ func TestPropagationTable_Get(t *testing.T) {
 }
 
 func TestPropagationTable_All(t *testing.T) {
-	pt := NewPropagationTable(nil)
+	pt := newPropagationTable(nil)
 	pt.Add(
 		&scopedItem{ItemSet: 2, Item: 4},
 		&scopedItem{ItemSet: 6, Item: 1},
@@ -215,7 +215,7 @@ func TestPropagationTable_All(t *testing.T) {
 }
 
 func TestPropagationTable_String(t *testing.T) {
-	pt := NewPropagationTable(sm)
+	pt := newPropagationTable(sm)
 	pt.Add(&scopedItem{ItemSet: 0, Item: 0},
 		&scopedItem{ItemSet: 1, Item: 0},
 		&scopedItem{ItemSet: 5, Item: 0},
@@ -299,7 +299,7 @@ func TestNewLookaheadTable(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			lt := NewLookaheadTable(tc.S)
+			lt := newLookaheadTable(tc.S)
 
 			assert.NotNil(t, lt)
 			assert.NotNil(t, lt.table)
@@ -308,7 +308,7 @@ func TestNewLookaheadTable(t *testing.T) {
 }
 
 func TestLookaheadTable_Add(t *testing.T) {
-	lt := NewLookaheadTable(nil)
+	lt := newLookaheadTable(nil)
 
 	tests := []struct {
 		name       string
@@ -343,7 +343,7 @@ func TestLookaheadTable_Add(t *testing.T) {
 }
 
 func TestLookaheadTable_Get(t *testing.T) {
-	lt := NewLookaheadTable(nil)
+	lt := newLookaheadTable(nil)
 	lt.Add(&scopedItem{ItemSet: 2, Item: 4}, "$")
 
 	tests := []struct {
@@ -380,7 +380,7 @@ func TestLookaheadTable_Get(t *testing.T) {
 }
 
 func TestLookaheadTable_All(t *testing.T) {
-	lt := NewLookaheadTable(nil)
+	lt := newLookaheadTable(nil)
 	lt.Add(&scopedItem{ItemSet: 2, Item: 4}, "$")
 	lt.Add(&scopedItem{ItemSet: 4, Item: 2}, "$", "=")
 
@@ -405,7 +405,7 @@ func TestLookaheadTable_All(t *testing.T) {
 }
 
 func TestLookaheadTable_String(t *testing.T) {
-	lt := NewLookaheadTable(sm)
+	lt := newLookaheadTable(sm)
 	lt.Add(&scopedItem{ItemSet: 0, Item: 0}, grammar.Endmarker)
 	lt.Add(&scopedItem{ItemSet: 1, Item: 0}, grammar.Endmarker)
 	lt.Add(&scopedItem{ItemSet: 2, Item: 0}, grammar.Endmarker)
