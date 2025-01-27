@@ -37,6 +37,30 @@ func Collect2[K, V any](seq2 iter.Seq2[K, V]) []KeyValue[K, V] {
 	return kvs
 }
 
+// Find searches for the index of the first occurrence of a value in a slice.
+// If the value exists in the slice, it returns its index; otherwise, it returns -1.
+func Find[T any](s []T, eq EqualFunc[T], val T) int {
+	for i, v := range s {
+		if eq(v, val) {
+			return i
+		}
+	}
+
+	return -1
+}
+
+// Contains checks if a slice contains all the specified values.
+// It returns true if all values are found in the slice, otherwise returns false.
+func Contains[T any](s []T, eq EqualFunc[T], vals ...T) bool {
+	for _, val := range vals {
+		if Find(s, eq, val) == -1 {
+			return false
+		}
+	}
+
+	return true
+}
+
 // AnyMatch returns true if at least one item in a slice satisfies the provided predicate function.
 // If no items satisfy the predicate or a slice is empty, it returns false.
 func AnyMatch[T any](s []T, p Predicate1[T]) bool {

@@ -108,6 +108,68 @@ func TestCollect2(t *testing.T) {
 
 }
 
+func TestFind(t *testing.T) {
+	tests := []struct {
+		name          string
+		s             []string
+		eq            EqualFunc[string]
+		val           string
+		expectedIndex int
+	}{
+		{
+			name:          "Found",
+			s:             []string{"Football", "Basketball", "Volleyball", "Handball"},
+			eq:            NewEqualFunc[string](),
+			val:           "Football",
+			expectedIndex: 0,
+		},
+		{
+			name:          "NotFound",
+			s:             []string{"Football", "Basketball", "Volleyball", "Handball"},
+			eq:            NewEqualFunc[string](),
+			val:           "Water Polo",
+			expectedIndex: -1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedIndex, Find(tc.s, tc.eq, tc.val))
+		})
+	}
+}
+
+func TestContains(t *testing.T) {
+	tests := []struct {
+		name             string
+		s                []string
+		eq               EqualFunc[string]
+		vals             []string
+		expectedContains bool
+	}{
+		{
+			name:             "True",
+			s:                []string{"Shih Tzu", "Pomeranian", "Chihuahua", "Maltese"},
+			eq:               NewEqualFunc[string](),
+			vals:             []string{"Shih Tzu", "Maltese"},
+			expectedContains: true,
+		},
+		{
+			name:             "False",
+			s:                []string{"Shih Tzu", "Pomeranian", "Chihuahua", "Maltese"},
+			eq:               NewEqualFunc[string](),
+			vals:             []string{"Shih Tzu", "Bichon Frise"},
+			expectedContains: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedContains, Contains(tc.s, tc.eq, tc.vals...))
+		})
+	}
+}
+
 func TestAnyMatch(t *testing.T) {
 	tests := []struct {
 		name             string
