@@ -220,7 +220,7 @@ func Example_parse() {
 }
 
 // You can copy-paste the output of this example into https://edotor.net to view the result.
-func Example_parseAST() {
+func Example_parseAndBuildAST() {
 	src := strings.NewReader(`
 		(price + tax * quantity) * 
 			(discount + shipping) * 
@@ -250,7 +250,7 @@ func Example_parseAST() {
 
 	parser := predictive.New(G, l)
 
-	ast, err := parser.ParseAST()
+	ast, err := parser.ParseAndBuildAST()
 	if err != nil {
 		panic(err)
 	}
@@ -258,7 +258,7 @@ func Example_parseAST() {
 	fmt.Println(ast.DOT())
 }
 
-func Example_parsingTable() {
+func Example_buildParsingTable() {
 	G := grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},

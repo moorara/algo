@@ -283,7 +283,7 @@ func TestParser_Parse(t *testing.T) {
 	}
 }
 
-func TestParser_ParseAST(t *testing.T) {
+func TestParser_ParseAndBuildAST(t *testing.T) {
 	pt := getTestParsingTables()
 
 	tests := []struct {
@@ -518,7 +518,7 @@ func TestParser_ParseAST(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ast, err := tc.p.ParseAST()
+			ast, err := tc.p.ParseAndBuildAST()
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.True(t, ast.Equal(tc.expectedAST))

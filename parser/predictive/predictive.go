@@ -168,7 +168,7 @@ func (p *predictiveParser) Parse(tokenF parser.TokenFunc, prodF parser.Productio
 	return nil
 }
 
-// ParseAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+// ParseAndBuildAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
 // It attempts to parse the input according to the production rules of a context-free grammar,
 // constructing an abstract syntax tree (AST) that reflects the structure of the input.
 //
@@ -176,7 +176,7 @@ func (p *predictiveParser) Parse(tokenF parser.TokenFunc, prodF parser.Productio
 // representing the syntactic structure of the input string.
 //
 // It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-func (p *predictiveParser) ParseAST() (parser.Node, error) {
+func (p *predictiveParser) ParseAndBuildAST() (parser.Node, error) {
 	// Root of the abstract syntax tree.
 	root := &parser.InternalNode{
 		NonTerminal: p.G.Start,

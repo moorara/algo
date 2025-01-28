@@ -186,7 +186,7 @@ func (p *Parser) Parse(tokenF parser.TokenFunc, prodF parser.ProductionFunc) err
 	return nil
 }
 
-// ParseAST implements the LR parsing algorithm.
+// ParseAndBuildAST implements the LR parsing algorithm.
 // It analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
 // It attempts to parse the input according to the production rules of a context-free grammar,
 // constructing an abstract syntax tree (AST) that reflects the structure of the input.
@@ -195,7 +195,7 @@ func (p *Parser) Parse(tokenF parser.TokenFunc, prodF parser.ProductionFunc) err
 // representing the syntactic structure of the input string.
 //
 // It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-func (p *Parser) ParseAST() (parser.Node, error) {
+func (p *Parser) ParseAndBuildAST() (parser.Node, error) {
 	// Stack for constructing the abstract syntax tree.
 	nodes := list.NewStack[parser.Node](1024, parser.EqNode)
 

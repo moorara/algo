@@ -26,7 +26,7 @@ type Parser interface {
 	// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
 	Parse(TokenFunc, ProductionFunc) error
 
-	// ParseAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+	// ParseAndBuildAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
 	// It attempts to parse the input according to the production rules of a context-free grammar,
 	// constructing an abstract syntax tree (AST) that reflects the structure of the input.
 	//
@@ -34,7 +34,7 @@ type Parser interface {
 	// representing the syntactic structure of the input string.
 	//
 	// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-	ParseAST() (Node, error)
+	ParseAndBuildAST() (Node, error)
 }
 
 // ParseError represents an error encountered when parsing an input string.
