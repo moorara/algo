@@ -13,38 +13,8 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
-// ParsingTable is the interface for an LR parsing table.
-type ParsingTable interface {
-	fmt.Stringer
-	generic.Equaler[ParsingTable]
-
-	// AddACTION adds a new action for state s and terminal a to the parsing table.
-	// Multiple actions can be added for the same state s and terminal a.
-	// It returns false if the ACTION[s,a] contains more than one action, indicating a conflict.
-	AddACTION(State, grammar.Terminal, *Action) bool
-
-	// SetGOTO updates the next state for state s and non-terminal A in the parsing table.
-	// If the next state is ErrState, it will not be added to the table.
-	SetGOTO(State, grammar.NonTerminal, State)
-
-	// Error checks the parsing table for any conflicts between actions.
-	// A conflict occurs when multiple actions are assigned to the same state and terminal symbol.
-	// Conflicts arise when the grammar is ambiguous.
-	// If any conflicts are found, it returns an error with detailed descriptions of the conflicts.
-	Error() error
-
-	// ACTION looks up and returns the action for state s and terminal a.
-	// If the ACTION[s,a] contains more than one action,
-	// it returns an erroneous ACTION and an error, indicating a conflict.
-	ACTION(State, grammar.Terminal) (*Action, error)
-
-	// GOTO looks up and returns the next state for state s and non-terminal A.
-	// If the GOTO[s,A] contains more than one state, it returns an error.
-	GOTO(State, grammar.NonTerminal) (State, error)
-}
-
 // NewParsingTable creates an empty parsing table for an LR parser.
-func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal) ParsingTable {
+func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal) *ParsingTable {
 	opts := symboltable.HashOpts{}
 
 	actions := symboltable.NewQuadraticHashTable(
@@ -65,7 +35,7 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 		opts,
 	)
 
-	return &parsingTable{
+	return &ParsingTable{
 		states:       states,
 		terminals:    terminals,
 		nonTerminals: nonTerminals,
@@ -74,8 +44,8 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 	}
 }
 
-// parsingTable is an implementation of the ParsingTable interface.
-type parsingTable struct {
+// ParsingTable represents an LR parsing table.
+type ParsingTable struct {
 	states       []State
 	terminals    []grammar.Terminal
 	nonTerminals []grammar.NonTerminal
@@ -83,7 +53,7 @@ type parsingTable struct {
 	gotos        symboltable.SymbolTable[State, symboltable.SymbolTable[grammar.NonTerminal, State]]
 }
 
-func (t *parsingTable) getActions(s State, a grammar.Terminal) (set.Set[*Action], bool) {
+func (t *ParsingTable) getActions(s State, a grammar.Terminal) (set.Set[*Action], bool) {
 	if row, ok := t.actions.Get(s); ok {
 		if actions, ok := row.Get(a); ok {
 			if actions != nil {
@@ -95,7 +65,7 @@ func (t *parsingTable) getActions(s State, a grammar.Terminal) (set.Set[*Action]
 	return nil, false
 }
 
-func (t *parsingTable) getActionString(s State, a grammar.Terminal) string {
+func (t *ParsingTable) getActionString(s State, a grammar.Terminal) string {
 	set, ok := t.getActions(s, a)
 	if !ok || set.Size() == 0 {
 		return ""
@@ -114,7 +84,7 @@ func (t *parsingTable) getActionString(s State, a grammar.Terminal) string {
 	return b.String()
 }
 
-func (t *parsingTable) getGotoString(s State, A grammar.NonTerminal) string {
+func (t *ParsingTable) getGotoString(s State, A grammar.NonTerminal) string {
 	row, ok := t.gotos.Get(s)
 	if !ok {
 		return ""
@@ -128,7 +98,8 @@ func (t *parsingTable) getGotoString(s State, A grammar.NonTerminal) string {
 	return strconv.Itoa(int(state))
 }
 
-func (t *parsingTable) String() string {
+// String returns a human-readable string representation of the parsing table.
+func (t *ParsingTable) String() string {
 	ts := &tableStringer[State, grammar.Terminal, grammar.NonTerminal]{
 		K1Title:  "STATE",
 		K1Values: t.states,
@@ -143,14 +114,16 @@ func (t *parsingTable) String() string {
 	return ts.String()
 }
 
-func (t *parsingTable) Equal(rhs ParsingTable) bool {
-	tt, ok := rhs.(*parsingTable)
-	return ok &&
-		t.actions.Equal(tt.actions) &&
-		t.gotos.Equal(tt.gotos)
+// Equal determines whether or not two parsing tables are the same.
+func (t *ParsingTable) Equal(rhs *ParsingTable) bool {
+	return t.actions.Equal(rhs.actions) &&
+		t.gotos.Equal(rhs.gotos)
 }
 
-func (t *parsingTable) AddACTION(s State, a grammar.Terminal, action *Action) bool {
+// AddACTION adds a new action for state s and terminal a to the parsing table.
+// Multiple actions can be added for the same state s and terminal a.
+// It returns false if the ACTION[s,a] contains more than one action, indicating a conflict.
+func (t *ParsingTable) AddACTION(s State, a grammar.Terminal, action *Action) bool {
 	if _, ok := t.actions.Get(s); !ok {
 		t.actions.Put(s, symboltable.NewQuadraticHashTable(
 			grammar.HashTerminal,
@@ -171,7 +144,9 @@ func (t *parsingTable) AddACTION(s State, a grammar.Terminal, action *Action) bo
 	return actions.Size() == 1
 }
 
-func (t *parsingTable) SetGOTO(s State, A grammar.NonTerminal, next State) {
+// SetGOTO updates the next state for state s and non-terminal A in the parsing table.
+// If the next state is ErrState, it will not be added to the table.
+func (t *ParsingTable) SetGOTO(s State, A grammar.NonTerminal, next State) {
 	if next == ErrState {
 		return
 	}
@@ -189,7 +164,11 @@ func (t *parsingTable) SetGOTO(s State, A grammar.NonTerminal, next State) {
 	row.Put(A, next)
 }
 
-func (t *parsingTable) Error() error {
+// Error checks the parsing table for any conflicts between actions.
+// A conflict occurs when multiple actions are assigned to the same state and terminal symbol.
+// Conflicts arise when the grammar is ambiguous.
+// If any conflicts are found, it returns an error with detailed descriptions of the conflicts.
+func (t *ParsingTable) Error() error {
 	var err = &errors.MultiError{
 		Format: errors.BulletErrorFormat,
 	}
@@ -213,7 +192,10 @@ func (t *parsingTable) Error() error {
 	return err.ErrorOrNil()
 }
 
-func (t *parsingTable) ACTION(s State, a grammar.Terminal) (*Action, error) {
+// ACTION looks up and returns the action for state s and terminal a.
+// If the ACTION[s,a] contains more than one action,
+// it returns an erroneous ACTION and an error, indicating a conflict.
+func (t *ParsingTable) ACTION(s State, a grammar.Terminal) (*Action, error) {
 	actions, ok := t.getActions(s, a)
 	if !ok || actions.Size() == 0 {
 		return &Action{Type: ERROR}, &ParsingTableError{
@@ -238,7 +220,9 @@ func (t *parsingTable) ACTION(s State, a grammar.Terminal) (*Action, error) {
 	}
 }
 
-func (t *parsingTable) GOTO(s State, A grammar.NonTerminal) (State, error) {
+// GOTO looks up and returns the next state for state s and non-terminal A.
+// If the GOTO[s,A] contains more than one state, it returns an error.
+func (t *ParsingTable) GOTO(s State, A grammar.NonTerminal) (State, error) {
 	row, ok := t.gotos.Get(s)
 	if !ok {
 		return ErrState, &ParsingTableError{

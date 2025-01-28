@@ -9,8 +9,8 @@ import (
 	"github.com/moorara/algo/set"
 )
 
-func getTestParsingTables() []*parsingTable {
-	pt0 := newParsingTable(
+func getTestParsingTables() []*ParsingTable {
+	pt0 := NewParsingTable(
 		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
 	)
@@ -39,7 +39,7 @@ func getTestParsingTables() []*parsingTable {
 	pt0.setSync("F", ")", true)
 	pt0.setSync("F", grammar.Endmarker, true)
 
-	pt1 := newParsingTable(
+	pt1 := NewParsingTable(
 		[]grammar.Terminal{"a", "b", "e", "i", "t"},
 		[]grammar.NonTerminal{"S", "S′", "E"},
 	)
@@ -51,12 +51,12 @@ func getTestParsingTables() []*parsingTable {
 	pt1.addProduction("S′", grammar.Endmarker, &grammar.Production{Head: "S′", Body: grammar.E})
 	pt1.addProduction("E", "b", &grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("b")}})
 
-	pt2 := newParsingTable(
+	pt2 := NewParsingTable(
 		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "T", "F"},
 	)
 
-	return []*parsingTable{pt0, pt1, pt2}
+	return []*ParsingTable{pt0, pt1, pt2}
 }
 
 func TestBuildParsingTable(t *testing.T) {
@@ -65,7 +65,7 @@ func TestBuildParsingTable(t *testing.T) {
 	tests := []struct {
 		name                 string
 		G                    *grammar.CFG
-		expectedTable        ParsingTable
+		expectedTable        *ParsingTable
 		expectedErrorStrings []string
 	}{
 		{
@@ -136,7 +136,7 @@ func TestParsingTable_addProduction(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		pt         *parsingTable
+		pt         *ParsingTable
 		A          grammar.NonTerminal
 		a          grammar.Terminal
 		prod       *grammar.Production
@@ -185,7 +185,7 @@ func TestParsingTable_setSync(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		pt         *parsingTable
+		pt         *ParsingTable
 		A          grammar.NonTerminal
 		a          grammar.Terminal
 		sync       bool
@@ -228,7 +228,7 @@ func TestParsingTable_String(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		pt                 *parsingTable
+		pt                 *ParsingTable
 		expectedSubstrings []string
 	}{
 		{
@@ -270,8 +270,8 @@ func TestParsingTable_Equal(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		pt            *parsingTable
-		rhs           *parsingTable
+		pt            *ParsingTable
+		rhs           *ParsingTable
 		expectedEqual bool
 	}{
 		{
@@ -300,7 +300,7 @@ func TestParsingTable_Error(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		pt                   *parsingTable
+		pt                   *ParsingTable
 		expectedErrorStrings []string
 	}{
 		{
@@ -341,7 +341,7 @@ func TestParsingTable_IsEmpty(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		pt              *parsingTable
+		pt              *ParsingTable
 		A               grammar.NonTerminal
 		a               grammar.Terminal
 		expectedIsEmpty bool
@@ -374,7 +374,7 @@ func TestParsingTable_IsSync(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		pt             *parsingTable
+		pt             *ParsingTable
 		A              grammar.NonTerminal
 		a              grammar.Terminal
 		expectedIsSync bool
@@ -407,7 +407,7 @@ func TestParsingTable_GetProduction(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		pt                 *parsingTable
+		pt                 *ParsingTable
 		A                  grammar.NonTerminal
 		a                  grammar.Terminal
 		expectedOK         bool
