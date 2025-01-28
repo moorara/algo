@@ -126,8 +126,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 				G:     grammars[0],
 				lexer: new(MockLexer),
 			},
-			tokenF: func(*lexer.Token) {},
-			prodF:  func(*grammar.Production) {},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
 				`multiple productions at M[E, "-"]`,
 				`multiple productions at M[E, "("]`,
@@ -144,8 +144,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			tokenF: func(*lexer.Token) {},
-			prodF:  func(*grammar.Production) {},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
 				`unacceptable input <$, > for non-terminal E`,
 			},
@@ -160,8 +160,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			tokenF: func(*lexer.Token) {},
-			prodF:  func(*grammar.Production) {},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
 				`cannot read rune`,
 			},
@@ -190,8 +190,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			tokenF: func(*lexer.Token) {},
-			prodF:  func(*grammar.Production) {},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
 				`input failed`,
 			},
@@ -218,10 +218,122 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			tokenF: func(*lexer.Token) {},
-			prodF:  func(*grammar.Production) {},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
 				`unacceptable input <"+", +> for non-terminal E`,
+			},
+		},
+		{
+			name: "TokenFuncError",
+			p: &predictiveParser{
+				G: grammars[2],
+				lexer: &MockLexer{
+					NextTokenMocks: []NextTokenMock{
+						// First token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("id"),
+								Lexeme:   "a",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   0,
+									Line:     1,
+									Column:   1,
+								},
+							},
+						},
+						// Second token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("+"),
+								Lexeme:   "+",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   2,
+									Line:     1,
+									Column:   3,
+								},
+							},
+						},
+						// Third token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("id"),
+								Lexeme:   "b",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   4,
+									Line:     1,
+									Column:   5,
+								},
+							},
+						},
+						// EOF
+						{OutError: io.EOF},
+					},
+				},
+			},
+			tokenF: func(*lexer.Token) error { return errors.New("invalid semantic") },
+			prodF:  func(*grammar.Production) error { return nil },
+			expectedErrorStrings: []string{
+				`invalid semantic`,
+			},
+		},
+		{
+			name: "ProductionFuncError",
+			p: &predictiveParser{
+				G: grammars[2],
+				lexer: &MockLexer{
+					NextTokenMocks: []NextTokenMock{
+						// First token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("id"),
+								Lexeme:   "a",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   0,
+									Line:     1,
+									Column:   1,
+								},
+							},
+						},
+						// Second token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("+"),
+								Lexeme:   "+",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   2,
+									Line:     1,
+									Column:   3,
+								},
+							},
+						},
+						// Third token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("id"),
+								Lexeme:   "b",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   4,
+									Line:     1,
+									Column:   5,
+								},
+							},
+						},
+						// EOF
+						{OutError: io.EOF},
+					},
+				},
+			},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return errors.New("invalid semantic") },
+			expectedErrorStrings: []string{
+				`invalid semantic`,
 			},
 		},
 		{
@@ -274,8 +386,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			tokenF:               func(*lexer.Token) {},
-			prodF:                func(*grammar.Production) {},
+			tokenF:               func(*lexer.Token) error { return nil },
+			prodF:                func(*grammar.Production) error { return nil },
 			expectedErrorStrings: nil,
 		},
 	}

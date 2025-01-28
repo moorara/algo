@@ -206,11 +206,13 @@ func Example_parse() {
 	parser := predictive.New(G, l)
 
 	err = parser.Parse(
-		func(token *lexer.Token) {
+		func(token *lexer.Token) error {
 			fmt.Printf("Token: %s\n", token)
+			return nil
 		},
-		func(prod *grammar.Production) {
+		func(prod *grammar.Production) error {
 			fmt.Printf("Production: %s\n", prod)
+			return nil
 		},
 	)
 

@@ -63,10 +63,11 @@ func (p *predictiveParser) nextToken() (lexer.Token, error) {
 // It attempts to parse the input according to the production rules of a context-free grammar,
 // determining whether the input string belongs to the language defined by the grammar.
 //
-// The Parse method invokes the provided functions each time a token or a production rule is successfully matched.
+// The Parse method invokes the provided functions each time a token or a production rule is matched.
 // This allows the caller to process or react to each step of the parsing process.
 //
-// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+// An error is returned if the input fails to conform to the grammar rules, indicating a syntax issue,
+// or if any of the provided functions return an error, indicating a semantic issue.
 func (p *predictiveParser) Parse(tokenF parser.TokenFunc, prodF parser.ProductionFunc) error {
 	/*
 	 * INPUT:  • A lexer for reading input string w.
@@ -117,7 +118,9 @@ func (p *predictiveParser) Parse(tokenF parser.TokenFunc, prodF parser.Productio
 		if X.Equal(token.Terminal) {
 			// Yield the token.
 			if tokenF != nil {
-				tokenF(&token)
+				if err := tokenF(&token); err != nil {
+					return &parser.ParseError{Cause: err}
+				}
 			}
 
 			// Pop X from the stack.
@@ -152,7 +155,9 @@ func (p *predictiveParser) Parse(tokenF parser.TokenFunc, prodF parser.Productio
 
 		// Yield the production.
 		if prodF != nil {
-			prodF(prod)
+			if err := prodF(prod); err != nil {
+				return &parser.ParseError{Cause: err}
+			}
 		}
 
 		// Pop X from the stack.
@@ -175,7 +180,7 @@ func (p *predictiveParser) Parse(tokenF parser.TokenFunc, prodF parser.Productio
 // If the input string is valid, the root node of the AST is returned,
 // representing the syntactic structure of the input string.
 //
-// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
+// An error is returned if the input fails to conform to the grammar rules, indicating a syntax issue.
 func (p *predictiveParser) ParseAndBuildAST() (parser.Node, error) {
 	// Root of the abstract syntax tree.
 	root := &parser.InternalNode{
@@ -187,14 +192,16 @@ func (p *predictiveParser) ParseAndBuildAST() (parser.Node, error) {
 	nodes.Push(root)
 
 	err := p.Parse(
-		func(token *lexer.Token) {
+		func(token *lexer.Token) error {
 			// Complete the leaf node.
 			n, _ := nodes.Pop()
 			lf, _ := n.(*parser.LeafNode)
 			lf.Lexeme = token.Lexeme
 			lf.Position = token.Pos
+
+			return nil
 		},
-		func(prod *grammar.Production) {
+		func(prod *grammar.Production) error {
 			n, _ := nodes.Pop()
 			in, _ := n.(*parser.InternalNode)
 			in.Production = prod
@@ -215,6 +222,8 @@ func (p *predictiveParser) ParseAndBuildAST() (parser.Node, error) {
 
 				nodes.Push(child)
 			}
+
+			return nil
 		},
 	)
 
