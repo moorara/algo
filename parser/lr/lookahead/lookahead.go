@@ -22,7 +22,7 @@ import (
 
 // New creates a new LALR parser for a given context-free grammar (CFG).
 // It requires a lexer for lexical analysis, which reads the input tokens (terminal symbols).
-func New(L lexer.Lexer, G *grammar.CFG) (parser.Parser, error) {
+func New(L lexer.Lexer, G *grammar.CFG) (*lr.Parser, error) {
 	T, err := BuildParsingTable(G)
 	if err != nil {
 		return nil, &parser.ParseError{

@@ -206,11 +206,13 @@ func Example_parse() {
 	parser := predictive.New(G, l)
 
 	err = parser.Parse(
-		func(prod *grammar.Production) {
-			fmt.Printf("Production: %s\n", prod)
-		},
-		func(token *lexer.Token) {
+		func(token *lexer.Token) error {
 			fmt.Printf("Token: %s\n", token)
+			return nil
+		},
+		func(prod *grammar.Production) error {
+			fmt.Printf("Production: %s\n", prod)
+			return nil
 		},
 	)
 
@@ -220,7 +222,7 @@ func Example_parse() {
 }
 
 // You can copy-paste the output of this example into https://edotor.net to view the result.
-func Example_parseAST() {
+func Example_parseAndBuildAST() {
 	src := strings.NewReader(`
 		(price + tax * quantity) * 
 			(discount + shipping) * 
@@ -250,7 +252,7 @@ func Example_parseAST() {
 
 	parser := predictive.New(G, l)
 
-	ast, err := parser.ParseAST()
+	ast, err := parser.ParseAndBuildAST()
 	if err != nil {
 		panic(err)
 	}
@@ -258,7 +260,7 @@ func Example_parseAST() {
 	fmt.Println(ast.DOT())
 }
 
-func Example_parsingTable() {
+func Example_buildParsingTable() {
 	G := grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},

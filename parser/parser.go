@@ -20,21 +20,22 @@ type Parser interface {
 	// It attempts to parse the input according to the production rules of a context-free grammar,
 	// determining whether the input string belongs to the language defined by the grammar.
 	//
-	// The Parse method invokes the provided functions each time a production rule or a token is successfully matched.
+	// The Parse method invokes the provided functions each time a token or a production rule is matched.
 	// This allows the caller to process or react to each step of the parsing process.
 	//
-	// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-	Parse(ProductionFunc, TokenFunc) error
+	// An error is returned if the input fails to conform to the grammar rules, indicating a syntax issue,
+	// or if any of the provided functions return an error, indicating a semantic issue.
+	Parse(TokenFunc, ProductionFunc) error
 
-	// ParseAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+	// ParseAndBuildAST analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
 	// It attempts to parse the input according to the production rules of a context-free grammar,
 	// constructing an abstract syntax tree (AST) that reflects the structure of the input.
 	//
 	// If the input string is valid, the root node of the AST is returned,
 	// representing the syntactic structure of the input string.
 	//
-	// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-	ParseAST() (Node, error)
+	// An error is returned if the input fails to conform to the grammar rules, indicating a syntax issue.
+	ParseAndBuildAST() (Node, error)
 }
 
 // ParseError represents an error encountered when parsing an input string.

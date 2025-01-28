@@ -7,7 +7,7 @@
 // At each reduction step, a specific substring matching the body of a production
 // is replaced by the non-terminal at the head of that production.
 //
-// Bottom-up parsing during a left-to-right scan of the inputconstructs a rightmost derivation in reverse:
+// Bottom-up parsing during a left-to-right scan of the input constructs a rightmost derivation in reverse:
 //
 //	S = γ₀ ⇒ᵣₘ γ₁ ⇒ᵣₘ γ₂ ⇒ᵣₘ ... ⇒ᵣₘ γₙ₋₁ ⇒ᵣₘ γₙ = w
 //
@@ -57,6 +57,7 @@ package lr
 
 import (
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/moorara/algo/grammar"
@@ -65,7 +66,7 @@ import (
 	"github.com/moorara/algo/parser"
 )
 
-// lrParser is a general LR parser for LR(1) grammars.
+// Parser is a general LR parser for LR(1) grammars.
 // It implements the parser.Parser interface.
 type Parser struct {
 	L lexer.Lexer
@@ -119,11 +120,12 @@ func (p *Parser) nextToken() (lexer.Token, error) {
 // This method requires a parsing table, which must be generated from a grammar
 // by an LR parser (e.g., Simple LR, Canonical LR, or LALR).
 //
-// The Parse method invokes the provided function each time a production rule is successfully matched.
+// The Parse method invokes the provided functions each time a token or a production rule is matched.
 // This allows the caller to process or react to each step of the parsing process.
 //
-// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-func (p *Parser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) error {
+// An error is returned if the input fails to conform to the grammar rules, indicating a syntax issue,
+// or if any of the provided functions return an error, indicating a semantic issue.
+func (p *Parser) Parse(tokenF parser.TokenFunc, prodF parser.ProductionFunc) error {
 	stack := list.NewStack[State](1024, EqState)
 	stack.Push(State(0)) // BuildStateMap ensures state 0 always includes the initial item "S′ → •S"
 
@@ -147,7 +149,9 @@ func (p *Parser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) err
 
 			// Yield the token.
 			if tokenF != nil {
-				tokenF(&token)
+				if err := tokenF(&token); err != nil {
+					return &parser.ParseError{Cause: err}
+				}
 			}
 
 			// Read the next input token.
@@ -173,7 +177,9 @@ func (p *Parser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) err
 
 			// Yield the production.
 			if prodF != nil {
-				prodF(action.Production)
+				if err := prodF(action.Production); err != nil {
+					return &parser.ParseError{Cause: err}
+				}
 			}
 		} else if action.Type == ACCEPT {
 			break
@@ -186,7 +192,7 @@ func (p *Parser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) err
 	return nil
 }
 
-// ParseAST implements the LR parsing algorithm.
+// ParseAndBuildAST implements the LR parsing algorithm.
 // It analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
 // It attempts to parse the input according to the production rules of a context-free grammar,
 // constructing an abstract syntax tree (AST) that reflects the structure of the input.
@@ -194,13 +200,22 @@ func (p *Parser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) err
 // If the input string is valid, the root node of the AST is returned,
 // representing the syntactic structure of the input string.
 //
-// It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-func (p *Parser) ParseAST() (parser.Node, error) {
+// An error is returned if the input fails to conform to the grammar rules, indicating a syntax issue.
+func (p *Parser) ParseAndBuildAST() (parser.Node, error) {
 	// Stack for constructing the abstract syntax tree.
 	nodes := list.NewStack[parser.Node](1024, parser.EqNode)
 
 	err := p.Parse(
-		func(prod *grammar.Production) {
+		func(token *lexer.Token) error {
+			nodes.Push(&parser.LeafNode{
+				Terminal: token.Terminal,
+				Lexeme:   token.Lexeme,
+				Position: token.Pos,
+			})
+
+			return nil
+		},
+		func(prod *grammar.Production) error {
 			in := &parser.InternalNode{
 				NonTerminal: prod.Head,
 				Production:  prod,
@@ -212,13 +227,8 @@ func (p *Parser) ParseAST() (parser.Node, error) {
 			}
 
 			nodes.Push(in)
-		},
-		func(token *lexer.Token) {
-			nodes.Push(&parser.LeafNode{
-				Terminal: token.Terminal,
-				Lexeme:   token.Lexeme,
-				Position: token.Pos,
-			})
+
+			return nil
 		},
 	)
 
@@ -230,4 +240,97 @@ func (p *Parser) ParseAST() (parser.Node, error) {
 	root, _ := nodes.Pop()
 
 	return root, nil
+}
+
+// ParseAndEvaluate implements the LR parsing algorithm.
+// It analyzes a sequence of input tokens (terminal symbols) provided by a lexical analyzer.
+// It attempts to parse the input according to the production rules of a context-free grammar,
+// evaluating the input in a bottom-up fashion using a rightmost derivation.
+//
+// During the parsing process, the provided EvaluateFunc is invoked each time a production rule is matched.
+// The function is called with values corresponding to the symbols in the body of the production,
+// enabling the caller to process and evaluate the input incrementally.
+//
+// An error is returned if the input fails to conform to the grammar rules, indicating a syntax issue,
+// or if the evaluation function returns an error, indicating a semantic issue.
+func (p *Parser) ParseAndEvaluate(eval EvaluateFunc) (*Value, error) {
+	// Stack for constructing the abstract syntax tree.
+	nodes := list.NewStack[*Value](1024, nil)
+
+	err := p.Parse(
+		func(token *lexer.Token) error {
+			copy := token.Pos
+			nodes.Push(&Value{
+				Val: token.Lexeme,
+				Pos: &copy,
+			})
+
+			return nil
+		},
+		func(prod *grammar.Production) error {
+			l := len(prod.Body)
+			rhs := make([]*Value, l)
+
+			// Maintain correct production body order
+			for i := l - 1; i >= 0; i-- {
+				v, _ := nodes.Pop()
+				rhs[i] = v
+			}
+
+			lhs, err := eval(prod, rhs)
+			if err != nil {
+				return err
+			}
+
+			v := &Value{Val: lhs}
+			if l > 0 {
+				v.Pos = rhs[0].Pos
+			}
+
+			nodes.Push(v)
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// The nodes stack only contains the root of AST at this point.
+	root, _ := nodes.Pop()
+
+	return root, nil
+}
+
+// EvaluateFunc is a function invoked every time a production rule
+// is matched or applied during the parsing of an input string.
+// It receives a list of values corresponding to the right-hand side of the matched production
+// and expects a value to be returned representing the left-hand side of the production.
+//
+// The returned value will be subsequently used as an input in the evaluation of other production rules.
+// Both the input and output values are of the generic type any.
+//
+// The caller is responsible for ensuring that each value is converted to the appropriate type based on
+// the production rule and the position of the symbol corresponding to the value in the production's right-hand side.
+// The input values must retain the same type they were originally evaluated as when returned.
+//
+// The function may return an error if there are issues with the input values,
+// such as mismatched types or unexpected inputs.
+type EvaluateFunc func(*grammar.Production, []*Value) (any, error)
+
+// Value represents a value used during the evaluation process,
+// along with its corresponding positional information in the input.
+type Value struct {
+	Val any
+	Pos *lexer.Position
+}
+
+// String returns a string representation of a value.
+func (v *Value) String() string {
+	if v.Pos == nil || v.Pos.IsZero() {
+		return fmt.Sprintf("%v", v.Val)
+	}
+
+	return fmt.Sprintf("%v <%s>", v.Val, v.Pos)
 }

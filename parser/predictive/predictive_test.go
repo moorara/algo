@@ -116,8 +116,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 	tests := []struct {
 		name                 string
 		p                    *predictiveParser
-		prodF                parser.ProductionFunc
 		tokenF               parser.TokenFunc
+		prodF                parser.ProductionFunc
 		expectedErrorStrings []string
 	}{
 		{
@@ -126,8 +126,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 				G:     grammars[0],
 				lexer: new(MockLexer),
 			},
-			prodF:  func(*grammar.Production) {},
-			tokenF: func(*lexer.Token) {},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
 				`multiple productions at M[E, "-"]`,
 				`multiple productions at M[E, "("]`,
@@ -144,8 +144,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			prodF:  func(*grammar.Production) {},
-			tokenF: func(*lexer.Token) {},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
 				`unacceptable input <$, > for non-terminal E`,
 			},
@@ -160,8 +160,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			prodF:  func(*grammar.Production) {},
-			tokenF: func(*lexer.Token) {},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
 				`cannot read rune`,
 			},
@@ -190,8 +190,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			prodF:  func(*grammar.Production) {},
-			tokenF: func(*lexer.Token) {},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
 				`input failed`,
 			},
@@ -218,10 +218,122 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			prodF:  func(*grammar.Production) {},
-			tokenF: func(*lexer.Token) {},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
 				`unacceptable input <"+", +> for non-terminal E`,
+			},
+		},
+		{
+			name: "TokenFuncError",
+			p: &predictiveParser{
+				G: grammars[2],
+				lexer: &MockLexer{
+					NextTokenMocks: []NextTokenMock{
+						// First token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("id"),
+								Lexeme:   "a",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   0,
+									Line:     1,
+									Column:   1,
+								},
+							},
+						},
+						// Second token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("+"),
+								Lexeme:   "+",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   2,
+									Line:     1,
+									Column:   3,
+								},
+							},
+						},
+						// Third token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("id"),
+								Lexeme:   "b",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   4,
+									Line:     1,
+									Column:   5,
+								},
+							},
+						},
+						// EOF
+						{OutError: io.EOF},
+					},
+				},
+			},
+			tokenF: func(*lexer.Token) error { return errors.New("invalid semantic") },
+			prodF:  func(*grammar.Production) error { return nil },
+			expectedErrorStrings: []string{
+				`invalid semantic`,
+			},
+		},
+		{
+			name: "ProductionFuncError",
+			p: &predictiveParser{
+				G: grammars[2],
+				lexer: &MockLexer{
+					NextTokenMocks: []NextTokenMock{
+						// First token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("id"),
+								Lexeme:   "a",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   0,
+									Line:     1,
+									Column:   1,
+								},
+							},
+						},
+						// Second token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("+"),
+								Lexeme:   "+",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   2,
+									Line:     1,
+									Column:   3,
+								},
+							},
+						},
+						// Third token
+						{
+							OutToken: lexer.Token{
+								Terminal: grammar.Terminal("id"),
+								Lexeme:   "b",
+								Pos: lexer.Position{
+									Filename: "test",
+									Offset:   4,
+									Line:     1,
+									Column:   5,
+								},
+							},
+						},
+						// EOF
+						{OutError: io.EOF},
+					},
+				},
+			},
+			tokenF: func(*lexer.Token) error { return nil },
+			prodF:  func(*grammar.Production) error { return errors.New("invalid semantic") },
+			expectedErrorStrings: []string{
+				`invalid semantic`,
 			},
 		},
 		{
@@ -274,8 +386,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			prodF:                func(*grammar.Production) {},
-			tokenF:               func(*lexer.Token) {},
+			tokenF:               func(*lexer.Token) error { return nil },
+			prodF:                func(*grammar.Production) error { return nil },
 			expectedErrorStrings: nil,
 		},
 	}
@@ -283,7 +395,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.p.G.Verify())
-			err := tc.p.Parse(tc.prodF, tc.tokenF)
+			err := tc.p.Parse(tc.tokenF, tc.prodF)
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)
@@ -298,7 +410,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 	}
 }
 
-func TestPredictiveParser_ParseAST(t *testing.T) {
+func TestPredictiveParser_ParseAndBuildAST(t *testing.T) {
 	tests := []struct {
 		name                 string
 		p                    *predictiveParser
@@ -566,7 +678,7 @@ func TestPredictiveParser_ParseAST(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.p.G.Verify())
-			ast, err := tc.p.ParseAST()
+			ast, err := tc.p.ParseAndBuildAST()
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.True(t, ast.Equal(tc.expectedAST))
