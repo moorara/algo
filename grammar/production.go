@@ -112,6 +112,11 @@ func (p *Productions) String() string {
 	return b.String()
 }
 
+// Equal determines whether or not two sets of production rules are the same.
+func (p *Productions) Equal(rhs *Productions) bool {
+	return p.table.Equal(rhs.table)
+}
+
 // Clone returns a deep copy of the production rules, ensuring the clone is independent of the original.
 func (p *Productions) Clone() *Productions {
 	newP := NewProductions()
@@ -120,11 +125,6 @@ func (p *Productions) Clone() *Productions {
 	}
 
 	return newP
-}
-
-// Equal determines whether or not two sets of production rules are the same.
-func (p *Productions) Equal(rhs *Productions) bool {
-	return p.table.Equal(rhs.table)
 }
 
 // Add adds a new production rule.
@@ -277,7 +277,7 @@ func cmpProduction(lhs, rhs *Production) int {
 	return 0
 }
 
-// orderProductionSet orders an unordered set of production rules in a deterministic way.
+// OrderProductionSet orders an unordered set of production rules in a deterministic way.
 func OrderProductionSet(set set.Set[*Production]) []*Production {
 	prods := generic.Collect1(set.All())
 	orderProductionSlice(prods)

@@ -69,7 +69,7 @@ import (
 // It implements the parser.Parser interface.
 type Parser struct {
 	L lexer.Lexer
-	T ParsingTable
+	T *ParsingTable
 }
 
 // nextToken wraps the Lexer.NextToken method and ensures
