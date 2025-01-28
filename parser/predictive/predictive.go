@@ -63,11 +63,11 @@ func (p *predictiveParser) nextToken() (lexer.Token, error) {
 // It attempts to parse the input according to the production rules of a context-free grammar,
 // determining whether the input string belongs to the language defined by the grammar.
 //
-// The Parse method invokes the provided function each time a production rule is successfully matched.
+// The Parse method invokes the provided functions each time a token or a production rule is successfully matched.
 // This allows the caller to process or react to each step of the parsing process.
 //
 // It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-func (p *predictiveParser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) error {
+func (p *predictiveParser) Parse(tokenF parser.TokenFunc, prodF parser.ProductionFunc) error {
 	/*
 	 * INPUT:  • A lexer for reading input string w.
 	 *         • A parsing table M for grammar G.
@@ -187,6 +187,13 @@ func (p *predictiveParser) ParseAST() (parser.Node, error) {
 	nodes.Push(root)
 
 	err := p.Parse(
+		func(token *lexer.Token) {
+			// Complete the leaf node.
+			n, _ := nodes.Pop()
+			lf, _ := n.(*parser.LeafNode)
+			lf.Lexeme = token.Lexeme
+			lf.Position = token.Pos
+		},
 		func(prod *grammar.Production) {
 			n, _ := nodes.Pop()
 			in, _ := n.(*parser.InternalNode)
@@ -208,13 +215,6 @@ func (p *predictiveParser) ParseAST() (parser.Node, error) {
 
 				nodes.Push(child)
 			}
-		},
-		func(token *lexer.Token) {
-			// Complete the leaf node.
-			n, _ := nodes.Pop()
-			lf, _ := n.(*parser.LeafNode)
-			lf.Lexeme = token.Lexeme
-			lf.Position = token.Pos
 		},
 	)
 

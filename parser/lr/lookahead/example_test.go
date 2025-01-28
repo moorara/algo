@@ -207,11 +207,11 @@ func Example_parse() {
 	}
 
 	err = parser.Parse(
-		func(prod *grammar.Production) {
-			fmt.Printf("Production: %s\n", prod)
-		},
 		func(token *lexer.Token) {
 			fmt.Printf("Token: %s\n", token)
+		},
+		func(prod *grammar.Production) {
+			fmt.Printf("Production: %s\n", prod)
 		},
 	)
 

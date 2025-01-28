@@ -119,11 +119,11 @@ func (p *Parser) nextToken() (lexer.Token, error) {
 // This method requires a parsing table, which must be generated from a grammar
 // by an LR parser (e.g., Simple LR, Canonical LR, or LALR).
 //
-// The Parse method invokes the provided function each time a production rule is successfully matched.
+// The Parse method invokes the provided functions each time a token or a production rule is successfully matched.
 // This allows the caller to process or react to each step of the parsing process.
 //
 // It returns an error if the input fails to conform to the grammar rules, indicating a syntax error.
-func (p *Parser) Parse(prodF parser.ProductionFunc, tokenF parser.TokenFunc) error {
+func (p *Parser) Parse(tokenF parser.TokenFunc, prodF parser.ProductionFunc) error {
 	stack := list.NewStack[State](1024, EqState)
 	stack.Push(State(0)) // BuildStateMap ensures state 0 always includes the initial item "S′ → •S"
 
@@ -200,6 +200,13 @@ func (p *Parser) ParseAST() (parser.Node, error) {
 	nodes := list.NewStack[parser.Node](1024, parser.EqNode)
 
 	err := p.Parse(
+		func(token *lexer.Token) {
+			nodes.Push(&parser.LeafNode{
+				Terminal: token.Terminal,
+				Lexeme:   token.Lexeme,
+				Position: token.Pos,
+			})
+		},
 		func(prod *grammar.Production) {
 			in := &parser.InternalNode{
 				NonTerminal: prod.Head,
@@ -212,13 +219,6 @@ func (p *Parser) ParseAST() (parser.Node, error) {
 			}
 
 			nodes.Push(in)
-		},
-		func(token *lexer.Token) {
-			nodes.Push(&parser.LeafNode{
-				Terminal: token.Terminal,
-				Lexeme:   token.Lexeme,
-				Position: token.Pos,
-			})
 		},
 	)
 

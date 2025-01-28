@@ -116,8 +116,8 @@ func TestParser_Parse(t *testing.T) {
 	tests := []struct {
 		name                 string
 		p                    *Parser
-		prodF                parser.ProductionFunc
 		tokenF               parser.TokenFunc
+		prodF                parser.ProductionFunc
 		expectedErrorStrings []string
 	}{
 		{
@@ -130,8 +130,8 @@ func TestParser_Parse(t *testing.T) {
 				},
 				T: pt[0],
 			},
-			prodF:  func(*grammar.Production) {},
 			tokenF: func(*lexer.Token) {},
+			prodF:  func(*grammar.Production) {},
 			expectedErrorStrings: []string{
 				`no action for ACTION[0, $]`,
 			},
@@ -146,8 +146,8 @@ func TestParser_Parse(t *testing.T) {
 				},
 				T: pt[0],
 			},
-			prodF:  func(*grammar.Production) {},
 			tokenF: func(*lexer.Token) {},
+			prodF:  func(*grammar.Production) {},
 			expectedErrorStrings: []string{
 				`cannot read rune`,
 			},
@@ -176,8 +176,8 @@ func TestParser_Parse(t *testing.T) {
 				},
 				T: pt[0],
 			},
-			prodF:  func(*grammar.Production) {},
 			tokenF: func(*lexer.Token) {},
+			prodF:  func(*grammar.Production) {},
 			expectedErrorStrings: []string{
 				`input stream failed`,
 			},
@@ -204,8 +204,8 @@ func TestParser_Parse(t *testing.T) {
 				},
 				T: pt[0],
 			},
-			prodF:  func(*grammar.Production) {},
 			tokenF: func(*lexer.Token) {},
+			prodF:  func(*grammar.Production) {},
 			expectedErrorStrings: []string{
 				`no action for ACTION[0, "+"]`,
 			},
@@ -260,15 +260,15 @@ func TestParser_Parse(t *testing.T) {
 				},
 				T: pt[0],
 			},
-			prodF:                func(*grammar.Production) {},
 			tokenF:               func(*lexer.Token) {},
+			prodF:                func(*grammar.Production) {},
 			expectedErrorStrings: nil,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.p.Parse(tc.prodF, tc.tokenF)
+			err := tc.p.Parse(tc.tokenF, tc.prodF)
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)

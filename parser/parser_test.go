@@ -4,8 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/moorara/algo/lexer"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moorara/algo/lexer"
 )
 
 func TestParseError(t *testing.T) {

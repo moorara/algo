@@ -116,8 +116,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 	tests := []struct {
 		name                 string
 		p                    *predictiveParser
-		prodF                parser.ProductionFunc
 		tokenF               parser.TokenFunc
+		prodF                parser.ProductionFunc
 		expectedErrorStrings []string
 	}{
 		{
@@ -126,8 +126,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 				G:     grammars[0],
 				lexer: new(MockLexer),
 			},
-			prodF:  func(*grammar.Production) {},
 			tokenF: func(*lexer.Token) {},
+			prodF:  func(*grammar.Production) {},
 			expectedErrorStrings: []string{
 				`multiple productions at M[E, "-"]`,
 				`multiple productions at M[E, "("]`,
@@ -144,8 +144,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			prodF:  func(*grammar.Production) {},
 			tokenF: func(*lexer.Token) {},
+			prodF:  func(*grammar.Production) {},
 			expectedErrorStrings: []string{
 				`unacceptable input <$, > for non-terminal E`,
 			},
@@ -160,8 +160,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			prodF:  func(*grammar.Production) {},
 			tokenF: func(*lexer.Token) {},
+			prodF:  func(*grammar.Production) {},
 			expectedErrorStrings: []string{
 				`cannot read rune`,
 			},
@@ -190,8 +190,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			prodF:  func(*grammar.Production) {},
 			tokenF: func(*lexer.Token) {},
+			prodF:  func(*grammar.Production) {},
 			expectedErrorStrings: []string{
 				`input failed`,
 			},
@@ -218,8 +218,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			prodF:  func(*grammar.Production) {},
 			tokenF: func(*lexer.Token) {},
+			prodF:  func(*grammar.Production) {},
 			expectedErrorStrings: []string{
 				`unacceptable input <"+", +> for non-terminal E`,
 			},
@@ -274,8 +274,8 @@ func TestPredictiveParser_Parse(t *testing.T) {
 					},
 				},
 			},
-			prodF:                func(*grammar.Production) {},
 			tokenF:               func(*lexer.Token) {},
+			prodF:                func(*grammar.Production) {},
 			expectedErrorStrings: nil,
 		},
 	}
@@ -283,7 +283,7 @@ func TestPredictiveParser_Parse(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.p.G.Verify())
-			err := tc.p.Parse(tc.prodF, tc.tokenF)
+			err := tc.p.Parse(tc.tokenF, tc.prodF)
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)
