@@ -74,7 +74,7 @@ var (
 type CFG struct {
 	Terminals    set.Set[Terminal]
 	NonTerminals set.Set[NonTerminal]
-	Productions  Productions
+	Productions  *Productions
 	Start        NonTerminal
 }
 

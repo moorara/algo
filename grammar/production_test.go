@@ -9,15 +9,15 @@ import (
 	"github.com/moorara/algo/set"
 )
 
-func getTestProductions() []*productions {
-	p0 := NewProductions().(*productions)
+func getTestProductions() []*Productions {
+	p0 := NewProductions()
 
-	p1 := NewProductions().(*productions)
+	p1 := NewProductions()
 	p1.Add(&Production{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}) // S → aSbS
 	p1.Add(&Production{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}) // S → bSaS
 	p1.Add(&Production{"S", E})                                                                                // S → ε
 
-	p2 := NewProductions().(*productions)
+	p2 := NewProductions()
 	p2.Add(&Production{"S", String[Symbol]{NonTerminal("E")}})                                  // S → E
 	p2.Add(&Production{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("T")}}) // E → E + T
 	p2.Add(&Production{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("T")}}) // E → E - T
@@ -28,7 +28,7 @@ func getTestProductions() []*productions {
 	p2.Add(&Production{"F", String[Symbol]{Terminal("("), NonTerminal("E"), Terminal(")")}})    // F → ( E )
 	p2.Add(&Production{"F", String[Symbol]{Terminal("id")}})                                    // F → id
 
-	p3 := NewProductions().(*productions)
+	p3 := NewProductions()
 	p3.Add(&Production{"S", String[Symbol]{NonTerminal("E")}})                                  // S → E
 	p3.Add(&Production{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}) // E → E + E
 	p3.Add(&Production{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}) // E → E - E
@@ -38,7 +38,7 @@ func getTestProductions() []*productions {
 	p3.Add(&Production{"E", String[Symbol]{Terminal("-"), NonTerminal("E")}})                   // E → - E
 	p3.Add(&Production{"E", String[Symbol]{Terminal("id")}})                                    // E → id
 
-	return []*productions{p0, p1, p2, p3}
+	return []*Productions{p0, p1, p2, p3}
 }
 
 func TestProduction(t *testing.T) {
@@ -152,7 +152,7 @@ func TestProductions_String(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		p                  *productions
+		p                  *Productions
 		expectedSubstrings []string
 	}{
 		{
@@ -198,7 +198,7 @@ func TestProductions_Clone(t *testing.T) {
 
 	tests := []struct {
 		name string
-		p    *productions
+		p    *Productions
 	}{
 		{
 			name: "1st",
@@ -228,8 +228,8 @@ func TestProductions_Equal(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		p             *productions
-		rhs           Productions
+		p             *Productions
+		rhs           *Productions
 		expectedEqual bool
 	}{
 		{
@@ -258,9 +258,9 @@ func TestProductions_Add(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *productions
+		p                   *Productions
 		ps                  []*Production
-		expectedProductions *productions
+		expectedProductions *Productions
 	}{
 		{
 			name: "1st",
@@ -318,9 +318,9 @@ func TestProductions_Remove(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *productions
+		p                   *Productions
 		ps                  []*Production
-		expectedProductions *productions
+		expectedProductions *Productions
 	}{
 		{
 			name: "1st",
@@ -378,9 +378,9 @@ func TestProductions_RemoveAll(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *productions
+		p                   *Productions
 		heads               []NonTerminal
-		expectedProductions *productions
+		expectedProductions *Productions
 	}{
 		{
 			name:                "1st",
@@ -437,7 +437,7 @@ func TestProductions_Get(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *productions
+		p                   *Productions
 		head                NonTerminal
 		expectedProductions set.Set[*Production]
 	}{
@@ -485,7 +485,7 @@ func TestProductions_All(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *productions
+		p                   *Productions
 		expectedProductions []*Production
 	}{
 		{
@@ -542,7 +542,7 @@ func TestProductions_AllByHead(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		p                   *productions
+		p                   *Productions
 		expectedProductions []*Production
 	}{
 		{
@@ -602,7 +602,7 @@ func TestProductions_AnyMatch(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		p                *productions
+		p                *Productions
 		pred             generic.Predicate1[*Production]
 		expectedAnyMatch bool
 	}{
@@ -633,7 +633,7 @@ func TestProductions_AllMatch(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		p                *productions
+		p                *Productions
 		pred             generic.Predicate1[*Production]
 		expectedAllMatch bool
 	}{
@@ -662,16 +662,16 @@ func TestProductions_AllMatch(t *testing.T) {
 func TestProductions_SelectMatch(t *testing.T) {
 	p := getTestProductions()
 
-	q1 := NewProductions().(*productions)
+	q1 := NewProductions()
 	q1.Add(&Production{"S", String[Symbol]{NonTerminal("E")}}) // S → E
 	q1.Add(&Production{"E", String[Symbol]{NonTerminal("T")}}) // E → T
 	q1.Add(&Production{"T", String[Symbol]{NonTerminal("F")}}) // T → F
 
 	tests := []struct {
 		name                string
-		p                   *productions
+		p                   *Productions
 		pred                generic.Predicate1[*Production]
-		expectedSelectMatch *productions
+		expectedSelectMatch *Productions
 	}{
 		{
 			name:                "OK",
