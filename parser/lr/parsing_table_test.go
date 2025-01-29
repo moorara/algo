@@ -10,108 +10,16 @@ import (
 	"github.com/moorara/algo/set"
 )
 
-func getTestParsingTables() []*ParsingTable {
-	pt0 := NewParsingTable(
-		[]State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
-		[]grammar.NonTerminal{"E", "T", "F"},
-	)
-
-	pt0.AddACTION(0, "id", &Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(0, "(", &Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(1, "+", &Action{Type: SHIFT, State: 6})
-	pt0.AddACTION(1, grammar.Endmarker, &Action{Type: ACCEPT})
-	pt0.AddACTION(2, "+", &Action{Type: REDUCE, Production: prods[2][2]})
-	pt0.AddACTION(2, "*", &Action{Type: SHIFT, State: 7})
-	pt0.AddACTION(2, ")", &Action{Type: REDUCE, Production: prods[2][2]})
-	pt0.AddACTION(2, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][2]})
-	pt0.AddACTION(3, "+", &Action{Type: REDUCE, Production: prods[2][4]})
-	pt0.AddACTION(3, "*", &Action{Type: REDUCE, Production: prods[2][4]})
-	pt0.AddACTION(3, ")", &Action{Type: REDUCE, Production: prods[2][4]})
-	pt0.AddACTION(3, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][4]})
-	pt0.AddACTION(4, "id", &Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(4, "(", &Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(5, "+", &Action{Type: REDUCE, Production: prods[2][6]})
-	pt0.AddACTION(5, "*", &Action{Type: REDUCE, Production: prods[2][6]})
-	pt0.AddACTION(5, ")", &Action{Type: REDUCE, Production: prods[2][6]})
-	pt0.AddACTION(5, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][6]})
-	pt0.AddACTION(6, "id", &Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(6, "(", &Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(7, "id", &Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(7, "(", &Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(8, "+", &Action{Type: SHIFT, State: 6})
-	pt0.AddACTION(8, ")", &Action{Type: SHIFT, State: 11})
-	pt0.AddACTION(9, "+", &Action{Type: REDUCE, Production: prods[2][1]})
-	pt0.AddACTION(9, "*", &Action{Type: SHIFT, State: 7})
-	pt0.AddACTION(9, ")", &Action{Type: REDUCE, Production: prods[2][1]})
-	pt0.AddACTION(9, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][1]})
-	pt0.AddACTION(10, "+", &Action{Type: REDUCE, Production: prods[2][3]})
-	pt0.AddACTION(10, "*", &Action{Type: REDUCE, Production: prods[2][3]})
-	pt0.AddACTION(10, ")", &Action{Type: REDUCE, Production: prods[2][3]})
-	pt0.AddACTION(10, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][3]})
-	pt0.AddACTION(11, "+", &Action{Type: REDUCE, Production: prods[2][5]})
-	pt0.AddACTION(11, "*", &Action{Type: REDUCE, Production: prods[2][5]})
-	pt0.AddACTION(11, ")", &Action{Type: REDUCE, Production: prods[2][5]})
-	pt0.AddACTION(11, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][5]})
-
-	pt0.SetGOTO(0, "E", 1)
-	pt0.SetGOTO(0, "T", 2)
-	pt0.SetGOTO(0, "F", 3)
-	pt0.SetGOTO(4, "E", 8)
-	pt0.SetGOTO(4, "T", 2)
-	pt0.SetGOTO(4, "F", 3)
-	pt0.SetGOTO(6, "T", 9)
-	pt0.SetGOTO(6, "F", 3)
-	pt0.SetGOTO(7, "F", 10)
-
-	pt1 := NewParsingTable(
-		[]State{0, 1, 2, 3, 4, 5, 6},
-		[]grammar.Terminal{"a", "b", "c", "d", grammar.Endmarker},
-		[]grammar.NonTerminal{"A", "B", "C", "D"},
-	)
-
-	pt1.AddACTION(0, "a", &Action{
-		Type:  SHIFT,
-		State: 5,
-	})
-
-	pt1.AddACTION(0, "a", &Action{
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "A",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("a"), grammar.NonTerminal("A")},
-		},
-	})
-
-	pt1.AddACTION(1, "b", &Action{
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "B",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("b"), grammar.NonTerminal("B")},
-		},
-	})
-
-	pt1.AddACTION(1, "b", &Action{
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "C",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("c"), grammar.NonTerminal("C")},
-		},
-	})
-
-	return []*ParsingTable{pt0, pt1}
-}
-
 func TestNewParsingTable(t *testing.T) {
 	tests := []struct {
 		name         string
-		states       []State
+		S            StateMap
 		terminals    []grammar.Terminal
 		nonTerminals []grammar.NonTerminal
 	}{
 		{
 			name:         "OK",
-			states:       []State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+			S:            statemaps[0],
 			terminals:    []grammar.Terminal{"+", "-", "*", "/", "(", ")", "id"},
 			nonTerminals: []grammar.NonTerminal{"E", "T", "F"},
 		},
@@ -119,7 +27,7 @@ func TestNewParsingTable(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			pt := NewParsingTable(tc.states, tc.terminals, tc.nonTerminals)
+			pt := NewParsingTable(tc.S, tc.terminals, tc.nonTerminals)
 
 			assert.NotNil(t, pt)
 			assert.NotNil(t, pt.actions)

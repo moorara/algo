@@ -22,7 +22,7 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 
 	terminals := auto1.G().OrderTerminals()
 	_, _, nonTerminals := auto1.G().OrderNonTerminals()
-	table := lr.NewParsingTable(S.States(), terminals, nonTerminals)
+	table := lr.NewParsingTable(S, terminals, nonTerminals)
 
 	// 2. State i is constructed from I.
 	for i, I := range S.All() {

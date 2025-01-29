@@ -10,170 +10,6 @@ import (
 	"github.com/moorara/algo/sort"
 )
 
-func getTestLR0ItemSets() []ItemSet {
-	I0 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
-		// Non-Kernels
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
-		&Item0{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-	)
-
-	I1 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
-	)
-
-	I2 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][2], Start: starts[2], Dot: 1}, // E → T•
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
-	)
-
-	I3 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 1}, // T → F•
-	)
-
-	I4 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 1}, // F → (•E )
-		// Non-Kernels
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
-		&Item0{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-	)
-
-	I5 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 1}, // F → id•
-	)
-
-	I6 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
-		// Non-Kernels
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-	)
-
-	I7 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 2}, // T → T *•F
-		// Non-Kernels
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-	)
-
-	I8 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E• + T
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 2}, // F → ( E•)
-	)
-
-	I9 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
-	)
-
-	I10 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 3}, // T → T * F•
-	)
-
-	I11 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 3}, // F → ( E )•
-	)
-
-	return []ItemSet{I0, I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11}
-}
-
-func getTestLR1ItemSets() []ItemSet {
-	I0 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
-		// Non-Kernels
-		&Item1{Production: prods[0][1], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker},     // S → •CC, $
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •cC, c
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •cC, d
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •d, d
-	)
-
-	I1 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][0], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
-	)
-
-	I2 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
-		// Non-Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // C → •cC, $
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // C → •d, $
-	)
-
-	I3 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 1, Lookahead: grammar.Terminal("c")}, // C → c•C, c
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 1, Lookahead: grammar.Terminal("d")}, // C → c•C, d
-		// Non-Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •cC, c
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •cC, d
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •d, d
-	)
-
-	I4 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 1, Lookahead: grammar.Terminal("c")}, // C → d•, c
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 1, Lookahead: grammar.Terminal("d")}, // C → d•, d
-	)
-
-	I5 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
-	)
-
-	I6 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // C → c•C, $
-		// Non-Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // C → •cC, $
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // C → •d, $
-	)
-
-	I7 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // C → d•, $
-	)
-
-	I8 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 2, Lookahead: grammar.Terminal("c")}, // C → cC•, c
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 2, Lookahead: grammar.Terminal("d")}, // C → cC•, d
-	)
-
-	I9 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // C → cC•, $
-	)
-
-	return []ItemSet{I0, I1, I2, I3, I4, I5, I6, I7, I8, I9}
-}
-
 func TestItem0_String(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -983,17 +819,41 @@ func TestNewItemSet(t *testing.T) {
 }
 
 func TestCmpItemSet(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name         string
 		sets         []ItemSet
 		expectedSets []ItemSet
 	}{
 		{
-			name:         "OK",
-			sets:         []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
-			expectedSets: []ItemSet{s[0], s[1], s[9], s[11], s[10], s[6], s[8], s[7], s[2], s[4], s[5], s[3]},
+			name: "OK",
+			sets: []ItemSet{
+				LR0ItemSets[0],
+				LR0ItemSets[1],
+				LR0ItemSets[2],
+				LR0ItemSets[3],
+				LR0ItemSets[4],
+				LR0ItemSets[5],
+				LR0ItemSets[6],
+				LR0ItemSets[7],
+				LR0ItemSets[8],
+				LR0ItemSets[9],
+				LR0ItemSets[10],
+				LR0ItemSets[11],
+			},
+			expectedSets: []ItemSet{
+				LR0ItemSets[0],
+				LR0ItemSets[1],
+				LR0ItemSets[9],
+				LR0ItemSets[11],
+				LR0ItemSets[10],
+				LR0ItemSets[6],
+				LR0ItemSets[8],
+				LR0ItemSets[7],
+				LR0ItemSets[2],
+				LR0ItemSets[4],
+				LR0ItemSets[5],
+				LR0ItemSets[3],
+			},
 		},
 	}
 
@@ -1006,7 +866,6 @@ func TestCmpItemSet(t *testing.T) {
 }
 
 func TestItemSetStringer(t *testing.T) {
-	s := getTestLR0ItemSets()
 	state := State(0)
 
 	tests := []struct {
@@ -1017,7 +876,7 @@ func TestItemSetStringer(t *testing.T) {
 		{
 			name: "WithoutState",
 			ss: &itemSetStringer{
-				items: generic.Collect1(s[0].All()),
+				items: generic.Collect1(LR0ItemSets[0].All()),
 			},
 			expectedSubstrings: []string{
 				`┌────────────────┐`,
@@ -1036,7 +895,7 @@ func TestItemSetStringer(t *testing.T) {
 			name: "WithState",
 			ss: &itemSetStringer{
 				state: &state,
-				items: generic.Collect1(s[0].All()),
+				items: generic.Collect1(LR0ItemSets[0].All()),
 			},
 			expectedSubstrings: []string{
 				`┌──────[0]───────┐`,
@@ -1065,8 +924,6 @@ func TestItemSetStringer(t *testing.T) {
 }
 
 func TestNewItemSetCollection(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name               string
 		sets               []ItemSet
@@ -1074,7 +931,20 @@ func TestNewItemSetCollection(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			sets: []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+			sets: []ItemSet{
+				LR0ItemSets[0],
+				LR0ItemSets[1],
+				LR0ItemSets[2],
+				LR0ItemSets[3],
+				LR0ItemSets[4],
+				LR0ItemSets[5],
+				LR0ItemSets[6],
+				LR0ItemSets[7],
+				LR0ItemSets[8],
+				LR0ItemSets[9],
+				LR0ItemSets[10],
+				LR0ItemSets[11],
+			},
 			expectedSubstrings: []string{
 				`┌──────[0]───────┐`,
 				`│ E′ → •E        │`,
@@ -1161,8 +1031,6 @@ func TestNewItemSetCollection(t *testing.T) {
 }
 
 func TestItemSetCollectionStringer(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name               string
 		cs                 *itemSetCollectionStringer
@@ -1171,7 +1039,20 @@ func TestItemSetCollectionStringer(t *testing.T) {
 		{
 			name: "OK",
 			cs: &itemSetCollectionStringer{
-				sets: []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+				sets: []ItemSet{
+					LR0ItemSets[0],
+					LR0ItemSets[1],
+					LR0ItemSets[2],
+					LR0ItemSets[3],
+					LR0ItemSets[4],
+					LR0ItemSets[5],
+					LR0ItemSets[6],
+					LR0ItemSets[7],
+					LR0ItemSets[8],
+					LR0ItemSets[9],
+					LR0ItemSets[10],
+					LR0ItemSets[11],
+				},
 			},
 			expectedSubstrings: []string{
 				`┌──────[0]───────┐`,

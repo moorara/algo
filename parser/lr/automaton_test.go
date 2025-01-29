@@ -88,8 +88,6 @@ func TestCalculator0_Initial(t *testing.T) {
 }
 
 func TestCalculator0_CLOSURE(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name            string
 		c               *calculator0
@@ -104,7 +102,7 @@ func TestCalculator0_CLOSURE(t *testing.T) {
 			I: NewItemSet(
 				&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
 			),
-			expectedCLOSURE: s[0],
+			expectedCLOSURE: LR0ItemSets[0],
 		},
 	}
 
@@ -172,7 +170,6 @@ func TestCalculator1_Initial(t *testing.T) {
 }
 
 func TestCalculator1_CLOSURE(t *testing.T) {
-	s := getTestLR1ItemSets()
 	g := augment(grammars[0])
 
 	tests := []struct {
@@ -190,7 +187,7 @@ func TestCalculator1_CLOSURE(t *testing.T) {
 			I: NewItemSet(
 				&Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
 			),
-			expectedCLOSURE: s[0],
+			expectedCLOSURE: LR1ItemSets[0],
 		},
 	}
 
@@ -205,8 +202,6 @@ func TestCalculator1_CLOSURE(t *testing.T) {
 }
 
 func TestAutomaton_GOTO(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name         string
 		a            *automaton
@@ -221,9 +216,9 @@ func TestAutomaton_GOTO(t *testing.T) {
 					augG: augment(grammars[2]),
 				},
 			},
-			I:            s[0],
+			I:            LR0ItemSets[0],
 			X:            grammar.Terminal("("),
-			expectedGOTO: s[4],
+			expectedGOTO: LR0ItemSets[4],
 		},
 	}
 
@@ -236,8 +231,6 @@ func TestAutomaton_GOTO(t *testing.T) {
 }
 
 func TestAutomaton_Canonical(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name              string
 		a                 *automaton
@@ -250,7 +243,20 @@ func TestAutomaton_Canonical(t *testing.T) {
 					augG: augment(grammars[2]),
 				},
 			},
-			expectedCanonical: NewItemSetCollection(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]),
+			expectedCanonical: NewItemSetCollection(
+				LR0ItemSets[0],
+				LR0ItemSets[1],
+				LR0ItemSets[2],
+				LR0ItemSets[3],
+				LR0ItemSets[4],
+				LR0ItemSets[5],
+				LR0ItemSets[6],
+				LR0ItemSets[7],
+				LR0ItemSets[8],
+				LR0ItemSets[9],
+				LR0ItemSets[10],
+				LR0ItemSets[11],
+			),
 		},
 	}
 

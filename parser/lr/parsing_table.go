@@ -16,7 +16,7 @@ import (
 )
 
 // NewParsingTable creates an empty parsing table for an LR parser.
-func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal) *ParsingTable {
+func NewParsingTable(S StateMap, terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal) *ParsingTable {
 	opts := symboltable.HashOpts{}
 
 	actions := symboltable.NewQuadraticHashTable(
@@ -38,7 +38,7 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 	)
 
 	return &ParsingTable{
-		states:       states,
+		S:            S,
 		terminals:    terminals,
 		nonTerminals: nonTerminals,
 		actions:      actions,
@@ -48,7 +48,7 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 
 // ParsingTable represents an LR parsing table.
 type ParsingTable struct {
-	states       []State
+	S            StateMap
 	terminals    []grammar.Terminal
 	nonTerminals []grammar.NonTerminal
 	actions      symboltable.SymbolTable[State, symboltable.SymbolTable[grammar.Terminal, set.Set[*Action]]]
@@ -104,7 +104,7 @@ func (t *ParsingTable) getGotoString(s State, A grammar.NonTerminal) string {
 func (t *ParsingTable) String() string {
 	ts := &tableStringer[State, grammar.Terminal, grammar.NonTerminal]{
 		K1Title:  "STATE",
-		K1Values: t.states,
+		K1Values: t.S.States(),
 		K2Title:  "ACTION",
 		K2Values: t.terminals,
 		K3Title:  "GOTO",
@@ -117,6 +117,7 @@ func (t *ParsingTable) String() string {
 }
 
 // Equal determines whether or not two parsing tables are the same.
+// The equality check is merely based on the ACTION and GOTO tables.
 func (t *ParsingTable) Equal(rhs *ParsingTable) bool {
 	return t.actions.Equal(rhs.actions) &&
 		t.gotos.Equal(rhs.gotos)
@@ -176,7 +177,7 @@ func (t *ParsingTable) Error() error {
 	}
 
 	// Check for ACTION conflicts.
-	for _, s := range t.states {
+	for _, s := range t.S.States() {
 		for _, a := range t.terminals {
 			if actions, ok := t.getActions(s, a); ok {
 				if actions.Size() > 1 {
