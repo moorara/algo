@@ -302,10 +302,10 @@ func TestParsingTable_Error(t *testing.T) {
 			pt:   pt[1],
 			expectedErrorStrings: []string{
 				`2 errors occurred:`,
-				`shift/reduce conflict at ACTION[0, "a"]`,
+				`AMBIGUOUS Grammar: shift/reduce conflict in ACTION[0, "a"]`,
 				`SHIFT 5`,
 				`REDUCE A → "a" A`,
-				`reduce/reduce conflict at ACTION[1, "b"]`,
+				`AMBIGUOUS Grammar: reduce/reduce conflict in ACTION[1, "b"]`,
 				`REDUCE B → "b" B`,
 				`REDUCE C → "c" C`,
 			},
@@ -346,7 +346,7 @@ func TestParsingTable_ACTION(t *testing.T) {
 			s:              State(4),
 			a:              grammar.Terminal("+"),
 			expectedAction: &Action{Type: ERROR},
-			expectedError:  "no action for ACTION[4, \"+\"]",
+			expectedError:  "no action exists in the parsing table for ACTION[4, \"+\"]",
 		},
 		{
 			name:           "Conflict",
@@ -354,7 +354,7 @@ func TestParsingTable_ACTION(t *testing.T) {
 			s:              State(0),
 			a:              grammar.Terminal("a"),
 			expectedAction: &Action{Type: ERROR},
-			expectedError:  "shift/reduce conflict at ACTION[0, \"a\"]\n  SHIFT 5\n  REDUCE A → \"a\" A\n",
+			expectedError:  "AMBIGUOUS Grammar: shift/reduce conflict in ACTION[0, \"a\"]\n  SHIFT 5\n  REDUCE A → \"a\" A\n",
 		},
 		{
 			name: "Success",
@@ -401,7 +401,7 @@ func TestParsingTable_GOTO(t *testing.T) {
 			s:             State(5),
 			A:             grammar.NonTerminal("E"),
 			expectedState: ErrState,
-			expectedError: "no state for GOTO[5, E]",
+			expectedError: "no state exists in the parsing table for GOTO[5, E]",
 		},
 		{
 			name:          "NoNonTerminal",
@@ -409,7 +409,7 @@ func TestParsingTable_GOTO(t *testing.T) {
 			s:             State(7),
 			A:             grammar.NonTerminal("T"),
 			expectedState: ErrState,
-			expectedError: "no state for GOTO[7, T]",
+			expectedError: "no state exists in the parsing table for GOTO[7, T]",
 		},
 		{
 			name:          "Success",
@@ -445,20 +445,20 @@ func TestParsingTableError(t *testing.T) {
 		{
 			name: "NoAction",
 			e: &ParsingTableError{
-				Type:   NO_ACTION,
+				Type:   MISSING_ACTION,
 				State:  State(7),
 				Symbol: grammar.Terminal("+"),
 			},
-			expectedError: "no action for ACTION[7, \"+\"]",
+			expectedError: "no action exists in the parsing table for ACTION[7, \"+\"]",
 		},
 		{
 			name: "NoState",
 			e: &ParsingTableError{
-				Type:   NO_GOTO,
+				Type:   MISSING_GOTO,
 				State:  State(5),
 				Symbol: grammar.NonTerminal("T"),
 			},
-			expectedError: "no state for GOTO[5, T]",
+			expectedError: "no state exists in the parsing table for GOTO[5, T]",
 		},
 		{
 			name: "Shift_Reduce_Conflict",
@@ -468,7 +468,7 @@ func TestParsingTableError(t *testing.T) {
 				Symbol:  grammar.Terminal("*"),
 				Actions: set.New(eqAction, actions[0], actions[2]),
 			},
-			expectedError: "shift/reduce conflict at ACTION[2, \"*\"]\n  SHIFT 5\n  REDUCE E → T\n",
+			expectedError: "AMBIGUOUS Grammar: shift/reduce conflict in ACTION[2, \"*\"]\n  SHIFT 5\n  REDUCE E → T\n",
 		},
 		{
 			name: "Reduce_Reduce_Conflict",
@@ -478,7 +478,7 @@ func TestParsingTableError(t *testing.T) {
 				Symbol:  grammar.Terminal("id"),
 				Actions: set.New(eqAction, actions[2], actions[3]),
 			},
-			expectedError: "reduce/reduce conflict at ACTION[4, \"id\"]\n  REDUCE E → T\n  REDUCE F → \"id\"\n",
+			expectedError: "AMBIGUOUS Grammar: reduce/reduce conflict in ACTION[4, \"id\"]\n  REDUCE E → T\n  REDUCE F → \"id\"\n",
 		},
 		{
 			name: "Invalid",

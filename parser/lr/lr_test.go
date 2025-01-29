@@ -153,7 +153,7 @@ func TestParser_Parse(t *testing.T) {
 			tokenF: func(*lexer.Token) error { return nil },
 			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
-				`no action for ACTION[0, $]`,
+				`no action exists in the parsing table for ACTION[0, $]`,
 			},
 		},
 		{
@@ -227,7 +227,7 @@ func TestParser_Parse(t *testing.T) {
 			tokenF: func(*lexer.Token) error { return nil },
 			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
-				`no action for ACTION[0, "+"]`,
+				`no action exists in the parsing table for ACTION[0, "+"]`,
 			},
 		},
 		{
@@ -436,7 +436,7 @@ func TestParser_ParseAndBuildAST(t *testing.T) {
 			},
 			expectedAST: nil,
 			expectedErrorStrings: []string{
-				`no action for ACTION[0, $]`,
+				`no action exists in the parsing table for ACTION[0, $]`,
 			},
 		},
 		{
@@ -507,7 +507,7 @@ func TestParser_ParseAndBuildAST(t *testing.T) {
 			},
 			expectedAST: nil,
 			expectedErrorStrings: []string{
-				`no action for ACTION[0, "+"]`,
+				`no action exists in the parsing table for ACTION[0, "+"]`,
 			},
 		},
 		{
@@ -690,7 +690,7 @@ func TestParser_ParseAndEvaluate(t *testing.T) {
 			eval:          func(*grammar.Production, []*Value) (any, error) { return nil, nil },
 			expectedValue: nil,
 			expectedErrorStrings: []string{
-				`no action for ACTION[0, $]`,
+				`no action exists in the parsing table for ACTION[0, $]`,
 			},
 		},
 		{
@@ -764,7 +764,7 @@ func TestParser_ParseAndEvaluate(t *testing.T) {
 			eval:          func(*grammar.Production, []*Value) (any, error) { return nil, nil },
 			expectedValue: nil,
 			expectedErrorStrings: []string{
-				`no action for ACTION[0, "+"]`,
+				`no action exists in the parsing table for ACTION[0, "+"]`,
 			},
 		},
 		{

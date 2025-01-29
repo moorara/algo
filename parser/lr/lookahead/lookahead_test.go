@@ -28,10 +28,10 @@ func TestNew(t *testing.T) {
 			G:    grammars[2],
 			expectedErrorStrings: []string{
 				`failed to construct LALR parsing table: 4 errors occurred:`,
-				`shift/reduce conflict at ACTION[2, "*"]`,
-				`shift/reduce conflict at ACTION[2, "+"]`,
-				`shift/reduce conflict at ACTION[3, "*"]`,
-				`shift/reduce conflict at ACTION[3, "+"]`,
+				`AMBIGUOUS Grammar: shift/reduce conflict in ACTION[2, "*"]`,
+				`AMBIGUOUS Grammar: shift/reduce conflict in ACTION[2, "+"]`,
+				`AMBIGUOUS Grammar: shift/reduce conflict in ACTION[3, "*"]`,
+				`AMBIGUOUS Grammar: shift/reduce conflict in ACTION[3, "+"]`,
 			},
 		},
 	}
