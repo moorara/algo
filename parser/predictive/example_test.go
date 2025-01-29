@@ -12,7 +12,8 @@ import (
 )
 
 type exprLexer struct {
-	in *input.Input
+	in    *input.Input
+	state int
 }
 
 func NewExprLexer(src io.Reader) (lexer.Lexer, error) {
@@ -27,152 +28,108 @@ func NewExprLexer(src io.Reader) (lexer.Lexer, error) {
 }
 
 func (l *exprLexer) NextToken() (lexer.Token, error) {
-	var state int
 	var r rune
 	var err error
 
 	// Reads runes from the input and feeds them into the DFA.
 	for r, err = l.in.Next(); err == nil; r, err = l.in.Next() {
-		state = l.advanceDFA(state, r)
-		if token, ok := l.evalDFA(state, r); ok {
+		if token, ok := l.advanceDFA(r); ok {
 			return token, nil
 		}
 	}
 
 	// Process last lexeme.
 	if err == io.EOF {
-		lexeme, pos := l.in.Lexeme()
-		if state == 5 {
-			return lexer.Token{Terminal: grammar.Terminal("id"), Lexeme: lexeme, Pos: pos}, nil
-		}
-		return lexer.Token{Terminal: grammar.Endmarker, Lexeme: "", Pos: pos}, nil
+		return l.finalizeDFA(), nil
 	}
 
 	return lexer.Token{}, err
 }
 
-// advanceDFA simulates a determinist finite automata.
-func (l *exprLexer) advanceDFA(state int, r rune) int {
-	switch state {
+// advanceDFA simulates a deterministic finite automata to identify tokens.
+func (l *exprLexer) advanceDFA(r rune) (lexer.Token, bool) {
+	// Determine the next state based on the current state and input.
+	switch l.state {
 	case 0:
 		switch r {
 		case ' ', '\t', '\n':
-			return 1
+			l.state = 0
 		case '+', '-', '*', '/', '(', ')':
-			return 3
-		// case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z':
-			return 4
-		}
-
-	case 1:
-		switch r {
-		case ' ', '\t', '\n':
-			return 1
-		case '+', '-', '*', '/', '(', ')':
-			return 2
+			l.state = 1
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			return 2
+			l.state = 2
 		case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z':
-			return 2
+			l.state = 4
 		}
 
 	case 2:
 		switch r {
-		case ' ', '\t', '\n':
-			return 1
-		case '+', '-', '*', '/', '(', ')':
-			return 3
-		// case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z':
-			return 4
-		}
-
-	case 3:
-		switch r {
-		case ' ', '\t', '\n':
-			return 1
-		case '+', '-', '*', '/', '(', ')':
-			return 3
-		// case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z':
-			return 4
+		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+			l.state = 2
+		case ' ', '\t', '\n',
+			'+', '-', '*', '/', '(', ')',
+			'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z':
+			l.state = 3
 		}
 
 	case 4:
 		switch r {
-		case ' ', '\t', '\n':
-			return 6
-		case '+', '-', '*', '/', '(', ')':
-			return 6
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			return 5
 		case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z':
-			return 5
+			l.state = 4
+		case ' ', '\t', '\n',
+			'+', '-', '*', '/', '(', ')',
+			'0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+			l.state = 5
 		}
 
-	case 5:
-		switch r {
-		case ' ', '\t', '\n':
-			return 6
-		case '+', '-', '*', '/', '(', ')':
-			return 6
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			return 5
-		case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z':
-			return 5
-		}
-
-	case 6:
-		switch r {
-		case ' ', '\t', '\n':
-			return 1
-		case '+', '-', '*', '/', '(', ')':
-			return 3
-		// case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z':
-			return 4
-		}
+	default:
+		panic("WTF?")
 	}
 
-	return -1
-}
-
-// evalDFA evaluates the state of the DFA after processing the rune r.
-func (l *exprLexer) evalDFA(state int, r rune) (lexer.Token, bool) {
-	switch state {
-	// Ignore whitespaces
-	case 2:
-		l.in.Retract()
+	// Create and return a token based on the current state.
+	switch l.state {
+	case 0:
 		l.in.Skip()
 
-	// Operations
-	case 3:
+	// +  -  *  /  (  )
+	case 1:
+		l.state = 0
 		lexeme, pos := l.in.Lexeme()
+		return lexer.Token{Terminal: grammar.Terminal(r), Lexeme: lexeme, Pos: pos}, true
 
-		switch r {
-		case '+':
-			return lexer.Token{Terminal: grammar.Terminal("+"), Lexeme: lexeme, Pos: pos}, true
-		case '-':
-			return lexer.Token{Terminal: grammar.Terminal("-"), Lexeme: lexeme, Pos: pos}, true
-		case '*':
-			return lexer.Token{Terminal: grammar.Terminal("*"), Lexeme: lexeme, Pos: pos}, true
-		case '/':
-			return lexer.Token{Terminal: grammar.Terminal("/"), Lexeme: lexeme, Pos: pos}, true
-		case '(':
-			return lexer.Token{Terminal: grammar.Terminal("("), Lexeme: lexeme, Pos: pos}, true
-		case ')':
-			return lexer.Token{Terminal: grammar.Terminal(")"), Lexeme: lexeme, Pos: pos}, true
-		}
+		// Number
+	case 3:
+		l.state = 0
+		l.in.Retract()
+		lexeme, pos := l.in.Lexeme()
+		return lexer.Token{Terminal: grammar.Terminal("num"), Lexeme: lexeme, Pos: pos}, true
 
-	// Identifier
-	case 6:
+		// Identifier
+	case 5:
+		l.state = 0
 		l.in.Retract()
 		lexeme, pos := l.in.Lexeme()
 		return lexer.Token{Terminal: grammar.Terminal("id"), Lexeme: lexeme, Pos: pos}, true
 	}
 
 	return lexer.Token{}, false
+}
+
+// finalizeDFA is called after all inputs have been processed by the DFA.
+// It generates the final token based on the current state of the lexer.
+func (l *exprLexer) finalizeDFA() lexer.Token {
+	lexeme, pos := l.in.Lexeme()
+
+	switch l.state {
+	case 2:
+		l.state = 0
+		return lexer.Token{Terminal: grammar.Terminal("num"), Lexeme: lexeme, Pos: pos}
+	case 4:
+		l.state = 0
+		return lexer.Token{Terminal: grammar.Terminal("id"), Lexeme: lexeme, Pos: pos}
+	default:
+		return lexer.Token{Terminal: grammar.Endmarker, Lexeme: "", Pos: pos}
+	}
 }
 
 func Example_parse() {
