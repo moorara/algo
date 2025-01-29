@@ -57,6 +57,10 @@ type trieTest[V any] struct {
 	expectedAnyMatch           bool
 	allMatchPredicate          Predicate2[string, V]
 	expectedAllMatch           bool
+	firstMatchPredicate        Predicate2[string, V]
+	expectedFirstMatchKey      string
+	expectedFirstMatchVal      V
+	expectedFirstMatchOK       bool
 	selectMatchPredicate       Predicate2[string, V]
 	expectedSelectMatch        []KeyValue[string, V]
 	expectedVLRTraverse        []KeyValue[string, V]
@@ -132,12 +136,16 @@ func getTrieTests() []trieTest[int] {
 				{Key: "B", Val: 2},
 				{Key: "C", Val: 3},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return v < 0 },
-			expectedAnyMatch:     false,
-			allMatchPredicate:    func(k string, v int) bool { return v%2 == 0 },
-			expectedAllMatch:     false,
-			selectMatchPredicate: func(k string, v int) bool { return v%10 == 0 },
-			expectedSelectMatch:  []KeyValue[string, int]{},
+			anyMatchPredicate:     func(k string, v int) bool { return v < 0 },
+			expectedAnyMatch:      false,
+			allMatchPredicate:     func(k string, v int) bool { return v%2 == 0 },
+			expectedAllMatch:      false,
+			firstMatchPredicate:   func(k string, v int) bool { return v%5 == 0 },
+			expectedFirstMatchKey: "",
+			expectedFirstMatchVal: 0,
+			expectedFirstMatchOK:  false,
+			selectMatchPredicate:  func(k string, v int) bool { return v%10 == 0 },
+			expectedSelectMatch:   []KeyValue[string, int]{},
 		},
 		{
 			name:  "ABCDE",
@@ -203,11 +211,15 @@ func getTrieTests() []trieTest[int] {
 				{Key: "D", Val: 4},
 				{Key: "E", Val: 5},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return v == 0 },
-			expectedAnyMatch:     false,
-			allMatchPredicate:    func(k string, v int) bool { return v > 0 },
-			expectedAllMatch:     true,
-			selectMatchPredicate: func(k string, v int) bool { return v%2 == 0 },
+			anyMatchPredicate:     func(k string, v int) bool { return v == 0 },
+			expectedAnyMatch:      false,
+			allMatchPredicate:     func(k string, v int) bool { return v > 0 },
+			expectedAllMatch:      true,
+			firstMatchPredicate:   func(k string, v int) bool { return v%5 == 0 },
+			expectedFirstMatchKey: "E",
+			expectedFirstMatchVal: 5,
+			expectedFirstMatchOK:  true,
+			selectMatchPredicate:  func(k string, v int) bool { return v%2 == 0 },
 			expectedSelectMatch: []KeyValue[string, int]{
 				{Key: "B", Val: 2},
 				{Key: "D", Val: 4},
@@ -285,11 +297,15 @@ func getTrieTests() []trieTest[int] {
 				{Key: "P", Val: 16},
 				{Key: "S", Val: 19},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return v%5 == 0 },
-			expectedAnyMatch:     true,
-			allMatchPredicate:    func(k string, v int) bool { return v < 10 },
-			expectedAllMatch:     false,
-			selectMatchPredicate: func(k string, v int) bool { return v > 10 },
+			anyMatchPredicate:     func(k string, v int) bool { return v%5 == 0 },
+			expectedAnyMatch:      true,
+			allMatchPredicate:     func(k string, v int) bool { return v < 10 },
+			expectedAllMatch:      false,
+			firstMatchPredicate:   func(k string, v int) bool { return v == 13 },
+			expectedFirstMatchKey: "M",
+			expectedFirstMatchVal: 13,
+			expectedFirstMatchOK:  true,
+			selectMatchPredicate:  func(k string, v int) bool { return v > 10 },
 			expectedSelectMatch: []KeyValue[string, int]{
 				{Key: "M", Val: 13},
 				{Key: "P", Val: 16},
@@ -363,11 +379,15 @@ func getTrieTests() []trieTest[int] {
 				{Key: "dance", Val: 13},
 				{Key: "dome", Val: 7},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return strings.HasSuffix(k, "x") },
-			expectedAnyMatch:     true,
-			allMatchPredicate:    func(k string, v int) bool { return k == strings.ToLower(k) },
-			expectedAllMatch:     true,
-			selectMatchPredicate: func(k string, v int) bool { return strings.HasPrefix(k, "ba") },
+			anyMatchPredicate:     func(k string, v int) bool { return strings.HasSuffix(k, "x") },
+			expectedAnyMatch:      true,
+			allMatchPredicate:     func(k string, v int) bool { return k == strings.ToLower(k) },
+			expectedAllMatch:      true,
+			firstMatchPredicate:   func(k string, v int) bool { return strings.Contains(k, "alloo") },
+			expectedFirstMatchKey: "balloon",
+			expectedFirstMatchVal: 17,
+			expectedFirstMatchOK:  true,
+			selectMatchPredicate:  func(k string, v int) bool { return strings.HasPrefix(k, "ba") },
 			expectedSelectMatch: []KeyValue[string, int]{
 				{Key: "baby", Val: 5},
 				{Key: "balloon", Val: 17},
@@ -543,6 +563,13 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 		t.Run("AllMatch", func(t *testing.T) {
 			allMatch := trie.AllMatch(test.allMatchPredicate)
 			assert.Equal(t, test.expectedAllMatch, allMatch)
+		})
+
+		t.Run("FirstMatch", func(t *testing.T) {
+			key, val, ok := trie.FirstMatch(test.firstMatchPredicate)
+			assert.Equal(t, test.expectedFirstMatchKey, key)
+			assert.Equal(t, test.expectedFirstMatchVal, val)
+			assert.Equal(t, test.expectedFirstMatchOK, ok)
 		})
 
 		t.Run("SelectMatch", func(t *testing.T) {

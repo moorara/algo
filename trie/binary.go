@@ -577,6 +577,24 @@ func (t *binary[V]) AllMatch(p Predicate2[string, V]) bool {
 	})
 }
 
+// FirstMatch returns the first key-value in the binary trie that satisfies the given predicate.
+// If no match is found, it returns the zero values of K and V, along with false.
+func (t *binary[V]) FirstMatch(p Predicate2[string, V]) (string, V, bool) {
+	var k string
+	var v V
+	var ok bool
+
+	t._traverse(t.root.left, "", VLR, func(key string, n *binaryNode[V]) bool {
+		if n.term && p(key, n.val) {
+			k, v, ok = key, n.val, true
+			return false
+		}
+		return true
+	})
+
+	return k, v, ok
+}
+
 // SelectMatch selects a subset of key-values from the binary trie that satisfy the given predicate.
 // It returns a new binary trie containing the matching key-values, of the same type as the original binary trie.
 func (t *binary[V]) SelectMatch(p Predicate2[string, V]) Collection2[string, V] {

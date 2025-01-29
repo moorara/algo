@@ -47,6 +47,10 @@ type (
 		// If the collection is empty, it returns true.
 		AllMatch(Predicate1[T]) bool
 
+		// FirstMatch returns the first item in the collection that satisfies the given predicate.
+		// If no match is found, it returns the zero value of T and false.
+		FirstMatch(Predicate1[T]) (T, bool)
+
 		// SelectMatch selects a subset of items from the collection that satisfy the given predicate.
 		// It returns a new collection containing the matching items, of the same type as the original collection.
 		SelectMatch(Predicate1[T]) Collection1[T]
@@ -86,6 +90,10 @@ type (
 		// AllMatch returns true if all key-values in the collection satisfy the provided predicate function.
 		// If the collection is empty, it returns true.
 		AllMatch(Predicate2[K, V]) bool
+
+		// FirstMatch returns the first key-value in the collection that satisfies the given predicate.
+		// If no match is found, it returns the zero values of K and V, along with false.
+		FirstMatch(Predicate2[K, V]) (K, V, bool)
 
 		// SelectMatch selects a subset of key-values from the collection that satisfy the given predicate.
 		// It returns a new collection containing the matching key-values, of the same type as the original collection.

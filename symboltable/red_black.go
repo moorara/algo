@@ -711,6 +711,24 @@ func (t *redBlack[K, V]) AllMatch(p Predicate2[K, V]) bool {
 	})
 }
 
+// FirstMatch returns the first key-value in the colRed-Black treelection that satisfies the given predicate.
+// If no match is found, it returns the zero values of K and V, along with false.
+func (t *redBlack[K, V]) FirstMatch(p Predicate2[K, V]) (K, V, bool) {
+	var k K
+	var v V
+	var ok bool
+
+	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+		if p(n.key, n.val) {
+			k, v, ok = n.key, n.val, true
+			return false
+		}
+		return true
+	})
+
+	return k, v, ok
+}
+
 // SelectMatch selects a subset of key-values from the Red-Black tree that satisfy the given predicate.
 // It returns a new Red-Black tree containing the matching key-values, of the same type as the original Red-Black tree.
 func (t *redBlack[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {

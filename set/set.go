@@ -191,6 +191,17 @@ func (s *set[T]) AllMatch(p generic.Predicate1[T]) bool {
 	return true
 }
 
+func (s *set[T]) FirstMatch(p generic.Predicate1[T]) (T, bool) {
+	for _, m := range s.members {
+		if p(m) {
+			return m, true
+		}
+	}
+
+	var zeroT T
+	return zeroT, false
+}
+
 func (s *set[T]) SelectMatch(p generic.Predicate1[T]) generic.Collection1[T] {
 	newS := New[T](s.equal)
 
