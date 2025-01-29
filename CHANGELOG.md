@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.10.5](https://github.com/moorara/algo/tree/v0.10.5) (2025-01-28)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.10.4...v0.10.5)
+
+**Merged Changes:**
+
+  - Enhance parsers [#266](https://github.com/moorara/algo/pull/266) ([moorara](https://github.com/moorara))
+  - Remove extra interfaces and export the structs [#264](https://github.com/moorara/algo/pull/264) ([moorara](https://github.com/moorara))
+
+
 ## [v0.10.4](https://github.com/moorara/algo/tree/v0.10.4) (2025-01-27)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.10.3...v0.10.4)
