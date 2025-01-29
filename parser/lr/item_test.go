@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/sort"
 )
@@ -171,164 +172,6 @@ func getTestLR1ItemSets() []ItemSet {
 	)
 
 	return []ItemSet{I0, I1, I2, I3, I4, I5, I6, I7, I8, I9}
-}
-
-func TestNewItemSetCollection(t *testing.T) {
-	s := getTestLR0ItemSets()
-
-	tests := []struct {
-		name               string
-		sets               []ItemSet
-		expectedSubstrings []string
-	}{
-		{
-			name: "OK",
-			sets: []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
-			expectedSubstrings: []string{
-				`┌──────[0]───────┐`,
-				`│ E′ → •E        │`,
-				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
-				`│ E → •E "+" T   │`,
-				`│ E → •T         │`,
-				`│ F → •"(" E ")" │`,
-				`│ F → •"id"      │`,
-				`│ T → •T "*" F   │`,
-				`│ T → •F         │`,
-				`└────────────────┘`,
-				`┌──────[1]───────┐`,
-				`│ E′ → E•        │`,
-				`│ E → E•"+" T    │`,
-				`└────────────────┘`,
-				`┌──────[2]───────┐`,
-				`│ E → T•         │`,
-				`│ T → T•"*" F    │`,
-				`└────────────────┘`,
-				`┌──────[3]───────┐`,
-				`│ T → F•         │`,
-				`└────────────────┘`,
-				`┌──────[4]───────┐`,
-				`│ F → "("•E ")"  │`,
-				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
-				`│ E → •E "+" T   │`,
-				`│ E → •T         │`,
-				`│ F → •"(" E ")" │`,
-				`│ F → •"id"      │`,
-				`│ T → •T "*" F   │`,
-				`│ T → •F         │`,
-				`└────────────────┘`,
-				`┌──────[5]───────┐`,
-				`│ F → "id"•      │`,
-				`└────────────────┘`,
-				`┌──────[6]───────┐`,
-				`│ E → E "+"•T    │`,
-				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
-				`│ F → •"(" E ")" │`,
-				`│ F → •"id"      │`,
-				`│ T → •T "*" F   │`,
-				`│ T → •F         │`,
-				`└────────────────┘`,
-				`┌──────[7]───────┐`,
-				`│ T → T "*"•F    │`,
-				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
-				`│ F → •"(" E ")" │`,
-				`│ F → •"id"      │`,
-				`└────────────────┘`,
-				`┌──────[8]───────┐`,
-				`│ F → "(" E•")"  │`,
-				`│ E → E•"+" T    │`,
-				`└────────────────┘`,
-				`┌──────[9]───────┐`,
-				`│ E → E "+" T•   │`,
-				`│ T → T•"*" F    │`,
-				`└────────────────┘`,
-				`┌──────[10]──────┐`,
-				`│ T → T "*" F•   │`,
-				`└────────────────┘`,
-				`┌──────[11]──────┐`,
-				`│ F → "(" E ")"• │`,
-				`└────────────────┘`,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s := NewItemSetCollection(tc.sets...)
-
-			assert.NotNil(t, s)
-
-			for _, expectedItemSet := range tc.sets {
-				assert.True(t, s.Contains(expectedItemSet))
-			}
-
-			str := s.String()
-			for _, expectedSubstring := range tc.expectedSubstrings {
-				assert.Contains(t, str, expectedSubstring)
-			}
-		})
-	}
-}
-
-func TestNewItemSet(t *testing.T) {
-	tests := []struct {
-		name               string
-		items              []Item
-		expectedSubstrings []string
-	}{
-		{
-			name: "OK",
-			items: []Item{
-				&Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
-				&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
-			},
-			expectedSubstrings: []string{
-				`┌─────────────┐`,
-				`│ E′ → E•     │`,
-				`│ E → E•"+" T │`,
-				`└─────────────┘`,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s := NewItemSet(tc.items...)
-
-			assert.NotNil(t, s)
-
-			for _, expectedItem := range tc.items {
-				assert.True(t, s.Contains(expectedItem))
-			}
-
-			str := s.String()
-			for _, expectedSubstring := range tc.expectedSubstrings {
-				assert.Contains(t, str, expectedSubstring)
-			}
-		})
-	}
-}
-
-func TestCmpItemSet(t *testing.T) {
-	s := getTestLR0ItemSets()
-
-	tests := []struct {
-		name         string
-		sets         []ItemSet
-		expectedSets []ItemSet
-	}{
-		{
-			name:         "OK",
-			sets:         []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
-			expectedSets: []ItemSet{s[0], s[1], s[9], s[11], s[10], s[6], s[8], s[7], s[2], s[4], s[5], s[3]},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			sort.Quick(tc.sets, cmpItemSet)
-			assert.Equal(t, tc.expectedSets, tc.sets)
-		})
-	}
 }
 
 func TestItem0_String(t *testing.T) {
@@ -1095,6 +938,314 @@ func TestItem1_Item0(t *testing.T) {
 				assert.Nil(t, item0)
 			} else {
 				assert.True(t, item0.Equal(tc.expectedItem0))
+			}
+		})
+	}
+}
+
+func TestNewItemSet(t *testing.T) {
+	tests := []struct {
+		name               string
+		items              []Item
+		expectedSubstrings []string
+	}{
+		{
+			name: "OK",
+			items: []Item{
+				&Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
+				&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
+			},
+			expectedSubstrings: []string{
+				`┌─────────────┐`,
+				`│ E′ → E•     │`,
+				`│ E → E•"+" T │`,
+				`└─────────────┘`,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewItemSet(tc.items...)
+
+			assert.NotNil(t, s)
+
+			for _, expectedItem := range tc.items {
+				assert.True(t, s.Contains(expectedItem))
+			}
+
+			str := s.String()
+			for _, expectedSubstring := range tc.expectedSubstrings {
+				assert.Contains(t, str, expectedSubstring)
+			}
+		})
+	}
+}
+
+func TestCmpItemSet(t *testing.T) {
+	s := getTestLR0ItemSets()
+
+	tests := []struct {
+		name         string
+		sets         []ItemSet
+		expectedSets []ItemSet
+	}{
+		{
+			name:         "OK",
+			sets:         []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+			expectedSets: []ItemSet{s[0], s[1], s[9], s[11], s[10], s[6], s[8], s[7], s[2], s[4], s[5], s[3]},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			sort.Quick(tc.sets, cmpItemSet)
+			assert.Equal(t, tc.expectedSets, tc.sets)
+		})
+	}
+}
+
+func TestItemSetStringer(t *testing.T) {
+	s := getTestLR0ItemSets()
+	state := State(0)
+
+	tests := []struct {
+		name               string
+		ss                 *itemSetStringer
+		expectedSubstrings []string
+	}{
+		{
+			name: "WithoutState",
+			ss: &itemSetStringer{
+				items: generic.Collect1(s[0].All()),
+			},
+			expectedSubstrings: []string{
+				`┌────────────────┐`,
+				`│ E′ → •E        │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ E → •E "+" T   │`,
+				`│ E → •T         │`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+			},
+		},
+		{
+			name: "WithState",
+			ss: &itemSetStringer{
+				state: &state,
+				items: generic.Collect1(s[0].All()),
+			},
+			expectedSubstrings: []string{
+				`┌──────[0]───────┐`,
+				`│ E′ → •E        │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ E → •E "+" T   │`,
+				`│ E → •T         │`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			str := tc.ss.String()
+
+			for _, expectedSubstring := range tc.expectedSubstrings {
+				assert.Contains(t, str, expectedSubstring)
+			}
+		})
+	}
+}
+
+func TestNewItemSetCollection(t *testing.T) {
+	s := getTestLR0ItemSets()
+
+	tests := []struct {
+		name               string
+		sets               []ItemSet
+		expectedSubstrings []string
+	}{
+		{
+			name: "OK",
+			sets: []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+			expectedSubstrings: []string{
+				`┌──────[0]───────┐`,
+				`│ E′ → •E        │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ E → •E "+" T   │`,
+				`│ E → •T         │`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+				`┌──────[1]───────┐`,
+				`│ E′ → E•        │`,
+				`│ E → E•"+" T    │`,
+				`└────────────────┘`,
+				`┌──────[2]───────┐`,
+				`│ E → T•         │`,
+				`│ T → T•"*" F    │`,
+				`└────────────────┘`,
+				`┌──────[3]───────┐`,
+				`│ T → F•         │`,
+				`└────────────────┘`,
+				`┌──────[4]───────┐`,
+				`│ F → "("•E ")"  │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ E → •E "+" T   │`,
+				`│ E → •T         │`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+				`┌──────[5]───────┐`,
+				`│ F → "id"•      │`,
+				`└────────────────┘`,
+				`┌──────[6]───────┐`,
+				`│ E → E "+"•T    │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+				`┌──────[7]───────┐`,
+				`│ T → T "*"•F    │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`└────────────────┘`,
+				`┌──────[8]───────┐`,
+				`│ F → "(" E•")"  │`,
+				`│ E → E•"+" T    │`,
+				`└────────────────┘`,
+				`┌──────[9]───────┐`,
+				`│ E → E "+" T•   │`,
+				`│ T → T•"*" F    │`,
+				`└────────────────┘`,
+				`┌──────[10]──────┐`,
+				`│ T → T "*" F•   │`,
+				`└────────────────┘`,
+				`┌──────[11]──────┐`,
+				`│ F → "(" E ")"• │`,
+				`└────────────────┘`,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewItemSetCollection(tc.sets...)
+
+			assert.NotNil(t, s)
+
+			for _, expectedItemSet := range tc.sets {
+				assert.True(t, s.Contains(expectedItemSet))
+			}
+
+			str := s.String()
+			for _, expectedSubstring := range tc.expectedSubstrings {
+				assert.Contains(t, str, expectedSubstring)
+			}
+		})
+	}
+}
+
+func TestItemSetCollectionStringer(t *testing.T) {
+	s := getTestLR0ItemSets()
+
+	tests := []struct {
+		name               string
+		cs                 *itemSetCollectionStringer
+		expectedSubstrings []string
+	}{
+		{
+			name: "OK",
+			cs: &itemSetCollectionStringer{
+				sets: []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+			},
+			expectedSubstrings: []string{
+				`┌──────[0]───────┐`,
+				`│ E′ → •E        │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ E → •E "+" T   │`,
+				`│ E → •T         │`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+				`┌──────[1]───────┐`,
+				`│ E′ → E•        │`,
+				`│ E → E•"+" T    │`,
+				`└────────────────┘`,
+				`┌──────[2]───────┐`,
+				`│ E → T•         │`,
+				`│ T → T•"*" F    │`,
+				`└────────────────┘`,
+				`┌──────[3]───────┐`,
+				`│ T → F•         │`,
+				`└────────────────┘`,
+				`┌──────[4]───────┐`,
+				`│ F → "("•E ")"  │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ E → •E "+" T   │`,
+				`│ E → •T         │`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+				`┌──────[5]───────┐`,
+				`│ F → "id"•      │`,
+				`└────────────────┘`,
+				`┌──────[6]───────┐`,
+				`│ E → E "+"•T    │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`│ T → •T "*" F   │`,
+				`│ T → •F         │`,
+				`└────────────────┘`,
+				`┌──────[7]───────┐`,
+				`│ T → T "*"•F    │`,
+				`├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤`,
+				`│ F → •"(" E ")" │`,
+				`│ F → •"id"      │`,
+				`└────────────────┘`,
+				`┌──────[8]───────┐`,
+				`│ F → "(" E•")"  │`,
+				`│ E → E•"+" T    │`,
+				`└────────────────┘`,
+				`┌──────[9]───────┐`,
+				`│ E → E "+" T•   │`,
+				`│ T → T•"*" F    │`,
+				`└────────────────┘`,
+				`┌──────[10]──────┐`,
+				`│ T → T "*" F•   │`,
+				`└────────────────┘`,
+				`┌──────[11]──────┐`,
+				`│ F → "(" E ")"• │`,
+				`└────────────────┘`,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			str := tc.cs.String()
+
+			for _, expectedSubstring := range tc.expectedSubstrings {
+				assert.Contains(t, str, expectedSubstring)
 			}
 		})
 	}
