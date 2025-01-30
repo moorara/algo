@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/internal/parsertest"
 	"github.com/moorara/algo/lexer"
 )
 
@@ -19,13 +20,13 @@ func TestNew(t *testing.T) {
 		{
 			name:                 "Success",
 			L:                    nil,
-			G:                    grammars[0],
+			G:                    parsertest.Grammars[1],
 			expectedErrorStrings: nil,
 		},
 		{
 			name: "None_LR(1)_Grammar",
 			L:    nil,
-			G:    grammars[1],
+			G:    parsertest.Grammars[4],
 			expectedErrorStrings: []string{
 				`failed to construct Canonical LR parsing table: 8 errors occurred:`,
 				`AMBIGUOUS Grammar: shift/reduce conflict in ACTION[2, "*"]`,

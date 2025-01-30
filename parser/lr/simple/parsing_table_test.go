@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/internal/parsertest"
 	"github.com/moorara/algo/parser/lr"
 )
 
@@ -19,13 +20,13 @@ func TestBuildParsingTable(t *testing.T) {
 		expectedErrorStrings []string
 	}{
 		{
-			name:          "1st",
-			G:             grammars[0],
+			name:          "E→E+T",
+			G:             parsertest.Grammars[3],
 			expectedTable: pt[0],
 		},
 		{
-			name: "2nd",
-			G:    grammars[1],
+			name: "EBNF",
+			G:    parsertest.Grammars[5],
 			expectedErrorStrings: []string{
 				`20 errors occurred:`,
 				`AMBIGUOUS Grammar: shift/reduce conflict in ACTION[2, "("]`,

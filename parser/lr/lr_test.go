@@ -7,29 +7,11 @@ import (
 	"testing"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/internal/parsertest"
 	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/parser"
 	"github.com/stretchr/testify/assert"
 )
-
-type (
-	// MockLexer is an implementation of lexer.Lexer for testing purposes.
-	MockLexer struct {
-		NextTokenIndex int
-		NextTokenMocks []NextTokenMock
-	}
-
-	NextTokenMock struct {
-		OutToken lexer.Token
-		OutError error
-	}
-)
-
-func (m *MockLexer) NextToken() (lexer.Token, error) {
-	i := m.NextTokenIndex
-	m.NextTokenIndex++
-	return m.NextTokenMocks[i].OutToken, m.NextTokenMocks[i].OutError
-}
 
 func TestParser_Parse(t *testing.T) {
 	pt := getTestParsingTables()
@@ -44,8 +26,8 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "EmptyString",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: io.EOF},
 					},
 				},
@@ -60,8 +42,8 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "First_NextToken_Fails",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: errors.New("cannot read rune")},
 					},
 				},
@@ -76,8 +58,8 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "Second_NextToken_Fails",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -106,8 +88,8 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "Invalid_Input",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -134,8 +116,8 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "TokenFuncError",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -190,8 +172,8 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "ProductionFuncError",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -246,8 +228,8 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "Success",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -328,8 +310,8 @@ func TestParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "EmptyString",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: io.EOF},
 					},
 				},
@@ -343,8 +325,8 @@ func TestParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "First_NextToken_Fails",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: errors.New("cannot read rune")},
 					},
 				},
@@ -358,8 +340,8 @@ func TestParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "Second_NextToken_Fails",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -387,8 +369,8 @@ func TestParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "Invalid_Input",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -414,8 +396,8 @@ func TestParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "Success",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -581,8 +563,8 @@ func TestParser_ParseAndEvaluate(t *testing.T) {
 		{
 			name: "EmptyString",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: io.EOF},
 					},
 				},
@@ -597,8 +579,8 @@ func TestParser_ParseAndEvaluate(t *testing.T) {
 		{
 			name: "First_NextToken_Fails",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: errors.New("cannot read rune")},
 					},
 				},
@@ -613,8 +595,8 @@ func TestParser_ParseAndEvaluate(t *testing.T) {
 		{
 			name: "Second_NextToken_Fails",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -643,8 +625,8 @@ func TestParser_ParseAndEvaluate(t *testing.T) {
 		{
 			name: "Invalid_Input",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -671,8 +653,8 @@ func TestParser_ParseAndEvaluate(t *testing.T) {
 		{
 			name: "EvaluateFuncError",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -727,8 +709,8 @@ func TestParser_ParseAndEvaluate(t *testing.T) {
 		{
 			name: "Success",
 			p: &Parser{
-				L: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				L: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{

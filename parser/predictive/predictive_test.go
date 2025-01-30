@@ -8,28 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/internal/parsertest"
 	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/parser"
 )
-
-type (
-	// MockLexer is an implementation of lexer.Lexer for testing purposes.
-	MockLexer struct {
-		NextTokenIndex int
-		NextTokenMocks []NextTokenMock
-	}
-
-	NextTokenMock struct {
-		OutToken lexer.Token
-		OutError error
-	}
-)
-
-func (m *MockLexer) NextToken() (lexer.Token, error) {
-	i := m.NextTokenIndex
-	m.NextTokenIndex++
-	return m.NextTokenMocks[i].OutToken, m.NextTokenMocks[i].OutError
-}
 
 func TestNew(t *testing.T) {
 	tests := []struct {
@@ -39,8 +21,8 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			name:  "OK",
-			G:     grammars[2],
-			lexer: new(MockLexer),
+			G:     parsertest.Grammars[0],
+			lexer: new(parsertest.MockLexer),
 		},
 	}
 
@@ -64,23 +46,29 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "None_LL(1)_Grammar",
 			p: &predictiveParser{
-				G:     grammars[0],
-				lexer: new(MockLexer),
+				G:     parsertest.Grammars[4],
+				lexer: new(parsertest.MockLexer),
 			},
 			tokenF: func(*lexer.Token) error { return nil },
 			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
-				`multiple productions at M[E, "-"]`,
-				`multiple productions at M[E, "("]`,
-				`multiple productions at M[E, "id"]`,
+				`failed to construct the predictive parsing table: 2 errors occurred:`,
+				`multiple productions at M[E, "("]:`,
+				`E → E "*" E`,
+				`E → E "+" E`,
+				`E → "(" E ")"`,
+				`multiple productions at M[E, "id"]:`,
+				`E → E "*" E`,
+				`E → E "+" E`,
+				`E → "id"`,
 			},
 		},
 		{
 			name: "EmptyString",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: io.EOF},
 					},
 				},
@@ -94,9 +82,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "First_NextToken_Fails",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: errors.New("cannot read rune")},
 					},
 				},
@@ -110,9 +98,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "Second_NextToken_Fails",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -140,9 +128,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "Invalid_Input",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -168,9 +156,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "TokenFuncError",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -224,9 +212,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "ProductionFuncError",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -280,9 +268,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "Success",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -361,22 +349,28 @@ func TestPredictiveParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "None_LL(1)_Grammar",
 			p: &predictiveParser{
-				G:     grammars[0],
-				lexer: new(MockLexer),
+				G:     parsertest.Grammars[4],
+				lexer: new(parsertest.MockLexer),
 			},
 			expectedAST: nil,
 			expectedErrorStrings: []string{
-				`multiple productions at M[E, "-"]`,
-				`multiple productions at M[E, "("]`,
-				`multiple productions at M[E, "id"]`,
+				`failed to construct the predictive parsing table: 2 errors occurred:`,
+				`multiple productions at M[E, "("]:`,
+				`E → E "*" E`,
+				`E → E "+" E`,
+				`E → "(" E ")"`,
+				`multiple productions at M[E, "id"]:`,
+				`E → E "*" E`,
+				`E → E "+" E`,
+				`E → "id"`,
 			},
 		},
 		{
 			name: "EmptyString",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: io.EOF},
 					},
 				},
@@ -389,9 +383,9 @@ func TestPredictiveParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "First_NextToken_Fails",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: errors.New("cannot read rune")},
 					},
 				},
@@ -404,9 +398,9 @@ func TestPredictiveParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "Second_NextToken_Fails",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -433,9 +427,9 @@ func TestPredictiveParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "Invalid_Input",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -460,9 +454,9 @@ func TestPredictiveParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "Success",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{

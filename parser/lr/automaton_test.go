@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/internal/parsertest"
 )
 
 func TestAugment(t *testing.T) {
@@ -16,11 +17,11 @@ func TestAugment(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			G:    grammars[2],
+			G:    parsertest.Grammars[3],
 			expectedCFG: grammar.NewCFG(
 				[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 				[]grammar.NonTerminal{"E′", "E", "T", "F"},
-				prods[2],
+				parsertest.Prods[3],
 				"E′",
 			),
 		},
@@ -43,7 +44,7 @@ func TestCalculator0_G(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator0{
-				augG: augment(grammars[2]),
+				augG: augment(parsertest.Grammars[3]),
 			},
 		},
 	}
@@ -67,11 +68,11 @@ func TestCalculator0_Initial(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator0{
-				augG: augment(grammars[2]),
+				augG: augment(parsertest.Grammars[3]),
 			},
 			expectedInitial: &Item0{
-				Production: prods[2][0],
-				Start:      starts[2],
+				Production: parsertest.Prods[3][0],
+				Start:      "E′",
 				Dot:        0,
 			},
 		},
@@ -97,10 +98,10 @@ func TestCalculator0_CLOSURE(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator0{
-				augG: augment(grammars[2]),
+				augG: augment(parsertest.Grammars[3]),
 			},
 			I: NewItemSet(
-				&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
+				&Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E
 			),
 			expectedCLOSURE: LR0ItemSets[0],
 		},
@@ -124,7 +125,7 @@ func TestCalculator1_G(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator1{
-				augG: augment(grammars[0]),
+				augG: augment(parsertest.Grammars[1]),
 			},
 		},
 	}
@@ -148,11 +149,11 @@ func TestCalculator1_Initial(t *testing.T) {
 		{
 			name: "OK",
 			c: &calculator1{
-				augG: augment(grammars[0]),
+				augG: augment(parsertest.Grammars[1]),
 			},
 			expectedInitial: &Item1{
-				Production: prods[0][0],
-				Start:      starts[0],
+				Production: parsertest.Prods[1][0],
+				Start:      "S′",
 				Dot:        0,
 				Lookahead:  grammar.Endmarker,
 			},
@@ -170,7 +171,7 @@ func TestCalculator1_Initial(t *testing.T) {
 }
 
 func TestCalculator1_CLOSURE(t *testing.T) {
-	g := augment(grammars[0])
+	g := augment(parsertest.Grammars[1])
 
 	tests := []struct {
 		name            string
@@ -185,7 +186,7 @@ func TestCalculator1_CLOSURE(t *testing.T) {
 				FIRST: g.ComputeFIRST(),
 			},
 			I: NewItemSet(
-				&Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
+				&Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
 			),
 			expectedCLOSURE: LR1ItemSets[0],
 		},
@@ -213,7 +214,7 @@ func TestAutomaton_GOTO(t *testing.T) {
 			name: `GOTO(I₀,"(")`,
 			a: &automaton{
 				calculator: &calculator0{
-					augG: augment(grammars[2]),
+					augG: augment(parsertest.Grammars[3]),
 				},
 			},
 			I:            LR0ItemSets[0],
@@ -240,7 +241,7 @@ func TestAutomaton_Canonical(t *testing.T) {
 			name: "OK",
 			a: &automaton{
 				calculator: &calculator0{
-					augG: augment(grammars[2]),
+					augG: augment(parsertest.Grammars[3]),
 				},
 			},
 			expectedCanonical: NewItemSetCollection(
@@ -275,7 +276,7 @@ func TestNewLR0Automaton(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			G:    grammars[2],
+			G:    parsertest.Grammars[3],
 		},
 	}
 
@@ -298,7 +299,7 @@ func TestNewLR1Automaton(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			G:    grammars[2],
+			G:    parsertest.Grammars[3],
 		},
 	}
 
@@ -327,15 +328,15 @@ func TestKernelAutomaton_GOTO(t *testing.T) {
 			name: `GOTO(I₀,"(")`,
 			a: &kernelAutomaton{
 				calculator: &calculator0{
-					augG: augment(grammars[2]),
+					augG: augment(parsertest.Grammars[3]),
 				},
 			},
 			I: NewItemSet(
-				&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
+				&Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E
 			),
 			X: grammar.Terminal("("),
 			expectedGOTO: NewItemSet(
-				&Item0{Production: prods[2][5], Start: starts[2], Dot: 1}, // F → (•E ),
+				&Item0{Production: parsertest.Prods[3][5], Start: "E′", Dot: 1}, // F → (•E ),
 			),
 		},
 	}
@@ -358,49 +359,49 @@ func TestKernelAutomaton_Canonical(t *testing.T) {
 			name: "OK",
 			a: &kernelAutomaton{
 				calculator: &calculator0{
-					augG: augment(grammars[2]),
+					augG: augment(parsertest.Grammars[3]),
 				},
 			},
 			expectedCanonical: NewItemSetCollection(
 				NewItemSet(
-					&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E,
+					&Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E,
 				),
 				NewItemSet(
-					&Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
-					&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
+					&Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 1}, // E′ → E•
+					&Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 1}, // E → E•+ T
 				),
 				NewItemSet(
-					&Item0{Production: prods[2][2], Start: starts[2], Dot: 1}, // E → T•
-					&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
+					&Item0{Production: parsertest.Prods[3][2], Start: "E′", Dot: 1}, // E → T•
+					&Item0{Production: parsertest.Prods[3][3], Start: "E′", Dot: 1}, // T → T•* F
 				),
 				NewItemSet(
-					&Item0{Production: prods[2][4], Start: starts[2], Dot: 1}, // T → F•
+					&Item0{Production: parsertest.Prods[3][4], Start: "E′", Dot: 1}, // T → F•
 				),
 				NewItemSet(
-					&Item0{Production: prods[2][5], Start: starts[2], Dot: 1}, // F → (•E )
+					&Item0{Production: parsertest.Prods[3][5], Start: "E′", Dot: 1}, // F → (•E )
 				),
 				NewItemSet(
-					&Item0{Production: prods[2][6], Start: starts[2], Dot: 1}, // F → id•
+					&Item0{Production: parsertest.Prods[3][6], Start: "E′", Dot: 1}, // F → id•
 				),
 				NewItemSet(
-					&Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
+					&Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 2}, // E → E +•T
 				),
 				NewItemSet(
-					&Item0{Production: prods[2][3], Start: starts[2], Dot: 2}, // T → T *•F
+					&Item0{Production: parsertest.Prods[3][3], Start: "E′", Dot: 2}, // T → T *•F
 				),
 				NewItemSet(
-					&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E• + T
-					&Item0{Production: prods[2][5], Start: starts[2], Dot: 2}, // F → ( E•)
+					&Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 1}, // E → E• + T
+					&Item0{Production: parsertest.Prods[3][5], Start: "E′", Dot: 2}, // F → ( E•)
 				),
 				NewItemSet(
-					&Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
-					&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
+					&Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 3}, // E → E + T•
+					&Item0{Production: parsertest.Prods[3][3], Start: "E′", Dot: 1}, // T → T•* F
 				),
 				NewItemSet(
-					&Item0{Production: prods[2][3], Start: starts[2], Dot: 3}, // T → T * F•
+					&Item0{Production: parsertest.Prods[3][3], Start: "E′", Dot: 3}, // T → T * F•
 				),
 				NewItemSet(
-					&Item0{Production: prods[2][5], Start: starts[2], Dot: 3}, // F → ( E )•
+					&Item0{Production: parsertest.Prods[3][5], Start: "E′", Dot: 3}, // F → ( E )•
 				),
 			),
 		},
@@ -421,7 +422,7 @@ func TestNewLR0KernelAutomaton(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			G:    grammars[2],
+			G:    parsertest.Grammars[3],
 		},
 	}
 
@@ -444,7 +445,7 @@ func TestNewLR1KernelAutomaton(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			G:    grammars[2],
+			G:    parsertest.Grammars[3],
 		},
 	}
 

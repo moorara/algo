@@ -3,6 +3,7 @@ package lr
 import (
 	"testing"
 
+	"github.com/moorara/algo/internal/parsertest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -54,7 +55,7 @@ func TestStateMap_Item(t *testing.T) {
 			m:            statemaps[0],
 			s:            9,
 			i:            3,
-			expectedItem: &Item0{Production: prods[2][5], Start: starts[2], Dot: 0},
+			expectedItem: &Item0{Production: parsertest.Prods[3][5], Start: "E′", Dot: 0},
 		},
 	}
 
@@ -99,14 +100,14 @@ func TestStateMap_FindItem(t *testing.T) {
 			name:          "Found",
 			m:             statemaps[0],
 			s:             State(7),
-			item:          &Item0{Production: prods[2][3], Start: starts[2], Dot: 2}, // T → T *•F
+			item:          &Item0{Production: parsertest.Prods[3][3], Start: "E′", Dot: 2}, // T → T *•F
 			expectedIndex: 0,
 		},
 		{
 			name:          "NotFound",
 			m:             statemaps[0],
 			s:             State(7),
-			item:          &Item0{Production: prods[2][5], Start: starts[2], Dot: 1}, // F → (•E ),
+			item:          &Item0{Production: parsertest.Prods[3][5], Start: "E′", Dot: 1}, // F → (•E ),
 			expectedIndex: -1,
 		},
 	}
