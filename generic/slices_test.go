@@ -7,15 +7,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type testCollection1[T any] struct {
+type testC1[T any] struct {
 	items []T
 }
 
-func (c *testCollection1[T]) Add(vals ...T) {
+func (c *testC1[T]) Add(vals ...T) {
 	c.items = append(c.items, vals...)
 }
 
-func (c *testCollection1[T]) All() iter.Seq[T] {
+func (c *testC1[T]) All() iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for _, v := range c.items {
 			if !yield(v) {
@@ -25,17 +25,17 @@ func (c *testCollection1[T]) All() iter.Seq[T] {
 	}
 }
 
-type testCollection2[K comparable, V any] struct {
+type testC2[K comparable, V any] struct {
 	keys []K
 	vals []V
 }
 
-func (c *testCollection2[K, V]) Put(key K, val V) {
+func (c *testC2[K, V]) Put(key K, val V) {
 	c.keys = append(c.keys, key)
 	c.vals = append(c.vals, val)
 }
 
-func (c *testCollection2[K, V]) All() iter.Seq2[K, V] {
+func (c *testC2[K, V]) All() iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		for i := range c.keys {
 			if !yield(c.keys[i], c.vals[i]) {
@@ -46,7 +46,7 @@ func (c *testCollection2[K, V]) All() iter.Seq2[K, V] {
 }
 
 func TestCollect1(t *testing.T) {
-	c := new(testCollection1[string])
+	c := new(testC1[string])
 	c.Add("foo", "bar")
 
 	tests := []struct {
@@ -75,7 +75,7 @@ func TestCollect1(t *testing.T) {
 }
 
 func TestCollect2(t *testing.T) {
-	c := new(testCollection2[string, int])
+	c := new(testC2[string, int])
 	c.Put("foo", 1)
 	c.Put("bar", 2)
 
@@ -222,6 +222,46 @@ func TestAllMatch(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedAllMatch, AllMatch(tc.s, tc.p))
+		})
+	}
+}
+
+func TestFirstMatch(t *testing.T) {
+	tests := []struct {
+		name          string
+		s             []string
+		p             Predicate1[string]
+		expectedValue string
+		expectedOK    bool
+	}{
+		{
+			name:          "Empty",
+			s:             []string{},
+			p:             func(s string) bool { return s[0] == 'F' },
+			expectedValue: "",
+			expectedOK:    false,
+		},
+		{
+			name:          "NoMatch",
+			s:             []string{"Eagle", "Sparrow", "Owl", "Hummingbird", "Falcon", "Parrot", "Swan", "Seagull"},
+			p:             func(s string) bool { return s[0] == 'M' },
+			expectedValue: "",
+			expectedOK:    false,
+		},
+		{
+			name:          "OK",
+			s:             []string{"Eagle", "Sparrow", "Owl", "Hummingbird", "Falcon", "Parrot", "Swan", "Seagull"},
+			p:             func(s string) bool { return s[0] == 'S' },
+			expectedValue: "Sparrow",
+			expectedOK:    true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			val, ok := FirstMatch(tc.s, tc.p)
+			assert.Equal(t, tc.expectedValue, val)
+			assert.Equal(t, tc.expectedOK, ok)
 		})
 	}
 }
