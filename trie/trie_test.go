@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/moorara/algo/generic"
 	. "github.com/moorara/algo/generic"
 )
 
@@ -63,6 +64,9 @@ type trieTest[V any] struct {
 	expectedFirstMatchOK       bool
 	selectMatchPredicate       Predicate2[string, V]
 	expectedSelectMatch        []KeyValue[string, V]
+	partitionMatchPredicate    Predicate2[string, V]
+	expectedPartitionMatched   []KeyValue[string, V]
+	expectedPartitionUnmatched []KeyValue[string, V]
 	expectedVLRTraverse        []KeyValue[string, V]
 	expectedVRLTraverse        []KeyValue[string, V]
 	expectedLVRTraverse        []KeyValue[string, V]
@@ -136,16 +140,23 @@ func getTrieTests() []trieTest[int] {
 				{Key: "B", Val: 2},
 				{Key: "C", Val: 3},
 			},
-			anyMatchPredicate:     func(k string, v int) bool { return v < 0 },
-			expectedAnyMatch:      false,
-			allMatchPredicate:     func(k string, v int) bool { return v%2 == 0 },
-			expectedAllMatch:      false,
-			firstMatchPredicate:   func(k string, v int) bool { return v%5 == 0 },
-			expectedFirstMatchKey: "",
-			expectedFirstMatchVal: 0,
-			expectedFirstMatchOK:  false,
-			selectMatchPredicate:  func(k string, v int) bool { return v%10 == 0 },
-			expectedSelectMatch:   []KeyValue[string, int]{},
+			anyMatchPredicate:        func(k string, v int) bool { return v < 0 },
+			expectedAnyMatch:         false,
+			allMatchPredicate:        func(k string, v int) bool { return v%2 == 0 },
+			expectedAllMatch:         false,
+			firstMatchPredicate:      func(k string, v int) bool { return v%5 == 0 },
+			expectedFirstMatchKey:    "",
+			expectedFirstMatchVal:    0,
+			expectedFirstMatchOK:     false,
+			selectMatchPredicate:     func(k string, v int) bool { return v%10 == 0 },
+			expectedSelectMatch:      []KeyValue[string, int]{},
+			partitionMatchPredicate:  func(k string, v int) bool { return v%10 == 0 },
+			expectedPartitionMatched: []KeyValue[string, int]{},
+			expectedPartitionUnmatched: []KeyValue[string, int]{
+				{Key: "A", Val: 1},
+				{Key: "B", Val: 2},
+				{Key: "C", Val: 3},
+			},
 		},
 		{
 			name:  "ABCDE",
@@ -223,6 +234,16 @@ func getTrieTests() []trieTest[int] {
 			expectedSelectMatch: []KeyValue[string, int]{
 				{Key: "B", Val: 2},
 				{Key: "D", Val: 4},
+			},
+			partitionMatchPredicate: func(k string, v int) bool { return v%2 == 0 },
+			expectedPartitionMatched: []KeyValue[string, int]{
+				{Key: "B", Val: 2},
+				{Key: "D", Val: 4},
+			},
+			expectedPartitionUnmatched: []KeyValue[string, int]{
+				{Key: "A", Val: 1},
+				{Key: "C", Val: 3},
+				{Key: "E", Val: 5},
 			},
 		},
 		{
@@ -311,6 +332,18 @@ func getTrieTests() []trieTest[int] {
 				{Key: "P", Val: 16},
 				{Key: "S", Val: 19},
 			},
+			partitionMatchPredicate: func(k string, v int) bool { return v > 10 },
+			expectedPartitionMatched: []KeyValue[string, int]{
+				{Key: "M", Val: 13},
+				{Key: "P", Val: 16},
+				{Key: "S", Val: 19},
+			},
+			expectedPartitionUnmatched: []KeyValue[string, int]{
+				{Key: "A", Val: 1},
+				{Key: "D", Val: 4},
+				{Key: "G", Val: 7},
+				{Key: "J", Val: 10},
+			},
 		},
 		{
 			name:  "Words",
@@ -392,6 +425,18 @@ func getTrieTests() []trieTest[int] {
 				{Key: "baby", Val: 5},
 				{Key: "balloon", Val: 17},
 				{Key: "band", Val: 11},
+			},
+			partitionMatchPredicate: func(k string, v int) bool { return strings.HasPrefix(k, "ba") },
+			expectedPartitionMatched: []KeyValue[string, int]{
+				{Key: "baby", Val: 5},
+				{Key: "balloon", Val: 17},
+				{Key: "band", Val: 11},
+			},
+			expectedPartitionUnmatched: []KeyValue[string, int]{
+				{Key: "box", Val: 2},
+				{Key: "dad", Val: 3},
+				{Key: "dance", Val: 13},
+				{Key: "dome", Val: 7},
 			},
 		},
 	}
@@ -573,8 +618,14 @@ func runTrieTest(t *testing.T, trie Trie[int], test trieTest[int]) {
 		})
 
 		t.Run("SelectMatch", func(t *testing.T) {
-			selectMatch := Collect2(trie.SelectMatch(test.selectMatchPredicate).All())
-			assert.Equal(t, test.expectedSelectMatch, selectMatch)
+			selected := trie.SelectMatch(test.selectMatchPredicate)
+			assert.Equal(t, test.expectedSelectMatch, Collect2(selected.All()))
+		})
+
+		t.Run("PartitionMatch", func(t *testing.T) {
+			matched, unmatched := trie.PartitionMatch(test.partitionMatchPredicate)
+			assert.Equal(t, test.expectedPartitionMatched, generic.Collect2(matched.All()))
+			assert.Equal(t, test.expectedPartitionUnmatched, generic.Collect2(unmatched.All()))
 		})
 
 		t.Run("Traverse", func(t *testing.T) {

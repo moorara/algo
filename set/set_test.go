@@ -651,10 +651,10 @@ func TestSet_SelectMatch(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		s        *set[string]
-		p        generic.Predicate1[string]
-		expected Set[string]
+		name             string
+		s                *set[string]
+		p                generic.Predicate1[string]
+		expectedSelected Set[string]
 	}{
 		{
 			name: "Empty",
@@ -663,7 +663,7 @@ func TestSet_SelectMatch(t *testing.T) {
 				equal:   eqFunc,
 			},
 			p: predicate,
-			expected: &set[string]{
+			expectedSelected: &set[string]{
 				members: []string{},
 				equal:   eqFunc,
 			},
@@ -675,7 +675,7 @@ func TestSet_SelectMatch(t *testing.T) {
 				equal:   eqFunc,
 			},
 			p: predicate,
-			expected: &set[string]{
+			expectedSelected: &set[string]{
 				members: []string{},
 				equal:   eqFunc,
 			},
@@ -687,7 +687,7 @@ func TestSet_SelectMatch(t *testing.T) {
 				equal:   eqFunc,
 			},
 			p: predicate,
-			expected: &set[string]{
+			expectedSelected: &set[string]{
 				members: []string{"A", "C"},
 				equal:   eqFunc,
 			},
@@ -696,8 +696,50 @@ func TestSet_SelectMatch(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			set := tc.s.SelectMatch(tc.p).(*set[string])
-			assert.True(t, set.Equal(tc.expected))
+			selected := tc.s.SelectMatch(tc.p)
+
+			assert.True(t, selected.(*set[string]).Equal(tc.expectedSelected))
+		})
+	}
+}
+
+func TestSet_PartitionMatch(t *testing.T) {
+	eqFunc := generic.NewEqualFunc[string]()
+	predicate := func(s string) bool {
+		return strings.ToUpper(s) == s
+	}
+
+	tests := []struct {
+		name              string
+		s                 *set[string]
+		p                 generic.Predicate1[string]
+		expectedMatched   Set[string]
+		expectedUnmatched Set[string]
+	}{
+		{
+			name: "OK",
+			s: &set[string]{
+				members: []string{"A", "b", "C", "d"},
+				equal:   eqFunc,
+			},
+			p: predicate,
+			expectedMatched: &set[string]{
+				members: []string{"A", "C"},
+				equal:   eqFunc,
+			},
+			expectedUnmatched: &set[string]{
+				members: []string{"b", "d"},
+				equal:   eqFunc,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			matched, unmatched := tc.s.PartitionMatch(tc.p)
+
+			assert.True(t, matched.(*set[string]).Equal(tc.expectedMatched))
+			assert.True(t, unmatched.(*set[string]).Equal(tc.expectedUnmatched))
 		})
 	}
 }

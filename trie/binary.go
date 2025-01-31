@@ -610,6 +610,29 @@ func (t *binary[V]) SelectMatch(p Predicate2[string, V]) Collection2[string, V] 
 	return newT
 }
 
+// PartitionMatch partitions the key-values in the binary trie
+// into two separate binary tries based on the provided predicate.
+// The first binary trie contains the key-values that satisfy the predicate (matched key-values),
+// while the second binary trie contains those that do not satisfy the predicate (unmatched key-values).
+// Both binary tries are of the same type as the original binary trie.
+func (t *binary[V]) PartitionMatch(p Predicate2[string, V]) (Collection2[string, V], Collection2[string, V]) {
+	matched := NewBinary[V](t.eqVal)
+	ummatched := NewBinary[V](t.eqVal)
+
+	t._traverse(t.root.left, "", VLR, func(key string, n *binaryNode[V]) bool {
+		if n.term {
+			if p(key, n.val) {
+				matched.Put(key, n.val)
+			} else {
+				ummatched.Put(key, n.val)
+			}
+		}
+		return true
+	})
+
+	return matched, ummatched
+}
+
 // Traverse performs a traversal of the binary trie using the specified traversal order
 // and yields the key-value of each node to the provided VisitFunc2 function.
 //

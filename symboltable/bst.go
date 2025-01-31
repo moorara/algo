@@ -544,6 +544,27 @@ func (t *bst[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
 	return newST
 }
 
+// PartitionMatch partitions the key-values in the BST
+// into two separate BSTs based on the provided predicate.
+// The first BST contains the key-values that satisfy the predicate (matched key-values),
+// while the second BST contains those that do not satisfy the predicate (unmatched key-values).
+// Both BSTs are of the same type as the original BST.
+func (t *bst[K, V]) PartitionMatch(p Predicate2[K, V]) (Collection2[K, V], Collection2[K, V]) {
+	matched := NewBST[K, V](t.cmpKey, t.eqVal)
+	unmatched := NewBST[K, V](t.cmpKey, t.eqVal)
+
+	t._traverse(t.root, VLR, func(n *bstNode[K, V]) bool {
+		if p(n.key, n.val) {
+			matched.Put(n.key, n.val)
+		} else {
+			unmatched.Put(n.key, n.val)
+		}
+		return true
+	})
+
+	return matched, unmatched
+}
+
 // Traverse performs a traversal of the BST using the specified traversal order
 // and yields the key-value of each node to the provided VisitFunc2 function.
 //

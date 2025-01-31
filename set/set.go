@@ -214,6 +214,21 @@ func (s *set[T]) SelectMatch(p generic.Predicate1[T]) generic.Collection1[T] {
 	return newS
 }
 
+func (s *set[T]) PartitionMatch(p generic.Predicate1[T]) (generic.Collection1[T], generic.Collection1[T]) {
+	matched := New[T](s.equal)
+	unmatched := New[T](s.equal)
+
+	for _, m := range s.members {
+		if p(m) {
+			matched.Add(m)
+		} else {
+			unmatched.Add(m)
+		}
+	}
+
+	return matched, unmatched
+}
+
 func (s *set[T]) IsSubset(superset Set[T]) bool {
 	for m := range s.All() {
 		if !superset.Contains(m) {

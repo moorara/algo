@@ -342,6 +342,33 @@ func (ht *doubleHashTable[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, 
 	return newHT
 }
 
+// PartitionMatch partitions the key-values in the hash table
+// into two separate hash tables based on the provided predicate.
+// The first hash table contains the key-values that satisfy the predicate (matched key-values),
+// while the second hash table contains those that do not satisfy the predicate (unmatched key-values).
+// Both hash tables are of the same type as the original hash table.
+func (ht *doubleHashTable[K, V]) PartitionMatch(p Predicate2[K, V]) (Collection2[K, V], Collection2[K, V]) {
+	matched := NewDoubleHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+		MinLoadFactor: ht.minLF,
+		MaxLoadFactor: ht.maxLF,
+	})
+
+	unmatched := NewDoubleHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+		MinLoadFactor: ht.minLF,
+		MaxLoadFactor: ht.maxLF,
+	})
+
+	for key, val := range ht.All() {
+		if p(key, val) {
+			matched.Put(key, val)
+		} else {
+			unmatched.Put(key, val)
+		}
+	}
+
+	return matched, unmatched
+}
+
 // print displays the current state of the hash table in the terminal,
 // including its parameters and a detailed table of indices, key-values, and hash function calculations.
 //

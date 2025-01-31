@@ -735,6 +735,27 @@ func (t *patricia[V]) SelectMatch(p Predicate2[string, V]) Collection2[string, V
 	return newT
 }
 
+// PartitionMatch partitions the key-values in the Patricia trie
+// into two separate Patricia tries based on the provided predicate.
+// The first Patricia trie contains the key-values that satisfy the predicate (matched key-values),
+// while the second Patricia trie contains those that do not satisfy the predicate (unmatched key-values).
+// Both Patricia tries are of the same type as the original Patricia trie.
+func (t *patricia[V]) PartitionMatch(p Predicate2[string, V]) (Collection2[string, V], Collection2[string, V]) {
+	matched := NewPatricia[V](t.eqVal)
+	unmatched := NewPatricia[V](t.eqVal)
+
+	t._traverse(t.root, VLR, func(n *patriciaNode[V]) bool {
+		if key := n.key.String(); p(key, n.val) {
+			matched.Put(key, n.val)
+		} else {
+			unmatched.Put(key, n.val)
+		}
+		return true
+	})
+
+	return matched, unmatched
+}
+
 // Traverse performs a traversal of the Patricia trie using the specified traversal order
 // and yields the key-value of each node to the provided VisitFunc2 function.
 //
