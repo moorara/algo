@@ -15,13 +15,13 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 	 * OUTPUT: The canonical LR parsing table functions ACTION and GOTO for G′.
 	 */
 
-	auto1 := lr.NewLR1Automaton(G)
+	H := lr.NewGrammarWithLR1(G, nil)
 
-	C := auto1.Canonical()   // 1. Construct C = {I₀, I₁, ..., Iₙ}, the collection of sets of LR(1) items for G′.
+	C := H.Canonical()       // 1. Construct C = {I₀, I₁, ..., Iₙ}, the collection of sets of LR(1) items for G′.
 	S := lr.BuildStateMap(C) // Map sets of LR(1) items to state numbers.
 
-	terminals := auto1.G().OrderTerminals()
-	_, _, nonTerminals := auto1.G().OrderNonTerminals()
+	terminals := H.OrderTerminals()
+	_, _, nonTerminals := H.OrderNonTerminals()
 	table := lr.NewParsingTable(S.States(), terminals, nonTerminals)
 
 	// 2. State i is constructed from I.
@@ -34,7 +34,7 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 			// If "A → α•aβ, b" is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
 			if X, ok := item.DotSymbol(); ok {
 				if a, ok := X.(grammar.Terminal); ok {
-					J := auto1.GOTO(I, a)
+					J := H.GOTO(I, a)
 					j := S.FindItemSet(J)
 
 					// Set ACTION[i,a] to SHIFT j
@@ -70,9 +70,9 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 
 		// 3. The goto transitions for state i are constructed for all non-terminals A using the rule:
 		// If GOTO(Iᵢ,A) = Iⱼ
-		for A := range auto1.G().NonTerminals.All() {
-			if !A.Equal(auto1.G().Start) {
-				J := auto1.GOTO(I, A)
+		for A := range H.NonTerminals.All() {
+			if !A.Equal(H.Start) {
+				J := H.GOTO(I, A)
 				j := S.FindItemSet(J)
 
 				// Set GOTO[i,A] = j
