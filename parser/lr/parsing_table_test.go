@@ -12,13 +12,13 @@ import (
 func TestNewParsingTable(t *testing.T) {
 	tests := []struct {
 		name         string
-		S            StateMap
+		states       []State
 		terminals    []grammar.Terminal
 		nonTerminals []grammar.NonTerminal
 	}{
 		{
 			name:         "OK",
-			S:            statemaps[0],
+			states:       []State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
 			terminals:    []grammar.Terminal{"+", "-", "*", "/", "(", ")", "id"},
 			nonTerminals: []grammar.NonTerminal{"E", "T", "F"},
 		},
@@ -26,7 +26,7 @@ func TestNewParsingTable(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			pt := NewParsingTable(tc.S, tc.terminals, tc.nonTerminals)
+			pt := NewParsingTable(tc.states, tc.terminals, tc.nonTerminals)
 
 			assert.NotNil(t, pt)
 			assert.NotNil(t, pt.actions)

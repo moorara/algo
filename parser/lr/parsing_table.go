@@ -15,7 +15,7 @@ import (
 )
 
 // NewParsingTable creates an empty parsing table for an LR parser.
-func NewParsingTable(S StateMap, terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal) *ParsingTable {
+func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal) *ParsingTable {
 	opts := symboltable.HashOpts{}
 
 	actions := symboltable.NewQuadraticHashTable(
@@ -37,7 +37,7 @@ func NewParsingTable(S StateMap, terminals []grammar.Terminal, nonTerminals []gr
 	)
 
 	return &ParsingTable{
-		S:            S,
+		states:       states,
 		terminals:    terminals,
 		nonTerminals: nonTerminals,
 		actions:      actions,
@@ -47,7 +47,7 @@ func NewParsingTable(S StateMap, terminals []grammar.Terminal, nonTerminals []gr
 
 // ParsingTable represents an LR parsing table.
 type ParsingTable struct {
-	S            StateMap
+	states       []State
 	terminals    []grammar.Terminal
 	nonTerminals []grammar.NonTerminal
 	actions      symboltable.SymbolTable[State, symboltable.SymbolTable[grammar.Terminal, set.Set[*Action]]]
@@ -103,7 +103,7 @@ func (t *ParsingTable) getGotoString(s State, A grammar.NonTerminal) string {
 func (t *ParsingTable) String() string {
 	ts := &tableStringer[State, grammar.Terminal, grammar.NonTerminal]{
 		K1Title:  "STATE",
-		K1Values: t.S.States(),
+		K1Values: t.states,
 		K2Title:  "ACTION",
 		K2Values: t.terminals,
 		K3Title:  "GOTO",
@@ -174,7 +174,7 @@ func (t *ParsingTable) Error() error {
 	var errs AggregatedConflictError
 
 	// Check for ACTION conflicts.
-	for _, s := range t.S.States() {
+	for _, s := range t.states {
 		for _, a := range t.terminals {
 			if actions, ok := t.getActions(s, a); ok {
 				if actions.Size() > 1 {

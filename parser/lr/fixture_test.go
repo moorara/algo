@@ -241,7 +241,7 @@ var actions = []*Action{
 
 func getTestParsingTables() []*ParsingTable {
 	pt0 := NewParsingTable(
-		statemaps[0],
+		statemaps[0].States(),
 		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "T", "F"},
 	)
@@ -294,7 +294,7 @@ func getTestParsingTables() []*ParsingTable {
 	pt0.SetGOTO(7, "F", 10)
 
 	pt1 := NewParsingTable(
-		[][]Item{{}, {}, {}, {}, {}, {}, {}},
+		[]State{0, 1, 2, 3, 4, 5, 6},
 		[]grammar.Terminal{"a", "b", "c", "d", grammar.Endmarker},
 		[]grammar.NonTerminal{"A", "B", "C", "D"},
 	)

@@ -71,7 +71,7 @@ var statemaps = []lr.StateMap{
 
 func getTestParsingTables() []*lr.ParsingTable {
 	pt0 := lr.NewParsingTable(
-		statemaps[0],
+		statemaps[0].States(),
 		[]grammar.Terminal{"(", ")", "*", "+", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "T", "F"},
 	)

@@ -161,7 +161,7 @@ var kernelmaps = []lr.StateMap{
 
 func getTestParsingTables() []*lr.ParsingTable {
 	pt0 := lr.NewParsingTable(
-		statemaps[0],
+		statemaps[0].States(),
 		[]grammar.Terminal{"=", "*", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"S", "L", "R"},
 	)
@@ -193,7 +193,7 @@ func getTestParsingTables() []*lr.ParsingTable {
 	pt0.SetGOTO(5, "R", 3)
 
 	pt1 := lr.NewParsingTable(
-		statemaps[1],
+		statemaps[1].States(),
 		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "T", "F"},
 	)
