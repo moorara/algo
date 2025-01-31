@@ -262,10 +262,7 @@ func (s *set[T]) Union(sets ...Set[T]) Set[T] {
 }
 
 func (s *set[T]) Intersection(sets ...Set[T]) Set[T] {
-	t := &set[T]{
-		members: make([]T, 0),
-		equal:   s.equal,
-	}
+	t := s.CloneEmpty()
 
 	for _, m := range s.members {
 		isInAll := true
@@ -277,7 +274,7 @@ func (s *set[T]) Intersection(sets ...Set[T]) Set[T] {
 		}
 
 		if isInAll {
-			t.members = append(t.members, m)
+			t.Add(m)
 		}
 	}
 
