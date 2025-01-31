@@ -4,40 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/moorara/algo/grammar"
 )
-
-var actions = []*Action{
-	{
-		Type:  SHIFT,
-		State: 5,
-	},
-	{
-		Type:  SHIFT,
-		State: 7,
-	},
-	{
-		Type: REDUCE,
-		Production: &grammar.Production{ // E → T
-			Head: "E",
-			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")},
-		},
-	},
-	{
-		Type: REDUCE,
-		Production: &grammar.Production{ // F → id
-			Head: "F",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
-		},
-	},
-	{
-		Type: ACCEPT,
-	},
-	{
-		Type: ERROR,
-	},
-}
 
 func TestEqAction(t *testing.T) {
 	tests := []struct {

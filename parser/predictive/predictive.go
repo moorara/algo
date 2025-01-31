@@ -119,7 +119,10 @@ func (p *predictiveParser) Parse(tokenF parser.TokenFunc, prodF parser.Productio
 			// Yield the token.
 			if tokenF != nil {
 				if err := tokenF(&token); err != nil {
-					return &parser.ParseError{Cause: err}
+					return &parser.ParseError{
+						Cause: err,
+						Pos:   token.Pos,
+					}
 				}
 			}
 

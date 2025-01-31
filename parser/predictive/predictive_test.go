@@ -8,106 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/internal/parsertest"
 	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/parser"
 )
-
-var grammars = []*grammar.CFG{
-	grammar.NewCFG(
-		[]grammar.Terminal{"+", "-", "*", "/", "(", ")", "id"},
-		[]grammar.NonTerminal{"S", "E"},
-		[]*grammar.Production{
-			{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E")}},                                                  // S → E
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("E")}}, // E → E + E
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("-"), grammar.NonTerminal("E")}}, // E → E - E
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("*"), grammar.NonTerminal("E")}}, // E → E * E
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("/"), grammar.NonTerminal("E")}}, // E → E / E
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}},    // E → ( E )
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("-"), grammar.NonTerminal("E")}},                           // E → - E
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                    // E → id
-		},
-		"S",
-	),
-	grammar.NewCFG(
-		[]grammar.Terminal{"+", "-", "*", "/", "(", ")", "id"},
-		[]grammar.NonTerminal{"S", "E", "T", "F"},
-		[]*grammar.Production{
-			{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E")}},                                                  // S → E
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("T")}}, // E → E + T
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("-"), grammar.NonTerminal("T")}}, // E → E - T
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")}},                                                  // E → T
-			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.Terminal("*"), grammar.NonTerminal("F")}}, // T → T * F
-			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.Terminal("/"), grammar.NonTerminal("F")}}, // T → T / F
-			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F")}},                                                  // T → F
-			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}},    // F → ( E )
-			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                    // F → id
-		},
-		"S",
-	),
-	grammar.NewCFG(
-		[]grammar.Terminal{"+", "*", "(", ")", "id"},
-		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
-		[]*grammar.Production{
-			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}},                         // E → T E′
-			{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}}, // E′ → + T E′
-			{Head: "E′", Body: grammar.E}, // E′ → ε
-			{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}},                         // T → F T′
-			{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}}, // T′ → * F T′
-			{Head: "T′", Body: grammar.E}, // T′ → ε
-			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}}, // F → ( E )
-			{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                 // F → id
-		},
-		"E",
-	),
-	grammar.NewCFG(
-		[]grammar.Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
-		[]grammar.NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
-		[]*grammar.Production{
-			{Head: "grammar", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("name"), grammar.NonTerminal("decls")}}, // grammar → name decls
-			{Head: "name", Body: grammar.String[grammar.Symbol]{grammar.Terminal("grammar"), grammar.Terminal("IDENT")}},       // name → "grammar" IDENT
-			{Head: "decls", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("decls"), grammar.NonTerminal("decl")}},   // decls → decls decl
-			{Head: "decls", Body: grammar.E}, // decls → ε
-			{Head: "decl", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("token")}},                                                  // decl → token
-			{Head: "decl", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rule")}},                                                   // decl → rule
-			{Head: "token", Body: grammar.String[grammar.Symbol]{grammar.Terminal("TOKEN"), grammar.Terminal("="), grammar.Terminal("STRING")}}, // token → TOKEN "=" STRING
-			{Head: "token", Body: grammar.String[grammar.Symbol]{grammar.Terminal("TOKEN"), grammar.Terminal("="), grammar.Terminal("REGEX")}},  // token → TOKEN "=" REGEX
-			{Head: "rule", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("lhs"), grammar.Terminal("="), grammar.NonTerminal("rhs")}}, // rule → lhs "=" rhs
-			{Head: "rule", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("lhs"), grammar.Terminal("=")}},                             // rule → lhs "="
-			{Head: "lhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("nonterm")}},                                                 // lhs → nonterm
-			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")}},                         // rhs → rhs rhs
-			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.Terminal("|"), grammar.NonTerminal("rhs")}},  // rhs → rhs "|" rhs
-			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("rhs"), grammar.Terminal(")")}},       // rhs → "(" rhs ")"
-			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("["), grammar.NonTerminal("rhs"), grammar.Terminal("]")}},       // rhs → "[" rhs "]"
-			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("{"), grammar.NonTerminal("rhs"), grammar.Terminal("}")}},       // rhs → "{" rhs "}"
-			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("{{"), grammar.NonTerminal("rhs"), grammar.Terminal("}}")}},     // rhs → "{{" rhs "}}"
-			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("nonterm")}},                                                 // rhs → nonterm
-			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("term")}},                                                    // rhs → term
-			{Head: "nonterm", Body: grammar.String[grammar.Symbol]{grammar.Terminal("IDENT")}},                                                  // nonterm → IDENT
-			{Head: "term", Body: grammar.String[grammar.Symbol]{grammar.Terminal("TOKEN")}},                                                     // term → TOKEN
-			{Head: "term", Body: grammar.String[grammar.Symbol]{grammar.Terminal("STRING")}},                                                    // term → STRING
-		},
-		"grammar",
-	),
-}
-
-type (
-	// MockLexer is an implementation of lexer.Lexer for testing purposes.
-	MockLexer struct {
-		NextTokenIndex int
-		NextTokenMocks []NextTokenMock
-	}
-
-	NextTokenMock struct {
-		OutToken lexer.Token
-		OutError error
-	}
-)
-
-func (m *MockLexer) NextToken() (lexer.Token, error) {
-	i := m.NextTokenIndex
-	m.NextTokenIndex++
-	return m.NextTokenMocks[i].OutToken, m.NextTokenMocks[i].OutError
-}
 
 func TestNew(t *testing.T) {
 	tests := []struct {
@@ -117,8 +21,8 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			name:  "OK",
-			G:     grammars[2],
-			lexer: new(MockLexer),
+			G:     parsertest.Grammars[0],
+			lexer: new(parsertest.MockLexer),
 		},
 	}
 
@@ -142,23 +46,29 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "None_LL(1)_Grammar",
 			p: &predictiveParser{
-				G:     grammars[0],
-				lexer: new(MockLexer),
+				G:     parsertest.Grammars[4],
+				lexer: new(parsertest.MockLexer),
 			},
 			tokenF: func(*lexer.Token) error { return nil },
 			prodF:  func(*grammar.Production) error { return nil },
 			expectedErrorStrings: []string{
-				`multiple productions at M[E, "-"]`,
-				`multiple productions at M[E, "("]`,
-				`multiple productions at M[E, "id"]`,
+				`failed to construct the predictive parsing table: 2 errors occurred:`,
+				`multiple productions at M[E, "("]:`,
+				`E → E "*" E`,
+				`E → E "+" E`,
+				`E → "(" E ")"`,
+				`multiple productions at M[E, "id"]:`,
+				`E → E "*" E`,
+				`E → E "+" E`,
+				`E → "id"`,
 			},
 		},
 		{
 			name: "EmptyString",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: io.EOF},
 					},
 				},
@@ -172,9 +82,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "First_NextToken_Fails",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: errors.New("cannot read rune")},
 					},
 				},
@@ -188,9 +98,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "Second_NextToken_Fails",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -218,9 +128,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "Invalid_Input",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -246,9 +156,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "TokenFuncError",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -302,9 +212,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "ProductionFuncError",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -358,9 +268,9 @@ func TestPredictiveParser_Parse(t *testing.T) {
 		{
 			name: "Success",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -439,22 +349,28 @@ func TestPredictiveParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "None_LL(1)_Grammar",
 			p: &predictiveParser{
-				G:     grammars[0],
-				lexer: new(MockLexer),
+				G:     parsertest.Grammars[4],
+				lexer: new(parsertest.MockLexer),
 			},
 			expectedAST: nil,
 			expectedErrorStrings: []string{
-				`multiple productions at M[E, "-"]`,
-				`multiple productions at M[E, "("]`,
-				`multiple productions at M[E, "id"]`,
+				`failed to construct the predictive parsing table: 2 errors occurred:`,
+				`multiple productions at M[E, "("]:`,
+				`E → E "*" E`,
+				`E → E "+" E`,
+				`E → "(" E ")"`,
+				`multiple productions at M[E, "id"]:`,
+				`E → E "*" E`,
+				`E → E "+" E`,
+				`E → "id"`,
 			},
 		},
 		{
 			name: "EmptyString",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: io.EOF},
 					},
 				},
@@ -467,9 +383,9 @@ func TestPredictiveParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "First_NextToken_Fails",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						{OutError: errors.New("cannot read rune")},
 					},
 				},
@@ -482,9 +398,9 @@ func TestPredictiveParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "Second_NextToken_Fails",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -511,9 +427,9 @@ func TestPredictiveParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "Invalid_Input",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{
@@ -538,9 +454,9 @@ func TestPredictiveParser_ParseAndBuildAST(t *testing.T) {
 		{
 			name: "Success",
 			p: &predictiveParser{
-				G: grammars[2],
-				lexer: &MockLexer{
-					NextTokenMocks: []NextTokenMock{
+				G: parsertest.Grammars[0],
+				lexer: &parsertest.MockLexer{
+					NextTokenMocks: []parsertest.NextTokenMock{
 						// First token
 						{
 							OutToken: lexer.Token{

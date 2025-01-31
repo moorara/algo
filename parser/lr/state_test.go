@@ -3,82 +3,33 @@ package lr
 import (
 	"testing"
 
+	"github.com/moorara/algo/internal/parsertest"
 	"github.com/stretchr/testify/assert"
 )
 
-var sm = StateMap{
-	{
-		&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
-		&Item0{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
-	},
-	{
-		&Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
-	},
-	{
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
-	},
-	{
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 3}, // F → ( E )•
-	},
-	{
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 3}, // T → T * F•
-	},
-	{
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
-	},
-	{
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 2}, // F → ( E•)
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E• + T
-	},
-	{
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 2}, // T → T *•F
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-	},
-	{
-		&Item0{Production: prods[2][2], Start: starts[2], Dot: 1}, // E → T•
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
-	},
-	{
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 1}, // F → (•E )
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
-		&Item0{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
-	},
-	{
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 1}, // F → id•
-	},
-	{
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 1}, // T → F•
-	},
-}
-
 func TestBuildStateMap(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name             string
 		C                ItemSetCollection
 		expectedStateMap StateMap
 	}{
 		{
-			name:             "OK",
-			C:                NewItemSetCollection(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]),
-			expectedStateMap: sm,
+			name: "OK",
+			C: NewItemSetCollection(
+				LR0ItemSets[0],
+				LR0ItemSets[1],
+				LR0ItemSets[2],
+				LR0ItemSets[3],
+				LR0ItemSets[4],
+				LR0ItemSets[5],
+				LR0ItemSets[6],
+				LR0ItemSets[7],
+				LR0ItemSets[8],
+				LR0ItemSets[9],
+				LR0ItemSets[10],
+				LR0ItemSets[11],
+			),
+			expectedStateMap: statemaps[0],
 		},
 	}
 
@@ -101,10 +52,10 @@ func TestStateMap_Item(t *testing.T) {
 	}{
 		{
 			name:         "OK",
-			m:            sm,
+			m:            statemaps[0],
 			s:            9,
 			i:            3,
-			expectedItem: &Item0{Production: prods[2][5], Start: starts[2], Dot: 0},
+			expectedItem: &Item0{Production: parsertest.Prods[3][5], Start: "E′", Dot: 0},
 		},
 	}
 
@@ -116,8 +67,6 @@ func TestStateMap_Item(t *testing.T) {
 }
 
 func TestStateMap_ItemSet(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name            string
 		m               StateMap
@@ -126,9 +75,9 @@ func TestStateMap_ItemSet(t *testing.T) {
 	}{
 		{
 			name:            "OK",
-			m:               sm,
+			m:               statemaps[0],
 			s:               5,
-			expectedItemSet: s[6],
+			expectedItemSet: LR0ItemSets[6],
 		},
 	}
 
@@ -149,16 +98,16 @@ func TestStateMap_FindItem(t *testing.T) {
 	}{
 		{
 			name:          "Found",
-			m:             sm,
+			m:             statemaps[0],
 			s:             State(7),
-			item:          &Item0{Production: prods[2][3], Start: starts[2], Dot: 2}, // T → T *•F
+			item:          &Item0{Production: parsertest.Prods[3][3], Start: "E′", Dot: 2}, // T → T *•F
 			expectedIndex: 0,
 		},
 		{
 			name:          "NotFound",
-			m:             sm,
+			m:             statemaps[0],
 			s:             State(7),
-			item:          &Item0{Production: prods[2][5], Start: starts[2], Dot: 1}, // F → (•E ),
+			item:          &Item0{Production: parsertest.Prods[3][5], Start: "E′", Dot: 1}, // F → (•E ),
 			expectedIndex: -1,
 		},
 	}
@@ -169,8 +118,6 @@ func TestStateMap_FindItem(t *testing.T) {
 }
 
 func TestStateMap_FindItemSet(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name          string
 		m             StateMap
@@ -179,13 +126,13 @@ func TestStateMap_FindItemSet(t *testing.T) {
 	}{
 		{
 			name:          "Found",
-			m:             sm,
-			I:             s[2],
+			m:             statemaps[0],
+			I:             LR0ItemSets[2],
 			expectedState: State(8),
 		},
 		{
 			name:          "NotFound",
-			m:             sm,
+			m:             statemaps[0],
 			I:             NewItemSet(),
 			expectedState: ErrState,
 		},
@@ -204,7 +151,7 @@ func TestStateMap_States(t *testing.T) {
 	}{
 		{
 			name:           "OK",
-			m:              sm,
+			m:              statemaps[0],
 			expectedStates: []State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
 		},
 	}
@@ -215,17 +162,28 @@ func TestStateMap_States(t *testing.T) {
 }
 
 func TestStateMap_All(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name           string
 		m              StateMap
 		expectedYields []ItemSet
 	}{
 		{
-			name:           "OK",
-			m:              sm,
-			expectedYields: []ItemSet{s[0], s[1], s[9], s[11], s[10], s[6], s[8], s[7], s[2], s[4], s[5], s[3]},
+			name: "OK",
+			m:    statemaps[0],
+			expectedYields: []ItemSet{
+				LR0ItemSets[0],
+				LR0ItemSets[1],
+				LR0ItemSets[9],
+				LR0ItemSets[11],
+				LR0ItemSets[10],
+				LR0ItemSets[6],
+				LR0ItemSets[8],
+				LR0ItemSets[7],
+				LR0ItemSets[2],
+				LR0ItemSets[4],
+				LR0ItemSets[5],
+				LR0ItemSets[3],
+			},
 		},
 	}
 
@@ -244,7 +202,7 @@ func TestStateMap_String(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			m:    sm,
+			m:    statemaps[0],
 			expectedSubstrings: []string{
 				`┌──────[0]───────┐`,
 				`│ E′ → •E        │`,

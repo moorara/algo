@@ -85,6 +85,19 @@ func AllMatch[T any](s []T, p Predicate1[T]) bool {
 	return true
 }
 
+// FirstMatch returns the first item in a slice that satisfies the given predicate.
+// If no match is found, it returns the zero value of T and false.
+func FirstMatch[T any](s []T, p Predicate1[T]) (T, bool) {
+	for _, v := range s {
+		if p(v) {
+			return v, true
+		}
+	}
+
+	var zeroT T
+	return zeroT, false
+}
+
 // SelectMatch selects a subset of items from a slice that satisfy the given predicate.
 // It returns a new slice containing the matching items, of the same type as the original slice.
 func SelectMatch[T any](s []T, p Predicate1[T]) []T {

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/internal/parsertest"
 	"github.com/moorara/algo/lexer"
 )
 
@@ -19,19 +20,24 @@ func TestNew(t *testing.T) {
 		{
 			name:                 "Success",
 			L:                    nil,
-			G:                    grammars[1],
+			G:                    parsertest.Grammars[2],
 			expectedErrorStrings: nil,
 		},
 		{
 			name: "None_LALR(1)_Grammar",
 			L:    nil,
-			G:    grammars[2],
+			G:    parsertest.Grammars[4],
 			expectedErrorStrings: []string{
-				`failed to construct LALR parsing table: 4 errors occurred:`,
-				`shift/reduce conflict at ACTION[2, "*"]`,
-				`shift/reduce conflict at ACTION[2, "+"]`,
-				`shift/reduce conflict at ACTION[3, "*"]`,
-				`shift/reduce conflict at ACTION[3, "+"]`,
+				`Error:      Ambiguous Grammar`,
+				`Cause:      Multiple conflicts in the parsing table:`,
+				`              1. Shift/Reduce conflict in ACTION[2, "*"]`,
+				`              2. Shift/Reduce conflict in ACTION[2, "+"]`,
+				`              3. Shift/Reduce conflict in ACTION[3, "*"]`,
+				`              4. Shift/Reduce conflict in ACTION[3, "+"]`,
+				`Resolution: Specify precedence for the following in the grammar directives:`,
+				`              • "*"`,
+				`              • "+"`,
+				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
 			},
 		},
 	}

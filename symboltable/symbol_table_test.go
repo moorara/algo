@@ -11,25 +11,29 @@ import (
 )
 
 type symbolTableTest[K, V any] struct {
-	name                 string
-	symbolTable          string
-	hashKey              HashFunc[K]
-	eqKey                EqualFunc[K]
-	eqVal                EqualFunc[V]
-	opts                 HashOpts
-	keyVals              []KeyValue[K, V]
-	expectedSize         int
-	expectedIsEmpty      bool
-	expectedSubstrings   []string
-	equal                SymbolTable[K, V]
-	expectedEqual        bool
-	expectedAll          []KeyValue[K, V]
-	anyMatchPredicate    Predicate2[K, V]
-	expectedAnyMatch     bool
-	allMatchPredicate    Predicate2[K, V]
-	expectedAllMatch     bool
-	selectMatchPredicate Predicate2[K, V]
-	expectedSelectMatch  []KeyValue[K, V]
+	name                  string
+	symbolTable           string
+	hashKey               HashFunc[K]
+	eqKey                 EqualFunc[K]
+	eqVal                 EqualFunc[V]
+	opts                  HashOpts
+	keyVals               []KeyValue[K, V]
+	expectedSize          int
+	expectedIsEmpty       bool
+	expectedSubstrings    []string
+	equal                 SymbolTable[K, V]
+	expectedEqual         bool
+	expectedAll           []KeyValue[K, V]
+	anyMatchPredicate     Predicate2[K, V]
+	expectedAnyMatch      bool
+	allMatchPredicate     Predicate2[K, V]
+	expectedAllMatch      bool
+	firstMatchPredicate   Predicate2[K, V]
+	expectedFirstMatchKey K
+	expectedFirstMatchVal V
+	expectedFirstMatchOK  bool
+	selectMatchPredicate  Predicate2[K, V]
+	expectedSelectMatch   []KeyValue[K, V]
 }
 
 type orderedSymbolTableTest[K, V any] struct {
@@ -73,6 +77,10 @@ type orderedSymbolTableTest[K, V any] struct {
 	expectedAnyMatch           bool
 	allMatchPredicate          Predicate2[K, V]
 	expectedAllMatch           bool
+	firstMatchPredicate        Predicate2[K, V]
+	expectedFirstMatchKey      K
+	expectedFirstMatchVal      V
+	expectedFirstMatchOK       bool
 	selectMatchPredicate       Predicate2[K, V]
 	expectedSelectMatch        []KeyValue[K, V]
 	expectedVLRTraverse        []KeyValue[K, V]
@@ -151,12 +159,16 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Pineapple", Val: 1200},
 				{Key: "Watermelon", Val: 9000},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return k == "Sour Cherry" },
-			expectedAnyMatch:     false,
-			allMatchPredicate:    func(k string, v int) bool { return v > 100 },
-			expectedAllMatch:     false,
-			selectMatchPredicate: func(k string, v int) bool { return v < 10 },
-			expectedSelectMatch:  []KeyValue[string, int]{},
+			anyMatchPredicate:     func(k string, v int) bool { return k == "Sour Cherry" },
+			expectedAnyMatch:      false,
+			allMatchPredicate:     func(k string, v int) bool { return v > 100 },
+			expectedAllMatch:      false,
+			firstMatchPredicate:   func(k string, v int) bool { return v < 10 },
+			expectedFirstMatchKey: "",
+			expectedFirstMatchVal: 0,
+			expectedFirstMatchOK:  false,
+			selectMatchPredicate:  func(k string, v int) bool { return v < 20 },
+			expectedSelectMatch:   []KeyValue[string, int]{},
 		},
 		{
 			name:    "BirdLifespan",
@@ -196,11 +208,15 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Scarlet Macaw", Val: 50},
 				{Key: "Snowy Owl", Val: 10},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return k == "Cardinal" },
-			expectedAnyMatch:     false,
-			allMatchPredicate:    func(k string, v int) bool { return v >= 10 },
-			expectedAllMatch:     true,
-			selectMatchPredicate: func(k string, v int) bool { return v > 20 },
+			anyMatchPredicate:     func(k string, v int) bool { return k == "Cardinal" },
+			expectedAnyMatch:      false,
+			allMatchPredicate:     func(k string, v int) bool { return v >= 10 },
+			expectedAllMatch:      true,
+			firstMatchPredicate:   func(k string, v int) bool { return v == 20 },
+			expectedFirstMatchKey: "Peacock",
+			expectedFirstMatchVal: 20,
+			expectedFirstMatchOK:  true,
+			selectMatchPredicate:  func(k string, v int) bool { return v > 20 },
 			expectedSelectMatch: []KeyValue[string, int]{
 				{Key: "Harpy Eagle", Val: 35},
 				{Key: "Quetzal", Val: 25},
@@ -266,11 +282,15 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Ukulele", Val: 60},
 				{Key: "Violin", Val: 60},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return k == "Saxophone" },
-			expectedAnyMatch:     true,
-			allMatchPredicate:    func(k string, v int) bool { return v < 100 },
-			expectedAllMatch:     false,
-			selectMatchPredicate: func(k string, v int) bool { return v < 100 },
+			anyMatchPredicate:     func(k string, v int) bool { return k == "Saxophone" },
+			expectedAnyMatch:      true,
+			allMatchPredicate:     func(k string, v int) bool { return v < 100 },
+			expectedAllMatch:      false,
+			firstMatchPredicate:   func(k string, v int) bool { return v == 80 },
+			expectedFirstMatchKey: "Saxophone",
+			expectedFirstMatchVal: 80,
+			expectedFirstMatchOK:  true,
+			selectMatchPredicate:  func(k string, v int) bool { return v < 100 },
 			expectedSelectMatch: []KeyValue[string, int]{
 				{Key: "Accordion", Val: 50},
 				{Key: "Clarinet", Val: 66},
@@ -325,11 +345,15 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Toronto", Val: 8},
 				{Key: "Vancouver", Val: 10},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return k == "Toronto" },
-			expectedAnyMatch:     true,
-			allMatchPredicate:    func(k string, v int) bool { return v > 4 && v < 24 },
-			expectedAllMatch:     true,
-			selectMatchPredicate: func(k string, v int) bool { return v > 15 },
+			anyMatchPredicate:     func(k string, v int) bool { return k == "Toronto" },
+			expectedAnyMatch:      true,
+			allMatchPredicate:     func(k string, v int) bool { return v > 4 && v < 24 },
+			expectedAllMatch:      true,
+			firstMatchPredicate:   func(k string, v int) bool { return v == 17 },
+			expectedFirstMatchKey: "Tehran",
+			expectedFirstMatchVal: 17,
+			expectedFirstMatchOK:  true,
+			selectMatchPredicate:  func(k string, v int) bool { return v > 15 },
 			expectedSelectMatch: []KeyValue[string, int]{
 				{Key: "Rome", Val: 16},
 				{Key: "Tehran", Val: 17},
@@ -500,11 +524,15 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Wolf", Val: 14},
 				{Key: "Zebra", Val: 25},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return k == "Platypus" },
-			expectedAnyMatch:     true,
-			allMatchPredicate:    func(k string, v int) bool { return v >= 1 },
-			expectedAllMatch:     true,
-			selectMatchPredicate: func(k string, v int) bool { return v < 20 },
+			anyMatchPredicate:     func(k string, v int) bool { return k == "Platypus" },
+			expectedAnyMatch:      true,
+			allMatchPredicate:     func(k string, v int) bool { return v >= 1 },
+			expectedAllMatch:      true,
+			firstMatchPredicate:   func(k string, v int) bool { return v == 17 },
+			expectedFirstMatchKey: "Platypus",
+			expectedFirstMatchVal: 17,
+			expectedFirstMatchOK:  true,
+			selectMatchPredicate:  func(k string, v int) bool { return v < 20 },
 			expectedSelectMatch: []KeyValue[string, int]{
 				{Key: "Dog", Val: 13},
 				{Key: "Cat", Val: 15},
@@ -583,12 +611,16 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{Key: "B", Val: 2},
 				{Key: "C", Val: 3},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return v < 0 },
-			expectedAnyMatch:     false,
-			allMatchPredicate:    func(k string, v int) bool { return v%2 == 0 },
-			expectedAllMatch:     false,
-			selectMatchPredicate: func(k string, v int) bool { return v%10 == 0 },
-			expectedSelectMatch:  []KeyValue[string, int]{},
+			anyMatchPredicate:     func(k string, v int) bool { return v < 0 },
+			expectedAnyMatch:      false,
+			allMatchPredicate:     func(k string, v int) bool { return v%2 == 0 },
+			expectedAllMatch:      false,
+			firstMatchPredicate:   func(k string, v int) bool { return v%5 == 0 },
+			expectedFirstMatchKey: "",
+			expectedFirstMatchVal: 0,
+			expectedFirstMatchOK:  false,
+			selectMatchPredicate:  func(k string, v int) bool { return v%10 == 0 },
+			expectedSelectMatch:   []KeyValue[string, int]{},
 		},
 		{
 			name:   "ABCDE",
@@ -639,11 +671,15 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{Key: "D", Val: 4},
 				{Key: "E", Val: 5},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return v == 0 },
-			expectedAnyMatch:     false,
-			allMatchPredicate:    func(k string, v int) bool { return v > 0 },
-			expectedAllMatch:     true,
-			selectMatchPredicate: func(k string, v int) bool { return v%2 == 0 },
+			anyMatchPredicate:     func(k string, v int) bool { return v == 0 },
+			expectedAnyMatch:      false,
+			allMatchPredicate:     func(k string, v int) bool { return v > 0 },
+			expectedAllMatch:      true,
+			firstMatchPredicate:   func(k string, v int) bool { return v%5 == 0 },
+			expectedFirstMatchKey: "E",
+			expectedFirstMatchVal: 5,
+			expectedFirstMatchOK:  true,
+			selectMatchPredicate:  func(k string, v int) bool { return v%2 == 0 },
 			expectedSelectMatch: []KeyValue[string, int]{
 				{Key: "B", Val: 2},
 				{Key: "D", Val: 4},
@@ -704,11 +740,15 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{Key: "P", Val: 16},
 				{Key: "S", Val: 19},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return v%5 == 0 },
-			expectedAnyMatch:     true,
-			allMatchPredicate:    func(k string, v int) bool { return v < 10 },
-			expectedAllMatch:     false,
-			selectMatchPredicate: func(k string, v int) bool { return v > 10 },
+			anyMatchPredicate:     func(k string, v int) bool { return v%5 == 0 },
+			expectedAnyMatch:      true,
+			allMatchPredicate:     func(k string, v int) bool { return v < 10 },
+			expectedAllMatch:      false,
+			firstMatchPredicate:   func(k string, v int) bool { return v == 13 },
+			expectedFirstMatchKey: "M",
+			expectedFirstMatchVal: 13,
+			expectedFirstMatchOK:  true,
+			selectMatchPredicate:  func(k string, v int) bool { return v > 10 },
 			expectedSelectMatch: []KeyValue[string, int]{
 				{Key: "M", Val: 13},
 				{Key: "P", Val: 16},
@@ -769,11 +809,15 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 				{Key: "dance", Val: 13},
 				{Key: "dome", Val: 7},
 			},
-			anyMatchPredicate:    func(k string, v int) bool { return strings.HasSuffix(k, "x") },
-			expectedAnyMatch:     true,
-			allMatchPredicate:    func(k string, v int) bool { return k == strings.ToLower(k) },
-			expectedAllMatch:     true,
-			selectMatchPredicate: func(k string, v int) bool { return strings.HasPrefix(k, "ba") },
+			anyMatchPredicate:     func(k string, v int) bool { return strings.HasSuffix(k, "x") },
+			expectedAnyMatch:      true,
+			allMatchPredicate:     func(k string, v int) bool { return k == strings.ToLower(k) },
+			expectedAllMatch:      true,
+			firstMatchPredicate:   func(k string, v int) bool { return strings.Contains(k, "alloo") },
+			expectedFirstMatchKey: "balloon",
+			expectedFirstMatchVal: 17,
+			expectedFirstMatchOK:  true,
+			selectMatchPredicate:  func(k string, v int) bool { return strings.HasPrefix(k, "ba") },
 			expectedSelectMatch: []KeyValue[string, int]{
 				{Key: "baby", Val: 5},
 				{Key: "balloon", Val: 17},
@@ -855,6 +899,13 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 		t.Run("AllMatch", func(t *testing.T) {
 			allMatch := st.AllMatch(test.allMatchPredicate)
 			assert.Equal(t, test.expectedAllMatch, allMatch)
+		})
+
+		t.Run("FirstMatch", func(t *testing.T) {
+			key, val, ok := st.FirstMatch(test.firstMatchPredicate)
+			assert.Equal(t, test.expectedFirstMatchKey, key)
+			assert.Equal(t, test.expectedFirstMatchVal, val)
+			assert.Equal(t, test.expectedFirstMatchOK, ok)
 		})
 
 		t.Run("SelectMatch", func(t *testing.T) {
@@ -1068,6 +1119,13 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 		t.Run("AllMatch", func(t *testing.T) {
 			allMatch := ost.AllMatch(test.allMatchPredicate)
 			assert.Equal(t, test.expectedAllMatch, allMatch)
+		})
+
+		t.Run("FirstMatch", func(t *testing.T) {
+			key, val, ok := ost.FirstMatch(test.firstMatchPredicate)
+			assert.Equal(t, test.expectedFirstMatchKey, key)
+			assert.Equal(t, test.expectedFirstMatchVal, val)
+			assert.Equal(t, test.expectedFirstMatchOK, ok)
 		})
 
 		t.Run("SelectMatch", func(t *testing.T) {

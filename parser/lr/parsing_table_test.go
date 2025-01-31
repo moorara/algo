@@ -7,100 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
-	"github.com/moorara/algo/set"
 )
-
-func getTestParsingTables() []*ParsingTable {
-	pt0 := NewParsingTable(
-		[]State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
-		[]grammar.NonTerminal{"E", "T", "F"},
-	)
-
-	pt0.AddACTION(0, "id", &Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(0, "(", &Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(1, "+", &Action{Type: SHIFT, State: 6})
-	pt0.AddACTION(1, grammar.Endmarker, &Action{Type: ACCEPT})
-	pt0.AddACTION(2, "+", &Action{Type: REDUCE, Production: prods[2][2]})
-	pt0.AddACTION(2, "*", &Action{Type: SHIFT, State: 7})
-	pt0.AddACTION(2, ")", &Action{Type: REDUCE, Production: prods[2][2]})
-	pt0.AddACTION(2, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][2]})
-	pt0.AddACTION(3, "+", &Action{Type: REDUCE, Production: prods[2][4]})
-	pt0.AddACTION(3, "*", &Action{Type: REDUCE, Production: prods[2][4]})
-	pt0.AddACTION(3, ")", &Action{Type: REDUCE, Production: prods[2][4]})
-	pt0.AddACTION(3, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][4]})
-	pt0.AddACTION(4, "id", &Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(4, "(", &Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(5, "+", &Action{Type: REDUCE, Production: prods[2][6]})
-	pt0.AddACTION(5, "*", &Action{Type: REDUCE, Production: prods[2][6]})
-	pt0.AddACTION(5, ")", &Action{Type: REDUCE, Production: prods[2][6]})
-	pt0.AddACTION(5, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][6]})
-	pt0.AddACTION(6, "id", &Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(6, "(", &Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(7, "id", &Action{Type: SHIFT, State: 5})
-	pt0.AddACTION(7, "(", &Action{Type: SHIFT, State: 4})
-	pt0.AddACTION(8, "+", &Action{Type: SHIFT, State: 6})
-	pt0.AddACTION(8, ")", &Action{Type: SHIFT, State: 11})
-	pt0.AddACTION(9, "+", &Action{Type: REDUCE, Production: prods[2][1]})
-	pt0.AddACTION(9, "*", &Action{Type: SHIFT, State: 7})
-	pt0.AddACTION(9, ")", &Action{Type: REDUCE, Production: prods[2][1]})
-	pt0.AddACTION(9, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][1]})
-	pt0.AddACTION(10, "+", &Action{Type: REDUCE, Production: prods[2][3]})
-	pt0.AddACTION(10, "*", &Action{Type: REDUCE, Production: prods[2][3]})
-	pt0.AddACTION(10, ")", &Action{Type: REDUCE, Production: prods[2][3]})
-	pt0.AddACTION(10, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][3]})
-	pt0.AddACTION(11, "+", &Action{Type: REDUCE, Production: prods[2][5]})
-	pt0.AddACTION(11, "*", &Action{Type: REDUCE, Production: prods[2][5]})
-	pt0.AddACTION(11, ")", &Action{Type: REDUCE, Production: prods[2][5]})
-	pt0.AddACTION(11, grammar.Endmarker, &Action{Type: REDUCE, Production: prods[2][5]})
-
-	pt0.SetGOTO(0, "E", 1)
-	pt0.SetGOTO(0, "T", 2)
-	pt0.SetGOTO(0, "F", 3)
-	pt0.SetGOTO(4, "E", 8)
-	pt0.SetGOTO(4, "T", 2)
-	pt0.SetGOTO(4, "F", 3)
-	pt0.SetGOTO(6, "T", 9)
-	pt0.SetGOTO(6, "F", 3)
-	pt0.SetGOTO(7, "F", 10)
-
-	pt1 := NewParsingTable(
-		[]State{0, 1, 2, 3, 4, 5, 6},
-		[]grammar.Terminal{"a", "b", "c", "d", grammar.Endmarker},
-		[]grammar.NonTerminal{"A", "B", "C", "D"},
-	)
-
-	pt1.AddACTION(0, "a", &Action{
-		Type:  SHIFT,
-		State: 5,
-	})
-
-	pt1.AddACTION(0, "a", &Action{
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "A",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("a"), grammar.NonTerminal("A")},
-		},
-	})
-
-	pt1.AddACTION(1, "b", &Action{
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "B",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("b"), grammar.NonTerminal("B")},
-		},
-	})
-
-	pt1.AddACTION(1, "b", &Action{
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "C",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("c"), grammar.NonTerminal("C")},
-		},
-	})
-
-	return []*ParsingTable{pt0, pt1}
-}
 
 func TestNewParsingTable(t *testing.T) {
 	tests := []struct {
@@ -301,13 +208,15 @@ func TestParsingTable_Error(t *testing.T) {
 			name: "Error",
 			pt:   pt[1],
 			expectedErrorStrings: []string{
-				`2 errors occurred:`,
-				`shift/reduce conflict at ACTION[0, "a"]`,
-				`SHIFT 5`,
-				`REDUCE A → "a" A`,
-				`reduce/reduce conflict at ACTION[1, "b"]`,
-				`REDUCE B → "b" B`,
-				`REDUCE C → "c" C`,
+				`Error:      Ambiguous Grammar`,
+				`Cause:      Multiple conflicts in the parsing table`,
+				`              1. Shift/Reduce conflict in ACTION[0, "a"]`,
+				`              2. Reduce/Reduce conflict in ACTION[1, "b"]`,
+				`Resolution: Specify precedence for the following in the grammar directives:`,
+				`              • "a"`,
+				`              • "b"`,
+				`              • "c"`,
+				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
 			},
 		},
 	}
@@ -333,12 +242,12 @@ func TestParsingTable_ACTION(t *testing.T) {
 	pt := getTestParsingTables()
 
 	tests := []struct {
-		name           string
-		pt             *ParsingTable
-		s              State
-		a              grammar.Terminal
-		expectedAction *Action
-		expectedError  string
+		name                 string
+		pt                   *ParsingTable
+		s                    State
+		a                    grammar.Terminal
+		expectedAction       *Action
+		expectedErrorStrings []string
 	}{
 		{
 			name:           "NoAction",
@@ -346,7 +255,9 @@ func TestParsingTable_ACTION(t *testing.T) {
 			s:              State(4),
 			a:              grammar.Terminal("+"),
 			expectedAction: &Action{Type: ERROR},
-			expectedError:  "no action for ACTION[4, \"+\"]",
+			expectedErrorStrings: []string{
+				`no action exists in the parsing table for ACTION[4, "+"]`,
+			},
 		},
 		{
 			name:           "Conflict",
@@ -354,7 +265,14 @@ func TestParsingTable_ACTION(t *testing.T) {
 			s:              State(0),
 			a:              grammar.Terminal("a"),
 			expectedAction: &Action{Type: ERROR},
-			expectedError:  "shift/reduce conflict at ACTION[0, \"a\"]\n  SHIFT 5\n  REDUCE A → \"a\" A\n",
+			expectedErrorStrings: []string{
+				`Error:      Ambiguous Grammar`,
+				`Cause:      Shift/Reduce conflict in ACTION[0, "a"]`,
+				`Context:    The parser cannot decide whether to`,
+				`              1. Shift the terminal "a", or`,
+				`              2. Reduce by production A → "a" A`,
+				`Resolution: Specify associativity for the "a" in the grammar directives.`,
+			},
 		},
 		{
 			name: "Success",
@@ -365,20 +283,23 @@ func TestParsingTable_ACTION(t *testing.T) {
 				Type:  SHIFT,
 				State: 5,
 			},
-			expectedError: "",
+			expectedErrorStrings: nil,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			action, err := tc.pt.ACTION(tc.s, tc.a)
+			assert.True(t, action.Equal(tc.expectedAction))
 
-			if len(tc.expectedError) == 0 {
-				assert.True(t, action.Equal(tc.expectedAction))
+			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)
 			} else {
-				assert.True(t, action.Equal(tc.expectedAction))
-				assert.EqualError(t, err, tc.expectedError)
+				assert.Error(t, err)
+				s := err.Error()
+				for _, expectedErrorString := range tc.expectedErrorStrings {
+					assert.Contains(t, s, expectedErrorString)
+				}
 			}
 		})
 	}
@@ -401,7 +322,7 @@ func TestParsingTable_GOTO(t *testing.T) {
 			s:             State(5),
 			A:             grammar.NonTerminal("E"),
 			expectedState: ErrState,
-			expectedError: "no state for GOTO[5, E]",
+			expectedError: "no state exists in the parsing table for GOTO[5, E]",
 		},
 		{
 			name:          "NoNonTerminal",
@@ -409,7 +330,7 @@ func TestParsingTable_GOTO(t *testing.T) {
 			s:             State(7),
 			A:             grammar.NonTerminal("T"),
 			expectedState: ErrState,
-			expectedError: "no state for GOTO[7, T]",
+			expectedError: "no state exists in the parsing table for GOTO[7, T]",
 		},
 		{
 			name:          "Success",
@@ -445,40 +366,20 @@ func TestParsingTableError(t *testing.T) {
 		{
 			name: "NoAction",
 			e: &ParsingTableError{
-				Type:   NO_ACTION,
+				Type:   MISSING_ACTION,
 				State:  State(7),
 				Symbol: grammar.Terminal("+"),
 			},
-			expectedError: "no action for ACTION[7, \"+\"]",
+			expectedError: "no action exists in the parsing table for ACTION[7, \"+\"]",
 		},
 		{
 			name: "NoState",
 			e: &ParsingTableError{
-				Type:   NO_GOTO,
+				Type:   MISSING_GOTO,
 				State:  State(5),
 				Symbol: grammar.NonTerminal("T"),
 			},
-			expectedError: "no state for GOTO[5, T]",
-		},
-		{
-			name: "Shift_Reduce_Conflict",
-			e: &ParsingTableError{
-				Type:    CONFLICT,
-				State:   State(2),
-				Symbol:  grammar.Terminal("*"),
-				Actions: set.New(eqAction, actions[0], actions[2]),
-			},
-			expectedError: "shift/reduce conflict at ACTION[2, \"*\"]\n  SHIFT 5\n  REDUCE E → T\n",
-		},
-		{
-			name: "Reduce_Reduce_Conflict",
-			e: &ParsingTableError{
-				Type:    CONFLICT,
-				State:   State(4),
-				Symbol:  grammar.Terminal("id"),
-				Actions: set.New(eqAction, actions[2], actions[3]),
-			},
-			expectedError: "reduce/reduce conflict at ACTION[4, \"id\"]\n  REDUCE E → T\n  REDUCE F → \"id\"\n",
+			expectedError: "no state exists in the parsing table for GOTO[5, T]",
 		},
 		{
 			name: "Invalid",

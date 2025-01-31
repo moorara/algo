@@ -7,58 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/internal/parsertest"
 	"github.com/moorara/algo/set"
 )
-
-func getTestParsingTables() []*ParsingTable {
-	pt0 := NewParsingTable(
-		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
-		[]grammar.NonTerminal{"E", "E′", "T", "T′", "F"},
-	)
-
-	pt0.addProduction("E", "id", &grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
-	pt0.addProduction("E", "(", &grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
-	pt0.addProduction("E′", "+", &grammar.Production{Head: "E′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("+"), grammar.NonTerminal("T"), grammar.NonTerminal("E′")}})
-	pt0.addProduction("E′", ")", &grammar.Production{Head: "E′", Body: grammar.E})
-	pt0.addProduction("E′", grammar.Endmarker, &grammar.Production{Head: "E′", Body: grammar.E})
-	pt0.addProduction("T", "id", &grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
-	pt0.addProduction("T", "(", &grammar.Production{Head: "T", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
-	pt0.addProduction("T′", "+", &grammar.Production{Head: "T′", Body: grammar.E})
-	pt0.addProduction("T′", "*", &grammar.Production{Head: "T′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("*"), grammar.NonTerminal("F"), grammar.NonTerminal("T′")}})
-	pt0.addProduction("T′", ")", &grammar.Production{Head: "T′", Body: grammar.E})
-	pt0.addProduction("T′", grammar.Endmarker, &grammar.Production{Head: "T′", Body: grammar.E})
-	pt0.addProduction("F", "id", &grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}})
-	pt0.addProduction("F", "(", &grammar.Production{Head: "F", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}})
-
-	pt0.setSync("E", ")", true)
-	pt0.setSync("E", grammar.Endmarker, true)
-	pt0.setSync("T", "+", true)
-	pt0.setSync("T", ")", true)
-	pt0.setSync("T", grammar.Endmarker, true)
-	pt0.setSync("F", "+", true)
-	pt0.setSync("F", "*", true)
-	pt0.setSync("F", ")", true)
-	pt0.setSync("F", grammar.Endmarker, true)
-
-	pt1 := NewParsingTable(
-		[]grammar.Terminal{"a", "b", "e", "i", "t"},
-		[]grammar.NonTerminal{"S", "S′", "E"},
-	)
-
-	pt1.addProduction("S", "a", &grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("a")}})
-	pt1.addProduction("S", "i", &grammar.Production{Head: "S", Body: grammar.String[grammar.Symbol]{grammar.Terminal("i"), grammar.NonTerminal("E"), grammar.Terminal("t"), grammar.NonTerminal("S"), grammar.NonTerminal("S′")}})
-	pt1.addProduction("S′", "e", &grammar.Production{Head: "S′", Body: grammar.E})
-	pt1.addProduction("S′", "e", &grammar.Production{Head: "S′", Body: grammar.String[grammar.Symbol]{grammar.Terminal("e"), grammar.NonTerminal("S")}})
-	pt1.addProduction("S′", grammar.Endmarker, &grammar.Production{Head: "S′", Body: grammar.E})
-	pt1.addProduction("E", "b", &grammar.Production{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("b")}})
-
-	pt2 := NewParsingTable(
-		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
-		[]grammar.NonTerminal{"E", "T", "F"},
-	)
-
-	return []*ParsingTable{pt0, pt1, pt2}
-}
 
 func TestBuildParsingTable(t *testing.T) {
 	pt := getTestParsingTables()
@@ -70,44 +21,89 @@ func TestBuildParsingTable(t *testing.T) {
 		expectedErrorStrings []string
 	}{
 		{
-			name: "1st",
-			G:    grammars[0],
-			expectedErrorStrings: []string{
-				`multiple productions at M[E, "("]`,
-				`multiple productions at M[E, "-"]`,
-				`multiple productions at M[E, "id"]`,
-			},
-		},
-		{
-			name: "2nd",
-			G:    grammars[1],
-			expectedErrorStrings: []string{
-				`multiple productions at M[E, "("]`,
-				`multiple productions at M[E, "id"]`,
-				`multiple productions at M[T, "("]`,
-				`multiple productions at M[T, "id"]`,
-			},
-		},
-		{
-			name:          "3rd",
-			G:             grammars[2],
+			name:          "E→TE′",
+			G:             parsertest.Grammars[0],
 			expectedTable: pt[0],
 		},
 		{
-			name: "4th",
-			G:    grammars[3],
+			name: "E→E+T",
+			G:    parsertest.Grammars[3],
 			expectedErrorStrings: []string{
-				`multiple productions at M[decls, "IDENT"]`,
-				`multiple productions at M[decls, "TOKEN"]`,
-				`multiple productions at M[rule, "IDENT"]`,
-				`multiple productions at M[token, "TOKEN"]`,
-				`multiple productions at M[rhs, "("]`,
-				`multiple productions at M[rhs, "IDENT"]`,
-				`multiple productions at M[rhs, "STRING"]`,
-				`multiple productions at M[rhs, "TOKEN"]`,
-				`multiple productions at M[rhs, "["]`,
-				`multiple productions at M[rhs, "{"]`,
-				`multiple productions at M[rhs, "{{"]`,
+				`4 errors occurred:`,
+				`multiple productions at M[E, "("]:`,
+				`E → E "+" T`,
+				`E → T`,
+				`multiple productions at M[E, "id"]:`,
+				`E → E "+" T`,
+				`E → T`,
+				`multiple productions at M[T, "("]:`,
+				`T → T "*" F`,
+				`T → F`,
+				`multiple productions at M[T, "id"]:`,
+				`T → T "*" F`,
+				`T → F`,
+			},
+		},
+		{
+			name: "E→E+E",
+			G:    parsertest.Grammars[4],
+			expectedErrorStrings: []string{
+				`2 errors occurred:`,
+				`multiple productions at M[E, "("]:`,
+				`E → E "*" E`,
+				`E → E "+" E`,
+				`E → "(" E ")"`,
+				`multiple productions at M[E, "id"]:`,
+				`E → E "*" E`,
+				`E → E "+" E`,
+				`E → "id"`,
+			},
+		},
+		{
+			name: "EBNF",
+			G:    parsertest.Grammars[5],
+			expectedErrorStrings: []string{
+				`11 errors occurred:`,
+				`multiple productions at M[decls, "IDENT"]:`,
+				`decls → decls decl`,
+				`decls → ε`,
+				`multiple productions at M[decls, "TOKEN"]:`,
+				`decls → decls decl`,
+				`decls → ε`,
+				`multiple productions at M[rule, "IDENT"]:`,
+				`rule → lhs "=" rhs`,
+				`rule → lhs "="`,
+				`multiple productions at M[token, "TOKEN"]:`,
+				`token → "TOKEN" "=" "REGEX"`,
+				`token → "TOKEN" "=" "STRING"`,
+				`multiple productions at M[rhs, "("]:`,
+				`rhs → rhs "|" rhs`,
+				`rhs → rhs rhs`,
+				`rhs → "(" rhs ")"`,
+				`multiple productions at M[rhs, "IDENT"]:`,
+				`rhs → rhs "|" rhs`,
+				`rhs → rhs rhs`,
+				`rhs → nonterm`,
+				`multiple productions at M[rhs, "STRING"]:`,
+				`rhs → rhs "|" rhs`,
+				`rhs → rhs rhs`,
+				`rhs → term`,
+				`multiple productions at M[rhs, "TOKEN"]:`,
+				`rhs → rhs "|" rhs`,
+				`rhs → rhs rhs`,
+				`rhs → term`,
+				`multiple productions at M[rhs, "["]:`,
+				`rhs → rhs "|" rhs`,
+				`rhs → rhs rhs`,
+				`rhs → "[" rhs "]"`,
+				`multiple productions at M[rhs, "{"]:`,
+				`rhs → rhs "|" rhs`,
+				`rhs → rhs rhs`,
+				`rhs → "{" rhs "}"`,
+				`multiple productions at M[rhs, "{{"]:`,
+				`rhs → rhs "|" rhs`,
+				`rhs → rhs rhs`,
+				`rhs → "{{" rhs "}}"`,
 			},
 		},
 	}

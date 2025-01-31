@@ -293,6 +293,20 @@ func (ht *linearHashTable[K, V]) AllMatch(p Predicate2[K, V]) bool {
 	return true
 }
 
+// FirstMatch returns the first key-value in the hash table that satisfies the given predicate.
+// If no match is found, it returns the zero values of K and V, along with false.
+func (ht *linearHashTable[K, V]) FirstMatch(p Predicate2[K, V]) (K, V, bool) {
+	for key, val := range ht.All() {
+		if p(key, val) {
+			return key, val, true
+		}
+	}
+
+	var zeroK K
+	var zeroV V
+	return zeroK, zeroV, false
+}
+
 // SelectMatch selects a subset of key-values from the hash table that satisfy the given predicate.
 // It returns a new hash table containing the matching key-values, of the same type as the original hash table.
 func (ht *linearHashTable[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {

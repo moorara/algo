@@ -71,7 +71,7 @@ func (e *ParseError) Error() string {
 	return b.String()
 }
 
-// Error implements the unwrap interface.
+// Unwrap implements the unwrap interface.
 func (e *ParseError) Unwrap() error {
 	return e.Cause
 }

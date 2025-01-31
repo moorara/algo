@@ -590,6 +590,60 @@ func TestSet_AllMatch(t *testing.T) {
 	}
 }
 
+func TestSet_FirstMatch(t *testing.T) {
+	eqFunc := generic.NewEqualFunc[string]()
+	predicate := func(s string) bool {
+		return strings.ToUpper(s) == s
+	}
+
+	tests := []struct {
+		name          string
+		s             *set[string]
+		p             generic.Predicate1[string]
+		expectedValue string
+		expectedOK    bool
+	}{
+		{
+			name: "Empty",
+			s: &set[string]{
+				members: []string{},
+				equal:   eqFunc,
+			},
+			p:             predicate,
+			expectedValue: "",
+			expectedOK:    false,
+		},
+		{
+			name: "NoMatch",
+			s: &set[string]{
+				members: []string{"a", "b", "c", "d"},
+				equal:   eqFunc,
+			},
+			p:             predicate,
+			expectedValue: "",
+			expectedOK:    false,
+		},
+		{
+			name: "OK",
+			s: &set[string]{
+				members: []string{"a", "b", "C", "d"},
+				equal:   eqFunc,
+			},
+			p:             predicate,
+			expectedValue: "C",
+			expectedOK:    true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			val, ok := tc.s.FirstMatch(tc.p)
+			assert.Equal(t, tc.expectedValue, val)
+			assert.Equal(t, tc.expectedOK, ok)
+		})
+	}
+}
+
 func TestSet_SelectMatch(t *testing.T) {
 	eqFunc := generic.NewEqualFunc[string]()
 	predicate := func(s string) bool {
@@ -629,7 +683,7 @@ func TestSet_SelectMatch(t *testing.T) {
 		{
 			name: "SelectSome",
 			s: &set[string]{
-				members: []string{"A", "c", "C", "d"},
+				members: []string{"A", "b", "C", "d"},
 				equal:   eqFunc,
 			},
 			p: predicate,

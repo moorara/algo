@@ -335,9 +335,9 @@ func TestAppend(t *testing.T) {
 
 func TestMultiError_ErrorOrNil(t *testing.T) {
 	tests := []struct {
-		name               string
-		e                  *MultiError
-		expectedMultiError error
+		name          string
+		e             *MultiError
+		expectedError error
 	}{
 
 		{
@@ -345,14 +345,14 @@ func TestMultiError_ErrorOrNil(t *testing.T) {
 			e: &MultiError{
 				errs: nil,
 			},
-			expectedMultiError: nil,
+			expectedError: nil,
 		},
 		{
 			name: "Zero",
 			e: &MultiError{
 				errs: []error{},
 			},
-			expectedMultiError: nil,
+			expectedError: nil,
 		},
 		{
 			name: "One",
@@ -361,7 +361,7 @@ func TestMultiError_ErrorOrNil(t *testing.T) {
 					new(fooError),
 				},
 			},
-			expectedMultiError: &MultiError{
+			expectedError: &MultiError{
 				errs: []error{
 					new(fooError),
 				},
@@ -376,7 +376,7 @@ func TestMultiError_ErrorOrNil(t *testing.T) {
 					new(bazError),
 				},
 			},
-			expectedMultiError: &MultiError{
+			expectedError: &MultiError{
 				errs: []error{
 					new(fooError),
 					new(barError),
@@ -388,8 +388,7 @@ func TestMultiError_ErrorOrNil(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.e.ErrorOrNil()
-			assert.Equal(t, tc.expectedMultiError, err)
+			assert.Equal(t, tc.expectedError, tc.e.ErrorOrNil())
 		})
 	}
 }
@@ -478,8 +477,7 @@ func TestMultiError_Is(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			is := tc.e.Is(tc.target)
-			assert.Equal(t, tc.expectedIs, is)
+			assert.Equal(t, tc.expectedIs, tc.e.Is(tc.target))
 		})
 	}
 }
@@ -520,8 +518,7 @@ func TestMultiError_As(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			as := tc.e.As(tc.target)
-			assert.Equal(t, tc.expectedAs, as)
+			assert.Equal(t, tc.expectedAs, tc.e.As(tc.target))
 		})
 	}
 }
@@ -574,8 +571,7 @@ func TestMultiError_Unwrap(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			errs := tc.e.Unwrap()
-			assert.Equal(t, tc.expectedErrors, errs)
+			assert.Equal(t, tc.expectedErrors, tc.e.Unwrap())
 		})
 	}
 }

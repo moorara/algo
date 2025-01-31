@@ -7,172 +7,9 @@ import (
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/internal/parsertest"
 	"github.com/moorara/algo/sort"
 )
-
-func getTestLR0ItemSets() []ItemSet {
-	I0 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
-		// Non-Kernels
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
-		&Item0{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-	)
-
-	I1 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
-	)
-
-	I2 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][2], Start: starts[2], Dot: 1}, // E → T•
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
-	)
-
-	I3 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 1}, // T → F•
-	)
-
-	I4 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 1}, // F → (•E )
-		// Non-Kernels
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
-		&Item0{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-	)
-
-	I5 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 1}, // F → id•
-	)
-
-	I6 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
-		// Non-Kernels
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
-		&Item0{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-	)
-
-	I7 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 2}, // T → T *•F
-		// Non-Kernels
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-		&Item0{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-	)
-
-	I8 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E• + T
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 2}, // F → ( E•)
-	)
-
-	I9 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
-	)
-
-	I10 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][3], Start: starts[2], Dot: 3}, // T → T * F•
-	)
-
-	I11 := NewItemSet(
-		// Kernels
-		&Item0{Production: prods[2][5], Start: starts[2], Dot: 3}, // F → ( E )•
-	)
-
-	return []ItemSet{I0, I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11}
-}
-
-func getTestLR1ItemSets() []ItemSet {
-	I0 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
-		// Non-Kernels
-		&Item1{Production: prods[0][1], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker},     // S → •CC, $
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •cC, c
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •cC, d
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •d, d
-	)
-
-	I1 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][0], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
-	)
-
-	I2 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
-		// Non-Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // C → •cC, $
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // C → •d, $
-	)
-
-	I3 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 1, Lookahead: grammar.Terminal("c")}, // C → c•C, c
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 1, Lookahead: grammar.Terminal("d")}, // C → c•C, d
-		// Non-Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •cC, c
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •cC, d
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •d, d
-	)
-
-	I4 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 1, Lookahead: grammar.Terminal("c")}, // C → d•, c
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 1, Lookahead: grammar.Terminal("d")}, // C → d•, d
-	)
-
-	I5 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
-	)
-
-	I6 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // C → c•C, $
-		// Non-Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // C → •cC, $
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // C → •d, $
-	)
-
-	I7 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][3], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // C → d•, $
-	)
-
-	I8 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 2, Lookahead: grammar.Terminal("c")}, // C → cC•, c
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 2, Lookahead: grammar.Terminal("d")}, // C → cC•, d
-	)
-
-	I9 := NewItemSet(
-		// Kernels
-		&Item1{Production: prods[0][2], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // C → cC•, $
-	)
-
-	return []ItemSet{I0, I1, I2, I3, I4, I5, I6, I7, I8, I9}
-}
 
 func TestItem0_String(t *testing.T) {
 	tests := []struct {
@@ -184,29 +21,29 @@ func TestItem0_String(t *testing.T) {
 			name: "EmptyProduction",
 			i: &Item0{
 				Production: &grammar.Production{Head: "E", Body: grammar.E},
-				Start:      starts[2],
+				Start:      "E′",
 				Dot:        0,
 			},
 			expectedString: `E → •`,
 		},
 		{
 			name:           "Initial",
-			i:              &Item0{Production: prods[2][0], Start: starts[2], Dot: 0},
+			i:              &Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0},
 			expectedString: `E′ → •E`,
 		},
 		{
 			name:           "DotAtLeft",
-			i:              &Item0{Production: prods[2][1], Start: starts[2], Dot: 0},
+			i:              &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 0},
 			expectedString: `E → •E "+" T`,
 		},
 		{
 			name:           "DotInMiddle",
-			i:              &Item0{Production: prods[2][1], Start: starts[2], Dot: 2},
+			i:              &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 2},
 			expectedString: `E → E "+"•T`,
 		},
 		{
 			name:           "DotAtRight",
-			i:              &Item0{Production: prods[2][1], Start: starts[2], Dot: 3},
+			i:              &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 3},
 			expectedString: `E → E "+" T•`,
 		},
 	}
@@ -227,14 +64,14 @@ func TestItem0_Equal(t *testing.T) {
 	}{
 		{
 			name:          "Equal",
-			i:             &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
-			rhs:           &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
+			i:             &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 1}, // E → E•+ T
+			rhs:           &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 1}, // E → E•+ T
 			expectedEqual: true,
 		},
 		{
 			name:          "NotEqual",
-			i:             &Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
-			rhs:           &Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
+			i:             &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 1}, // E → E•+ T
+			rhs:           &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 2}, // E → E +•T
 			expectedEqual: false,
 		},
 	}
@@ -255,44 +92,44 @@ func TestItem0_Compare(t *testing.T) {
 		{
 			name: "I₀",
 			items: []*Item0{
-				{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
-				{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
-				{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
-				{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
-				{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
-				{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-				{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
+				{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E
+				{Production: parsertest.Prods[3][1], Start: "E′", Dot: 0}, // E → •E + T
+				{Production: parsertest.Prods[3][2], Start: "E′", Dot: 0}, // E → •T
+				{Production: parsertest.Prods[3][3], Start: "E′", Dot: 0}, // T → •T * F
+				{Production: parsertest.Prods[3][4], Start: "E′", Dot: 0}, // T → •F
+				{Production: parsertest.Prods[3][5], Start: "E′", Dot: 0}, // F → •( E )
+				{Production: parsertest.Prods[3][6], Start: "E′", Dot: 0}, // F → •id
 			},
 			expectedItems: []*Item0{
-				{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
-				{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
-				{Production: prods[2][2], Start: starts[2], Dot: 0}, // E → •T
-				{Production: prods[2][5], Start: starts[2], Dot: 0}, // F → •( E )
-				{Production: prods[2][6], Start: starts[2], Dot: 0}, // F → •id
-				{Production: prods[2][3], Start: starts[2], Dot: 0}, // T → •T * F
-				{Production: prods[2][4], Start: starts[2], Dot: 0}, // T → •F
+				{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E
+				{Production: parsertest.Prods[3][1], Start: "E′", Dot: 0}, // E → •E + T
+				{Production: parsertest.Prods[3][2], Start: "E′", Dot: 0}, // E → •T
+				{Production: parsertest.Prods[3][5], Start: "E′", Dot: 0}, // F → •( E )
+				{Production: parsertest.Prods[3][6], Start: "E′", Dot: 0}, // F → •id
+				{Production: parsertest.Prods[3][3], Start: "E′", Dot: 0}, // T → •T * F
+				{Production: parsertest.Prods[3][4], Start: "E′", Dot: 0}, // T → •F
 			},
 		},
 		{
 			name: "I₈",
 			items: []*Item0{
-				{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E• + T
-				{Production: prods[2][5], Start: starts[2], Dot: 2}, // F → ( E•)
+				{Production: parsertest.Prods[3][1], Start: "E′", Dot: 1}, // E → E• + T
+				{Production: parsertest.Prods[3][5], Start: "E′", Dot: 2}, // F → ( E•)
 			},
 			expectedItems: []*Item0{
-				{Production: prods[2][5], Start: starts[2], Dot: 2}, // F → ( E•)
-				{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E• + T
+				{Production: parsertest.Prods[3][5], Start: "E′", Dot: 2}, // F → ( E•)
+				{Production: parsertest.Prods[3][1], Start: "E′", Dot: 1}, // E → E• + T
 			},
 		},
 		{
 			name: "I₉",
 			items: []*Item0{
-				{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
-				{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
+				{Production: parsertest.Prods[3][1], Start: "E′", Dot: 3}, // E → E + T•
+				{Production: parsertest.Prods[3][3], Start: "E′", Dot: 1}, // T → T•* F
 			},
 			expectedItems: []*Item0{
-				{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
-				{Production: prods[2][3], Start: starts[2], Dot: 1}, // T → T•* F
+				{Production: parsertest.Prods[3][1], Start: "E′", Dot: 3}, // E → E + T•
+				{Production: parsertest.Prods[3][3], Start: "E′", Dot: 1}, // T → T•* F
 			},
 		},
 	}
@@ -316,12 +153,12 @@ func TestItem0_IsInitial(t *testing.T) {
 	}{
 		{
 			name:             "Initial",
-			i:                &Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
+			i:                &Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E
 			expectedIsKernel: true,
 		},
 		{
 			name:             "NotInitial",
-			i:                &Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
+			i:                &Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 1}, // E′ → E•
 			expectedIsKernel: false,
 		},
 	}
@@ -341,17 +178,17 @@ func TestItem0_IsKernel(t *testing.T) {
 	}{
 		{
 			name:             "Initial",
-			i:                &Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
+			i:                &Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E
 			expectedIsKernel: true,
 		},
 		{
 			name:             "Kernel",
-			i:                &Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
+			i:                &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 2}, // E → E +•T
 			expectedIsKernel: true,
 		},
 		{
 			name:             "NonKernel",
-			i:                &Item0{Production: prods[2][1], Start: starts[2], Dot: 0}, // E → •E + T
+			i:                &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 0}, // E → •E + T
 			expectedIsKernel: false,
 		},
 	}
@@ -371,12 +208,12 @@ func TestItem0_IsComplete(t *testing.T) {
 	}{
 		{
 			name:               "Complete",
-			i:                  &Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
+			i:                  &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 3}, // E → E + T•
 			expectedIsComplete: true,
 		},
 		{
 			name:               "NotComplete",
-			i:                  &Item0{Production: prods[2][1], Start: starts[2], Dot: 2}, // E → E +•T
+			i:                  &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 2}, // E → E +•T
 			expectedIsComplete: false,
 		},
 	}
@@ -396,12 +233,12 @@ func TestItem0_IsFinal(t *testing.T) {
 	}{
 		{
 			name:            "Final",
-			i:               &Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
+			i:               &Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 1}, // E′ → E•
 			expectedIsFinal: true,
 		},
 		{
 			name:            "NotFinal",
-			i:               &Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
+			i:               &Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E
 			expectedIsFinal: false,
 		},
 	}
@@ -422,13 +259,13 @@ func TestItem0_DotSymbol(t *testing.T) {
 	}{
 		{
 			name:              "Initial",
-			i:                 &Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
+			i:                 &Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E
 			expectedDotSymbol: grammar.NonTerminal("E"),
 			expectedOK:        true,
 		},
 		{
 			name:              "Complete",
-			i:                 &Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
+			i:                 &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 3}, // E → E + T•
 			expectedDotSymbol: nil,
 			expectedOK:        false,
 		},
@@ -458,13 +295,13 @@ func TestItem0_Next(t *testing.T) {
 	}{
 		{
 			name:         "Initial",
-			i:            &Item0{Production: prods[2][0], Start: starts[2], Dot: 0}, // E′ → •E
+			i:            &Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E
 			expectedOK:   true,
-			expectedNext: &Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
+			expectedNext: &Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 1}, // E′ → E•
 		},
 		{
 			name:         "Complete",
-			i:            &Item0{Production: prods[2][1], Start: starts[2], Dot: 3}, // E → E + T•
+			i:            &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 3}, // E → E + T•
 			expectedOK:   false,
 			expectedNext: nil,
 		},
@@ -494,9 +331,9 @@ func TestItem0_Item1(t *testing.T) {
 	}{
 		{
 			name:          "OK",
-			i:             &Item0{Production: prods[0][1], Start: starts[0], Dot: 1}, // S → C•C
+			i:             &Item0{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1}, // S → C•C
 			lookahead:     grammar.Endmarker,
-			expectedItem1: &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			expectedItem1: &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
 		},
 	}
 
@@ -523,7 +360,7 @@ func TestItem1_String(t *testing.T) {
 			name: "EmptyProduction",
 			i: &Item1{
 				Production: &grammar.Production{Head: "S", Body: grammar.E},
-				Start:      starts[0],
+				Start:      "S′",
 				Dot:        0,
 				Lookahead:  grammar.Endmarker,
 			},
@@ -531,22 +368,22 @@ func TestItem1_String(t *testing.T) {
 		},
 		{
 			name:           "Initial",
-			i:              &Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker},
+			i:              &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker},
 			expectedString: `S′ → •S, $`,
 		},
 		{
 			name:           "DotAtLeft",
-			i:              &Item1{Production: prods[0][1], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker},
+			i:              &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker},
 			expectedString: `S → •C C, $`,
 		},
 		{
 			name:           "DotInMiddle",
-			i:              &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker},
+			i:              &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker},
 			expectedString: `S → C•C, $`,
 		},
 		{
 			name:           "DotAtRight",
-			i:              &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker},
+			i:              &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker},
 			expectedString: `S → C C•, $`,
 		},
 	}
@@ -567,14 +404,14 @@ func TestItem1_Equal(t *testing.T) {
 	}{
 		{
 			name:          "Equal",
-			i:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
-			rhs:           &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			i:             &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			rhs:           &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
 			expectedEqual: true,
 		},
 		{
 			name:          "NotEqual",
-			i:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
-			rhs:           &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
+			i:             &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			rhs:           &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
 			expectedEqual: false,
 		},
 	}
@@ -595,74 +432,74 @@ func TestItem1_Compare(t *testing.T) {
 	}{
 		{
 			name:            "FirstInitial",
-			i:               &Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
-			rhs:             &Item1{Production: prods[0][0], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
+			i:               &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
+			rhs:             &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
 			expectedCompare: -1,
 		},
 		{
 			name:            "SecondInitial",
-			i:               &Item1{Production: prods[0][0], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
-			rhs:             &Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
+			i:               &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
+			rhs:             &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
 			expectedCompare: 1,
 		},
 		{
 			name:            "FirstKernel",
-			i:               &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
-			rhs:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S → •CC, $
+			i:               &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			rhs:             &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S → •CC, $
 			expectedCompare: -1,
 		},
 		{
 			name:            "SecondKernel",
-			i:               &Item1{Production: prods[0][1], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S → •CC, $
-			rhs:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			i:               &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S → •CC, $
+			rhs:             &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
 			expectedCompare: 1,
 		},
 		{
 			name:            "FirstHead",
-			i:               &Item1{Production: prods[0][0], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
-			rhs:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
+			i:               &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
+			rhs:             &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
 			expectedCompare: -1,
 		},
 		{
 			name:            "SecondHead",
-			i:               &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
-			rhs:             &Item1{Production: prods[0][0], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
+			i:               &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
+			rhs:             &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
 			expectedCompare: 1,
 		},
 		{
 			name:            "FirstDot",
-			i:               &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
-			rhs:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			i:               &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
+			rhs:             &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
 			expectedCompare: -1,
 		},
 		{
 			name:            "SecondDot",
-			i:               &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
-			rhs:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
+			i:               &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			rhs:             &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
 			expectedCompare: 1,
 		},
 		{
 			name:            "FirstProduction",
-			i:               &Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •cC, c
-			rhs:             &Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
+			i:               &Item1{Production: parsertest.Prods[1][2], Start: "S′", Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •cC, c
+			rhs:             &Item1{Production: parsertest.Prods[1][3], Start: "S′", Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
 			expectedCompare: -1,
 		},
 		{
 			name:            "SecondProduction",
-			i:               &Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
-			rhs:             &Item1{Production: prods[0][2], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •cC, c
+			i:               &Item1{Production: parsertest.Prods[1][3], Start: "S′", Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
+			rhs:             &Item1{Production: parsertest.Prods[1][2], Start: "S′", Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •cC, c
 			expectedCompare: 1,
 		},
 		{
 			name:            "FirstLookahead",
-			i:               &Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
-			rhs:             &Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •d, d
+			i:               &Item1{Production: parsertest.Prods[1][3], Start: "S′", Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
+			rhs:             &Item1{Production: parsertest.Prods[1][3], Start: "S′", Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •d, d
 			expectedCompare: -1,
 		},
 		{
 			name:            "SecondLookahead",
-			i:               &Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •d, d
-			rhs:             &Item1{Production: prods[0][3], Start: starts[0], Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
+			i:               &Item1{Production: parsertest.Prods[1][3], Start: "S′", Dot: 0, Lookahead: grammar.Terminal("d")}, // C → •d, d
+			rhs:             &Item1{Production: parsertest.Prods[1][3], Start: "S′", Dot: 0, Lookahead: grammar.Terminal("c")}, // C → •d, c
 			expectedCompare: 1,
 		},
 	}
@@ -684,12 +521,12 @@ func TestItem1_IsInitial(t *testing.T) {
 	}{
 		{
 			name:             "Initial",
-			i:                &Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
+			i:                &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
 			expectedIsKernel: true,
 		},
 		{
 			name:             "NotInitial",
-			i:                &Item1{Production: prods[0][0], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
+			i:                &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
 			expectedIsKernel: false,
 		},
 	}
@@ -709,17 +546,17 @@ func TestItem1_IsKernel(t *testing.T) {
 	}{
 		{
 			name:             "Initial",
-			i:                &Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
+			i:                &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
 			expectedIsKernel: true,
 		},
 		{
 			name:             "Kernel",
-			i:                &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			i:                &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
 			expectedIsKernel: true,
 		},
 		{
 			name:             "NonKernel",
-			i:                &Item1{Production: prods[0][1], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // E → •CC, $
+			i:                &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // E → •CC, $
 			expectedIsKernel: false,
 		},
 	}
@@ -739,12 +576,12 @@ func TestItem1_IsComplete(t *testing.T) {
 	}{
 		{
 			name:               "Complete",
-			i:                  &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
+			i:                  &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
 			expectedIsComplete: true,
 		},
 		{
 			name:               "NotComplete",
-			i:                  &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			i:                  &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
 			expectedIsComplete: false,
 		},
 	}
@@ -764,12 +601,12 @@ func TestItem1_IsFinal(t *testing.T) {
 	}{
 		{
 			name:            "Final",
-			i:               &Item1{Production: prods[0][0], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
+			i:               &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
 			expectedIsFinal: true,
 		},
 		{
 			name:            "NotFinal",
-			i:               &Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
+			i:               &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
 			expectedIsFinal: false,
 		},
 	}
@@ -790,13 +627,13 @@ func TestItem1_DotSymbol(t *testing.T) {
 	}{
 		{
 			name:              "Initial",
-			i:                 &Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
+			i:                 &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
 			expectedDotSymbol: grammar.NonTerminal("S"),
 			expectedOK:        true,
 		},
 		{
 			name:              "Complete",
-			i:                 &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
+			i:                 &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
 			expectedDotSymbol: nil,
 			expectedOK:        false,
 		},
@@ -826,13 +663,13 @@ func TestItem1_Next(t *testing.T) {
 	}{
 		{
 			name:         "Initial",
-			i:            &Item1{Production: prods[0][0], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
+			i:            &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
 			expectedOK:   true,
-			expectedNext: &Item1{Production: prods[0][0], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
+			expectedNext: &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S′ → S•, $
 		},
 		{
 			name:         "Complete",
-			i:            &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•
+			i:            &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•
 			expectedOK:   false,
 			expectedNext: nil,
 		},
@@ -861,17 +698,17 @@ func TestItem1_GetPrefix(t *testing.T) {
 	}{
 		{
 			name:          "DotAtLeft",
-			i:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S → •CC, $
+			i:             &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S → •CC, $
 			expectedAlpha: grammar.E,
 		},
 		{
 			name:          "DotInMiddle",
-			i:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			i:             &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
 			expectedAlpha: grammar.String[grammar.Symbol]{grammar.NonTerminal("C")},
 		},
 		{
 			name:          "DotAtRight",
-			i:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
+			i:             &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
 			expectedAlpha: grammar.String[grammar.Symbol]{grammar.NonTerminal("C"), grammar.NonTerminal("C")},
 		},
 	}
@@ -893,17 +730,17 @@ func TestItem1_GetSuffix(t *testing.T) {
 	}{
 		{
 			name:         "DotAtLeft",
-			i:            &Item1{Production: prods[0][1], Start: starts[0], Dot: 0, Lookahead: grammar.Endmarker}, // S → •CC, $
+			i:            &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S → •CC, $
 			expectedBeta: grammar.String[grammar.Symbol]{grammar.NonTerminal("C"), grammar.NonTerminal("C")},
 		},
 		{
 			name:         "DotInMiddle",
-			i:            &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			i:            &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
 			expectedBeta: grammar.String[grammar.Symbol]{grammar.NonTerminal("C")},
 		},
 		{
 			name:         "DotAtRight",
-			i:            &Item1{Production: prods[0][1], Start: starts[0], Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
+			i:            &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker}, // S → CC•, $
 			expectedBeta: grammar.E,
 		},
 	}
@@ -925,8 +762,8 @@ func TestItem1_Item0(t *testing.T) {
 	}{
 		{
 			name:          "OK",
-			i:             &Item1{Production: prods[0][1], Start: starts[0], Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
-			expectedItem0: &Item0{Production: prods[0][1], Start: starts[0], Dot: 1},                               // S → C•C
+			i:             &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker}, // S → C•C, $
+			expectedItem0: &Item0{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1},                               // S → C•C
 		},
 	}
 
@@ -952,8 +789,8 @@ func TestNewItemSet(t *testing.T) {
 		{
 			name: "OK",
 			items: []Item{
-				&Item0{Production: prods[2][0], Start: starts[2], Dot: 1}, // E′ → E•
-				&Item0{Production: prods[2][1], Start: starts[2], Dot: 1}, // E → E•+ T
+				&Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 1}, // E′ → E•
+				&Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 1}, // E → E•+ T
 			},
 			expectedSubstrings: []string{
 				`┌─────────────┐`,
@@ -983,17 +820,41 @@ func TestNewItemSet(t *testing.T) {
 }
 
 func TestCmpItemSet(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name         string
 		sets         []ItemSet
 		expectedSets []ItemSet
 	}{
 		{
-			name:         "OK",
-			sets:         []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
-			expectedSets: []ItemSet{s[0], s[1], s[9], s[11], s[10], s[6], s[8], s[7], s[2], s[4], s[5], s[3]},
+			name: "OK",
+			sets: []ItemSet{
+				LR0ItemSets[0],
+				LR0ItemSets[1],
+				LR0ItemSets[2],
+				LR0ItemSets[3],
+				LR0ItemSets[4],
+				LR0ItemSets[5],
+				LR0ItemSets[6],
+				LR0ItemSets[7],
+				LR0ItemSets[8],
+				LR0ItemSets[9],
+				LR0ItemSets[10],
+				LR0ItemSets[11],
+			},
+			expectedSets: []ItemSet{
+				LR0ItemSets[0],
+				LR0ItemSets[1],
+				LR0ItemSets[9],
+				LR0ItemSets[11],
+				LR0ItemSets[10],
+				LR0ItemSets[6],
+				LR0ItemSets[8],
+				LR0ItemSets[7],
+				LR0ItemSets[2],
+				LR0ItemSets[4],
+				LR0ItemSets[5],
+				LR0ItemSets[3],
+			},
 		},
 	}
 
@@ -1006,7 +867,6 @@ func TestCmpItemSet(t *testing.T) {
 }
 
 func TestItemSetStringer(t *testing.T) {
-	s := getTestLR0ItemSets()
 	state := State(0)
 
 	tests := []struct {
@@ -1017,7 +877,7 @@ func TestItemSetStringer(t *testing.T) {
 		{
 			name: "WithoutState",
 			ss: &itemSetStringer{
-				items: generic.Collect1(s[0].All()),
+				items: generic.Collect1(LR0ItemSets[0].All()),
 			},
 			expectedSubstrings: []string{
 				`┌────────────────┐`,
@@ -1036,7 +896,7 @@ func TestItemSetStringer(t *testing.T) {
 			name: "WithState",
 			ss: &itemSetStringer{
 				state: &state,
-				items: generic.Collect1(s[0].All()),
+				items: generic.Collect1(LR0ItemSets[0].All()),
 			},
 			expectedSubstrings: []string{
 				`┌──────[0]───────┐`,
@@ -1065,8 +925,6 @@ func TestItemSetStringer(t *testing.T) {
 }
 
 func TestNewItemSetCollection(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name               string
 		sets               []ItemSet
@@ -1074,7 +932,20 @@ func TestNewItemSetCollection(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			sets: []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+			sets: []ItemSet{
+				LR0ItemSets[0],
+				LR0ItemSets[1],
+				LR0ItemSets[2],
+				LR0ItemSets[3],
+				LR0ItemSets[4],
+				LR0ItemSets[5],
+				LR0ItemSets[6],
+				LR0ItemSets[7],
+				LR0ItemSets[8],
+				LR0ItemSets[9],
+				LR0ItemSets[10],
+				LR0ItemSets[11],
+			},
 			expectedSubstrings: []string{
 				`┌──────[0]───────┐`,
 				`│ E′ → •E        │`,
@@ -1161,8 +1032,6 @@ func TestNewItemSetCollection(t *testing.T) {
 }
 
 func TestItemSetCollectionStringer(t *testing.T) {
-	s := getTestLR0ItemSets()
-
 	tests := []struct {
 		name               string
 		cs                 *itemSetCollectionStringer
@@ -1171,7 +1040,20 @@ func TestItemSetCollectionStringer(t *testing.T) {
 		{
 			name: "OK",
 			cs: &itemSetCollectionStringer{
-				sets: []ItemSet{s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]},
+				sets: []ItemSet{
+					LR0ItemSets[0],
+					LR0ItemSets[1],
+					LR0ItemSets[2],
+					LR0ItemSets[3],
+					LR0ItemSets[4],
+					LR0ItemSets[5],
+					LR0ItemSets[6],
+					LR0ItemSets[7],
+					LR0ItemSets[8],
+					LR0ItemSets[9],
+					LR0ItemSets[10],
+					LR0ItemSets[11],
+				},
 			},
 			expectedSubstrings: []string{
 				`┌──────[0]───────┐`,
