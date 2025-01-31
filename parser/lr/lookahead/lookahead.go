@@ -26,8 +26,7 @@ func New(L lexer.Lexer, G *grammar.CFG) (*lr.Parser, error) {
 	T, err := BuildParsingTable(G)
 	if err != nil {
 		return nil, &parser.ParseError{
-			Description: "failed to construct LALR parsing table",
-			Cause:       err,
+			Cause: err,
 		}
 	}
 

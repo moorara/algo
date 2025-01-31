@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
-	"github.com/moorara/algo/set"
 )
 
 func TestNewParsingTable(t *testing.T) {
@@ -209,13 +208,15 @@ func TestParsingTable_Error(t *testing.T) {
 			name: "Error",
 			pt:   pt[1],
 			expectedErrorStrings: []string{
-				`2 errors occurred:`,
-				`AMBIGUOUS Grammar: shift/reduce conflict in ACTION[0, "a"]`,
-				`SHIFT 5`,
-				`REDUCE A → "a" A`,
-				`AMBIGUOUS Grammar: reduce/reduce conflict in ACTION[1, "b"]`,
-				`REDUCE B → "b" B`,
-				`REDUCE C → "c" C`,
+				`Error:      Ambiguous Grammar`,
+				`Cause:      Multiple conflicts in the parsing table`,
+				`              1. Shift/Reduce conflict in ACTION[0, "a"]`,
+				`              2. Reduce/Reduce conflict in ACTION[1, "b"]`,
+				`Resolution: Specify precedence for the following in the grammar directives:`,
+				`              • "a"`,
+				`              • "b"`,
+				`              • "c"`,
+				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
 			},
 		},
 	}
@@ -241,12 +242,12 @@ func TestParsingTable_ACTION(t *testing.T) {
 	pt := getTestParsingTables()
 
 	tests := []struct {
-		name           string
-		pt             *ParsingTable
-		s              State
-		a              grammar.Terminal
-		expectedAction *Action
-		expectedError  string
+		name                 string
+		pt                   *ParsingTable
+		s                    State
+		a                    grammar.Terminal
+		expectedAction       *Action
+		expectedErrorStrings []string
 	}{
 		{
 			name:           "NoAction",
@@ -254,7 +255,9 @@ func TestParsingTable_ACTION(t *testing.T) {
 			s:              State(4),
 			a:              grammar.Terminal("+"),
 			expectedAction: &Action{Type: ERROR},
-			expectedError:  "no action exists in the parsing table for ACTION[4, \"+\"]",
+			expectedErrorStrings: []string{
+				`no action exists in the parsing table for ACTION[4, "+"]`,
+			},
 		},
 		{
 			name:           "Conflict",
@@ -262,7 +265,14 @@ func TestParsingTable_ACTION(t *testing.T) {
 			s:              State(0),
 			a:              grammar.Terminal("a"),
 			expectedAction: &Action{Type: ERROR},
-			expectedError:  "AMBIGUOUS Grammar: shift/reduce conflict in ACTION[0, \"a\"]\n  SHIFT 5\n  REDUCE A → \"a\" A\n",
+			expectedErrorStrings: []string{
+				`Error:      Ambiguous Grammar`,
+				`Cause:      Shift/Reduce conflict in ACTION[0, "a"]`,
+				`Context:    The parser cannot decide whether to`,
+				`              1. Shift the terminal "a", or`,
+				`              2. Reduce by production A → "a" A`,
+				`Resolution: Specify associativity for the "a" in the grammar directives.`,
+			},
 		},
 		{
 			name: "Success",
@@ -273,20 +283,23 @@ func TestParsingTable_ACTION(t *testing.T) {
 				Type:  SHIFT,
 				State: 5,
 			},
-			expectedError: "",
+			expectedErrorStrings: nil,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			action, err := tc.pt.ACTION(tc.s, tc.a)
+			assert.True(t, action.Equal(tc.expectedAction))
 
-			if len(tc.expectedError) == 0 {
-				assert.True(t, action.Equal(tc.expectedAction))
+			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)
 			} else {
-				assert.True(t, action.Equal(tc.expectedAction))
-				assert.EqualError(t, err, tc.expectedError)
+				assert.Error(t, err)
+				s := err.Error()
+				for _, expectedErrorString := range tc.expectedErrorStrings {
+					assert.Contains(t, s, expectedErrorString)
+				}
 			}
 		})
 	}
@@ -367,26 +380,6 @@ func TestParsingTableError(t *testing.T) {
 				Symbol: grammar.NonTerminal("T"),
 			},
 			expectedError: "no state exists in the parsing table for GOTO[5, T]",
-		},
-		{
-			name: "Shift_Reduce_Conflict",
-			e: &ParsingTableError{
-				Type:    CONFLICT,
-				State:   State(2),
-				Symbol:  grammar.Terminal("*"),
-				Actions: set.New(eqAction, actions[0], actions[2]),
-			},
-			expectedError: "AMBIGUOUS Grammar: shift/reduce conflict in ACTION[2, \"*\"]\n  SHIFT 5\n  REDUCE E → T\n",
-		},
-		{
-			name: "Reduce_Reduce_Conflict",
-			e: &ParsingTableError{
-				Type:    CONFLICT,
-				State:   State(4),
-				Symbol:  grammar.Terminal("id"),
-				Actions: set.New(eqAction, actions[2], actions[3]),
-			},
-			expectedError: "AMBIGUOUS Grammar: reduce/reduce conflict in ACTION[4, \"id\"]\n  REDUCE E → T\n  REDUCE F → \"id\"\n",
 		},
 		{
 			name: "Invalid",

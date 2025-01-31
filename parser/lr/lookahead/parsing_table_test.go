@@ -30,6 +30,22 @@ func TestBuildParsingTable(t *testing.T) {
 			G:             parsertest.Grammars[3],
 			expectedTable: pt[1],
 		},
+		{
+			name: "E→E+E",
+			G:    parsertest.Grammars[4],
+			expectedErrorStrings: []string{
+				`Error:      Ambiguous Grammar`,
+				`Cause:      Multiple conflicts in the parsing table:`,
+				`              1. Shift/Reduce conflict in ACTION[2, "*"]`,
+				`              2. Shift/Reduce conflict in ACTION[2, "+"]`,
+				`              3. Shift/Reduce conflict in ACTION[3, "*"]`,
+				`              4. Shift/Reduce conflict in ACTION[3, "+"]`,
+				`Resolution: Specify precedence for the following in the grammar directives:`,
+				`              • "*"`,
+				`              • "+"`,
+				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
+			},
+		},
 	}
 
 	for _, tc := range tests {

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/moorara/algo/errors"
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/set"
@@ -172,27 +171,24 @@ func (t *ParsingTable) SetGOTO(s State, A grammar.NonTerminal, next State) {
 // Conflicts arise when the grammar is ambiguous.
 // If any conflicts are found, it returns an error with detailed descriptions of the conflicts.
 func (t *ParsingTable) Error() error {
-	var err = &errors.MultiError{
-		Format: errors.BulletErrorFormat,
-	}
+	var errs AggregatedConflictError
 
 	// Check for ACTION conflicts.
 	for _, s := range t.S.States() {
 		for _, a := range t.terminals {
 			if actions, ok := t.getActions(s, a); ok {
 				if actions.Size() > 1 {
-					err = errors.Append(err, &ParsingTableError{
-						Type:    CONFLICT,
-						State:   s,
-						Symbol:  a,
-						Actions: actions,
+					errs = append(errs, &ConflictError{
+						State:    s,
+						Terminal: a,
+						Actions:  actions,
 					})
 				}
 			}
 		}
 	}
 
-	return err.ErrorOrNil()
+	return errs.ErrorOrNil()
 }
 
 // ACTION looks up and returns the action for state s and terminal a.
@@ -208,19 +204,19 @@ func (t *ParsingTable) ACTION(s State, a grammar.Terminal) (*Action, error) {
 		}
 	}
 
-	if actions.Size() == 1 {
-		for action := range actions.All() {
-			return action, nil
+	if actions.Size() > 1 {
+		return &Action{Type: ERROR}, &ConflictError{
+			State:    s,
+			Terminal: a,
+			Actions:  actions,
 		}
 	}
 
-	// Conflict
-	return &Action{Type: ERROR}, &ParsingTableError{
-		Type:    CONFLICT,
-		State:   s,
-		Symbol:  a,
-		Actions: actions,
-	}
+	action, _ := actions.FirstMatch(func(*Action) bool {
+		return true
+	})
+
+	return action, nil
 }
 
 // GOTO looks up and returns the next state for state s and non-terminal A.
@@ -251,18 +247,16 @@ func (t *ParsingTable) GOTO(s State, A grammar.NonTerminal) (State, error) {
 type ParsingTableErrorType int
 
 const (
-	MISSING_ACTION ParsingTableErrorType = 1 + iota // No action for the given state s and terminal a.
-	MISSING_GOTO                                    // No next state for the given state s and non-terminal A.
-	CONFLICT                                        // Conflict (Shift/Reduce or Reduce/Reduce) for the given state s and terminal a.
+	MISSING_ACTION ParsingTableErrorType = 1 + iota
+	MISSING_GOTO
 )
 
 // ParsingTableError represents an error encountered in an LR parsing table.
 // This error occurs when there is ambiguity in the grammar or when the input is unacceptable.
 type ParsingTableError struct {
-	Type    ParsingTableErrorType
-	State   State
-	Symbol  grammar.Symbol
-	Actions set.Set[*Action] // Only set for CONFLICT errors
+	Type   ParsingTableErrorType
+	State  State
+	Symbol grammar.Symbol
 }
 
 // Error implements the error interface.
@@ -273,70 +267,13 @@ func (e *ParsingTableError) Error() string {
 	switch e.Type {
 	case MISSING_ACTION:
 		fmt.Fprintf(&b, "no action exists in the parsing table for ACTION[%d, %s]", e.State, e.Symbol)
-
 	case MISSING_GOTO:
 		fmt.Fprintf(&b, "no state exists in the parsing table for GOTO[%d, %s]", e.State, e.Symbol)
-
-	case CONFLICT:
-		if s, r, ok := e.isShiftReduceConflict(); ok {
-			fmt.Fprintf(&b, "AMBIGUOUS Grammar: shift/reduce conflict in ACTION[%d, %s]\n", e.State, e.Symbol)
-			// cannot decide whether to shift or reduce
-			fmt.Fprintf(&b, "  %s\n", s)
-			fmt.Fprintf(&b, "  %s\n", r)
-		} else if r1, r2, ok := e.isReduceReduceConflict(); ok {
-			fmt.Fprintf(&b, "AMBIGUOUS Grammar: reduce/reduce conflict in ACTION[%d, %s]\n", e.State, e.Symbol)
-			// cannot decide between multiple reductions
-			fmt.Fprintf(&b, "  %s\n", r1)
-			fmt.Fprintf(&b, "  %s\n", r2)
-		}
-
 	default:
 		fmt.Fprintf(&b, "invalid error: %d", e.Type)
 	}
 
 	return b.String()
-}
-
-func (e *ParsingTableError) isShiftReduceConflict() (*Action, *Action, bool) {
-	if e.Type != CONFLICT {
-		return nil, nil, false
-	}
-
-	shift, ok := e.Actions.FirstMatch(func(action *Action) bool {
-		return action.Type == SHIFT
-	})
-
-	if !ok {
-		return nil, nil, false
-	}
-
-	reduce, ok := e.Actions.FirstMatch(func(action *Action) bool {
-		return action.Type == REDUCE
-	})
-
-	if !ok {
-		return nil, nil, false
-	}
-
-	return shift, reduce, true
-}
-
-func (e *ParsingTableError) isReduceReduceConflict() (*Action, *Action, bool) {
-	if e.Type != CONFLICT {
-		return nil, nil, false
-	}
-
-	actions := generic.Collect1(e.Actions.SelectMatch(func(action *Action) bool {
-		return action.Type == REDUCE
-	}).All())
-
-	if len(actions) < 2 {
-		return nil, nil, false
-	}
-
-	sort.Quick(actions, cmpAction)
-
-	return actions[0], actions[1], true
 }
 
 // tableStringer builds a string representation of a parsing table used during LR parsing.
