@@ -41,45 +41,6 @@ func (e *ConflictError) IsReduceReduce() bool {
 		})
 }
 
-// handles generates a set of precedence handles derived from the conflict actions.
-// A precedence handle is either a terminal symbol or a production rule that is used
-// to define associativity and precedence for resolving conflicts in the parsing table.
-// By specifying the associativity and precedence for these handles,
-// shift/reduce and reduce/reduce conflicts can be resolved.
-func (e *ConflictError) handles() *precedenceHandleGroup {
-	dedup := &precedenceHandleGroup{
-		reduces: NewPrecedenceHandles(),
-		shifts:  NewPrecedenceHandles(),
-	}
-
-	for a := range e.Actions.All() {
-		switch a.Type {
-		case SHIFT:
-			dedup.shifts.Add(&PrecedenceHandle{
-				Terminal: &e.Terminal,
-			})
-
-		case REDUCE:
-			first, ok := generic.FirstMatch(a.Production.Body, func(s grammar.Symbol) bool {
-				return s.IsTerminal()
-			})
-
-			if ok {
-				term := first.(grammar.Terminal)
-				dedup.reduces.Add(&PrecedenceHandle{
-					Terminal: &term,
-				})
-			} else {
-				dedup.reduces.Add(&PrecedenceHandle{
-					Production: a.Production,
-				})
-			}
-		}
-	}
-
-	return dedup
-}
-
 // Error returns a detailed string representation of the conflict error.
 func (e *ConflictError) Error() string {
 	var b bytes.Buffer
@@ -127,6 +88,45 @@ func (e *ConflictError) Error() string {
 	}
 
 	return b.String()
+}
+
+// handles generates a set of precedence handles derived from the conflict actions.
+// A precedence handle is either a terminal symbol or a production rule that is used
+// to define associativity and precedence for resolving conflicts in the parsing table.
+// By specifying the associativity and precedence for these handles,
+// shift/reduce and reduce/reduce conflicts can be resolved.
+func (e *ConflictError) handles() *precedenceHandleGroup {
+	dedup := &precedenceHandleGroup{
+		reduces: NewPrecedenceHandles(),
+		shifts:  NewPrecedenceHandles(),
+	}
+
+	for a := range e.Actions.All() {
+		switch a.Type {
+		case SHIFT:
+			dedup.shifts.Add(&PrecedenceHandle{
+				Terminal: &e.Terminal,
+			})
+
+		case REDUCE:
+			first, ok := generic.FirstMatch(a.Production.Body, func(s grammar.Symbol) bool {
+				return s.IsTerminal()
+			})
+
+			if ok {
+				term := first.(grammar.Terminal)
+				dedup.reduces.Add(&PrecedenceHandle{
+					Terminal: &term,
+				})
+			} else {
+				dedup.reduces.Add(&PrecedenceHandle{
+					Production: a.Production,
+				})
+			}
+		}
+	}
+
+	return dedup
 }
 
 // AggregatedConflictError represents a collection of conflict errors.
@@ -179,7 +179,7 @@ func (e AggregatedConflictError) Error() string {
 		if handles[s] == nil {
 			handles[s] = h
 		} else {
-			handles[s].reduces = handles[s].reduces.Intersection(h.reduces)
+			handles[s].reduces = handles[s].reduces.Union(h.reduces)
 			handles[s].shifts = handles[s].shifts.Union(h.shifts)
 		}
 	}
