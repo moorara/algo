@@ -186,3 +186,21 @@ func Example_buildParsingTable() {
 
 	fmt.Println(table)
 }
+
+func Example_ambiguousGrammar() {
+	G := grammar.NewCFG(
+		[]grammar.Terminal{"+", "*", "(", ")", "id"},
+		[]grammar.NonTerminal{"E"},
+		[]*grammar.Production{
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("E")}}, // E → E + E
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("*"), grammar.NonTerminal("E")}}, // E → E * E
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("E"), grammar.Terminal(")")}},    // E → ( E )
+			{Head: "E", Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")}},                                                    // E → id
+		},
+		"E",
+	)
+
+	if _, err := simple.BuildParsingTable(G); err != nil {
+		fmt.Println(err)
+	}
+}
