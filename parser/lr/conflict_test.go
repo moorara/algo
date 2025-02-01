@@ -5,84 +5,54 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/set"
 )
 
 func TestConflictError(t *testing.T) {
-	star := grammar.Terminal("*")
-	id := grammar.Terminal("id")
-
 	tests := []struct {
 		name                   string
 		e                      *ConflictError
 		expectedIsShiftReduce  bool
 		expectedIsReduceReduce bool
-		expectedHandles        set.Set[*PrecedenceHandle]
 		expectedErrorStrings   []string
 	}{
 		{
 			name: "ShiftReduce",
 			e: &ConflictError{
 				State:    2,
-				Terminal: "*",
-				Actions:  set.New(eqAction, actions[0], actions[2]),
+				Terminal: "(",
+				Actions:  set.New(eqAction, actions[4], actions[8]),
 			},
 			expectedIsShiftReduce:  true,
 			expectedIsReduceReduce: false,
-			expectedHandles: set.New(eqPrecedenceHandle,
-				&PrecedenceHandle{
-					Terminal: &star,
-				},
-				&PrecedenceHandle{
-					Production: &grammar.Production{
-						Head: "E",
-						Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")},
-					},
-				},
-			),
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
-				`Cause:      Shift/Reduce conflict in ACTION[2, "*"]`,
+				`Cause:      Shift/Reduce conflict in ACTION[2, "("]`,
 				`Context:    The parser cannot decide whether to`,
-				`              1. Shift the terminal "*", or`,
-				`              2. Reduce by production E → T`,
-				`Resolution: Specify precedence for the following in the grammar directives:`,
-				`              • "*"`,
-				`              • E = T`,
-				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
+				`              1. Shift the terminal "(", or`,
+				`              2. Reduce by production rhs → rhs "|" rhs`,
+				`Resolution: Specify associativity and precedence for these Terminals/Productions:`,
+				`              • "|" vs. "("`,
+				`            Terminals/Productions listed earlier will have higher precedence.`,
+				`            Terminals/Productions in the same line will have the same precedence.`,
 			},
 		},
 		{
 			name: "ReduceReduce",
 			e: &ConflictError{
-				State:    4,
-				Terminal: "id",
-				Actions:  set.New(eqAction, actions[2], actions[3]),
+				State:    40,
+				Terminal: ";",
+				Actions:  set.New(eqAction, actions[9], actions[10]),
 			},
 			expectedIsShiftReduce:  false,
 			expectedIsReduceReduce: true,
-			expectedHandles: set.New(eqPrecedenceHandle,
-				&PrecedenceHandle{
-					Terminal: &id,
-				},
-				&PrecedenceHandle{
-					Production: &grammar.Production{
-						Head: "E",
-						Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")},
-					},
-				},
-			),
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
-				`Cause:      Reduce/Reduce conflict in ACTION[4, "id"]`,
+				`Cause:      Reduce/Reduce conflict in ACTION[40, ";"]`,
 				`Context:    The parser cannot decide whether to`,
-				`              1. Reduce by production E → T, or`,
-				`              2. Reduce by production F → "id"`,
-				`Resolution: Specify precedence for the following in the grammar directives:`,
-				`              • "id"`,
-				`              • E = T`,
-				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
+				`              1. Reduce by production nonterm → "IDENT", or`,
+				`              2. Reduce by production rhs → "IDENT"`,
+				`Resolution: Specify associativity for "IDENT".`,
 			},
 		},
 	}
@@ -91,9 +61,6 @@ func TestConflictError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedIsShiftReduce, tc.e.IsShiftReduce())
 			assert.Equal(t, tc.expectedIsReduceReduce, tc.e.IsReduceReduce())
-
-			handles := tc.e.Handles()
-			assert.True(t, handles.Equal(tc.expectedHandles))
 
 			s := tc.e.Error()
 			for _, expectedErrorString := range tc.expectedErrorStrings {
@@ -155,7 +122,6 @@ func TestAggregatedConflictError_Error(t *testing.T) {
 		e                    AggregatedConflictError
 		expectedErrorStrings []string
 	}{
-
 		{
 			name:                 "Nil",
 			e:                    nil,
@@ -171,20 +137,20 @@ func TestAggregatedConflictError_Error(t *testing.T) {
 			e: AggregatedConflictError{
 				&ConflictError{
 					State:    2,
-					Terminal: "*",
-					Actions:  set.New(eqAction, actions[0], actions[2]),
+					Terminal: "(",
+					Actions:  set.New(eqAction, actions[4], actions[8]),
 				},
 			},
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
-				`Cause:      Shift/Reduce conflict in ACTION[2, "*"]`,
+				`Cause:      Shift/Reduce conflict in ACTION[2, "("]`,
 				`Context:    The parser cannot decide whether to`,
-				`              1. Shift the terminal "*", or`,
-				`              2. Reduce by production E → T`,
-				`Resolution: Specify precedence for the following in the grammar directives:`,
-				`              • "*"`,
-				`              • E = T`,
-				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
+				`              1. Shift the terminal "(", or`,
+				`              2. Reduce by production rhs → rhs "|" rhs`,
+				`Resolution: Specify associativity and precedence for these Terminals/Productions:`,
+				`              • "|" vs. "("`,
+				`            Terminals/Productions listed earlier will have higher precedence.`,
+				`            Terminals/Productions in the same line will have the same precedence.`,
 			},
 		},
 		{
@@ -192,25 +158,25 @@ func TestAggregatedConflictError_Error(t *testing.T) {
 			e: AggregatedConflictError{
 				&ConflictError{
 					State:    2,
-					Terminal: "*",
-					Actions:  set.New(eqAction, actions[0], actions[2]),
+					Terminal: "(",
+					Actions:  set.New(eqAction, actions[4], actions[8]),
 				},
 				&ConflictError{
-					State:    4,
-					Terminal: "id",
-					Actions:  set.New(eqAction, actions[2], actions[3]),
+					State:    19,
+					Terminal: "(",
+					Actions:  set.New(eqAction, actions[4], actions[7]),
 				},
 			},
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
-				`Cause:      Multiple conflicts in the parsing table`,
-				`              1. Shift/Reduce conflict in ACTION[2, "*"]`,
-				`              2. Reduce/Reduce conflict in ACTION[4, "id"]`,
-				`Resolution: Specify precedence for the following in the grammar directives:`,
-				`              • "*"`,
-				`              • "id"`,
-				`              • E = T`,
-				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
+				`Cause:      Multiple conflicts in the parsing table:`,
+				`              1. Shift/Reduce conflict in ACTION[2, "("]`,
+				`              2. Shift/Reduce conflict in ACTION[19, "("]`,
+				`Resolution: Specify associativity and precedence for these Terminals/Productions:`,
+				`              • "|" vs. "("`,
+				`              • rhs = rhs rhs vs. "("`,
+				`            Terminals/Productions listed earlier will have higher precedence.`,
+				`            Terminals/Productions in the same line will have the same precedence.`,
 			},
 		},
 	}
@@ -267,6 +233,217 @@ func TestAggregatedConflictError_Unwrap(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			errs := tc.e.Unwrap()
 			assert.Equal(t, tc.expectedErrors, errs)
+		})
+	}
+}
+
+func TestPrecedenceHandleGroup(t *testing.T) {
+	tests := []struct {
+		name           string
+		g              *precedenceHandleGroup
+		expectedUnion  PrecedenceHandles
+		expectedString string
+	}{
+		{
+			name: "ShiftReduce",
+			g: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[1],
+				),
+				shifts: NewPrecedenceHandles(
+					handles[2],
+					handles[3],
+					handles[4],
+					handles[5],
+				),
+			},
+			expectedUnion: NewPrecedenceHandles(
+				handles[1],
+				handles[2],
+				handles[3],
+				handles[4],
+				handles[5],
+			),
+			expectedString: `"|" vs. "(", "[", "{", "{{"`,
+		},
+		{
+			name: "ReduceReduce",
+			g: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[9],
+					handles[10],
+				),
+				shifts: NewPrecedenceHandles(),
+			},
+			expectedUnion: NewPrecedenceHandles(
+				handles[9],
+				handles[10],
+			),
+			expectedString: `rhs = rhs "|" rhs vs. rhs = rhs rhs`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.True(t, tc.g.Union().Equal(tc.expectedUnion))
+			assert.Equal(t, tc.expectedString, tc.g.String())
+		})
+	}
+}
+
+func TestEqPrecedenceHandleGroup(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs           *precedenceHandleGroup
+		rhs           *precedenceHandleGroup
+		expectedEqual bool
+	}{
+		{
+			name: "Equal",
+			lhs: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[1],
+				),
+				shifts: NewPrecedenceHandles(
+					handles[2],
+					handles[3],
+					handles[4],
+					handles[5],
+				),
+			},
+			rhs: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[1],
+				),
+				shifts: NewPrecedenceHandles(
+					handles[2],
+					handles[3],
+					handles[4],
+					handles[5],
+				),
+			},
+			expectedEqual: true,
+		},
+		{
+			name: "NotEqual",
+			lhs: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[1],
+				),
+				shifts: NewPrecedenceHandles(
+					handles[2],
+					handles[3],
+					handles[4],
+					handles[5],
+				),
+			},
+			rhs: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[9],
+					handles[10],
+				),
+				shifts: NewPrecedenceHandles(),
+			},
+			expectedEqual: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEqual, eqPrecedenceHandleGroup(tc.lhs, tc.rhs))
+		})
+	}
+}
+
+func TestCmpPrecedenceHandleGroup(t *testing.T) {
+	tests := []struct {
+		name            string
+		lhs             *precedenceHandleGroup
+		rhs             *precedenceHandleGroup
+		expectedCompare int
+	}{
+		{
+			name: "ByReduces",
+			lhs: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[9],
+				),
+				shifts: NewPrecedenceHandles(
+					handles[2],
+					handles[3],
+					handles[4],
+					handles[5],
+				),
+			},
+			rhs: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[10],
+				),
+				shifts: NewPrecedenceHandles(
+					handles[2],
+					handles[3],
+					handles[4],
+					handles[5],
+				),
+			},
+			expectedCompare: 1,
+		},
+		{
+			name: "ByShifts",
+			lhs: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[1],
+				),
+				shifts: NewPrecedenceHandles(
+					handles[2],
+					handles[3],
+					handles[4],
+					handles[5],
+				),
+			},
+			rhs: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[1],
+				),
+				shifts: NewPrecedenceHandles(
+					handles[6],
+					handles[7],
+					handles[8],
+				),
+			},
+			expectedCompare: 1,
+		},
+		{
+			name: "Equal",
+			lhs: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[1],
+				),
+				shifts: NewPrecedenceHandles(
+					handles[2],
+					handles[3],
+					handles[4],
+					handles[5],
+				),
+			},
+			rhs: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[1],
+				),
+				shifts: NewPrecedenceHandles(
+					handles[2],
+					handles[3],
+					handles[4],
+					handles[5],
+				),
+			},
+			expectedCompare: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedCompare, cmpPrecedenceHandleGroup(tc.lhs, tc.rhs))
 		})
 	}
 }

@@ -203,7 +203,7 @@ func (s *set[T]) FirstMatch(p generic.Predicate1[T]) (T, bool) {
 }
 
 func (s *set[T]) SelectMatch(p generic.Predicate1[T]) generic.Collection1[T] {
-	newS := New[T](s.equal)
+	newS := s.CloneEmpty()
 
 	for _, m := range s.members {
 		if p(m) {
@@ -215,8 +215,8 @@ func (s *set[T]) SelectMatch(p generic.Predicate1[T]) generic.Collection1[T] {
 }
 
 func (s *set[T]) PartitionMatch(p generic.Predicate1[T]) (generic.Collection1[T], generic.Collection1[T]) {
-	matched := New[T](s.equal)
-	unmatched := New[T](s.equal)
+	matched := s.CloneEmpty()
+	unmatched := s.CloneEmpty()
 
 	for _, m := range s.members {
 		if p(m) {

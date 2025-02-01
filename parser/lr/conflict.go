@@ -41,18 +41,21 @@ func (e *ConflictError) IsReduceReduce() bool {
 		})
 }
 
-// Handles generates a set of precedence handles derived from the conflict actions.
+// handles generates a set of precedence handles derived from the conflict actions.
 // A precedence handle is either a terminal symbol or a production rule that is used
 // to define associativity and precedence for resolving conflicts in the parsing table.
 // By specifying the associativity and precedence for these handles,
 // shift/reduce and reduce/reduce conflicts can be resolved.
-func (e *ConflictError) Handles() set.Set[*PrecedenceHandle] {
-	dedup := set.New(eqPrecedenceHandle)
+func (e *ConflictError) handles() *precedenceHandleGroup {
+	dedup := &precedenceHandleGroup{
+		reduces: NewPrecedenceHandles(),
+		shifts:  NewPrecedenceHandles(),
+	}
 
 	for a := range e.Actions.All() {
 		switch a.Type {
 		case SHIFT:
-			dedup.Add(&PrecedenceHandle{
+			dedup.shifts.Add(&PrecedenceHandle{
 				Terminal: &e.Terminal,
 			})
 
@@ -63,11 +66,11 @@ func (e *ConflictError) Handles() set.Set[*PrecedenceHandle] {
 
 			if ok {
 				term := first.(grammar.Terminal)
-				dedup.Add(&PrecedenceHandle{
+				dedup.reduces.Add(&PrecedenceHandle{
 					Terminal: &term,
 				})
 			} else {
-				dedup.Add(&PrecedenceHandle{
+				dedup.reduces.Add(&PrecedenceHandle{
 					Production: a.Production,
 				})
 			}
@@ -111,17 +114,16 @@ func (e *ConflictError) Error() string {
 		}
 	}
 
-	handles := generic.Collect1(e.Handles().All())
-	sort.Insertion(handles, cmpPrecedenceHandle)
+	handles := e.handles()
+	union := handles.Union()
 
-	if len(handles) == 1 {
-		fmt.Fprintf(&b, "Resolution: Specify associativity for the %s in the grammar directives.\n", handles[0])
+	if union.Size() == 1 {
+		fmt.Fprintf(&b, "Resolution: Specify associativity for %s.\n", union)
 	} else {
-		b.WriteString("Resolution: Specify precedence for the following in the grammar directives:\n")
-		for _, handle := range handles {
-			fmt.Fprintf(&b, "              • %s\n", handle)
-		}
-		b.WriteString("            Terminals or Productions listed earlier in the directives will have higher precedence.\n")
+		b.WriteString("Resolution: Specify associativity and precedence for these Terminals/Productions:\n")
+		fmt.Fprintf(&b, "              • %s\n", handles)
+		b.WriteString("            Terminals/Productions listed earlier will have higher precedence.\n")
+		b.WriteString("            Terminals/Productions in the same line will have the same precedence.\n")
 	}
 
 	return b.String()
@@ -168,23 +170,36 @@ func (e AggregatedConflictError) Error() string {
 		}
 	}
 
-	set := set.New(eqPrecedenceHandle)
+	// Group handles by state.
+	handles := map[State]*precedenceHandleGroup{}
 	for _, err := range e {
-		set = set.Union(err.Handles())
-	}
+		s := err.State
+		h := err.handles()
 
-	handles := generic.Collect1(set.All())
-	sort.Insertion(handles, cmpPrecedenceHandle)
-
-	if len(handles) == 1 {
-		fmt.Fprintf(&b, "Resolution: Specify associativity for the %s in the grammar directives.\n", handles[0])
-	} else {
-		b.WriteString("Resolution: Specify precedence for the following in the grammar directives:\n")
-		for _, handle := range handles {
-			fmt.Fprintf(&b, "              • %s\n", handle)
+		if handles[s] == nil {
+			handles[s] = h
+		} else {
+			handles[s].reduces = handles[s].reduces.Intersection(h.reduces)
+			handles[s].shifts = handles[s].shifts.Union(h.shifts)
 		}
-		b.WriteString("            Terminals or Productions listed earlier in the directives will have higher precedence.\n")
 	}
+
+	// Dedup the groups.
+	dedup := set.New(eqPrecedenceHandleGroup)
+	for _, g := range handles {
+		dedup.Add(g)
+	}
+
+	// Sort the groups.
+	sorted := generic.Collect1(dedup.All())
+	sort.Quick(sorted, cmpPrecedenceHandleGroup)
+
+	b.WriteString("Resolution: Specify associativity and precedence for these Terminals/Productions:\n")
+	for _, group := range sorted {
+		fmt.Fprintf(&b, "              • %s\n", group)
+	}
+	b.WriteString("            Terminals/Productions listed earlier will have higher precedence.\n")
+	b.WriteString("            Terminals/Productions in the same line will have the same precedence.\n")
 
 	return b.String()
 }
@@ -203,4 +218,46 @@ func (e AggregatedConflictError) Unwrap() []error {
 	}
 
 	return errs
+}
+
+// precedenceHandleGroup is used for grouping related precendence handles.
+type precedenceHandleGroup struct {
+	reduces PrecedenceHandles
+	shifts  PrecedenceHandles
+}
+
+func (g *precedenceHandleGroup) Union() PrecedenceHandles {
+	return g.reduces.Union(g.shifts)
+}
+
+func (g *precedenceHandleGroup) String() string {
+	// Shift/Reduce
+	if g.shifts.Size() > 0 {
+		return fmt.Sprintf("%s vs. %s", g.reduces, g.shifts)
+	}
+
+	// Reduce/Reduce
+
+	handles := generic.Collect1(g.reduces.All())
+	sort.Insertion(handles, cmpPrecedenceHandle)
+
+	var b bytes.Buffer
+	for _, handle := range handles {
+		fmt.Fprintf(&b, "%s vs. ", handle)
+	}
+	b.Truncate(b.Len() - 5)
+
+	return b.String()
+}
+
+func eqPrecedenceHandleGroup(lhs, rhs *precedenceHandleGroup) bool {
+	return lhs.reduces.Equal(rhs.reduces) && lhs.shifts.Equal(rhs.shifts)
+}
+
+func cmpPrecedenceHandleGroup(lhs, rhs *precedenceHandleGroup) int {
+	if cmp := cmpPrecedenceHandles(lhs.reduces, rhs.reduces); cmp != 0 {
+		return cmp
+	}
+
+	return cmpPrecedenceHandles(lhs.shifts, rhs.shifts)
 }

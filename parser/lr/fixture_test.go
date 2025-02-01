@@ -209,33 +209,89 @@ var statemaps = []StateMap{
 }
 
 var actions = []*Action{
-	{
+	{ // 0
+		Type: ACCEPT,
+	},
+	{ // 1
+		Type: ERROR,
+	},
+	{ // 2
 		Type:  SHIFT,
 		State: 5,
 	},
-	{
+	{ // 3
 		Type:  SHIFT,
 		State: 7,
 	},
-	{
+	{ // 4
+		Type:  SHIFT,
+		State: 27,
+	},
+	{ // 5
 		Type: REDUCE,
-		Production: &grammar.Production{ // E → T
+		Production: &grammar.Production{
 			Head: "E",
 			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")},
 		},
 	},
-	{
+	{ // 6
 		Type: REDUCE,
-		Production: &grammar.Production{ // F → id
+		Production: &grammar.Production{
 			Head: "F",
 			Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
 		},
 	},
+	{ // 7
+		Type: REDUCE,
+		Production: &grammar.Production{
+			Head: "rhs",
+			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
+		},
+	},
+	{ // 8
+		Type: REDUCE,
+		Production: &grammar.Production{
+			Head: "rhs",
+			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.Terminal("|"), grammar.NonTerminal("rhs")},
+		},
+	},
+	{ // 9
+		Type: REDUCE,
+		Production: &grammar.Production{
+			Head: "rhs",
+			Body: grammar.String[grammar.Symbol]{grammar.Terminal("IDENT")},
+		},
+	},
+	{ // 10
+		Type: REDUCE,
+		Production: &grammar.Production{
+			Head: "nonterm",
+			Body: grammar.String[grammar.Symbol]{grammar.Terminal("IDENT")},
+		},
+	},
+}
+
+var handles = []*PrecedenceHandle{
+	{Terminal: TerminalPtr("=")},
+	{Terminal: TerminalPtr("|")},
+	{Terminal: TerminalPtr("(")},
+	{Terminal: TerminalPtr("[")},
+	{Terminal: TerminalPtr("{")},
+	{Terminal: TerminalPtr("{{")},
+	{Terminal: TerminalPtr("IDENT")},
+	{Terminal: TerminalPtr("TOKEN")},
+	{Terminal: TerminalPtr("STRING")},
 	{
-		Type: ACCEPT,
+		Production: &grammar.Production{
+			Head: "rhs",
+			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
+		},
 	},
 	{
-		Type: ERROR,
+		Production: &grammar.Production{
+			Head: "rhs",
+			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.Terminal("|"), grammar.NonTerminal("rhs")},
+		},
 	},
 }
 
@@ -294,39 +350,54 @@ func getTestParsingTables() []*ParsingTable {
 	pt0.SetGOTO(7, "F", 10)
 
 	pt1 := NewParsingTable(
-		[]State{0, 1, 2, 3, 4, 5, 6},
-		[]grammar.Terminal{"a", "b", "c", "d", grammar.Endmarker},
-		[]grammar.NonTerminal{"A", "B", "C", "D"},
+		[]State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+		[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
+		[]grammar.NonTerminal{"E"},
 	)
 
-	pt1.AddACTION(0, "a", &Action{
-		Type:  SHIFT,
-		State: 5,
-	})
+	pt1.AddACTION(0, "(", &Action{Type: SHIFT, State: 8})
+	pt1.AddACTION(0, "id", &Action{Type: SHIFT, State: 9})
+	pt1.AddACTION(1, "*", &Action{Type: SHIFT, State: 5})
+	pt1.AddACTION(1, "+", &Action{Type: SHIFT, State: 6})
+	pt1.AddACTION(1, grammar.Endmarker, &Action{Type: ACCEPT})
+	pt1.AddACTION(2, ")", &Action{Type: REDUCE, Production: parsertest.Prods[4][2]})
+	pt1.AddACTION(2, "*", &Action{Type: SHIFT, State: 5})
+	pt1.AddACTION(2, "*", &Action{Type: REDUCE, Production: parsertest.Prods[4][2]})
+	pt1.AddACTION(2, "+", &Action{Type: SHIFT, State: 6})
+	pt1.AddACTION(2, "+", &Action{Type: REDUCE, Production: parsertest.Prods[4][2]})
+	pt1.AddACTION(2, grammar.Endmarker, &Action{Type: REDUCE, Production: parsertest.Prods[4][2]})
+	pt1.AddACTION(3, ")", &Action{Type: REDUCE, Production: parsertest.Prods[4][1]})
+	pt1.AddACTION(3, "*", &Action{Type: SHIFT, State: 5})
+	pt1.AddACTION(3, "*", &Action{Type: REDUCE, Production: parsertest.Prods[4][1]})
+	pt1.AddACTION(3, "+", &Action{Type: SHIFT, State: 6})
+	pt1.AddACTION(3, "+", &Action{Type: REDUCE, Production: parsertest.Prods[4][1]})
+	pt1.AddACTION(3, grammar.Endmarker, &Action{Type: REDUCE, Production: parsertest.Prods[4][1]})
+	pt1.AddACTION(4, ")", &Action{Type: REDUCE, Production: parsertest.Prods[4][3]})
+	pt1.AddACTION(4, "*", &Action{Type: REDUCE, Production: parsertest.Prods[4][3]})
+	pt1.AddACTION(4, "+", &Action{Type: REDUCE, Production: parsertest.Prods[4][3]})
+	pt1.AddACTION(4, grammar.Endmarker, &Action{Type: REDUCE, Production: parsertest.Prods[4][3]})
+	pt1.AddACTION(5, "(", &Action{Type: SHIFT, State: 8})
+	pt1.AddACTION(5, "id", &Action{Type: SHIFT, State: 9})
+	pt1.AddACTION(6, "(", &Action{Type: SHIFT, State: 8})
+	pt1.AddACTION(6, "id", &Action{Type: SHIFT, State: 9})
+	pt1.AddACTION(7, ")", &Action{Type: SHIFT, State: 4})
+	pt1.AddACTION(7, "*", &Action{Type: SHIFT, State: 5})
+	pt1.AddACTION(7, "+", &Action{Type: SHIFT, State: 6})
+	pt1.AddACTION(8, "(", &Action{Type: SHIFT, State: 8})
+	pt1.AddACTION(8, "id", &Action{Type: SHIFT, State: 9})
+	pt1.AddACTION(9, ")", &Action{Type: REDUCE, Production: parsertest.Prods[4][4]})
+	pt1.AddACTION(9, "*", &Action{Type: REDUCE, Production: parsertest.Prods[4][4]})
+	pt1.AddACTION(9, "+", &Action{Type: REDUCE, Production: parsertest.Prods[4][4]})
+	pt1.AddACTION(9, grammar.Endmarker, &Action{Type: REDUCE, Production: parsertest.Prods[4][4]})
 
-	pt1.AddACTION(0, "a", &Action{
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "A",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("a"), grammar.NonTerminal("A")},
-		},
-	})
-
-	pt1.AddACTION(1, "b", &Action{
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "B",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("b"), grammar.NonTerminal("B")},
-		},
-	})
-
-	pt1.AddACTION(1, "b", &Action{
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "C",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("c"), grammar.NonTerminal("C")},
-		},
-	})
+	pt1.SetGOTO(0, "E", 1)
+	pt1.SetGOTO(5, "E", 2)
+	pt1.SetGOTO(6, "E", 3)
+	pt1.SetGOTO(8, "E", 7)
 
 	return []*ParsingTable{pt0, pt1}
+}
+
+func TerminalPtr(t grammar.Terminal) *grammar.Terminal {
+	return &t
 }

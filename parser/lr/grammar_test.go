@@ -148,10 +148,115 @@ func TestNewGrammarWithLR1Kernel(t *testing.T) {
 	}
 }
 
-func TestPrecedenceHandle(t *testing.T) {
-	id := grammar.Terminal("ID")
-	num := grammar.Terminal("NUM")
+func TestPrecedenceHandles(t *testing.T) {
+	tests := []struct {
+		name           string
+		handles        []*PrecedenceHandle
+		expectedString string
+	}{
+		{
+			name:           "Zero",
+			handles:        []*PrecedenceHandle{},
+			expectedString: ``,
+		},
+		{
+			name: "One",
+			handles: []*PrecedenceHandle{
+				handles[1],
+			},
+			expectedString: `"|"`,
+		},
+		{
+			name: "Two",
+			handles: []*PrecedenceHandle{
+				handles[1],
+				handles[2],
+			},
+			expectedString: `"(", "|"`,
+		},
+		{
+			name: "Three",
+			handles: []*PrecedenceHandle{
+				handles[1],
+				handles[2],
+				handles[3],
+			},
+			expectedString: `"(", "[", "|"`,
+		},
+	}
 
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			h := NewPrecedenceHandles(tc.handles...)
+
+			assert.Equal(t, tc.expectedString, h.String())
+		})
+	}
+}
+
+func TestCmpPrecedenceHandles(t *testing.T) {
+	tests := []struct {
+		name            string
+		lhs             PrecedenceHandles
+		rhs             PrecedenceHandles
+		expectedCompare int
+	}{
+		{
+			name: "FirstShorter",
+			lhs: NewPrecedenceHandles(
+				handles[1],
+			),
+			rhs: NewPrecedenceHandles(
+				handles[1],
+				handles[2],
+			),
+			expectedCompare: -1,
+		},
+		{
+			name: "FirstLonger",
+			lhs: NewPrecedenceHandles(
+				handles[1],
+				handles[2],
+			),
+			rhs: NewPrecedenceHandles(
+				handles[1],
+			),
+			expectedCompare: 1,
+		},
+		{
+			name: "EqualLength",
+			lhs: NewPrecedenceHandles(
+				handles[1],
+				handles[2],
+			),
+			rhs: NewPrecedenceHandles(
+				handles[1],
+				handles[3],
+			),
+			expectedCompare: -1,
+		},
+		{
+			name: "Equal",
+			lhs: NewPrecedenceHandles(
+				handles[1],
+				handles[3],
+			),
+			rhs: NewPrecedenceHandles(
+				handles[1],
+				handles[3],
+			),
+			expectedCompare: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedCompare, cmpPrecedenceHandles(tc.lhs, tc.rhs))
+		})
+	}
+}
+
+func TestPrecedenceHandle(t *testing.T) {
 	type EqualTest struct {
 		rhs           *PrecedenceHandle
 		expectedEqual bool
@@ -166,71 +271,43 @@ func TestPrecedenceHandle(t *testing.T) {
 		equalTests           []EqualTest
 	}{
 		{
-			name: "Terminal",
-			h: &PrecedenceHandle{
-				Terminal: &id,
-			},
+			name:                 "Terminal",
+			h:                    handles[6],
 			expectedIsTerminal:   true,
 			expectedIsProduction: false,
-			expectedString:       `"ID"`,
+			expectedString:       `"IDENT"`,
 			equalTests: []EqualTest{
 				{
-					rhs: &PrecedenceHandle{
-						Terminal: &id,
-					},
+					rhs:           handles[6],
 					expectedEqual: true,
 				},
 				{
-					rhs: &PrecedenceHandle{
-						Terminal: &num,
-					},
+					rhs:           handles[7],
 					expectedEqual: false,
 				},
 				{
-					rhs: &PrecedenceHandle{
-						Production: &grammar.Production{
-							Head: "rhs",
-							Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
-						},
-					},
+					rhs:           handles[9],
 					expectedEqual: false,
 				},
 			},
 		},
 		{
-			name: "Production",
-			h: &PrecedenceHandle{
-				Production: &grammar.Production{
-					Head: "rhs",
-					Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
-				},
-			},
+			name:                 "Production",
+			h:                    handles[9],
 			expectedIsTerminal:   false,
 			expectedIsProduction: true,
 			expectedString:       `rhs = rhs rhs`,
 			equalTests: []EqualTest{
 				{
-					rhs: &PrecedenceHandle{
-						Production: &grammar.Production{
-							Head: "rhs",
-							Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
-						},
-					},
+					rhs:           handles[9],
 					expectedEqual: true,
 				},
 				{
-					rhs: &PrecedenceHandle{
-						Production: &grammar.Production{
-							Head: "rhs",
-							Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.Terminal("|"), grammar.NonTerminal("rhs")},
-						},
-					},
+					rhs:           handles[10],
 					expectedEqual: false,
 				},
 				{
-					rhs: &PrecedenceHandle{
-						Terminal: &id,
-					},
+					rhs:           handles[6],
 					expectedEqual: false,
 				},
 			},
@@ -253,9 +330,6 @@ func TestPrecedenceHandle(t *testing.T) {
 }
 
 func TestCmpPrecedenceHandle(t *testing.T) {
-	id := grammar.Terminal("ID")
-	num := grammar.Terminal("NUM")
-
 	tests := []struct {
 		name            string
 		lhs             *PrecedenceHandle
@@ -263,42 +337,21 @@ func TestCmpPrecedenceHandle(t *testing.T) {
 		expectedCompare int
 	}{
 		{
-			name: "BothTerminal",
-			lhs: &PrecedenceHandle{
-				Terminal: &id,
-			},
-			rhs: &PrecedenceHandle{
-				Terminal: &num,
-			},
+			name:            "BothTerminal",
+			lhs:             handles[6],
+			rhs:             handles[7],
 			expectedCompare: -1,
 		},
 		{
-			name: "BothProduction",
-			lhs: &PrecedenceHandle{
-				Production: &grammar.Production{
-					Head: "rhs",
-					Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
-				},
-			},
-			rhs: &PrecedenceHandle{
-				Production: &grammar.Production{
-					Head: "rhs",
-					Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.Terminal("|"), grammar.NonTerminal("rhs")},
-				},
-			},
+			name:            "BothProduction",
+			lhs:             handles[9],
+			rhs:             handles[10],
 			expectedCompare: 1,
 		},
 		{
-			name: "Mixed",
-			lhs: &PrecedenceHandle{
-				Terminal: &id,
-			},
-			rhs: &PrecedenceHandle{
-				Production: &grammar.Production{
-					Head: "rhs",
-					Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
-				},
-			},
+			name:            "Mixed",
+			lhs:             handles[6],
+			rhs:             handles[9],
 			expectedCompare: -1,
 		},
 	}

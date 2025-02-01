@@ -1,10 +1,13 @@
 package lr
 
 import (
+	"bytes"
 	"fmt"
 
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/set"
+	"github.com/moorara/algo/sort"
 )
 
 var (
@@ -142,7 +145,56 @@ const (
 // each of which shares the same precedence level and associativity.
 type PrecedenceLevel struct {
 	Associativity
-	Handles set.Set[PrecedenceHandle]
+	PrecedenceHandles
+}
+
+// PrecedenceHandles represents a set of terminals and/or production rules (referred to as handles).
+type PrecedenceHandles set.Set[*PrecedenceHandle]
+
+// NewPrecedenceHandles creates a new set of terminals and/or production rules (referred to as handles).
+func NewPrecedenceHandles(handles ...*PrecedenceHandle) PrecedenceHandles {
+	return set.NewWithFormat(
+		eqPrecedenceHandle,
+		func(h []*PrecedenceHandle) string {
+			if len(h) == 0 {
+				return ""
+			}
+
+			sort.Insertion(h, cmpPrecedenceHandle)
+
+			var b bytes.Buffer
+			for i := range len(h) {
+				fmt.Fprintf(&b, "%s, ", h[i])
+			}
+			b.Truncate(b.Len() - 2)
+
+			return b.String()
+		},
+		handles...,
+	)
+}
+
+// cmpPrecedenceHandles compares two sets of handles and establishes an order between them.
+func cmpPrecedenceHandles(lhs, rhs PrecedenceHandles) int {
+	if lhs.Size() < rhs.Size() {
+		return -1
+	} else if lhs.Size() > rhs.Size() {
+		return 1
+	}
+
+	ls := generic.Collect1(lhs.All())
+	sort.Quick(ls, cmpPrecedenceHandle)
+
+	rs := generic.Collect1(rhs.All())
+	sort.Quick(rs, cmpPrecedenceHandle)
+
+	for i := range len(ls) {
+		if cmp := cmpPrecedenceHandle(ls[i], rs[i]); cmp != 0 {
+			return cmp
+		}
+	}
+
+	return 0
 }
 
 // PrecedenceHandle represents either a terminal symbol or a production rule

@@ -15,26 +15,26 @@ func TestEqAction(t *testing.T) {
 	}{
 		{
 			name:          "Equal",
-			lhs:           actions[0],
-			rhs:           actions[0],
+			lhs:           actions[2],
+			rhs:           actions[2],
 			expectedEqual: true,
 		},
 		{
 			name:          "DifferentTypes",
-			lhs:           actions[0],
-			rhs:           actions[2],
+			lhs:           actions[2],
+			rhs:           actions[5],
 			expectedEqual: false,
 		},
 		{
 			name:          "DifferentStates",
-			lhs:           actions[0],
-			rhs:           actions[1],
+			lhs:           actions[2],
+			rhs:           actions[3],
 			expectedEqual: false,
 		},
 		{
 			name:          "DifferentProductions",
-			lhs:           actions[2],
-			rhs:           actions[3],
+			lhs:           actions[5],
+			rhs:           actions[6],
 			expectedEqual: false,
 		},
 	}
@@ -51,24 +51,24 @@ func TestAction_String(t *testing.T) {
 		expectedString string
 	}{
 		{
-			name:           "SHIFT",
-			a:              actions[0],
-			expectedString: "SHIFT 5",
-		},
-		{
-			name:           "REDUCE",
-			a:              actions[2],
-			expectedString: "REDUCE E → T",
-		},
-		{
 			name:           "ACCEPT",
-			a:              actions[4],
+			a:              actions[0],
 			expectedString: "ACCEPT",
 		},
 		{
 			name:           "ERROR",
-			a:              actions[5],
+			a:              actions[1],
 			expectedString: "ERROR",
+		},
+		{
+			name:           "SHIFT",
+			a:              actions[2],
+			expectedString: "SHIFT 5",
+		},
+		{
+			name:           "REDUCE",
+			a:              actions[5],
+			expectedString: "REDUCE E → T",
 		},
 		{
 			name:           "INVALID",
@@ -91,26 +91,26 @@ func TestAction_Equal(t *testing.T) {
 	}{
 		{
 			name:          "Equal",
-			a:             actions[0],
-			rhs:           actions[0],
+			a:             actions[2],
+			rhs:           actions[2],
 			expectedEqual: true,
 		},
 		{
 			name:          "DifferentTypes",
-			a:             actions[0],
-			rhs:           actions[2],
+			a:             actions[2],
+			rhs:           actions[5],
 			expectedEqual: false,
 		},
 		{
 			name:          "DifferentStates",
-			a:             actions[0],
-			rhs:           actions[1],
+			a:             actions[2],
+			rhs:           actions[3],
 			expectedEqual: false,
 		},
 		{
 			name:          "DifferentProductions",
-			a:             actions[2],
-			rhs:           actions[3],
+			a:             actions[5],
+			rhs:           actions[6],
 			expectedEqual: false,
 		},
 	}
@@ -129,20 +129,20 @@ func TestCmpAction(t *testing.T) {
 	}{
 		{
 			name:            "ByStates",
-			lhs:             actions[0],
-			rhs:             actions[1],
+			lhs:             actions[2],
+			rhs:             actions[3],
 			expectedCompare: -2,
 		},
 		{
 			name:            "ByProductions",
-			lhs:             actions[2],
-			rhs:             actions[3],
+			lhs:             actions[5],
+			rhs:             actions[6],
 			expectedCompare: -1,
 		},
 		{
 			name:            "ByTypes",
-			lhs:             actions[4],
-			rhs:             actions[5],
+			lhs:             actions[0],
+			rhs:             actions[1],
 			expectedCompare: -1,
 		},
 	}
