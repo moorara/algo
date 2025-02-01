@@ -52,7 +52,7 @@ func NewGrammarWithLR0(G *grammar.CFG, precedences PrecedenceLevels) *Grammar {
 		PrecedenceLevels: precedences,
 		Automaton: &automaton{
 			G: G,
-			Calculator: &calculator0{
+			calculator: &calculator0{
 				G: G,
 			},
 		},
@@ -69,7 +69,7 @@ func NewGrammarWithLR1(G *grammar.CFG, precedences PrecedenceLevels) *Grammar {
 		PrecedenceLevels: precedences,
 		Automaton: &automaton{
 			G: G,
-			Calculator: &calculator1{
+			calculator: &calculator1{
 				G:     G,
 				FIRST: FIRST,
 			},
@@ -86,7 +86,7 @@ func NewGrammarWithLR0Kernel(G *grammar.CFG, precedences PrecedenceLevels) *Gram
 		PrecedenceLevels: precedences,
 		Automaton: &kernelAutomaton{
 			G: G,
-			Calculator: &calculator0{
+			calculator: &calculator0{
 				G: G,
 			},
 		},
@@ -103,7 +103,7 @@ func NewGrammarWithLR1Kernel(G *grammar.CFG, precedences PrecedenceLevels) *Gram
 		PrecedenceLevels: precedences,
 		Automaton: &kernelAutomaton{
 			G: G,
-			Calculator: &calculator1{
+			calculator: &calculator1{
 				G:     G,
 				FIRST: FIRST,
 			},
@@ -258,10 +258,20 @@ func cmpPrecedenceHandle(lhs, rhs *PrecedenceHandle) int {
 // Automaton represents the core of an LR automaton used in LR parsing.
 // It provides essential functions for constructing LR parsing tables,
 // including state transitions (GOTO) and generating item sets (Canonical).
-// The specific implementation of the calculator determines whether the automaton is an LR(0) or LR(1) automaton.
-// Additionally, an automaton can operate on either the complete sets of items or just the kernel sets of items.
+//
+// An LR automaton has two orthogonal dimensions:
+//
+//  1. The item dimension: it can be based on either LR(0) or LR(1) items.
+//  2. The item set dimension: it can operate on either complete item sets or only kernel item sets.
 type Automaton interface {
-	Calculator
+	// Initial returns the initial item of an augmented grammar.
+	// For LR(0), the initial item is "S′ → •S",
+	// and for LR(1), the initial item is "S′ → •S, $".
+	Initial() Item
+
+	// Closure computes the closure of a given item set.
+	// It may compute the closure for either an LR(0) item set or an LR(1) item set.
+	CLOSURE(ItemSet) ItemSet
 
 	// GOTO(I, X) computes the closure of the set of all items "A → αX•β",
 	// where "A → α•Xβ" is in the set of items I and X is a grammar symbol.
@@ -281,7 +291,7 @@ type Automaton interface {
 // automaton implements the Automaton interface and considers both kernel and non-kernel items.
 type automaton struct {
 	G *grammar.CFG
-	Calculator
+	calculator
 }
 
 func (a *automaton) GOTO(I ItemSet, X grammar.Symbol) ItemSet {
@@ -337,7 +347,7 @@ func (a *automaton) Canonical() ItemSetCollection {
 // kernelAutomaton implements the Automaton interface but considers only kernel items
 type kernelAutomaton struct {
 	G *grammar.CFG
-	Calculator
+	calculator
 }
 
 func (a *kernelAutomaton) GOTO(I ItemSet, X grammar.Symbol) ItemSet {
@@ -385,15 +395,9 @@ func (a *kernelAutomaton) Canonical() ItemSetCollection {
 	return C
 }
 
-// Calculator defines the interface that specifies key functions for either LR(0) or LR(1) items.
-type Calculator interface {
-	// Initial returns the initial item of an augmented grammar.
-	// For LR(0), the initial item is "S′ → •S",
-	// and for LR(1), the initial item is "S′ → •S, $".
+// calculator defines the interface that specifies key functions for either LR(0) or LR(1) items.
+type calculator interface {
 	Initial() Item
-
-	// Closure computes the closure of a given item set.
-	// It may compute the closure for either an LR(0) item set or an LR(1) item set.
 	CLOSURE(ItemSet) ItemSet
 }
 

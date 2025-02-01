@@ -59,7 +59,7 @@ func TestNewGrammarWithLR0(t *testing.T) {
 			assert.NotNil(t, G.PrecedenceLevels)
 			assert.NotNil(t, G.Automaton)
 			assert.IsType(t, G.Automaton, &automaton{})
-			assert.IsType(t, G.Automaton.(*automaton).Calculator, &calculator0{})
+			assert.IsType(t, G.Automaton.(*automaton).calculator, &calculator0{})
 		})
 	}
 }
@@ -87,7 +87,7 @@ func TestNewGrammarWithLR1(t *testing.T) {
 			assert.NotNil(t, G.PrecedenceLevels)
 			assert.NotNil(t, G.Automaton)
 			assert.IsType(t, G.Automaton, &automaton{})
-			assert.IsType(t, G.Automaton.(*automaton).Calculator, &calculator1{})
+			assert.IsType(t, G.Automaton.(*automaton).calculator, &calculator1{})
 		})
 	}
 }
@@ -115,7 +115,7 @@ func TestNewGrammarWithLR0Kernel(t *testing.T) {
 			assert.NotNil(t, G.PrecedenceLevels)
 			assert.NotNil(t, G.Automaton)
 			assert.IsType(t, G.Automaton, &kernelAutomaton{})
-			assert.IsType(t, G.Automaton.(*kernelAutomaton).Calculator, &calculator0{})
+			assert.IsType(t, G.Automaton.(*kernelAutomaton).calculator, &calculator0{})
 		})
 	}
 }
@@ -143,7 +143,7 @@ func TestNewGrammarWithLR1Kernel(t *testing.T) {
 			assert.NotNil(t, G.PrecedenceLevels)
 			assert.NotNil(t, G.Automaton)
 			assert.IsType(t, G.Automaton, &kernelAutomaton{})
-			assert.IsType(t, G.Automaton.(*kernelAutomaton).Calculator, &calculator1{})
+			assert.IsType(t, G.Automaton.(*kernelAutomaton).calculator, &calculator1{})
 		})
 	}
 }
@@ -378,7 +378,7 @@ func TestAutomaton_GOTO(t *testing.T) {
 			name: `GOTO(I₀,"(")`,
 			a: &automaton{
 				G: G,
-				Calculator: &calculator0{
+				calculator: &calculator0{
 					G: G,
 				},
 			},
@@ -408,7 +408,7 @@ func TestAutomaton_Canonical(t *testing.T) {
 			name: "OK",
 			a: &automaton{
 				G: G,
-				Calculator: &calculator0{
+				calculator: &calculator0{
 					G: G,
 				},
 			},
@@ -451,7 +451,7 @@ func TestKernelAutomaton_GOTO(t *testing.T) {
 			name: `GOTO(I₀,"(")`,
 			a: &kernelAutomaton{
 				G: G,
-				Calculator: &calculator0{
+				calculator: &calculator0{
 					G: G,
 				},
 			},
@@ -485,7 +485,7 @@ func TestKernelAutomaton_Canonical(t *testing.T) {
 			name: "OK",
 			a: &kernelAutomaton{
 				G: G,
-				Calculator: &calculator0{
+				calculator: &calculator0{
 					G: G,
 				},
 			},
