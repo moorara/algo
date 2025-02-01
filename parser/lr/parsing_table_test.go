@@ -362,46 +362,6 @@ func TestParsingTable_GOTO(t *testing.T) {
 	}
 }
 
-func TestParsingTableError(t *testing.T) {
-	tests := []struct {
-		name          string
-		e             *ParsingTableError
-		expectedError string
-	}{
-		{
-			name: "NoAction",
-			e: &ParsingTableError{
-				Type:   MISSING_ACTION,
-				State:  State(7),
-				Symbol: grammar.Terminal("+"),
-			},
-			expectedError: "no action exists in the parsing table for ACTION[7, \"+\"]",
-		},
-		{
-			name: "NoState",
-			e: &ParsingTableError{
-				Type:   MISSING_GOTO,
-				State:  State(5),
-				Symbol: grammar.NonTerminal("T"),
-			},
-			expectedError: "no state exists in the parsing table for GOTO[5, T]",
-		},
-		{
-			name: "Invalid",
-			e: &ParsingTableError{
-				Type: ParsingTableErrorType(0),
-			},
-			expectedError: "invalid error: 0",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.EqualError(t, tc.e, tc.expectedError)
-		})
-	}
-}
-
 func TestTableStringer(t *testing.T) {
 	tests := []struct {
 		name               string

@@ -197,11 +197,9 @@ func (t *ParsingTable) Conflicts() error {
 func (t *ParsingTable) ACTION(s State, a grammar.Terminal) (*Action, error) {
 	actions, ok := t.getActions(s, a)
 	if !ok || actions.Size() == 0 {
-		return &Action{Type: ERROR}, &ParsingTableError{
-			Type:   MISSING_ACTION,
-			State:  s,
-			Symbol: a,
-		}
+		return &Action{
+			Type: ERROR,
+		}, fmt.Errorf("no action exists in the parsing table for ACTION[%d, %s]", s, a)
 	}
 
 	if actions.Size() > 1 {
@@ -224,56 +222,15 @@ func (t *ParsingTable) ACTION(s State, a grammar.Terminal) (*Action, error) {
 func (t *ParsingTable) GOTO(s State, A grammar.NonTerminal) (State, error) {
 	row, ok := t.gotos.Get(s)
 	if !ok {
-		return ErrState, &ParsingTableError{
-			Type:   MISSING_GOTO,
-			State:  s,
-			Symbol: A,
-		}
+		return ErrState, fmt.Errorf("no state exists in the parsing table for GOTO[%d, %s]", s, A)
 	}
 
 	state, ok := row.Get(A)
 	if !ok || state == ErrState {
-		return ErrState, &ParsingTableError{
-			Type:   MISSING_GOTO,
-			State:  s,
-			Symbol: A,
-		}
+		return ErrState, fmt.Errorf("no state exists in the parsing table for GOTO[%d, %s]", s, A)
 	}
 
 	return state, nil
-}
-
-// ParsingTableErrorType represents the type of error associated with an LR parsing table.
-type ParsingTableErrorType int
-
-const (
-	MISSING_ACTION ParsingTableErrorType = 1 + iota
-	MISSING_GOTO
-)
-
-// ParsingTableError represents an error encountered in an LR parsing table.
-// This error occurs when there is ambiguity in the grammar or when the input is unacceptable.
-type ParsingTableError struct {
-	Type   ParsingTableErrorType
-	State  State
-	Symbol grammar.Symbol
-}
-
-// Error implements the error interface.
-// It returns a formatted string describing the error in detail.
-func (e *ParsingTableError) Error() string {
-	var b bytes.Buffer
-
-	switch e.Type {
-	case MISSING_ACTION:
-		fmt.Fprintf(&b, "no action exists in the parsing table for ACTION[%d, %s]", e.State, e.Symbol)
-	case MISSING_GOTO:
-		fmt.Fprintf(&b, "no state exists in the parsing table for GOTO[%d, %s]", e.State, e.Symbol)
-	default:
-		fmt.Fprintf(&b, "invalid error: %d", e.Type)
-	}
-
-	return b.String()
 }
 
 // tableStringer builds a string representation of a parsing table used during LR parsing.
