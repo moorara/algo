@@ -29,7 +29,7 @@ var (
 // Some errors may be resolved by eliminating left recursion and applying left factoring to the grammar.
 // However, certain grammars cannot be transformed into LL(1) even after these transformations.
 // Some languages may have no LL(1) grammar at all.
-func BuildParsingTable(G *grammar.CFG) *ParsingTable {
+func BuildParsingTable(G *grammar.CFG) (*ParsingTable, error) {
 	/*
 	 * For each production A → α of the grammar:
 	 *
@@ -98,7 +98,7 @@ func BuildParsingTable(G *grammar.CFG) *ParsingTable {
 		}
 	}
 
-	return table
+	return table, table.Conflicts()
 }
 
 // ParsingTable represents a parsing table for a predictive parser.
@@ -205,11 +205,11 @@ func (t *ParsingTable) Equal(rhs *ParsingTable) bool {
 	return t.table.Equal(rhs.table)
 }
 
-// Error checks for conflicts in the parsing table.
+// Conflicts checks for conflicts in the parsing table.
 // If there are multiple productions for at least one combination of non-terminal A and terminal a,
 // the method returns an error containing details about the conflicting productions.
 // If no conflicts are found, it returns nil.
-func (t *ParsingTable) Error() error {
+func (t *ParsingTable) Conflicts() error {
 	var err = &errors.MultiError{
 		Format: errors.BulletErrorFormat,
 	}

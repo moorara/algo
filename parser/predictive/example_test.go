@@ -112,8 +112,8 @@ func Example_buildParsingTable() {
 		"E",
 	)
 
-	table := predictive.BuildParsingTable(G)
-	if err := table.Error(); err != nil {
+	table, err := predictive.BuildParsingTable(G)
+	if err != nil {
 		panic(err)
 	}
 

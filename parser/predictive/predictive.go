@@ -96,8 +96,8 @@ func (p *predictiveParser) Parse(tokenF parser.TokenFunc, prodF parser.Productio
 	 *         }
 	 */
 
-	M := BuildParsingTable(p.G)
-	if err := M.Error(); err != nil {
+	M, err := BuildParsingTable(p.G)
+	if err != nil {
 		return &parser.ParseError{
 			Description: "failed to construct the predictive parsing table",
 			Cause:       err,
