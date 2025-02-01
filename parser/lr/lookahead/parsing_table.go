@@ -16,9 +16,6 @@ import (
 )
 
 // BuildParsingTable constructs a parsing table for an LALR parser.
-//
-// This method constructs an LALR(1) parsing table for any context-free grammar.
-// To identify errors in the table, use the Error method.
 func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 	/*
 	 * INPUT:  An augmented grammar G′.
@@ -107,11 +104,7 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 
 	// 5. The initial state of the parser is the one constructed from the set of items containing "S′ → •S, $".
 
-	if err := table.Error(); err != nil {
-		return nil, err
-	}
-
-	return table, nil
+	return table, table.Conflicts()
 }
 
 // ComputeLALR1Kernels computes and returns the kernels of the LALR(1) collection of sets of items for a context-free grammar.

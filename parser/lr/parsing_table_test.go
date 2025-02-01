@@ -191,7 +191,7 @@ func TestParsingTable_SetGOTO(t *testing.T) {
 	}
 }
 
-func TestParsingTable_Error(t *testing.T) {
+func TestParsingTable_Conflicts(t *testing.T) {
 	pt := getTestParsingTables()
 
 	tests := []struct {
@@ -225,7 +225,7 @@ func TestParsingTable_Error(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.pt.Error()
+			err := tc.pt.Conflicts()
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)

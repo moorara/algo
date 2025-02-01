@@ -166,11 +166,11 @@ func (t *ParsingTable) SetGOTO(s State, A grammar.NonTerminal, next State) {
 	row.Put(A, next)
 }
 
-// Error checks the parsing table for any conflicts between actions.
+// Conflicts checks the parsing table for any conflicts between actions.
 // A conflict occurs when multiple actions are assigned to the same state and terminal symbol.
 // Conflicts arise when the grammar is ambiguous.
 // If any conflicts are found, it returns an error with detailed descriptions of the conflicts.
-func (t *ParsingTable) Error() error {
+func (t *ParsingTable) Conflicts() error {
 	var errs AggregatedConflictError
 
 	// Check for ACTION conflicts.
