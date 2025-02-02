@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.10.6](https://github.com/moorara/algo/tree/v0.10.6) (2025-02-02)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.10.5...v0.10.6)
+
+**Merged Changes:**
+
+  - Update README.md [#271](https://github.com/moorara/algo/pull/271) ([moorara](https://github.com/moorara))
+  - Update README.md [#270](https://github.com/moorara/algo/pull/270) ([moorara](https://github.com/moorara))
+  - LR parsing conflict resolution [#269](https://github.com/moorara/algo/pull/269) ([moorara](https://github.com/moorara))
+  - Group error message for conflicts in LR parsing [#268](https://github.com/moorara/algo/pull/268) ([moorara](https://github.com/moorara))
+  - Update golang.org/x/exp digest to e0ece0d [#265](https://github.com/moorara/algo/pull/265) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Refactor LR package [#267](https://github.com/moorara/algo/pull/267) ([moorara](https://github.com/moorara))
+
+
 ## [v0.10.5](https://github.com/moorara/algo/tree/v0.10.5) (2025-01-28)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.10.4...v0.10.5)
