@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.10.7](https://github.com/moorara/algo/tree/v0.10.7) (2025-02-02)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.10.6...v0.10.7)
+
+**Merged Changes:**
+
+  - Remove internal imports from parser examples [#272](https://github.com/moorara/algo/pull/272) ([moorara](https://github.com/moorara))
+
+
 ## [v0.10.6](https://github.com/moorara/algo/tree/v0.10.6) (2025-02-02)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.10.5...v0.10.6)
