@@ -18,8 +18,8 @@ import (
 
 // New creates a new Canonical LR parser for a given context-free grammar (CFG).
 // It requires a lexer for lexical analysis, which reads the input tokens (terminal symbols).
-func New(L lexer.Lexer, G *grammar.CFG) (*lr.Parser, error) {
-	T, err := BuildParsingTable(G)
+func New(L lexer.Lexer, G *grammar.CFG, precedences lr.PrecedenceLevels) (*lr.Parser, error) {
+	T, err := BuildParsingTable(G, precedences)
 	if err != nil {
 		return nil, &parser.ParseError{
 			Cause: err,

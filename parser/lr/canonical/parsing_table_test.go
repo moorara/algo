@@ -16,17 +16,20 @@ func TestBuildParsingTable(t *testing.T) {
 	tests := []struct {
 		name                 string
 		G                    *grammar.CFG
+		precedences          lr.PrecedenceLevels
 		expectedTable        *lr.ParsingTable
 		expectedErrorStrings []string
 	}{
 		{
 			name:          "S→CC",
 			G:             parsertest.Grammars[1],
+			precedences:   lr.PrecedenceLevels{},
 			expectedTable: pt[0],
 		},
 		{
-			name: "E→E+E",
-			G:    parsertest.Grammars[4],
+			name:        "E→E+E",
+			G:           parsertest.Grammars[4],
+			precedences: lr.PrecedenceLevels{},
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
 				`Cause:      Multiple conflicts in the parsing table:`,
@@ -50,7 +53,7 @@ func TestBuildParsingTable(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.G.Verify())
-			table, err := BuildParsingTable(tc.G)
+			table, err := BuildParsingTable(tc.G, tc.precedences)
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)

@@ -15,7 +15,7 @@ import (
 )
 
 // NewParsingTable creates an empty parsing table for an LR parser.
-func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal) *ParsingTable {
+func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals []grammar.NonTerminal, precedences PrecedenceLevels) *ParsingTable {
 	opts := symboltable.HashOpts{}
 
 	actions := symboltable.NewQuadraticHashTable(
@@ -40,6 +40,7 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 		states:       states,
 		terminals:    terminals,
 		nonTerminals: nonTerminals,
+		precedences:  precedences,
 		actions:      actions,
 		gotos:        gotos,
 	}
@@ -50,6 +51,7 @@ type ParsingTable struct {
 	states       []State
 	terminals    []grammar.Terminal
 	nonTerminals []grammar.NonTerminal
+	precedences  PrecedenceLevels
 	actions      symboltable.SymbolTable[State, symboltable.SymbolTable[grammar.Terminal, set.Set[*Action]]]
 	gotos        symboltable.SymbolTable[State, symboltable.SymbolTable[grammar.NonTerminal, State]]
 }
@@ -166,29 +168,82 @@ func (t *ParsingTable) SetGOTO(s State, A grammar.NonTerminal, next State) {
 	row.Put(A, next)
 }
 
-// Conflicts checks the parsing table for any conflicts between actions.
+// ResolveConflicts checks the parsing table for any conflicts between actions.
 // A conflict occurs when multiple actions are assigned to the same state and terminal symbol.
 // Conflicts arise when the grammar is ambiguous.
-// If any conflicts are found, it returns an error with detailed descriptions of the conflicts.
-func (t *ParsingTable) Conflicts() error {
+//
+// If conflicts are found, this method first attempts to resolve them using the specified precedence levels.
+// The action with the highest precedence replaces all conflicting actions in the table entry.
+//
+// If a conflict cannot be resolved, a detailed error describing the conflict is created and accumulated.
+func (t *ParsingTable) ResolveConflicts() error {
+	if err := t.precedences.Validate(); err != nil {
+		return err
+	}
+
 	var errs AggregatedConflictError
 
 	// Check for ACTION conflicts.
 	for _, s := range t.states {
 		for _, a := range t.terminals {
-			if actions, ok := t.getActions(s, a); ok {
-				if actions.Size() > 1 {
-					errs = append(errs, &ConflictError{
-						State:    s,
-						Terminal: a,
-						Actions:  actions,
-					})
-				}
+			actions, ok := t.getActions(s, a)
+			if !ok || actions.Size() <= 1 {
+				continue
 			}
+
+			// Try resolving the conflict.
+			resolution, err := t.resolveConflict(a, actions)
+			if err == nil {
+				actions.RemoveAll()
+				actions.Add(resolution)
+				continue
+			}
+
+			errs = append(errs, &ConflictError{
+				State:    s,
+				Terminal: a,
+				Actions:  actions,
+			})
 		}
 	}
 
 	return errs.ErrorOrNil()
+}
+
+// resolveConflict resolves a conflict for the ACTION[s,a] entry by choosing one action
+// from a set of conflicting actions, based on the precedence levels specified for the grammar.
+func (t *ParsingTable) resolveConflict(a grammar.Terminal, actions set.Set[*Action]) (*Action, error) {
+	pairs := make([]*ActionHandlePair, 0, actions.Size())
+
+	for action := range actions.All() {
+		var handle *PrecedenceHandle
+		switch action.Type {
+		case SHIFT:
+			handle = PrecedenceHandleForTerminal(a)
+		case REDUCE:
+			handle = PrecedenceHandleForProduction(action.Production)
+		}
+
+		pairs = append(pairs, &ActionHandlePair{
+			Action: action,
+			Handle: handle,
+		})
+	}
+
+	// Find the maximum pair, representing the action with highest precedence.
+	max := pairs[0]
+	for _, pair := range pairs {
+		cmp, err := t.precedences.Compare(pair, max)
+		if err != nil {
+			return nil, fmt.Errorf("cannot determine precedence: %s", err)
+		}
+
+		if cmp > 0 {
+			max = pair
+		}
+	}
+
+	return max.Action, nil
 }
 
 // ACTION looks up and returns the action for state s and terminal a.

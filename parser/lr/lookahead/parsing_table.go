@@ -16,26 +16,26 @@ import (
 )
 
 // BuildParsingTable constructs a parsing table for an LALR parser.
-func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
+func BuildParsingTable(G *grammar.CFG, precedences lr.PrecedenceLevels) (*lr.ParsingTable, error) {
 	/*
 	 * INPUT:  An augmented grammar G′.
 	 * OUTPUT: The LALR parsing table functions ACTION and GOTO for G′.
 	 */
 
-	H := lr.NewGrammarWithLR1Kernel(G, nil)
+	G1 := lr.NewGrammarWithLR1Kernel(G)
 
 	K := ComputeLALR1Kernels(G) // 1. Construct the kernels of the LALR(1) collection of sets of items for G′.
 	S := lr.BuildStateMap(K)    // Map sets of LALR(1) items to state numbers.
 
-	terminals := H.OrderTerminals()
-	_, _, nonTerminals := H.OrderNonTerminals()
-	table := lr.NewParsingTable(S.States(), terminals, nonTerminals)
+	terminals := G1.OrderTerminals()
+	_, _, nonTerminals := G1.OrderNonTerminals()
+	table := lr.NewParsingTable(S.States(), terminals, nonTerminals, precedences)
 
 	// 2. State i is constructed from I.
 	for i, I := range S.All() {
 		// The parsing action for state i is determined as follows:
 
-		for item := range H.CLOSURE(I).All() {
+		for item := range G1.CLOSURE(I).All() {
 			item := item.(*lr.Item1)
 
 			// If "A → α•aβ, b" is in Iᵢ and GOTO(Iᵢ,a) = Iⱼ (a must be a terminal)
@@ -47,7 +47,7 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 					// Let K be the union of all item sets that have the same core as GOTO(I₁, X). Then, GOTO(J, X) = K.
 					// This means that the regular GOTO function returns an item set whose core matches one of the LALR(1) item sets, but it may have missing lookaheads.
 					// Therefore, to find K, we need to identify an item set whose core is a superset of the set returned by the regular GOTO function.
-					J := H.GOTO(I, a)
+					J := G1.GOTO(I, a)
 					j := findSuperset(S, J)
 
 					// Set ACTION[i,a] to SHIFT j
@@ -83,15 +83,15 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 
 		// 3. The goto transitions for state i are constructed for all non-terminals A using the rule:
 		// If GOTO(Iᵢ,A) = Iⱼ
-		for A := range H.NonTerminals.All() {
-			if !A.Equal(H.Start) {
+		for A := range G1.NonTerminals.All() {
+			if !A.Equal(G1.Start) {
 				// J is the union of multiple sets of LR(1) items (J = I₁ ∪ I₂ ∪ ... ∪ Iₖ).
 				// By definition, I₁, I₂, ..., Iₖ all share the same core, which consists of the production and dot positions, excluding the lookahead.
 				// The cores of GOTO(I₁, X), GOTO(I₂, X), ..., GOTO(Iₖ, X) are also the same because the sets I₁, I₂, ..., Iₖ have identical cores.
 				// Let K be the union of all item sets that have the same core as GOTO(I₁, X). Then, GOTO(J, X) = K.
 				// This means that the regular GOTO function returns an item set whose core matches one of the LALR(1) item sets, but it may have missing lookaheads.
 				// Therefore, to find K, we need to identify an item set whose core is a superset of the set returned by the regular GOTO function.
-				J := H.GOTO(I, A)
+				J := G1.GOTO(I, A)
 				j := findSuperset(S, J)
 
 				// Set GOTO[i,A] = j
@@ -104,7 +104,12 @@ func BuildParsingTable(G *grammar.CFG) (*lr.ParsingTable, error) {
 
 	// 5. The initial state of the parser is the one constructed from the set of items containing "S′ → •S, $".
 
-	return table, table.Conflicts()
+	// Try resolving any conflicts in the ACTION parsing table.
+	if err := table.ResolveConflicts(); err != nil {
+		return table, err
+	}
+
+	return table, nil
 }
 
 // ComputeLALR1Kernels computes and returns the kernels of the LALR(1) collection of sets of items for a context-free grammar.
@@ -144,10 +149,10 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 	 *      We continue making passes over the kernel items until no more new lookaheads are propagated.
 	 */
 
-	H0 := lr.NewGrammarWithLR0Kernel(G, nil)
-	H1 := lr.NewGrammarWithLR1Kernel(G, nil)
+	G0 := lr.NewGrammarWithLR0Kernel(G)
+	G1 := lr.NewGrammarWithLR1Kernel(G)
 
-	K0 := H0.Canonical()       // Construct the kernels of the sets of LR(0) items for G′.
+	K0 := G0.Canonical()       // Construct the kernels of the sets of LR(0) items for G′.
 	S0 := lr.BuildStateMap(K0) // Map Kernel sets of LR(0) items to state numbers.
 
 	propagations := newPropagationTable(S0) // This table memoize which items propagate their lookaheads to which other items.
@@ -174,7 +179,7 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 			from := &scopedItem{ItemSet: s, Item: i}
 
 			// J = CLOSURE({[A → α.β, $]})
-			J := H1.CLOSURE(
+			J := G1.CLOSURE(
 				lr.NewItemSet(
 					item.(*lr.Item0).Item1(grammar.Endmarker),
 				),
@@ -182,7 +187,7 @@ func ComputeLALR1Kernels(G *grammar.CFG) lr.ItemSetCollection {
 
 			for j := range J.All() {
 				if X, ok := j.DotSymbol(); ok {
-					nextI := H0.GOTO(I, X) // GOTO(I,X)
+					nextI := G0.GOTO(I, X) // GOTO(I,X)
 					nextj, _ := j.Next()   // B → γX.δ
 
 					// Find B → γX.δ in GOTO(I,X)

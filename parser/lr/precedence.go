@@ -118,27 +118,29 @@ func (l PrecedenceLevels) Compare(lhs, rhs *ActionHandlePair) (int, error) {
 		return 0, nil
 	}
 
-	p, ok := l.Precedence(lhs.Handle)
-	if !ok {
-		return invalid, fmt.Errorf("no associativity and precedence specified: %s", lhs.Handle)
-	}
+	lp, lok := l.Precedence(lhs.Handle)
+	rp, rok := l.Precedence(rhs.Handle)
 
-	q, ok := l.Precedence(rhs.Handle)
-	if !ok {
+	switch {
+	case !lok && !rok:
+		return invalid, fmt.Errorf("no associativity and precedence specified: %s, %s", lhs.Handle, rhs.Handle)
+	case !lok:
+		return invalid, fmt.Errorf("no associativity and precedence specified: %s", lhs.Handle)
+	case !rok:
 		return invalid, fmt.Errorf("no associativity and precedence specified: %s", rhs.Handle)
 	}
 
 	// A lower index in the list indicates higher precedence.
-	if p.Order < q.Order {
+	if lp.Order < rp.Order {
 		return 1, nil
-	} else if p.Order > q.Order {
+	} else if lp.Order > rp.Order {
 		return -1, nil
 	}
 
 	// If the two handles have the same order, they also have the same associativity,
 	// and the caller should choose between competing actions based on their action types.
 
-	switch p.Associativity {
+	switch lp.Associativity {
 	case NONE:
 		if lhs.Handle.Equal(rhs.Handle) {
 			return invalid, fmt.Errorf("not associative: %s", lhs.Handle)

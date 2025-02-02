@@ -8,6 +8,7 @@ import (
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/internal/parsertest"
 	"github.com/moorara/algo/lexer"
+	"github.com/moorara/algo/parser/lr"
 )
 
 func TestNew(t *testing.T) {
@@ -15,18 +16,28 @@ func TestNew(t *testing.T) {
 		name                 string
 		L                    lexer.Lexer
 		G                    *grammar.CFG
+		precedences          lr.PrecedenceLevels
 		expectedErrorStrings []string
 	}{
 		{
-			name:                 "Success",
+			name:                 "S→L=R",
 			L:                    nil,
 			G:                    parsertest.Grammars[2],
+			precedences:          lr.PrecedenceLevels{},
 			expectedErrorStrings: nil,
 		},
 		{
-			name: "None_LALR(1)_Grammar",
-			L:    nil,
-			G:    parsertest.Grammars[4],
+			name:                 "E→E+T",
+			L:                    nil,
+			G:                    parsertest.Grammars[3],
+			precedences:          lr.PrecedenceLevels{},
+			expectedErrorStrings: nil,
+		},
+		{
+			name:        "E→E+E",
+			L:           nil,
+			G:           parsertest.Grammars[4],
+			precedences: lr.PrecedenceLevels{},
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
 				`Cause:      Multiple conflicts in the parsing table:`,
@@ -46,7 +57,7 @@ func TestNew(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.G.Verify())
-			p, err := New(tc.L, tc.G)
+			p, err := New(tc.L, tc.G, tc.precedences)
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NotNil(t, p)

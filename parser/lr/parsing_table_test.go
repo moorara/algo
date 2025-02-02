@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/set"
 )
 
 func TestNewParsingTable(t *testing.T) {
@@ -15,18 +16,20 @@ func TestNewParsingTable(t *testing.T) {
 		states       []State
 		terminals    []grammar.Terminal
 		nonTerminals []grammar.NonTerminal
+		precedences  PrecedenceLevels
 	}{
 		{
 			name:         "OK",
 			states:       []State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
 			terminals:    []grammar.Terminal{"+", "-", "*", "/", "(", ")", "id"},
 			nonTerminals: []grammar.NonTerminal{"E", "T", "F"},
+			precedences:  precedences[0],
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			pt := NewParsingTable(tc.states, tc.terminals, tc.nonTerminals)
+			pt := NewParsingTable(tc.states, tc.terminals, tc.nonTerminals, tc.precedences)
 
 			assert.NotNil(t, pt)
 			assert.NotNil(t, pt.actions)
@@ -191,7 +194,7 @@ func TestParsingTable_SetGOTO(t *testing.T) {
 	}
 }
 
-func TestParsingTable_Conflicts(t *testing.T) {
+func TestParsingTable_ResolveConflicts(t *testing.T) {
 	pt := getTestParsingTables()
 
 	tests := []struct {
@@ -200,13 +203,18 @@ func TestParsingTable_Conflicts(t *testing.T) {
 		expectedErrorStrings []string
 	}{
 		{
-			name:                 "NoError",
+			name:                 "NoConflict",
 			pt:                   pt[0],
 			expectedErrorStrings: nil,
 		},
 		{
-			name: "Error",
-			pt:   pt[1],
+			name:                 "ConflictsResolved",
+			pt:                   pt[1],
+			expectedErrorStrings: nil,
+		},
+		{
+			name: "ConflictsNotResolved",
+			pt:   pt[2],
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
 				`Cause:      Multiple conflicts in the parsing table:`,
@@ -225,7 +233,7 @@ func TestParsingTable_Conflicts(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.pt.Conflicts()
+			err := tc.pt.ResolveConflicts()
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)
@@ -235,6 +243,54 @@ func TestParsingTable_Conflicts(t *testing.T) {
 				for _, expectedErrorString := range tc.expectedErrorStrings {
 					assert.Contains(t, s, expectedErrorString)
 				}
+			}
+		})
+	}
+}
+
+func TestParsingTable_resolveConflict(t *testing.T) {
+	pt := getTestParsingTables()
+
+	tests := []struct {
+		name                   string
+		pt                     *ParsingTable
+		term                   grammar.Terminal
+		actions                set.Set[*Action]
+		expectedAction         *Action
+		expectedErrorSubstring string
+	}{
+		{
+			name: "Resolved",
+			pt:   pt[1],
+			term: "*",
+			actions: set.New(eqAction,
+				actions[0][2], // SHIFT 5
+				actions[0][4], // REDUCE E → E + E
+			),
+			expectedAction: actions[0][2], // SHIFT 5
+		},
+		{
+			name: "NotResolved",
+			pt:   pt[2],
+			term: "*",
+			actions: set.New(eqAction,
+				actions[0][2], // SHIFT 5
+				actions[0][4], // REDUCE E → E + E
+			),
+			expectedErrorSubstring: `cannot determine precedence: no associativity and precedence specified:`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			action, err := tc.pt.resolveConflict(tc.term, tc.actions)
+
+			if tc.expectedErrorSubstring == "" {
+				assert.True(t, action.Equal(tc.expectedAction))
+				assert.NoError(t, err)
+			} else {
+				assert.Nil(t, action)
+				assert.Contains(t, err.Error(), tc.expectedErrorSubstring)
 			}
 		})
 	}

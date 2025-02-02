@@ -39,7 +39,7 @@ func Example_parse() {
 		"E",
 	)
 
-	parser, err := canonical.New(l, G)
+	parser, err := canonical.New(l, G, lr.PrecedenceLevels{})
 	if err != nil {
 		panic(err)
 	}
@@ -87,7 +87,7 @@ func Example_parseAndBuildAST() {
 		"E",
 	)
 
-	parser, err := canonical.New(l, G)
+	parser, err := canonical.New(l, G, lr.PrecedenceLevels{})
 	if err != nil {
 		panic(err)
 	}
@@ -124,7 +124,7 @@ func Example_parseAndEvaluate() {
 		"E",
 	)
 
-	parser, err := simple.New(l, G)
+	parser, err := simple.New(l, G, lr.PrecedenceLevels{})
 	if err != nil {
 		panic(err)
 	}
@@ -180,7 +180,7 @@ func Example_buildParsingTable() {
 		"E",
 	)
 
-	table, err := canonical.BuildParsingTable(G)
+	table, err := canonical.BuildParsingTable(G, lr.PrecedenceLevels{})
 	if err != nil {
 		panic(err)
 	}
@@ -189,6 +189,13 @@ func Example_buildParsingTable() {
 }
 
 func Example_ambiguousGrammar() {
+	src := strings.NewReader(`foo + bar   * baz`)
+
+	l, err := parsertest.NewExprLexer(src)
+	if err != nil {
+		panic(err)
+	}
+
 	G := grammar.NewCFG(
 		[]grammar.Terminal{"+", "*", "(", ")", "id"},
 		[]grammar.NonTerminal{"E"},
@@ -201,7 +208,32 @@ func Example_ambiguousGrammar() {
 		"E",
 	)
 
-	if _, err := simple.BuildParsingTable(G); err != nil {
-		fmt.Println(err)
+	precedences := lr.PrecedenceLevels{
+		{
+			Associativity: lr.LEFT,
+			Handles: lr.NewPrecedenceHandles(
+				lr.PrecedenceHandleForTerminal("*"),
+				lr.PrecedenceHandleForTerminal("/"),
+			),
+		},
+		{
+			Associativity: lr.LEFT,
+			Handles: lr.NewPrecedenceHandles(
+				lr.PrecedenceHandleForTerminal("+"),
+				lr.PrecedenceHandleForTerminal("-"),
+			),
+		},
 	}
+
+	parser, err := simple.New(l, G, precedences)
+	if err != nil {
+		panic(err)
+	}
+
+	ast, err := parser.ParseAndBuildAST()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(ast.DOT())
 }

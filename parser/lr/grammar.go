@@ -41,17 +41,15 @@ func augment(G *grammar.CFG) *grammar.CFG {
 // Direct instantiation of the struct is discouraged.
 type Grammar struct {
 	*grammar.CFG
-	PrecedenceLevels
 	Automaton
 }
 
 // NewGrammarWithLR0 creates a new augmented grammar based on the complete sets of LR(0) items.
-func NewGrammarWithLR0(G *grammar.CFG, precedences PrecedenceLevels) *Grammar {
+func NewGrammarWithLR0(G *grammar.CFG) *Grammar {
 	G = augment(G)
 
 	return &Grammar{
-		CFG:              G,
-		PrecedenceLevels: precedences,
+		CFG: G,
 		Automaton: &automaton{
 			G: G,
 			calculator: &calculator0{
@@ -62,13 +60,12 @@ func NewGrammarWithLR0(G *grammar.CFG, precedences PrecedenceLevels) *Grammar {
 }
 
 // NewGrammarWithLR1 creates a new augmented grammar based on the complete sets of LR(1) items.
-func NewGrammarWithLR1(G *grammar.CFG, precedences PrecedenceLevels) *Grammar {
+func NewGrammarWithLR1(G *grammar.CFG) *Grammar {
 	G = augment(G)
 	FIRST := G.ComputeFIRST()
 
 	return &Grammar{
-		CFG:              G,
-		PrecedenceLevels: precedences,
+		CFG: G,
 		Automaton: &automaton{
 			G: G,
 			calculator: &calculator1{
@@ -80,12 +77,11 @@ func NewGrammarWithLR1(G *grammar.CFG, precedences PrecedenceLevels) *Grammar {
 }
 
 // NewGrammarWithLR0Kernel creates a new augmented grammar based on the kernel sets of LR(0) items.
-func NewGrammarWithLR0Kernel(G *grammar.CFG, precedences PrecedenceLevels) *Grammar {
+func NewGrammarWithLR0Kernel(G *grammar.CFG) *Grammar {
 	G = augment(G)
 
 	return &Grammar{
-		CFG:              G,
-		PrecedenceLevels: precedences,
+		CFG: G,
 		Automaton: &kernelAutomaton{
 			G: G,
 			calculator: &calculator0{
@@ -96,13 +92,12 @@ func NewGrammarWithLR0Kernel(G *grammar.CFG, precedences PrecedenceLevels) *Gram
 }
 
 // NewGrammarWithLR1Kernel creates a new augmented grammar based on the kernel sets of LR(1) items.
-func NewGrammarWithLR1Kernel(G *grammar.CFG, precedences PrecedenceLevels) *Grammar {
+func NewGrammarWithLR1Kernel(G *grammar.CFG) *Grammar {
 	G = augment(G)
 	FIRST := G.ComputeFIRST()
 
 	return &Grammar{
-		CFG:              G,
-		PrecedenceLevels: precedences,
+		CFG: G,
 		Automaton: &kernelAutomaton{
 			G: G,
 			calculator: &calculator1{

@@ -75,7 +75,7 @@ func TestActionHandlePair(t *testing.T) {
 			expectedString: `<SHIFT 5, "*">`,
 			equal: &ActionHandlePair{
 				Action: actions[1][5], // REDUCE rhs → rhs | rhs
-				Handle: handles[1][6], // |
+				Handle: handles[1][1], // |
 			},
 			expectedEqual: false,
 		},
@@ -92,17 +92,17 @@ func TestActionHandlePair(t *testing.T) {
 func TestPrecedenceLevels_Validate(t *testing.T) {
 	tests := []struct {
 		name          string
-		l             PrecedenceLevels
+		p             PrecedenceLevels
 		expectedError string
 	}{
 		{
 			name:          "Valid",
-			l:             levels[0],
+			p:             precedences[0],
 			expectedError: "",
 		},
 		{
 			name: "Invalid",
-			l: PrecedenceLevels{
+			p: PrecedenceLevels{
 				{
 					Associativity: RIGHT,
 					Handles:       NewPrecedenceHandles(handles[0][1]),
@@ -122,7 +122,7 @@ func TestPrecedenceLevels_Validate(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.l.Validate()
+			err := tc.p.Validate()
 
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
@@ -136,14 +136,14 @@ func TestPrecedenceLevels_Validate(t *testing.T) {
 func TestPrecedenceLevels_Precedence(t *testing.T) {
 	tests := []struct {
 		name               string
-		l                  PrecedenceLevels
+		p                  PrecedenceLevels
 		h                  *PrecedenceHandle
 		expectedOK         bool
 		expectedPrecedence *Precedence
 	}{
 		{
 			name:       "Found",
-			l:          levels[0],
+			p:          precedences[0],
 			h:          handles[0][0],
 			expectedOK: true,
 			expectedPrecedence: &Precedence{
@@ -153,7 +153,7 @@ func TestPrecedenceLevels_Precedence(t *testing.T) {
 		},
 		{
 			name:               "NotFound",
-			l:                  levels[0],
+			p:                  precedences[0],
 			h:                  handles[1][0],
 			expectedOK:         false,
 			expectedPrecedence: nil,
@@ -162,7 +162,7 @@ func TestPrecedenceLevels_Precedence(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			p, ok := tc.l.Precedence(tc.h)
+			p, ok := tc.p.Precedence(tc.h)
 
 			if tc.expectedOK {
 				assert.True(t, ok)
@@ -178,7 +178,7 @@ func TestPrecedenceLevels_Precedence(t *testing.T) {
 func TestPrecedenceLevels_Compare(t *testing.T) {
 	tests := []struct {
 		name            string
-		l               PrecedenceLevels
+		p               PrecedenceLevels
 		lhs             *ActionHandlePair
 		rhs             *ActionHandlePair
 		expectedCompare int
@@ -186,61 +186,74 @@ func TestPrecedenceLevels_Compare(t *testing.T) {
 	}{
 		{
 			name: "PairsEqual",
-			l:    levels[0],
+			p:    precedences[0],
 			lhs: &ActionHandlePair{
-				Action: actions[0][5], // REDUCE E → E + E
+				Action: actions[0][4], // REDUCE E → E + E
 				Handle: handles[0][0], // +
 			},
 			rhs: &ActionHandlePair{
-				Action: actions[0][5], // REDUCE E → E + E
+				Action: actions[0][4], // REDUCE E → E + E
 				Handle: handles[0][0], // +
 			},
 			expectedCompare: 0,
 		},
 		{
-			name: "FirstHandleNotFound",
-			l:    levels[0],
+			name: "BothHandlesNotFound",
+			p:    precedences[0],
 			lhs: &ActionHandlePair{
-				Action: actions[1][5], // REDUCE rhs → rhs | rhs
-				Handle: handles[1][6], // |
+				Action: actions[1][3], // SHIFT 27
+				Handle: handles[1][2], // (
 			},
 			rhs: &ActionHandlePair{
-				Action: actions[0][5], // REDUCE E → E + E
+				Action: actions[1][5], // REDUCE rhs → rhs | rhs
+				Handle: handles[1][1], // |
+			},
+			expectedError: `no associativity and precedence specified: "(", "|"`,
+		},
+		{
+			name: "FirstHandleNotFound",
+			p:    precedences[0],
+			lhs: &ActionHandlePair{
+				Action: actions[1][3], // SHIFT 27
+				Handle: handles[1][2], // (
+			},
+			rhs: &ActionHandlePair{
+				Action: actions[0][4], // REDUCE E → E + E
 				Handle: handles[0][0], // +
 			},
-			expectedError: `no associativity and precedence specified: "IDENT"`,
+			expectedError: `no associativity and precedence specified: "("`,
 		},
 		{
 			name: "SecondHandleNotFound",
-			l:    levels[0],
+			p:    precedences[0],
 			lhs: &ActionHandlePair{
 				Action: actions[0][2], // SHIFT 5
 				Handle: handles[0][2], // *
 			},
 			rhs: &ActionHandlePair{
 				Action: actions[1][5], // REDUCE rhs → rhs | rhs
-				Handle: handles[1][6], // |
+				Handle: handles[1][1], // |
 			},
-			expectedError: `no associativity and precedence specified: "IDENT"`,
+			expectedError: `no associativity and precedence specified: "|"`,
 		},
 		{
 			name: "FirstHandlePrecedes",
-			l:    levels[0],
+			p:    precedences[0],
 			lhs: &ActionHandlePair{
 				Action: actions[0][2], // SHIFT 5
 				Handle: handles[0][2], // *
 			},
 			rhs: &ActionHandlePair{
-				Action: actions[0][5], // REDUCE E → E + E
+				Action: actions[0][4], // REDUCE E → E + E
 				Handle: handles[0][0], // +
 			},
 			expectedCompare: 1,
 		},
 		{
 			name: "SecondHandlePrecedes",
-			l:    levels[0],
+			p:    precedences[0],
 			lhs: &ActionHandlePair{
-				Action: actions[0][5], // REDUCE E → E + E
+				Action: actions[0][4], // REDUCE E → E + E
 				Handle: handles[0][0], // +
 			},
 			rhs: &ActionHandlePair{
@@ -251,7 +264,7 @@ func TestPrecedenceLevels_Compare(t *testing.T) {
 		},
 		{
 			name: "SameLevel_NoneAssociative_SameHandle",
-			l:    levels[0],
+			p:    precedences[0],
 			lhs: &ActionHandlePair{
 				Action: &Action{Type: SHIFT},             // SHIFT
 				Handle: PrecedenceHandleForTerminal("<"), // <
@@ -264,7 +277,7 @@ func TestPrecedenceLevels_Compare(t *testing.T) {
 		},
 		{
 			name: "SameLevel_NoneAssociative_DistinctHandles",
-			l:    levels[0],
+			p:    precedences[0],
 			lhs: &ActionHandlePair{
 				Action: &Action{Type: SHIFT},             // SHIFT
 				Handle: PrecedenceHandleForTerminal(">"), // >
@@ -277,9 +290,9 @@ func TestPrecedenceLevels_Compare(t *testing.T) {
 		},
 		{
 			name: "SameLevel_LeftAssociative_FirstPrecedes",
-			l:    levels[0],
+			p:    precedences[0],
 			lhs: &ActionHandlePair{
-				Action: actions[0][5], // REDUCE E → E + E
+				Action: actions[0][4], // REDUCE E → E + E
 				Handle: handles[0][0], // +
 			},
 			rhs: &ActionHandlePair{
@@ -290,20 +303,20 @@ func TestPrecedenceLevels_Compare(t *testing.T) {
 		},
 		{
 			name: "SameLevel_LeftAssociative_SecondPrecedes",
-			l:    levels[0],
+			p:    precedences[0],
 			lhs: &ActionHandlePair{
 				Action: actions[0][3], // SHIFT 6
 				Handle: handles[0][0], // +
 			},
 			rhs: &ActionHandlePair{
-				Action: actions[0][5], // REDUCE E → E + E
+				Action: actions[0][4], // REDUCE E → E + E
 				Handle: handles[0][0], // +
 			},
 			expectedCompare: -1,
 		},
 		{
 			name: "SameLevel_RightAssociative_FirstPrecedes",
-			l:    levels[1],
+			p:    precedences[1],
 			lhs: &ActionHandlePair{
 				Action: actions[1][2], // SHIFT 13
 				Handle: handles[1][1], // |
@@ -316,7 +329,7 @@ func TestPrecedenceLevels_Compare(t *testing.T) {
 		},
 		{
 			name: "SameLevel_RightAssociative_SecondPrecedes",
-			l:    levels[1],
+			p:    precedences[1],
 			lhs: &ActionHandlePair{
 				Action: actions[1][5], // REDUCE rhs → rhs | rhs
 				Handle: handles[1][1], // |
@@ -329,7 +342,7 @@ func TestPrecedenceLevels_Compare(t *testing.T) {
 		},
 		{
 			name: "SameLevel_ReduceReduce_SameHandle",
-			l:    levels[1],
+			p:    precedences[1],
 			lhs: &ActionHandlePair{
 				Action: actions[1][6], // REDUCE rhs → IDENT
 				Handle: handles[1][6], // IDENT
@@ -344,7 +357,7 @@ func TestPrecedenceLevels_Compare(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cmp, err := tc.l.Compare(tc.lhs, tc.rhs)
+			cmp, err := tc.p.Compare(tc.lhs, tc.rhs)
 
 			if tc.expectedError == "" {
 				assert.Equal(t, tc.expectedCompare, cmp)
