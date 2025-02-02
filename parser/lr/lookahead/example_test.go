@@ -311,6 +311,7 @@ func Example_buildParsingTable() {
 	fmt.Println(table)
 }
 
+// You can copy-paste the output of this example into https://edotor.net to view the result.
 func Example_ambiguousGrammar() {
 	src := strings.NewReader(`foo + bar   * baz`)
 
