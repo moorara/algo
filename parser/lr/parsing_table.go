@@ -197,9 +197,7 @@ func (t *ParsingTable) Conflicts() error {
 func (t *ParsingTable) ACTION(s State, a grammar.Terminal) (*Action, error) {
 	actions, ok := t.getActions(s, a)
 	if !ok || actions.Size() == 0 {
-		return &Action{
-			Type: ERROR,
-		}, fmt.Errorf("no action exists in the parsing table for ACTION[%d, %s]", s, a)
+		return &Action{Type: ERROR}, fmt.Errorf("no action exists in the parsing table for ACTION[%d, %s]", s, a)
 	}
 
 	if actions.Size() > 1 {

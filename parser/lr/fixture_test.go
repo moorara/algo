@@ -208,89 +208,176 @@ var statemaps = []StateMap{
 	},
 }
 
-var actions = []*Action{
-	{ // 0
-		Type: ACCEPT,
-	},
-	{ // 1
-		Type: ERROR,
-	},
-	{ // 2
-		Type:  SHIFT,
-		State: 5,
-	},
-	{ // 3
-		Type:  SHIFT,
-		State: 7,
-	},
-	{ // 4
-		Type:  SHIFT,
-		State: 27,
-	},
-	{ // 5
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "E",
-			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("T")},
+var actions = [][]*Action{
+	{
+		{ // 0
+			Type: ACCEPT,
+		},
+		{ // 1
+			Type: ERROR,
+		},
+		{ // 2
+			Type:  SHIFT,
+			State: 5,
+		},
+		{ // 3
+			Type:  SHIFT,
+			State: 6,
+		},
+		{ // 4
+			Type: REDUCE,
+			Production: &grammar.Production{
+				Head: "E",
+				Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("E")},
+			},
+		},
+		{ // 5
+			Type: REDUCE,
+			Production: &grammar.Production{
+				Head: "E",
+				Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("*"), grammar.NonTerminal("E")},
+			},
 		},
 	},
-	{ // 6
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "F",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("id")},
+	{
+		{ // 0
+			Type: ACCEPT,
 		},
-	},
-	{ // 7
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "rhs",
-			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
+		{ // 1
+			Type: ERROR,
 		},
-	},
-	{ // 8
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "rhs",
-			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.Terminal("|"), grammar.NonTerminal("rhs")},
+		{ // 2
+			Type:  SHIFT,
+			State: 13,
 		},
-	},
-	{ // 9
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "rhs",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("IDENT")},
+		{ // 3
+			Type:  SHIFT,
+			State: 27,
 		},
-	},
-	{ // 10
-		Type: REDUCE,
-		Production: &grammar.Production{
-			Head: "nonterm",
-			Body: grammar.String[grammar.Symbol]{grammar.Terminal("IDENT")},
+		{ // 4
+			Type: REDUCE,
+			Production: &grammar.Production{
+				Head: "rhs",
+				Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
+			},
+		},
+		{ // 5
+			Type: REDUCE,
+			Production: &grammar.Production{
+				Head: "rhs",
+				Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.Terminal("|"), grammar.NonTerminal("rhs")},
+			},
+		},
+		{ // 6
+			Type: REDUCE,
+			Production: &grammar.Production{
+				Head: "rhs",
+				Body: grammar.String[grammar.Symbol]{grammar.Terminal("IDENT")},
+			},
+		},
+		{ // 7
+			Type: REDUCE,
+			Production: &grammar.Production{
+				Head: "nonterm",
+				Body: grammar.String[grammar.Symbol]{grammar.Terminal("IDENT")},
+			},
 		},
 	},
 }
 
-var handles = []*PrecedenceHandle{
-	{Terminal: TerminalPtr("=")},
-	{Terminal: TerminalPtr("|")},
-	{Terminal: TerminalPtr("(")},
-	{Terminal: TerminalPtr("[")},
-	{Terminal: TerminalPtr("{")},
-	{Terminal: TerminalPtr("{{")},
-	{Terminal: TerminalPtr("IDENT")},
-	{Terminal: TerminalPtr("TOKEN")},
-	{Terminal: TerminalPtr("STRING")},
+var handles = [][]*PrecedenceHandle{
 	{
-		Production: &grammar.Production{
-			Head: "rhs",
-			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
-		},
+		{Terminal: TerminalPtr("+")}, // 0
+		{Terminal: TerminalPtr("-")}, // 1
+		{Terminal: TerminalPtr("*")}, // 2
+		{Terminal: TerminalPtr("/")}, // 3
+		{Production: &grammar.Production{
+			Head: "E",
+			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("+"), grammar.NonTerminal("E")},
+		}},
+		{Production: &grammar.Production{
+			Head: "E",
+			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("E"), grammar.Terminal("*"), grammar.NonTerminal("E")},
+		}},
 	},
 	{
-		Production: &grammar.Production{
+		{Terminal: TerminalPtr("=")},      // 0
+		{Terminal: TerminalPtr("|")},      // 1
+		{Terminal: TerminalPtr("(")},      // 2
+		{Terminal: TerminalPtr("[")},      // 3
+		{Terminal: TerminalPtr("{")},      // 4
+		{Terminal: TerminalPtr("{{")},     // 5
+		{Terminal: TerminalPtr("IDENT")},  // 6
+		{Terminal: TerminalPtr("TOKEN")},  // 7
+		{Terminal: TerminalPtr("STRING")}, // 8
+		{Production: &grammar.Production{
+			Head: "rhs",
+			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
+		}},
+		{Production: &grammar.Production{
 			Head: "rhs",
 			Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.Terminal("|"), grammar.NonTerminal("rhs")},
+		}},
+	},
+}
+
+var levels = []PrecedenceLevels{
+	{ // 0
+		{
+			Associativity: LEFT,
+			Handles: NewPrecedenceHandles(
+				PrecedenceHandleForTerminal("*"),
+				PrecedenceHandleForTerminal("/"),
+			),
+		},
+		{
+			Associativity: LEFT,
+			Handles: NewPrecedenceHandles(
+				PrecedenceHandleForTerminal("+"),
+				PrecedenceHandleForTerminal("-"),
+			),
+		},
+		{
+			Associativity: NONE,
+			Handles: NewPrecedenceHandles(
+				PrecedenceHandleForTerminal("<"),
+				PrecedenceHandleForTerminal(">"),
+			),
+		},
+	},
+	{ // 1
+		{
+			Associativity: LEFT,
+			Handles: NewPrecedenceHandles(
+				PrecedenceHandleForProduction(&grammar.Production{
+					Head: "rhs",
+					Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
+				}),
+			),
+		},
+		{
+			Associativity: LEFT,
+			Handles: NewPrecedenceHandles(
+				PrecedenceHandleForTerminal("("),
+				PrecedenceHandleForTerminal("["),
+				PrecedenceHandleForTerminal("{"),
+				PrecedenceHandleForTerminal("{{"),
+				PrecedenceHandleForTerminal("IDENT"),
+				PrecedenceHandleForTerminal("TOKEN"),
+				PrecedenceHandleForTerminal("STRING"),
+			),
+		},
+		{
+			Associativity: RIGHT,
+			Handles: NewPrecedenceHandles(
+				PrecedenceHandleForTerminal("|"),
+			),
+		},
+		{
+			Associativity: NONE,
+			Handles: NewPrecedenceHandles(
+				PrecedenceHandleForTerminal("="),
+			),
 		},
 	},
 }

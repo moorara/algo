@@ -104,25 +104,9 @@ func (e *ConflictError) handles() *precedenceHandleGroup {
 	for a := range e.Actions.All() {
 		switch a.Type {
 		case SHIFT:
-			dedup.shifts.Add(&PrecedenceHandle{
-				Terminal: &e.Terminal,
-			})
-
+			dedup.shifts.Add(PrecedenceHandleForTerminal(e.Terminal))
 		case REDUCE:
-			first, ok := generic.FirstMatch(a.Production.Body, func(s grammar.Symbol) bool {
-				return s.IsTerminal()
-			})
-
-			if ok {
-				term := first.(grammar.Terminal)
-				dedup.reduces.Add(&PrecedenceHandle{
-					Terminal: &term,
-				})
-			} else {
-				dedup.reduces.Add(&PrecedenceHandle{
-					Production: a.Production,
-				})
-			}
+			dedup.reduces.Add(PrecedenceHandleForProduction(a.Production))
 		}
 	}
 

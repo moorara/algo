@@ -21,7 +21,7 @@ func TestConflictError(t *testing.T) {
 			e: &ConflictError{
 				State:    2,
 				Terminal: "(",
-				Actions:  set.New(eqAction, actions[4], actions[8]),
+				Actions:  set.New(eqAction, actions[1][3], actions[1][5]),
 			},
 			expectedIsShiftReduce:  true,
 			expectedIsReduceReduce: false,
@@ -42,7 +42,7 @@ func TestConflictError(t *testing.T) {
 			e: &ConflictError{
 				State:    40,
 				Terminal: ";",
-				Actions:  set.New(eqAction, actions[9], actions[10]),
+				Actions:  set.New(eqAction, actions[1][6], actions[1][7]),
 			},
 			expectedIsShiftReduce:  false,
 			expectedIsReduceReduce: true,
@@ -76,7 +76,6 @@ func TestAggregatedConflictError_ErrorOrNil(t *testing.T) {
 		e             AggregatedConflictError
 		expectedError error
 	}{
-
 		{
 			name:          "Nil",
 			e:             nil,
@@ -138,7 +137,7 @@ func TestAggregatedConflictError_Error(t *testing.T) {
 				&ConflictError{
 					State:    2,
 					Terminal: "(",
-					Actions:  set.New(eqAction, actions[4], actions[8]),
+					Actions:  set.New(eqAction, actions[1][3], actions[1][5]),
 				},
 			},
 			expectedErrorStrings: []string{
@@ -159,12 +158,12 @@ func TestAggregatedConflictError_Error(t *testing.T) {
 				&ConflictError{
 					State:    2,
 					Terminal: "(",
-					Actions:  set.New(eqAction, actions[4], actions[8]),
+					Actions:  set.New(eqAction, actions[1][3], actions[1][5]),
 				},
 				&ConflictError{
 					State:    19,
 					Terminal: "(",
-					Actions:  set.New(eqAction, actions[4], actions[7]),
+					Actions:  set.New(eqAction, actions[1][3], actions[1][4]),
 				},
 			},
 			expectedErrorStrings: []string{
@@ -248,21 +247,21 @@ func TestPrecedenceHandleGroup(t *testing.T) {
 			name: "ShiftReduce",
 			g: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[1],
+					handles[1][1],
 				),
 				shifts: NewPrecedenceHandles(
-					handles[2],
-					handles[3],
-					handles[4],
-					handles[5],
+					handles[1][2],
+					handles[1][3],
+					handles[1][4],
+					handles[1][5],
 				),
 			},
 			expectedUnion: NewPrecedenceHandles(
-				handles[1],
-				handles[2],
-				handles[3],
-				handles[4],
-				handles[5],
+				handles[1][1],
+				handles[1][2],
+				handles[1][3],
+				handles[1][4],
+				handles[1][5],
 			),
 			expectedString: `"|" vs. "(", "[", "{", "{{"`,
 		},
@@ -270,14 +269,14 @@ func TestPrecedenceHandleGroup(t *testing.T) {
 			name: "ReduceReduce",
 			g: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[9],
-					handles[10],
+					handles[1][9],
+					handles[1][10],
 				),
 				shifts: NewPrecedenceHandles(),
 			},
 			expectedUnion: NewPrecedenceHandles(
-				handles[9],
-				handles[10],
+				handles[1][9],
+				handles[1][10],
 			),
 			expectedString: `rhs = rhs "|" rhs vs. rhs = rhs rhs`,
 		},
@@ -302,24 +301,24 @@ func TestEqPrecedenceHandleGroup(t *testing.T) {
 			name: "Equal",
 			lhs: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[1],
+					handles[1][1],
 				),
 				shifts: NewPrecedenceHandles(
-					handles[2],
-					handles[3],
-					handles[4],
-					handles[5],
+					handles[1][2],
+					handles[1][3],
+					handles[1][4],
+					handles[1][5],
 				),
 			},
 			rhs: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[1],
+					handles[1][1],
 				),
 				shifts: NewPrecedenceHandles(
-					handles[2],
-					handles[3],
-					handles[4],
-					handles[5],
+					handles[1][2],
+					handles[1][3],
+					handles[1][4],
+					handles[1][5],
 				),
 			},
 			expectedEqual: true,
@@ -328,19 +327,19 @@ func TestEqPrecedenceHandleGroup(t *testing.T) {
 			name: "NotEqual",
 			lhs: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[1],
+					handles[1][1],
 				),
 				shifts: NewPrecedenceHandles(
-					handles[2],
-					handles[3],
-					handles[4],
-					handles[5],
+					handles[1][2],
+					handles[1][3],
+					handles[1][4],
+					handles[1][5],
 				),
 			},
 			rhs: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[9],
-					handles[10],
+					handles[1][9],
+					handles[1][10],
 				),
 				shifts: NewPrecedenceHandles(),
 			},
@@ -366,24 +365,24 @@ func TestCmpPrecedenceHandleGroup(t *testing.T) {
 			name: "ByReduces",
 			lhs: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[9],
+					handles[1][9],
 				),
 				shifts: NewPrecedenceHandles(
-					handles[2],
-					handles[3],
-					handles[4],
-					handles[5],
+					handles[1][2],
+					handles[1][3],
+					handles[1][4],
+					handles[1][5],
 				),
 			},
 			rhs: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[10],
+					handles[1][10],
 				),
 				shifts: NewPrecedenceHandles(
-					handles[2],
-					handles[3],
-					handles[4],
-					handles[5],
+					handles[1][2],
+					handles[1][3],
+					handles[1][4],
+					handles[1][5],
 				),
 			},
 			expectedCompare: 1,
@@ -392,23 +391,23 @@ func TestCmpPrecedenceHandleGroup(t *testing.T) {
 			name: "ByShifts",
 			lhs: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[1],
+					handles[1][1],
 				),
 				shifts: NewPrecedenceHandles(
-					handles[2],
-					handles[3],
-					handles[4],
-					handles[5],
+					handles[1][2],
+					handles[1][3],
+					handles[1][4],
+					handles[1][5],
 				),
 			},
 			rhs: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[1],
+					handles[1][1],
 				),
 				shifts: NewPrecedenceHandles(
-					handles[6],
-					handles[7],
-					handles[8],
+					handles[1][6],
+					handles[1][7],
+					handles[1][8],
 				),
 			},
 			expectedCompare: 1,
@@ -417,24 +416,24 @@ func TestCmpPrecedenceHandleGroup(t *testing.T) {
 			name: "Equal",
 			lhs: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[1],
+					handles[1][1],
 				),
 				shifts: NewPrecedenceHandles(
-					handles[2],
-					handles[3],
-					handles[4],
-					handles[5],
+					handles[1][2],
+					handles[1][3],
+					handles[1][4],
+					handles[1][5],
 				),
 			},
 			rhs: &precedenceHandleGroup{
 				reduces: NewPrecedenceHandles(
-					handles[1],
+					handles[1][1],
 				),
 				shifts: NewPrecedenceHandles(
-					handles[2],
-					handles[3],
-					handles[4],
-					handles[5],
+					handles[1][2],
+					handles[1][3],
+					handles[1][4],
+					handles[1][5],
 				),
 			},
 			expectedCompare: 0,
