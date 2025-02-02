@@ -10,70 +10,6 @@ import (
 	"github.com/moorara/algo/sort"
 )
 
-var (
-	eqPrecedenceHandle = func(lhs, rhs *PrecedenceHandle) bool {
-		return lhs.Equal(rhs)
-	}
-)
-
-// PrecedenceHandle represents either a terminal symbol or a production rule
-// in the context of determining precedence for conflict resolution.
-type PrecedenceHandle struct {
-	*grammar.Terminal
-	*grammar.Production
-}
-
-// IsTerminal returns true if the handle represents a terminal symbol.
-func (h *PrecedenceHandle) IsTerminal() bool {
-	return h.Terminal != nil && h.Production == nil
-}
-
-// IsProduction returns true if the handle represents a production rule.
-func (h *PrecedenceHandle) IsProduction() bool {
-	return h.Terminal == nil && h.Production != nil
-}
-
-// String returns a string representation of the handle.
-func (h *PrecedenceHandle) String() string {
-	if h.IsTerminal() {
-		return h.Terminal.String()
-	} else if h.IsProduction() {
-		return fmt.Sprintf("%s = %s", h.Production.Head, h.Production.Body)
-	}
-
-	panic("PrecedenceHandle.String: invalid configuration")
-}
-
-// Equal determines whether or not two handles are the same.
-func (h *PrecedenceHandle) Equal(rhs *PrecedenceHandle) bool {
-	switch {
-	case h.IsTerminal() && rhs.IsTerminal():
-		return grammar.EqTerminal(*h.Terminal, *rhs.Terminal)
-	case h.IsProduction() && rhs.IsProduction():
-		return grammar.EqProduction(h.Production, rhs.Production)
-
-	}
-
-	return false
-}
-
-// cmpPrecedenceHandle compares two handles and establishes an order between them.
-// Terminal handles come before Production handles.
-func cmpPrecedenceHandle(lhs, rhs *PrecedenceHandle) int {
-	switch {
-	case lhs.IsTerminal() && rhs.IsProduction():
-		return -1
-	case lhs.IsProduction() && rhs.IsTerminal():
-		return 1
-	case lhs.IsTerminal() && rhs.IsTerminal():
-		return grammar.CmpTerminal(*lhs.Terminal, *rhs.Terminal)
-	case lhs.IsProduction() && rhs.IsProduction():
-		return grammar.CmpProduction(lhs.Production, rhs.Production)
-	}
-
-	panic("cmpPrecedenceHandle: invalid configuration")
-}
-
 // ConflictError represents a conflict in an LR parsing table.
 // A conflict occurs when the grammar is ambiguous, resulting in multiple actions
 // being associated with a specific state s and terminal a in the ACTION table.
@@ -103,42 +39,6 @@ func (e *ConflictError) IsReduceReduce() bool {
 		e.Actions.AllMatch(func(a *Action) bool {
 			return a.Type == REDUCE
 		})
-}
-
-// Handles generates a set of precedence handles derived from the conflict actions.
-// A precedence handle is either a terminal symbol or a production rule that is used
-// to define associativity and precedence for resolving conflicts in the parsing table.
-// By specifying the associativity and precedence for these handles,
-// shift/reduce and reduce/reduce conflicts can be resolved.
-func (e *ConflictError) Handles() set.Set[*PrecedenceHandle] {
-	dedup := set.New(eqPrecedenceHandle)
-
-	for a := range e.Actions.All() {
-		switch a.Type {
-		case SHIFT:
-			dedup.Add(&PrecedenceHandle{
-				Terminal: &e.Terminal,
-			})
-
-		case REDUCE:
-			first, ok := generic.FirstMatch(a.Production.Body, func(s grammar.Symbol) bool {
-				return s.IsTerminal()
-			})
-
-			if ok {
-				term := first.(grammar.Terminal)
-				dedup.Add(&PrecedenceHandle{
-					Terminal: &term,
-				})
-			} else {
-				dedup.Add(&PrecedenceHandle{
-					Production: a.Production,
-				})
-			}
-		}
-	}
-
-	return dedup
 }
 
 // Error returns a detailed string representation of the conflict error.
@@ -175,20 +75,42 @@ func (e *ConflictError) Error() string {
 		}
 	}
 
-	handles := generic.Collect1(e.Handles().All())
-	sort.Insertion(handles, cmpPrecedenceHandle)
+	handles := e.handles()
+	union := handles.Union()
 
-	if len(handles) == 1 {
-		fmt.Fprintf(&b, "Resolution: Specify associativity for the %s in the grammar directives.\n", handles[0])
+	if union.Size() == 1 {
+		fmt.Fprintf(&b, "Resolution: Specify associativity for %s.\n", union)
 	} else {
-		b.WriteString("Resolution: Specify precedence for the following in the grammar directives:\n")
-		for _, handle := range handles {
-			fmt.Fprintf(&b, "              • %s\n", handle)
-		}
-		b.WriteString("            Terminals or Productions listed earlier in the directives will have higher precedence.\n")
+		b.WriteString("Resolution: Specify associativity and precedence for these Terminals/Productions:\n")
+		fmt.Fprintf(&b, "              • %s\n", handles)
+		b.WriteString("            Terminals/Productions listed earlier will have higher precedence.\n")
+		b.WriteString("            Terminals/Productions in the same line will have the same precedence.\n")
 	}
 
 	return b.String()
+}
+
+// handles generates a set of precedence handles derived from the conflict actions.
+// A precedence handle is either a terminal symbol or a production rule that is used
+// to define associativity and precedence for resolving conflicts in the parsing table.
+// By specifying the associativity and precedence for these handles,
+// shift/reduce and reduce/reduce conflicts can be resolved.
+func (e *ConflictError) handles() *precedenceHandleGroup {
+	dedup := &precedenceHandleGroup{
+		reduces: NewPrecedenceHandles(),
+		shifts:  NewPrecedenceHandles(),
+	}
+
+	for a := range e.Actions.All() {
+		switch a.Type {
+		case SHIFT:
+			dedup.shifts.Add(PrecedenceHandleForTerminal(e.Terminal))
+		case REDUCE:
+			dedup.reduces.Add(PrecedenceHandleForProduction(a.Production))
+		}
+	}
+
+	return dedup
 }
 
 // AggregatedConflictError represents a collection of conflict errors.
@@ -232,23 +154,36 @@ func (e AggregatedConflictError) Error() string {
 		}
 	}
 
-	set := set.New(eqPrecedenceHandle)
+	// Group handles by state.
+	handles := map[State]*precedenceHandleGroup{}
 	for _, err := range e {
-		set = set.Union(err.Handles())
-	}
+		s := err.State
+		h := err.handles()
 
-	handles := generic.Collect1(set.All())
-	sort.Insertion(handles, cmpPrecedenceHandle)
-
-	if len(handles) == 1 {
-		fmt.Fprintf(&b, "Resolution: Specify associativity for the %s in the grammar directives.\n", handles[0])
-	} else {
-		b.WriteString("Resolution: Specify precedence for the following in the grammar directives:\n")
-		for _, handle := range handles {
-			fmt.Fprintf(&b, "              • %s\n", handle)
+		if handles[s] == nil {
+			handles[s] = h
+		} else {
+			handles[s].reduces = handles[s].reduces.Union(h.reduces)
+			handles[s].shifts = handles[s].shifts.Union(h.shifts)
 		}
-		b.WriteString("            Terminals or Productions listed earlier in the directives will have higher precedence.\n")
 	}
+
+	// Dedup the groups.
+	dedup := set.New(eqPrecedenceHandleGroup)
+	for _, g := range handles {
+		dedup.Add(g)
+	}
+
+	// Sort the groups.
+	sorted := generic.Collect1(dedup.All())
+	sort.Quick(sorted, cmpPrecedenceHandleGroup)
+
+	b.WriteString("Resolution: Specify associativity and precedence for these Terminals/Productions:\n")
+	for _, group := range sorted {
+		fmt.Fprintf(&b, "              • %s\n", group)
+	}
+	b.WriteString("            Terminals/Productions listed earlier will have higher precedence.\n")
+	b.WriteString("            Terminals/Productions in the same line will have the same precedence.\n")
 
 	return b.String()
 }
@@ -267,4 +202,46 @@ func (e AggregatedConflictError) Unwrap() []error {
 	}
 
 	return errs
+}
+
+// precedenceHandleGroup is used for grouping related precendence handles.
+type precedenceHandleGroup struct {
+	reduces PrecedenceHandles
+	shifts  PrecedenceHandles
+}
+
+func (g *precedenceHandleGroup) Union() PrecedenceHandles {
+	return g.reduces.Union(g.shifts)
+}
+
+func (g *precedenceHandleGroup) String() string {
+	// Shift/Reduce
+	if g.shifts.Size() > 0 {
+		return fmt.Sprintf("%s vs. %s", g.reduces, g.shifts)
+	}
+
+	// Reduce/Reduce
+
+	handles := generic.Collect1(g.reduces.All())
+	sort.Insertion(handles, cmpPrecedenceHandle)
+
+	var b bytes.Buffer
+	for _, handle := range handles {
+		fmt.Fprintf(&b, "%s vs. ", handle)
+	}
+	b.Truncate(b.Len() - 5)
+
+	return b.String()
+}
+
+func eqPrecedenceHandleGroup(lhs, rhs *precedenceHandleGroup) bool {
+	return lhs.reduces.Equal(rhs.reduces) && lhs.shifts.Equal(rhs.shifts)
+}
+
+func cmpPrecedenceHandleGroup(lhs, rhs *precedenceHandleGroup) int {
+	if cmp := cmpPrecedenceHandles(lhs.reduces, rhs.reduces); cmp != 0 {
+		return cmp
+	}
+
+	return cmpPrecedenceHandles(lhs.shifts, rhs.shifts)
 }

@@ -203,7 +203,7 @@ func (s *set[T]) FirstMatch(p generic.Predicate1[T]) (T, bool) {
 }
 
 func (s *set[T]) SelectMatch(p generic.Predicate1[T]) generic.Collection1[T] {
-	newS := New[T](s.equal)
+	newS := s.CloneEmpty()
 
 	for _, m := range s.members {
 		if p(m) {
@@ -212,6 +212,21 @@ func (s *set[T]) SelectMatch(p generic.Predicate1[T]) generic.Collection1[T] {
 	}
 
 	return newS
+}
+
+func (s *set[T]) PartitionMatch(p generic.Predicate1[T]) (generic.Collection1[T], generic.Collection1[T]) {
+	matched := s.CloneEmpty()
+	unmatched := s.CloneEmpty()
+
+	for _, m := range s.members {
+		if p(m) {
+			matched.Add(m)
+		} else {
+			unmatched.Add(m)
+		}
+	}
+
+	return matched, unmatched
 }
 
 func (s *set[T]) IsSubset(superset Set[T]) bool {
@@ -247,10 +262,7 @@ func (s *set[T]) Union(sets ...Set[T]) Set[T] {
 }
 
 func (s *set[T]) Intersection(sets ...Set[T]) Set[T] {
-	t := &set[T]{
-		members: make([]T, 0),
-		equal:   s.equal,
-	}
+	t := s.CloneEmpty()
 
 	for _, m := range s.members {
 		isInAll := true
@@ -262,7 +274,7 @@ func (s *set[T]) Intersection(sets ...Set[T]) Set[T] {
 		}
 
 		if isInAll {
-			t.members = append(t.members, m)
+			t.Add(m)
 		}
 	}
 

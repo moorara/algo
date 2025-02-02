@@ -17,22 +17,26 @@ func TestBuildParsingTable(t *testing.T) {
 	tests := []struct {
 		name                 string
 		G                    *grammar.CFG
+		precedences          lr.PrecedenceLevels
 		expectedTable        *lr.ParsingTable
 		expectedErrorStrings []string
 	}{
 		{
 			name:          "S→L=R",
 			G:             parsertest.Grammars[2],
+			precedences:   lr.PrecedenceLevels{},
 			expectedTable: pt[0],
 		},
 		{
 			name:          "E→E+T",
 			G:             parsertest.Grammars[3],
+			precedences:   lr.PrecedenceLevels{},
 			expectedTable: pt[1],
 		},
 		{
-			name: "E→E+E",
-			G:    parsertest.Grammars[4],
+			name:        "E→E+E",
+			G:           parsertest.Grammars[4],
+			precedences: lr.PrecedenceLevels{},
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
 				`Cause:      Multiple conflicts in the parsing table:`,
@@ -40,10 +44,11 @@ func TestBuildParsingTable(t *testing.T) {
 				`              2. Shift/Reduce conflict in ACTION[2, "+"]`,
 				`              3. Shift/Reduce conflict in ACTION[3, "*"]`,
 				`              4. Shift/Reduce conflict in ACTION[3, "+"]`,
-				`Resolution: Specify precedence for the following in the grammar directives:`,
-				`              • "*"`,
-				`              • "+"`,
-				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
+				`Resolution: Specify associativity and precedence for these Terminals/Productions:`,
+				`              • "*" vs. "*", "+"`,
+				`              • "+" vs. "*", "+"`,
+				`            Terminals/Productions listed earlier will have higher precedence.`,
+				`            Terminals/Productions in the same line will have the same precedence.`,
 			},
 		},
 	}
@@ -51,7 +56,7 @@ func TestBuildParsingTable(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.G.Verify())
-			table, err := BuildParsingTable(tc.G)
+			table, err := BuildParsingTable(tc.G, tc.precedences)
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)

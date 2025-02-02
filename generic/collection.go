@@ -54,6 +54,13 @@ type (
 		// SelectMatch selects a subset of items from the collection that satisfy the given predicate.
 		// It returns a new collection containing the matching items, of the same type as the original collection.
 		SelectMatch(Predicate1[T]) Collection1[T]
+
+		// PartitionMatch partitions the items in the collection
+		// into two separate collections based on the provided predicate.
+		// The first collection contains the items that satisfy the predicate (matched items),
+		// while the second collection contains those that do not satisfy the predicate (unmatched items).
+		// Both collections are of the same type as the original collection.
+		PartitionMatch(Predicate1[T]) (Collection1[T], Collection1[T])
 	}
 
 	// Collection2 is a generic interface for a collection of key-values.
@@ -98,5 +105,12 @@ type (
 		// SelectMatch selects a subset of key-values from the collection that satisfy the given predicate.
 		// It returns a new collection containing the matching key-values, of the same type as the original collection.
 		SelectMatch(Predicate2[K, V]) Collection2[K, V]
+
+		// PartitionMatch partitions the key-values in the collection
+		// into two separate collections based on the provided predicate.
+		// The first collection contains the key-values that satisfy the predicate (matched key-values),
+		// while the second collection contains those that do not satisfy the predicate (unmatched key-values).
+		// Both collections are of the same type as the original collection.
+		PartitionMatch(Predicate2[K, V]) (Collection2[K, V], Collection2[K, V])
 	}
 )

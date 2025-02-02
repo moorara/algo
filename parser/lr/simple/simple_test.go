@@ -8,6 +8,7 @@ import (
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/internal/parsertest"
 	"github.com/moorara/algo/lexer"
+	"github.com/moorara/algo/parser/lr"
 )
 
 func TestNew(t *testing.T) {
@@ -15,18 +16,21 @@ func TestNew(t *testing.T) {
 		name                 string
 		L                    lexer.Lexer
 		G                    *grammar.CFG
+		precedences          lr.PrecedenceLevels
 		expectedErrorStrings []string
 	}{
 		{
-			name:                 "Success",
+			name:                 "E→E+T",
 			L:                    nil,
 			G:                    parsertest.Grammars[3],
+			precedences:          lr.PrecedenceLevels{},
 			expectedErrorStrings: nil,
 		},
 		{
-			name: "None_SLR(1)_Grammar",
-			L:    nil,
-			G:    parsertest.Grammars[5],
+			name:        "EBNF",
+			L:           nil,
+			G:           parsertest.Grammars[5],
+			precedences: lr.PrecedenceLevels{},
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
 				`Cause:      Multiple conflicts in the parsing table:`,
@@ -50,18 +54,12 @@ func TestNew(t *testing.T) {
 				`              18. Shift/Reduce conflict in ACTION[14, "|"]`,
 				`              19. Shift/Reduce conflict in ACTION[19, "IDENT"]`,
 				`              20. Shift/Reduce conflict in ACTION[19, "TOKEN"]`,
-				`Resolution: Specify precedence for the following in the grammar directives:`,
-				`              • "("`,
-				`              • "="`,
-				`              • "IDENT"`,
-				`              • "STRING"`,
-				`              • "TOKEN"`,
-				`              • "["`,
-				`              • "{"`,
-				`              • "{{"`,
-				`              • "|"`,
-				`              • rhs = rhs rhs`,
-				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
+				`Resolution: Specify associativity and precedence for these Terminals/Productions:`,
+				`              • "=" vs. "IDENT", "TOKEN"`,
+				`              • "|" vs. "(", "IDENT", "STRING", "TOKEN", "[", "{", "{{", "|"`,
+				`              • rhs = rhs rhs vs. "(", "IDENT", "STRING", "TOKEN", "[", "{", "{{", "|"`,
+				`            Terminals/Productions listed earlier will have higher precedence.`,
+				`            Terminals/Productions in the same line will have the same precedence.`,
 			},
 		},
 	}
@@ -69,7 +67,7 @@ func TestNew(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.G.Verify())
-			p, err := New(tc.L, tc.G)
+			p, err := New(tc.L, tc.G, tc.precedences)
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NotNil(t, p)

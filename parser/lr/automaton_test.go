@@ -9,200 +9,9 @@ import (
 	"github.com/moorara/algo/internal/parsertest"
 )
 
-func TestAugment(t *testing.T) {
-	tests := []struct {
-		name        string
-		G           *grammar.CFG
-		expectedCFG *grammar.CFG
-	}{
-		{
-			name: "OK",
-			G:    parsertest.Grammars[3],
-			expectedCFG: grammar.NewCFG(
-				[]grammar.Terminal{"+", "*", "(", ")", "id", grammar.Endmarker},
-				[]grammar.NonTerminal{"E′", "E", "T", "F"},
-				parsertest.Prods[3],
-				"E′",
-			),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.G.Verify())
-			augG := augment(tc.G)
-			assert.True(t, augG.Equal(tc.expectedCFG))
-		})
-	}
-}
-
-func TestCalculator0_G(t *testing.T) {
-	tests := []struct {
-		name string
-		c    *calculator0
-	}{
-		{
-			name: "OK",
-			c: &calculator0{
-				augG: augment(parsertest.Grammars[3]),
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.c.augG.Verify())
-			G := tc.c.G()
-
-			assert.True(t, G.Equal(tc.c.augG))
-		})
-	}
-}
-
-func TestCalculator0_Initial(t *testing.T) {
-	tests := []struct {
-		name            string
-		c               *calculator0
-		expectedInitial Item
-	}{
-		{
-			name: "OK",
-			c: &calculator0{
-				augG: augment(parsertest.Grammars[3]),
-			},
-			expectedInitial: &Item0{
-				Production: parsertest.Prods[3][0],
-				Start:      "E′",
-				Dot:        0,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.c.augG.Verify())
-			initial := tc.c.Initial()
-
-			assert.True(t, initial.Equal(tc.expectedInitial))
-		})
-	}
-}
-
-func TestCalculator0_CLOSURE(t *testing.T) {
-	tests := []struct {
-		name            string
-		c               *calculator0
-		I               ItemSet
-		expectedCLOSURE ItemSet
-	}{
-		{
-			name: "OK",
-			c: &calculator0{
-				augG: augment(parsertest.Grammars[3]),
-			},
-			I: NewItemSet(
-				&Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E
-			),
-			expectedCLOSURE: LR0ItemSets[0],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.c.augG.Verify())
-			J := tc.c.CLOSURE(tc.I)
-
-			assert.True(t, J.Equal(tc.expectedCLOSURE))
-		})
-	}
-}
-
-func TestCalculator1_G(t *testing.T) {
-	tests := []struct {
-		name string
-		c    *calculator1
-	}{
-		{
-			name: "OK",
-			c: &calculator1{
-				augG: augment(parsertest.Grammars[1]),
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.c.augG.Verify())
-			G := tc.c.G()
-
-			assert.True(t, G.Equal(tc.c.augG))
-		})
-	}
-}
-
-func TestCalculator1_Initial(t *testing.T) {
-	tests := []struct {
-		name            string
-		c               *calculator1
-		expectedInitial Item
-	}{
-		{
-			name: "OK",
-			c: &calculator1{
-				augG: augment(parsertest.Grammars[1]),
-			},
-			expectedInitial: &Item1{
-				Production: parsertest.Prods[1][0],
-				Start:      "S′",
-				Dot:        0,
-				Lookahead:  grammar.Endmarker,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.c.augG.Verify())
-			initial := tc.c.Initial()
-
-			assert.True(t, initial.Equal(tc.expectedInitial))
-		})
-	}
-}
-
-func TestCalculator1_CLOSURE(t *testing.T) {
-	g := augment(parsertest.Grammars[1])
-
-	tests := []struct {
-		name            string
-		c               *calculator1
-		I               ItemSet
-		expectedCLOSURE ItemSet
-	}{
-		{
-			name: "OK",
-			c: &calculator1{
-				augG:  g,
-				FIRST: g.ComputeFIRST(),
-			},
-			I: NewItemSet(
-				&Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
-			),
-			expectedCLOSURE: LR1ItemSets[0],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.c.augG.Verify())
-			J := tc.c.CLOSURE(tc.I)
-
-			assert.True(t, J.Equal(tc.expectedCLOSURE))
-		})
-	}
-}
-
 func TestAutomaton_GOTO(t *testing.T) {
+	G := augment(parsertest.Grammars[3])
+
 	tests := []struct {
 		name         string
 		a            *automaton
@@ -213,8 +22,9 @@ func TestAutomaton_GOTO(t *testing.T) {
 		{
 			name: `GOTO(I₀,"(")`,
 			a: &automaton{
+				G: G,
 				calculator: &calculator0{
-					augG: augment(parsertest.Grammars[3]),
+					G: G,
 				},
 			},
 			I:            LR0ItemSets[0],
@@ -232,6 +42,8 @@ func TestAutomaton_GOTO(t *testing.T) {
 }
 
 func TestAutomaton_Canonical(t *testing.T) {
+	G := augment(parsertest.Grammars[3])
+
 	tests := []struct {
 		name              string
 		a                 *automaton
@@ -240,8 +52,9 @@ func TestAutomaton_Canonical(t *testing.T) {
 		{
 			name: "OK",
 			a: &automaton{
+				G: G,
 				calculator: &calculator0{
-					augG: augment(parsertest.Grammars[3]),
+					G: G,
 				},
 			},
 			expectedCanonical: NewItemSetCollection(
@@ -269,54 +82,9 @@ func TestAutomaton_Canonical(t *testing.T) {
 	}
 }
 
-func TestNewLR0Automaton(t *testing.T) {
-	tests := []struct {
-		name string
-		G    *grammar.CFG
-	}{
-		{
-			name: "OK",
-			G:    parsertest.Grammars[3],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.G.Verify())
-			calc := NewLR0Automaton(tc.G)
-
-			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.(*automaton).calculator)
-			assert.NotEmpty(t, calc.(*automaton).calculator.(*calculator0).augG)
-		})
-	}
-}
-
-func TestNewLR1Automaton(t *testing.T) {
-	tests := []struct {
-		name string
-		G    *grammar.CFG
-	}{
-		{
-			name: "OK",
-			G:    parsertest.Grammars[3],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.G.Verify())
-			calc := NewLR1Automaton(tc.G)
-
-			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.(*automaton).calculator)
-			assert.NotEmpty(t, calc.(*automaton).calculator.(*calculator1).augG)
-			assert.NotNil(t, calc.(*automaton).calculator.(*calculator1).FIRST)
-		})
-	}
-}
-
 func TestKernelAutomaton_GOTO(t *testing.T) {
+	G := augment(parsertest.Grammars[3])
+
 	tests := []struct {
 		name         string
 		a            *kernelAutomaton
@@ -327,8 +95,9 @@ func TestKernelAutomaton_GOTO(t *testing.T) {
 		{
 			name: `GOTO(I₀,"(")`,
 			a: &kernelAutomaton{
+				G: G,
 				calculator: &calculator0{
-					augG: augment(parsertest.Grammars[3]),
+					G: G,
 				},
 			},
 			I: NewItemSet(
@@ -350,6 +119,8 @@ func TestKernelAutomaton_GOTO(t *testing.T) {
 }
 
 func TestKernelAutomaton_Canonical(t *testing.T) {
+	G := augment(parsertest.Grammars[3])
+
 	tests := []struct {
 		name              string
 		a                 *kernelAutomaton
@@ -358,8 +129,9 @@ func TestKernelAutomaton_Canonical(t *testing.T) {
 		{
 			name: "OK",
 			a: &kernelAutomaton{
+				G: G,
 				calculator: &calculator0{
-					augG: augment(parsertest.Grammars[3]),
+					G: G,
 				},
 			},
 			expectedCanonical: NewItemSetCollection(
@@ -415,49 +187,122 @@ func TestKernelAutomaton_Canonical(t *testing.T) {
 	}
 }
 
-func TestNewLR0KernelAutomaton(t *testing.T) {
+func TestCalculator0_Initial(t *testing.T) {
 	tests := []struct {
-		name string
-		G    *grammar.CFG
+		name            string
+		c               *calculator0
+		expectedInitial Item
 	}{
 		{
 			name: "OK",
-			G:    parsertest.Grammars[3],
+			c: &calculator0{
+				G: augment(parsertest.Grammars[3]),
+			},
+			expectedInitial: &Item0{
+				Production: parsertest.Prods[3][0],
+				Start:      "E′",
+				Dot:        0,
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.G.Verify())
-			calc := NewLR0KernelAutomaton(tc.G)
+			assert.NoError(t, tc.c.G.Verify())
+			initial := tc.c.Initial()
 
-			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.(*kernelAutomaton).calculator)
-			assert.NotEmpty(t, calc.(*kernelAutomaton).calculator.(*calculator0).augG)
+			assert.True(t, initial.Equal(tc.expectedInitial))
 		})
 	}
 }
 
-func TestNewLR1KernelAutomaton(t *testing.T) {
+func TestCalculator0_CLOSURE(t *testing.T) {
 	tests := []struct {
-		name string
-		G    *grammar.CFG
+		name            string
+		c               *calculator0
+		I               ItemSet
+		expectedCLOSURE ItemSet
 	}{
 		{
 			name: "OK",
-			G:    parsertest.Grammars[3],
+			c: &calculator0{
+				G: augment(parsertest.Grammars[3]),
+			},
+			I: NewItemSet(
+				&Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0}, // E′ → •E
+			),
+			expectedCLOSURE: LR0ItemSets[0],
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.NoError(t, tc.G.Verify())
-			calc := NewLR1KernelAutomaton(tc.G)
+			assert.NoError(t, tc.c.G.Verify())
+			J := tc.c.CLOSURE(tc.I)
 
-			assert.NotNil(t, calc)
-			assert.NotNil(t, calc.(*kernelAutomaton).calculator)
-			assert.NotEmpty(t, calc.(*kernelAutomaton).calculator.(*calculator1).augG)
-			assert.NotNil(t, calc.(*kernelAutomaton).calculator.(*calculator1).FIRST)
+			assert.True(t, J.Equal(tc.expectedCLOSURE))
+		})
+	}
+}
+
+func TestCalculator1_Initial(t *testing.T) {
+	tests := []struct {
+		name            string
+		c               *calculator1
+		expectedInitial Item
+	}{
+		{
+			name: "OK",
+			c: &calculator1{
+				G: augment(parsertest.Grammars[1]),
+			},
+			expectedInitial: &Item1{
+				Production: parsertest.Prods[1][0],
+				Start:      "S′",
+				Dot:        0,
+				Lookahead:  grammar.Endmarker,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.c.G.Verify())
+			initial := tc.c.Initial()
+
+			assert.True(t, initial.Equal(tc.expectedInitial))
+		})
+	}
+}
+
+func TestCalculator1_CLOSURE(t *testing.T) {
+	g := augment(parsertest.Grammars[1])
+
+	tests := []struct {
+		name            string
+		c               *calculator1
+		I               ItemSet
+		expectedCLOSURE ItemSet
+	}{
+		{
+			name: "OK",
+			c: &calculator1{
+				G:     g,
+				FIRST: g.ComputeFIRST(),
+			},
+			I: NewItemSet(
+				&Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker}, // S′ → •S, $
+			),
+			expectedCLOSURE: LR1ItemSets[0],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.c.G.Verify())
+			J := tc.c.CLOSURE(tc.I)
+
+			assert.True(t, J.Equal(tc.expectedCLOSURE))
 		})
 	}
 }

@@ -744,6 +744,27 @@ func (t *redBlack[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
 	return newST
 }
 
+// PartitionMatch partitions the key-values in the Red-Black tree
+// into two separate Red-Black trees based on the provided predicate.
+// The first Red-Black tree contains the key-values that satisfy the predicate (matched key-values),
+// while the second Red-Black tree contains those that do not satisfy the predicate (unmatched key-values).
+// Both Red-Black trees are of the same type as the original Red-Black tree.
+func (t *redBlack[K, V]) PartitionMatch(p Predicate2[K, V]) (Collection2[K, V], Collection2[K, V]) {
+	matched := NewRedBlack[K, V](t.cmpKey, t.eqVal)
+	unmatched := NewRedBlack[K, V](t.cmpKey, t.eqVal)
+
+	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+		if p(n.key, n.val) {
+			matched.Put(n.key, n.val)
+		} else {
+			unmatched.Put(n.key, n.val)
+		}
+		return true
+	})
+
+	return matched, unmatched
+}
+
 // Traverse performs a traversal of the Red-Black tree using the specified traversal order
 // and yields the key-value of each node to the provided VisitFunc2 function.
 //

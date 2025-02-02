@@ -74,6 +74,7 @@ func getTestParsingTables() []*lr.ParsingTable {
 		statemaps[0].States(),
 		[]grammar.Terminal{"(", ")", "*", "+", "id", grammar.Endmarker},
 		[]grammar.NonTerminal{"E", "T", "F"},
+		lr.PrecedenceLevels{},
 	)
 
 	pt0.AddACTION(0, "(", &lr.Action{Type: lr.SHIFT, State: 9})

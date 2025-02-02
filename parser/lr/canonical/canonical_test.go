@@ -8,6 +8,7 @@ import (
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/internal/parsertest"
 	"github.com/moorara/algo/lexer"
+	"github.com/moorara/algo/parser/lr"
 )
 
 func TestNew(t *testing.T) {
@@ -15,18 +16,21 @@ func TestNew(t *testing.T) {
 		name                 string
 		L                    lexer.Lexer
 		G                    *grammar.CFG
+		precedences          lr.PrecedenceLevels
 		expectedErrorStrings []string
 	}{
 		{
-			name:                 "Success",
+			name:                 "S→CC",
 			L:                    nil,
 			G:                    parsertest.Grammars[1],
+			precedences:          lr.PrecedenceLevels{},
 			expectedErrorStrings: nil,
 		},
 		{
-			name: "None_LR(1)_Grammar",
-			L:    nil,
-			G:    parsertest.Grammars[4],
+			name:        "E→E+E",
+			L:           nil,
+			G:           parsertest.Grammars[4],
+			precedences: lr.PrecedenceLevels{},
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
 				`Cause:      Multiple conflicts in the parsing table:`,
@@ -38,10 +42,11 @@ func TestNew(t *testing.T) {
 				`              6. Shift/Reduce conflict in ACTION[4, "+"]`,
 				`              7. Shift/Reduce conflict in ACTION[5, "*"]`,
 				`              8. Shift/Reduce conflict in ACTION[5, "+"]`,
-				`Resolution: Specify precedence for the following in the grammar directives:`,
-				`              • "*"`,
-				`              • "+"`,
-				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
+				`Resolution: Specify associativity and precedence for these Terminals/Productions:`,
+				`              • "*" vs. "*", "+"`,
+				`              • "+" vs. "*", "+"`,
+				`            Terminals/Productions listed earlier will have higher precedence.`,
+				`            Terminals/Productions in the same line will have the same precedence.`,
 			},
 		},
 	}
@@ -49,7 +54,7 @@ func TestNew(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.NoError(t, tc.G.Verify())
-			p, err := New(tc.L, tc.G)
+			p, err := New(tc.L, tc.G, tc.precedences)
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NotNil(t, p)

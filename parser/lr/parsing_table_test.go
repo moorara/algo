@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/set"
 )
 
 func TestNewParsingTable(t *testing.T) {
@@ -15,18 +16,20 @@ func TestNewParsingTable(t *testing.T) {
 		states       []State
 		terminals    []grammar.Terminal
 		nonTerminals []grammar.NonTerminal
+		precedences  PrecedenceLevels
 	}{
 		{
 			name:         "OK",
 			states:       []State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
 			terminals:    []grammar.Terminal{"+", "-", "*", "/", "(", ")", "id"},
 			nonTerminals: []grammar.NonTerminal{"E", "T", "F"},
+			precedences:  precedences[0],
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			pt := NewParsingTable(tc.states, tc.terminals, tc.nonTerminals)
+			pt := NewParsingTable(tc.states, tc.terminals, tc.nonTerminals, tc.precedences)
 
 			assert.NotNil(t, pt)
 			assert.NotNil(t, pt.actions)
@@ -191,7 +194,7 @@ func TestParsingTable_SetGOTO(t *testing.T) {
 	}
 }
 
-func TestParsingTable_Error(t *testing.T) {
+func TestParsingTable_ResolveConflicts(t *testing.T) {
 	pt := getTestParsingTables()
 
 	tests := []struct {
@@ -200,30 +203,37 @@ func TestParsingTable_Error(t *testing.T) {
 		expectedErrorStrings []string
 	}{
 		{
-			name:                 "NoError",
+			name:                 "NoConflict",
 			pt:                   pt[0],
 			expectedErrorStrings: nil,
 		},
 		{
-			name: "Error",
-			pt:   pt[1],
+			name:                 "ConflictsResolved",
+			pt:                   pt[1],
+			expectedErrorStrings: nil,
+		},
+		{
+			name: "ConflictsNotResolved",
+			pt:   pt[2],
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
-				`Cause:      Multiple conflicts in the parsing table`,
-				`              1. Shift/Reduce conflict in ACTION[0, "a"]`,
-				`              2. Reduce/Reduce conflict in ACTION[1, "b"]`,
-				`Resolution: Specify precedence for the following in the grammar directives:`,
-				`              • "a"`,
-				`              • "b"`,
-				`              • "c"`,
-				`            Terminals or Productions listed earlier in the directives will have higher precedence.`,
+				`Cause:      Multiple conflicts in the parsing table:`,
+				`              1. Shift/Reduce conflict in ACTION[2, "+"]`,
+				`              2. Shift/Reduce conflict in ACTION[2, "*"]`,
+				`              3. Shift/Reduce conflict in ACTION[3, "+"]`,
+				`              4. Shift/Reduce conflict in ACTION[3, "*"]`,
+				`Resolution: Specify associativity and precedence for these Terminals/Productions:`,
+				`              • "*" vs. "*", "+"`,
+				`              • "+" vs. "*", "+"`,
+				`            Terminals/Productions listed earlier will have higher precedence.`,
+				`            Terminals/Productions in the same line will have the same precedence.`,
 			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.pt.Error()
+			err := tc.pt.ResolveConflicts()
 
 			if len(tc.expectedErrorStrings) == 0 {
 				assert.NoError(t, err)
@@ -233,6 +243,54 @@ func TestParsingTable_Error(t *testing.T) {
 				for _, expectedErrorString := range tc.expectedErrorStrings {
 					assert.Contains(t, s, expectedErrorString)
 				}
+			}
+		})
+	}
+}
+
+func TestParsingTable_resolveConflict(t *testing.T) {
+	pt := getTestParsingTables()
+
+	tests := []struct {
+		name                   string
+		pt                     *ParsingTable
+		term                   grammar.Terminal
+		actions                set.Set[*Action]
+		expectedAction         *Action
+		expectedErrorSubstring string
+	}{
+		{
+			name: "Resolved",
+			pt:   pt[1],
+			term: "*",
+			actions: set.New(eqAction,
+				actions[0][2], // SHIFT 5
+				actions[0][4], // REDUCE E → E + E
+			),
+			expectedAction: actions[0][2], // SHIFT 5
+		},
+		{
+			name: "NotResolved",
+			pt:   pt[2],
+			term: "*",
+			actions: set.New(eqAction,
+				actions[0][2], // SHIFT 5
+				actions[0][4], // REDUCE E → E + E
+			),
+			expectedErrorSubstring: `cannot determine precedence: no associativity and precedence specified:`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			action, err := tc.pt.resolveConflict(tc.term, tc.actions)
+
+			if tc.expectedErrorSubstring == "" {
+				assert.True(t, action.Equal(tc.expectedAction))
+				assert.NoError(t, err)
+			} else {
+				assert.Nil(t, action)
+				assert.Contains(t, err.Error(), tc.expectedErrorSubstring)
 			}
 		})
 	}
@@ -262,16 +320,19 @@ func TestParsingTable_ACTION(t *testing.T) {
 		{
 			name:           "Conflict",
 			pt:             pt[1],
-			s:              State(0),
-			a:              grammar.Terminal("a"),
+			s:              State(2),
+			a:              grammar.Terminal("+"),
 			expectedAction: &Action{Type: ERROR},
 			expectedErrorStrings: []string{
 				`Error:      Ambiguous Grammar`,
-				`Cause:      Shift/Reduce conflict in ACTION[0, "a"]`,
+				`Cause:      Shift/Reduce conflict in ACTION[2, "+"]`,
 				`Context:    The parser cannot decide whether to`,
-				`              1. Shift the terminal "a", or`,
-				`              2. Reduce by production A → "a" A`,
-				`Resolution: Specify associativity for the "a" in the grammar directives.`,
+				`              1. Shift the terminal "+", or`,
+				`              2. Reduce by production E → E "*" E`,
+				`Resolution: Specify associativity and precedence for these Terminals/Productions:`,
+				`              • "*" vs. "+"`,
+				`            Terminals/Productions listed earlier will have higher precedence.`,
+				`            Terminals/Productions in the same line will have the same precedence.`,
 			},
 		},
 		{
@@ -353,46 +414,6 @@ func TestParsingTable_GOTO(t *testing.T) {
 				assert.Equal(t, ErrState, state)
 				assert.EqualError(t, err, tc.expectedError)
 			}
-		})
-	}
-}
-
-func TestParsingTableError(t *testing.T) {
-	tests := []struct {
-		name          string
-		e             *ParsingTableError
-		expectedError string
-	}{
-		{
-			name: "NoAction",
-			e: &ParsingTableError{
-				Type:   MISSING_ACTION,
-				State:  State(7),
-				Symbol: grammar.Terminal("+"),
-			},
-			expectedError: "no action exists in the parsing table for ACTION[7, \"+\"]",
-		},
-		{
-			name: "NoState",
-			e: &ParsingTableError{
-				Type:   MISSING_GOTO,
-				State:  State(5),
-				Symbol: grammar.NonTerminal("T"),
-			},
-			expectedError: "no state exists in the parsing table for GOTO[5, T]",
-		},
-		{
-			name: "Invalid",
-			e: &ParsingTableError{
-				Type: ParsingTableErrorType(0),
-			},
-			expectedError: "invalid error: 0",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.EqualError(t, tc.e, tc.expectedError)
 		})
 	}
 }

@@ -607,6 +607,27 @@ func (t *avl[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
 	return newST
 }
 
+// PartitionMatch partitions the key-values in the AVL tree
+// into two separate AVL trees based on the provided predicate.
+// The first AVL tree contains the key-values that satisfy the predicate (matched key-values),
+// while the second AVL tree contains those that do not satisfy the predicate (unmatched key-values).
+// Both AVL trees are of the same type as the original AVL tree.
+func (t *avl[K, V]) PartitionMatch(p Predicate2[K, V]) (Collection2[K, V], Collection2[K, V]) {
+	matched := NewAVL[K, V](t.cmpKey, t.eqVal)
+	unmatched := NewAVL[K, V](t.cmpKey, t.eqVal)
+
+	t._traverse(t.root, VLR, func(n *avlNode[K, V]) bool {
+		if p(n.key, n.val) {
+			matched.Put(n.key, n.val)
+		} else {
+			unmatched.Put(n.key, n.val)
+		}
+		return true
+	})
+
+	return matched, unmatched
+}
+
 // Traverse performs a traversal of the AVL tree using the specified traversal order
 // and yields the key-value of each node to the provided VisitFunc2 function.
 //
