@@ -72,6 +72,7 @@ A collection of common data structures and algorithms for Go applications.
       - Parser Combinators
       - Predictive Parser
       - LR Parsers (SLR, LALR, Canonical LR)
+        - Conflict Resolution 
 
 ## Development
 
