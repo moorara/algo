@@ -11,7 +11,6 @@ import (
 	"github.com/moorara/algo/lexer/input"
 	"github.com/moorara/algo/parser/lr"
 	"github.com/moorara/algo/parser/lr/lookahead"
-	"github.com/moorara/algo/parser/lr/simple"
 )
 
 // ExprLexer is an implementation of lexer.Lexer for basic math expressions.
@@ -247,7 +246,7 @@ func Example_parseAndEvaluate() {
 		"E",
 	)
 
-	parser, err := simple.New(l, G, lr.PrecedenceLevels{})
+	parser, err := lookahead.New(l, G, lr.PrecedenceLevels{})
 	if err != nil {
 		panic(err)
 	}
@@ -349,7 +348,7 @@ func Example_ambiguousGrammar() {
 		},
 	}
 
-	parser, err := simple.New(l, G, precedences)
+	parser, err := lookahead.New(l, G, precedences)
 	if err != nil {
 		panic(err)
 	}
