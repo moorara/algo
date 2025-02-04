@@ -137,28 +137,44 @@ var CFGrammars = []*CFG{
 		"E",
 	),
 	NewCFG(
-		[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
-		[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
+		[]Terminal{
+			"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}",
+			"grammar", "@left", "@right", "@none",
+			"IDENT", "TOKEN", "STRING", "REGEX", "PREDEF",
+		},
+		[]NonTerminal{
+			"grammar", "name", "decls", "decl", "token", "directive",
+			"handles", "rule", "lhs", "rhs", "nonterm", "term",
+		},
 		[]*Production{
 			{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
 			{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},       // name → "grammar" IDENT
 			{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
 			{"decls", E}, // decls → ε
 			{"decl", String[Symbol]{NonTerminal("token")}},                                  // decl → token
+			{"decl", String[Symbol]{NonTerminal("directive")}},                              // decl → directive
 			{"decl", String[Symbol]{NonTerminal("rule")}},                                   // decl → rule
 			{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}}, // token → TOKEN "=" STRING
 			{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},  // token → TOKEN "=" REGEX
+			{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("PREDEF")}}, // token → TOKEN "=" PREDEF
+			{"directive", String[Symbol]{Terminal("@left"), NonTerminal("handles")}},        // directive → "@left" handles
+			{"directive", String[Symbol]{Terminal("@right"), NonTerminal("handles")}},       // directive → "@right" handles
+			{"directive", String[Symbol]{Terminal("@none"), NonTerminal("handles")}},        // directive → "@none" handles
+			{"handles", String[Symbol]{NonTerminal("handles"), NonTerminal("term")}},        // handles → handles term
+			{"handles", String[Symbol]{NonTerminal("handles"), NonTerminal("rule")}},        // handles → handles rule
+			{"handles", String[Symbol]{NonTerminal("term")}},                                // handles → term
+			{"handles", String[Symbol]{NonTerminal("rule")}},                                // handles → rule
 			{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // rule → lhs "=" rhs
 			{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // rule → lhs "="
 			{"lhs", String[Symbol]{NonTerminal("nonterm")}},                                 // lhs → nonterm
+			{"rhs", String[Symbol]{NonTerminal("nonterm")}},                                 // rhs → nonterm
+			{"rhs", String[Symbol]{NonTerminal("term")}},                                    // rhs → term
 			{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs")}},                 // rhs → rhs rhs
-			{"rhs", String[Symbol]{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")}},  // rhs → rhs "|" rhs
 			{"rhs", String[Symbol]{Terminal("("), NonTerminal("rhs"), Terminal(")")}},       // rhs → "(" rhs ")"
 			{"rhs", String[Symbol]{Terminal("["), NonTerminal("rhs"), Terminal("]")}},       // rhs → "[" rhs "]"
 			{"rhs", String[Symbol]{Terminal("{"), NonTerminal("rhs"), Terminal("}")}},       // rhs → "{" rhs "}"
 			{"rhs", String[Symbol]{Terminal("{{"), NonTerminal("rhs"), Terminal("}}")}},     // rhs → "{{" rhs "}}"
-			{"rhs", String[Symbol]{NonTerminal("nonterm")}},                                 // rhs → nonterm
-			{"rhs", String[Symbol]{NonTerminal("term")}},                                    // rhs → term
+			{"rhs", String[Symbol]{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")}},  // rhs → rhs "|" rhs
 			{"nonterm", String[Symbol]{Terminal("IDENT")}},                                  // nonterm → IDENT
 			{"term", String[Symbol]{Terminal("TOKEN")}},                                     // term → TOKEN
 			{"term", String[Symbol]{Terminal("STRING")}},                                    // term → STRING
@@ -337,54 +353,139 @@ func TestCFG_String(t *testing.T) {
 		expectedString string
 	}{
 		{
-			name:           "1st",
-			g:              CFGrammars[0],
-			expectedString: "Terminal Symbols: \"0\" \"1\"\nNon-Terminal Symbols: S X Y\nStart Symbol: S\nProduction Rules:\n  S → X Y X\n  X → \"0\" X | ε\n  Y → \"1\" Y | ε\n",
+			name: "1st",
+			g:    CFGrammars[0],
+			expectedString: `Terminal Symbols: "0" "1"
+Non-Terminal Symbols: S X Y
+Start Symbol: S
+Production Rules:
+  S → X Y X
+  X → "0" X | ε
+  Y → "1" Y | ε
+`,
 		},
 		{
-			name:           "2nd",
-			g:              CFGrammars[1],
-			expectedString: "Terminal Symbols: \"a\" \"b\"\nNon-Terminal Symbols: S\nStart Symbol: S\nProduction Rules:\n  S → \"a\" S \"b\" S | \"b\" S \"a\" S | ε\n",
+			name: "2nd",
+			g:    CFGrammars[1],
+			expectedString: `Terminal Symbols: "a" "b"
+Non-Terminal Symbols: S
+Start Symbol: S
+Production Rules:
+  S → "a" S "b" S | "b" S "a" S | ε
+`,
 		},
 		{
-			name:           "3rd",
-			g:              CFGrammars[2],
-			expectedString: "Terminal Symbols: \"a\" \"b\"\nNon-Terminal Symbols: S B A\nStart Symbol: S\nProduction Rules:\n  S → \"a\" B \"a\" | A \"b\" | \"a\"\n  B → A | \"b\"\n  A → \"b\" | ε\n",
+			name: "3rd",
+			g:    CFGrammars[2],
+			expectedString: `Terminal Symbols: "a" "b"
+Non-Terminal Symbols: S B A
+Start Symbol: S
+Production Rules:
+  S → "a" B "a" | A "b" | "a"
+  B → A | "b"
+  A → "b" | ε
+`,
 		},
 		{
-			name:           "4th",
-			g:              CFGrammars[3],
-			expectedString: "Terminal Symbols: \"b\" \"c\" \"d\" \"s\"\nNon-Terminal Symbols: S A B C D\nStart Symbol: S\nProduction Rules:\n  S → A | \"s\"\n  A → B\n  B → C | \"b\"\n  C → D\n  D → \"d\"\n",
+			name: "4th",
+			g:    CFGrammars[3],
+			expectedString: `Terminal Symbols: "b" "c" "d" "s"
+Non-Terminal Symbols: S A B C D
+Start Symbol: S
+Production Rules:
+  S → A | "s"
+  A → B
+  B → C | "b"
+  C → D
+  D → "d"
+`,
 		},
 		{
-			name:           "5th",
-			g:              CFGrammars[4],
-			expectedString: "Terminal Symbols: \"a\" \"b\" \"c\" \"d\"\nNon-Terminal Symbols: S A B C D\nStart Symbol: S\nProduction Rules:\n  S → A B\n  A → \"a\" A | \"a\"\n  B → \"b\" B | \"b\"\n  C → \"c\" C | \"c\"\n  D → \"d\"\n",
+			name: "5th",
+			g:    CFGrammars[4],
+			expectedString: `Terminal Symbols: "a" "b" "c" "d"
+Non-Terminal Symbols: S A B C D
+Start Symbol: S
+Production Rules:
+  S → A B
+  A → "a" A | "a"
+  B → "b" B | "b"
+  C → "c" C | "c"
+  D → "d"
+`,
 		},
 		{
-			name:           "6th",
-			g:              CFGrammars[5],
-			expectedString: "Terminal Symbols: \"a\" \"b\"\nNon-Terminal Symbols: S A B A₁ B₁\nStart Symbol: S\nProduction Rules:\n  S → A B | ε\n  A → A₁ A | \"a\"\n  B → B₁ B | \"b\"\n  A₁ → \"a\"\n  B₁ → \"b\"\n",
+			name: "6th",
+			g:    CFGrammars[5],
+			expectedString: `Terminal Symbols: "a" "b"
+Non-Terminal Symbols: S A B A₁ B₁
+Start Symbol: S
+Production Rules:
+  S → A B | ε
+  A → A₁ A | "a"
+  B → B₁ B | "b"
+  A₁ → "a"
+  B₁ → "b"
+`,
 		},
 		{
-			name:           "7th",
-			g:              CFGrammars[6],
-			expectedString: "Terminal Symbols: \"(\" \")\" \"*\" \"+\" \"-\" \"/\" \"id\"\nNon-Terminal Symbols: S E\nStart Symbol: S\nProduction Rules:\n  S → E\n  E → E \"*\" E | E \"+\" E | E \"-\" E | E \"/\" E | \"(\" E \")\" | \"-\" E | \"id\"\n",
+			name: "7th",
+			g:    CFGrammars[6],
+			expectedString: `Terminal Symbols: "(" ")" "*" "+" "-" "/" "id"
+Non-Terminal Symbols: S E
+Start Symbol: S
+Production Rules:
+  S → E
+  E → E "*" E | E "+" E | E "-" E | E "/" E | "(" E ")" | "-" E | "id"
+`,
 		},
 		{
-			name:           "8th",
-			g:              CFGrammars[7],
-			expectedString: "Terminal Symbols: \"(\" \")\" \"*\" \"+\" \"-\" \"/\" \"id\"\nNon-Terminal Symbols: S E T F\nStart Symbol: S\nProduction Rules:\n  S → E\n  E → E \"+\" T | E \"-\" T | T\n  T → T \"*\" F | T \"/\" F | F\n  F → \"(\" E \")\" | \"id\"\n",
+			name: "8th",
+			g:    CFGrammars[7],
+			expectedString: `Terminal Symbols: "(" ")" "*" "+" "-" "/" "id"
+Non-Terminal Symbols: S E T F
+Start Symbol: S
+Production Rules:
+  S → E
+  E → E "+" T | E "-" T | T
+  T → T "*" F | T "/" F | F
+  F → "(" E ")" | "id"
+`,
 		},
 		{
-			name:           "9th",
-			g:              CFGrammars[8],
-			expectedString: "Terminal Symbols: \"(\" \")\" \"*\" \"+\" \"id\"\nNon-Terminal Symbols: E T E′ F T′\nStart Symbol: E\nProduction Rules:\n  E → T E′\n  T → F T′\n  E′ → \"+\" T E′ | ε\n  F → \"(\" E \")\" | \"id\"\n  T′ → \"*\" F T′ | ε\n",
+			name: "9th",
+			g:    CFGrammars[8],
+			expectedString: `Terminal Symbols: "(" ")" "*" "+" "id"
+Non-Terminal Symbols: E T E′ F T′
+Start Symbol: E
+Production Rules:
+  E → T E′
+  T → F T′
+  E′ → "+" T E′ | ε
+  F → "(" E ")" | "id"
+  T′ → "*" F T′ | ε
+`,
 		},
 		{
-			name:           "10th",
-			g:              CFGrammars[9],
-			expectedString: "Terminal Symbols: \"(\" \")\" \"=\" \"IDENT\" \"REGEX\" \"STRING\" \"TOKEN\" \"[\" \"]\" \"grammar\" \"{\" \"{{\" \"|\" \"}\" \"}}\"\nNon-Terminal Symbols: grammar name decls decl rule token lhs rhs nonterm term\nStart Symbol: grammar\nProduction Rules:\n  grammar → name decls\n  name → \"grammar\" \"IDENT\"\n  decls → decls decl | ε\n  decl → rule | token\n  rule → lhs \"=\" rhs | lhs \"=\"\n  token → \"TOKEN\" \"=\" \"REGEX\" | \"TOKEN\" \"=\" \"STRING\"\n  lhs → nonterm\n  rhs → rhs \"|\" rhs | rhs rhs | \"(\" rhs \")\" | \"[\" rhs \"]\" | \"{\" rhs \"}\" | \"{{\" rhs \"}}\" | nonterm | term\n  nonterm → \"IDENT\"\n  term → \"STRING\" | \"TOKEN\"\n",
+			name: "10th",
+			g:    CFGrammars[9],
+			expectedString: `Terminal Symbols: "(" ")" "=" "@left" "@none" "@right" "IDENT" "PREDEF" "REGEX" "STRING" "TOKEN" "[" "]" "grammar" "{" "{{" "|" "}" "}}"
+Non-Terminal Symbols: grammar name decls decl directive rule token handles term lhs rhs nonterm
+Start Symbol: grammar
+Production Rules:
+  grammar → name decls
+  name → "grammar" "IDENT"
+  decls → decls decl | ε
+  decl → directive | rule | token
+  directive → "@left" handles | "@none" handles | "@right" handles
+  rule → lhs "=" rhs | lhs "="
+  token → "TOKEN" "=" "PREDEF" | "TOKEN" "=" "REGEX" | "TOKEN" "=" "STRING"
+  handles → handles rule | handles term | rule | term
+  term → "STRING" | "TOKEN"
+  lhs → nonterm
+  rhs → rhs "|" rhs | rhs rhs | "(" rhs ")" | "[" rhs "]" | "{" rhs "}" | "{{" rhs "}}" | nonterm | term
+  nonterm → "IDENT"
+`,
 		},
 	}
 
@@ -652,9 +753,9 @@ func TestCFG_Symbols(t *testing.T) {
 			g:    CFGrammars[9],
 			expectedSymbols: set.New[Symbol](EqSymbol,
 				Terminal("="), Terminal("|"), Terminal("("), Terminal(")"), Terminal("["), Terminal("]"), Terminal("{"), Terminal("}"), Terminal("{{"), Terminal("}}"),
-				Terminal("grammar"), Terminal("IDENT"), Terminal("TOKEN"), Terminal("STRING"), Terminal("REGEX"),
-				NonTerminal("grammar"), NonTerminal("name"), NonTerminal("decls"), NonTerminal("decl"), NonTerminal("token"),
-				NonTerminal("rule"), NonTerminal("lhs"), NonTerminal("rhs"), NonTerminal("nonterm"), NonTerminal("term"),
+				Terminal("grammar"), Terminal("@left"), Terminal("@right"), Terminal("@none"), Terminal("IDENT"), Terminal("TOKEN"), Terminal("STRING"), Terminal("REGEX"), Terminal("PREDEF"),
+				NonTerminal("grammar"), NonTerminal("name"), NonTerminal("decls"), NonTerminal("decl"), NonTerminal("token"), NonTerminal("directive"),
+				NonTerminal("handles"), NonTerminal("rule"), NonTerminal("lhs"), NonTerminal("rhs"), NonTerminal("nonterm"), NonTerminal("term"),
 			),
 		},
 	}
@@ -1109,8 +1210,15 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
-				[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
+				[]Terminal{
+					"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}",
+					"grammar", "@left", "@right", "@none",
+					"IDENT", "TOKEN", "STRING", "REGEX", "PREDEF",
+				},
+				[]NonTerminal{
+					"grammar", "name", "decls", "decl", "token", "directive",
+					"handles", "rule", "lhs", "rhs", "nonterm", "term",
+				},
 				[]*Production{
 					{"grammar", String[Symbol]{NonTerminal("name")}},                                // grammar → name
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},          // grammar → name decls
@@ -1118,20 +1226,29 @@ func TestCFG_EliminateEmptyProductions(t *testing.T) {
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},            // decls → decls decl
 					{"decls", String[Symbol]{NonTerminal("decl")}},                                  // decls → decl
 					{"decl", String[Symbol]{NonTerminal("token")}},                                  // decl → token
+					{"decl", String[Symbol]{NonTerminal("directive")}},                              // decl → directive
 					{"decl", String[Symbol]{NonTerminal("rule")}},                                   // decl → rule
 					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}}, // token → TOKEN "=" STRING
 					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},  // token → TOKEN "=" REGEX
+					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("PREDEF")}}, // token → TOKEN "=" PREDEF
+					{"directive", String[Symbol]{Terminal("@left"), NonTerminal("handles")}},        // directive → "@left" handles
+					{"directive", String[Symbol]{Terminal("@right"), NonTerminal("handles")}},       // directive → "@right" handles
+					{"directive", String[Symbol]{Terminal("@none"), NonTerminal("handles")}},        // directive → "@none" handles
+					{"handles", String[Symbol]{NonTerminal("handles"), NonTerminal("term")}},        // handles → handles term
+					{"handles", String[Symbol]{NonTerminal("handles"), NonTerminal("rule")}},        // handles → handles rule
+					{"handles", String[Symbol]{NonTerminal("term")}},                                // handles → term
+					{"handles", String[Symbol]{NonTerminal("rule")}},                                // handles → rule
 					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // rule → lhs "=" rhs
 					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // rule → lhs "="
 					{"lhs", String[Symbol]{NonTerminal("nonterm")}},                                 // lhs → nonterm
+					{"rhs", String[Symbol]{NonTerminal("nonterm")}},                                 // rhs → nonterm
+					{"rhs", String[Symbol]{NonTerminal("term")}},                                    // rhs → term
 					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs")}},                 // rhs → rhs rhs
-					{"rhs", String[Symbol]{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")}},  // rhs → rhs "|" rhs
 					{"rhs", String[Symbol]{Terminal("("), NonTerminal("rhs"), Terminal(")")}},       // rhs → "(" rhs ")"
 					{"rhs", String[Symbol]{Terminal("["), NonTerminal("rhs"), Terminal("]")}},       // rhs → "[" rhs "]"
 					{"rhs", String[Symbol]{Terminal("{"), NonTerminal("rhs"), Terminal("}")}},       // rhs → "{" rhs "}"
 					{"rhs", String[Symbol]{Terminal("{{"), NonTerminal("rhs"), Terminal("}}")}},     // rhs → "{{" rhs "}}"
-					{"rhs", String[Symbol]{NonTerminal("nonterm")}},                                 // rhs → nonterm
-					{"rhs", String[Symbol]{NonTerminal("term")}},                                    // rhs → term
+					{"rhs", String[Symbol]{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")}},  // rhs → rhs "|" rhs
 					{"nonterm", String[Symbol]{Terminal("IDENT")}},                                  // nonterm → IDENT
 					{"term", String[Symbol]{Terminal("TOKEN")}},                                     // term → TOKEN
 					{"term", String[Symbol]{Terminal("STRING")}},                                    // term → STRING
@@ -1278,34 +1395,55 @@ func TestCFG_EliminateSingleProductions(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
-				[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "nonterm", "term"},
+				[]Terminal{
+					"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}",
+					"grammar", "@left", "@right", "@none",
+					"IDENT", "TOKEN", "STRING", "REGEX", "PREDEF",
+				},
+				[]NonTerminal{
+					"grammar", "name", "decls", "decl", "token", "directive",
+					"handles", "rule", "lhs", "rhs", "nonterm", "term",
+				},
 				[]*Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
 					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},       // name → "grammar" IDENT
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
 					{"decls", E}, // decls → ε
-					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // decl → lhs "=" rhs
-					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // decl → lhs "="
-					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},  // decl → TOKEN "=" STRING
-					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},   // decl → TOKEN "=" REGEX
-					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}}, // token → TOKEN "=" STRING
-					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},  // token → TOKEN "=" REGEX
-					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // rule → lhs "=" rhs
-					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // rule → lhs "="
-					{"lhs", String[Symbol]{Terminal("IDENT")}},                                      // lhs → IDENT
-					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs")}},                 // rhs → rhs rhs
-					{"rhs", String[Symbol]{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")}},  // rhs → rhs "|" rhs
-					{"rhs", String[Symbol]{Terminal("("), NonTerminal("rhs"), Terminal(")")}},       // rhs → "(" rhs ")"
-					{"rhs", String[Symbol]{Terminal("["), NonTerminal("rhs"), Terminal("]")}},       // rhs → "[" rhs "]"
-					{"rhs", String[Symbol]{Terminal("{"), NonTerminal("rhs"), Terminal("}")}},       // rhs → "{" rhs "}"
-					{"rhs", String[Symbol]{Terminal("{{"), NonTerminal("rhs"), Terminal("}}")}},     // rhs → "{{" rhs "}}"
-					{"rhs", String[Symbol]{Terminal("IDENT")}},                                      // rhs → IDENT
-					{"rhs", String[Symbol]{Terminal("TOKEN")}},                                      // rhs → TOKEN
-					{"rhs", String[Symbol]{Terminal("STRING")}},                                     // rhs → STRING
-					{"nonterm", String[Symbol]{Terminal("IDENT")}},                                  // nonterm → IDENT
-					{"term", String[Symbol]{Terminal("TOKEN")}},                                     // term → TOKEN
-					{"term", String[Symbol]{Terminal("STRING")}},                                    // term → STRING
+					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},     // decl → TOKEN "=" STRING
+					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},      // decl → TOKEN "=" REGEX
+					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("PREDEF")}},     // decl → TOKEN "=" PREDEF
+					{"decl", String[Symbol]{Terminal("@left"), NonTerminal("handles")}},                // decl → "@left" handles
+					{"decl", String[Symbol]{Terminal("@right"), NonTerminal("handles")}},               // decl → "@right" handles
+					{"decl", String[Symbol]{Terminal("@none"), NonTerminal("handles")}},                // decl → "@none" handles
+					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}},    // decl → lhs "=" rhs
+					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                        // decl → lhs "="
+					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},    // token → TOKEN "=" STRING
+					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},     // token → TOKEN "=" REGEX
+					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("PREDEF")}},    // token → TOKEN "=" PREDEF
+					{"directive", String[Symbol]{Terminal("@left"), NonTerminal("handles")}},           // directive → "@left" handles
+					{"directive", String[Symbol]{Terminal("@right"), NonTerminal("handles")}},          // directive → "@right" handles
+					{"directive", String[Symbol]{Terminal("@none"), NonTerminal("handles")}},           // directive → "@none" handles
+					{"handles", String[Symbol]{NonTerminal("handles"), NonTerminal("term")}},           // handles → handles term
+					{"handles", String[Symbol]{NonTerminal("handles"), NonTerminal("rule")}},           // handles → handles rule
+					{"handles", String[Symbol]{Terminal("TOKEN")}},                                     // handles → TOKEN
+					{"handles", String[Symbol]{Terminal("STRING")}},                                    // handles → STRING
+					{"handles", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // handles → lhs "=" rhs
+					{"handles", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // handles → lhs "="
+					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}},    // rule → lhs "=" rhs
+					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                        // rule → lhs "="
+					{"lhs", String[Symbol]{Terminal("IDENT")}},                                         // lhs → IDENT
+					{"rhs", String[Symbol]{Terminal("IDENT")}},                                         // rhs → IDENT
+					{"rhs", String[Symbol]{Terminal("TOKEN")}},                                         // rhs → TOKEN
+					{"rhs", String[Symbol]{Terminal("STRING")}},                                        // rhs → STRING
+					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs")}},                    // rhs → rhs rhs
+					{"rhs", String[Symbol]{Terminal("("), NonTerminal("rhs"), Terminal(")")}},          // rhs → "(" rhs ")"
+					{"rhs", String[Symbol]{Terminal("["), NonTerminal("rhs"), Terminal("]")}},          // rhs → "[" rhs "]"
+					{"rhs", String[Symbol]{Terminal("{"), NonTerminal("rhs"), Terminal("}")}},          // rhs → "{" rhs "}"
+					{"rhs", String[Symbol]{Terminal("{{"), NonTerminal("rhs"), Terminal("}}")}},        // rhs → "{{" rhs "}}"
+					{"rhs", String[Symbol]{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")}},     // rhs → rhs "|" rhs
+					{"nonterm", String[Symbol]{Terminal("IDENT")}},                                     // nonterm → IDENT
+					{"term", String[Symbol]{Terminal("TOKEN")}},                                        // term → TOKEN
+					{"term", String[Symbol]{Terminal("STRING")}},                                       // term → STRING
 				},
 				"grammar",
 			),
@@ -1621,31 +1759,56 @@ func TestCFG_EliminateCycles(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
-				[]NonTerminal{"grammar", "name", "decls", "decl", "lhs", "rhs"},
+				[]Terminal{
+					"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}",
+					"grammar", "@left", "@right", "@none",
+					"IDENT", "TOKEN", "STRING", "REGEX", "PREDEF",
+				},
+				[]NonTerminal{
+					"grammar", "name", "decls", "decl",
+					"handles", "rule", "lhs", "rhs", "term",
+				},
 				[]*Production{
-					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},           // grammar → name decls
-					{"grammar", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},              // grammar → "grammar" IDENT
-					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                 // name → "grammar" IDENT
-					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},             // decls → decls decl
-					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // decls → lhs "=" rhs
-					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // decls → lhs "="
-					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},  // decls → TOKEN "=" STRING
-					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},   // decls → TOKEN "=" REGEX
-					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}},  // decl → lhs "=" rhs
-					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                      // decl → lhs "="
-					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},   // decl → TOKEN "=" STRING
-					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},    // decl → TOKEN "=" REGEX
-					{"lhs", String[Symbol]{Terminal("IDENT")}},                                       // lhs → IDENT
-					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs")}},                  // rhs → rhs rhs
-					{"rhs", String[Symbol]{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")}},   // rhs → rhs "|" rhs
-					{"rhs", String[Symbol]{Terminal("("), NonTerminal("rhs"), Terminal(")")}},        // rhs → "(" rhs ")"
-					{"rhs", String[Symbol]{Terminal("["), NonTerminal("rhs"), Terminal("]")}},        // rhs → "[" rhs "]"
-					{"rhs", String[Symbol]{Terminal("{"), NonTerminal("rhs"), Terminal("}")}},        // rhs → "{" rhs "}"
-					{"rhs", String[Symbol]{Terminal("{{"), NonTerminal("rhs"), Terminal("}}")}},      // rhs → "{{" rhs "}}"
-					{"rhs", String[Symbol]{Terminal("IDENT")}},                                       // rhs → IDENT
-					{"rhs", String[Symbol]{Terminal("TOKEN")}},                                       // rhs → TOKEN
-					{"rhs", String[Symbol]{Terminal("STRING")}},                                      // rhs → STRING
+					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},             // grammar → name decls
+					{"grammar", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                // grammar → "grammar" IDENT
+					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                   // name → "grammar" IDENT
+					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},               // decls → decls decl
+					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},    // decls → TOKEN "=" STRING
+					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},     // decls → TOKEN "=" REGEX
+					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("PREDEF")}},    // decls → TOKEN "=" PREDEF
+					{"decls", String[Symbol]{Terminal("@left"), NonTerminal("handles")}},               // decls → "@left" handles
+					{"decls", String[Symbol]{Terminal("@right"), NonTerminal("handles")}},              // decls → "@right" handles
+					{"decls", String[Symbol]{Terminal("@none"), NonTerminal("handles")}},               // decls → "@none" handles
+					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}},   // decls → lhs "=" rhs
+					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                       // decls → lhs "="
+					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},     // decl → TOKEN "=" STRING
+					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},      // decl → TOKEN "=" REGEX
+					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("PREDEF")}},     // decl → TOKEN "=" PREDEF
+					{"decl", String[Symbol]{Terminal("@left"), NonTerminal("handles")}},                // decl → "@left" handles
+					{"decl", String[Symbol]{Terminal("@right"), NonTerminal("handles")}},               // decl → "@right" handles
+					{"decl", String[Symbol]{Terminal("@none"), NonTerminal("handles")}},                // decl → "@none" handles
+					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}},    // decl → lhs "=" rhs
+					{"decl", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                        // decl → lhs "="
+					{"handles", String[Symbol]{NonTerminal("handles"), NonTerminal("term")}},           // handles → handles term
+					{"handles", String[Symbol]{NonTerminal("handles"), NonTerminal("rule")}},           // handles → handles rule
+					{"handles", String[Symbol]{Terminal("TOKEN")}},                                     // handles → TOKEN
+					{"handles", String[Symbol]{Terminal("STRING")}},                                    // handles → STRING
+					{"handles", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // handles → lhs "=" rhs
+					{"handles", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // handles → lhs "="
+					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}},    // rule → lhs "=" rhs
+					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                        // rule → lhs "="
+					{"lhs", String[Symbol]{Terminal("IDENT")}},                                         // lhs → IDENT
+					{"rhs", String[Symbol]{Terminal("IDENT")}},                                         // rhs → IDENT
+					{"rhs", String[Symbol]{Terminal("TOKEN")}},                                         // rhs → TOKEN
+					{"rhs", String[Symbol]{Terminal("STRING")}},                                        // rhs → STRING
+					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs")}},                    // rhs → rhs rhs
+					{"rhs", String[Symbol]{Terminal("("), NonTerminal("rhs"), Terminal(")")}},          // rhs → "(" rhs ")"
+					{"rhs", String[Symbol]{Terminal("["), NonTerminal("rhs"), Terminal("]")}},          // rhs → "[" rhs "]"
+					{"rhs", String[Symbol]{Terminal("{"), NonTerminal("rhs"), Terminal("}")}},          // rhs → "{" rhs "}"
+					{"rhs", String[Symbol]{Terminal("{{"), NonTerminal("rhs"), Terminal("}}")}},        // rhs → "{{" rhs "}}"
+					{"rhs", String[Symbol]{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")}},     // rhs → rhs "|" rhs
+					{"term", String[Symbol]{Terminal("TOKEN")}},                                        // term → TOKEN
+					{"term", String[Symbol]{Terminal("STRING")}},                                       // term → STRING
 				},
 				"grammar",
 			),
@@ -1873,33 +2036,59 @@ func TestCFG_EliminateLeftRecursion(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
-				[]NonTerminal{"grammar", "name", "decls", "decls′", "decl", "lhs", "rhs", "rhs′"},
+				[]Terminal{
+					"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}",
+					"grammar", "@left", "@right", "@none",
+					"IDENT", "TOKEN", "STRING", "REGEX", "PREDEF",
+				},
+				[]NonTerminal{
+					"grammar", "name", "decls", "decls′", "decl",
+					"handles", "handles′", "rule", "lhs", "rhs", "rhs′", "term",
+				},
 				[]*Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},                                  // grammar → name decls
 					{"grammar", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                                     // grammar → "grammar" IDENT
 					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},                                        // name → "grammar" IDENT
-					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs"), NonTerminal("decls′")}}, // decls → lhs "=" rhs decls′
-					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("decls′")}},                     // decls → lhs "=" decls′
 					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX"), NonTerminal("decls′")}},   // decls → TOKEN "=" REGEX decls′
 					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING"), NonTerminal("decls′")}},  // decls → TOKEN "=" STRING decls′
+					{"decls", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("PREDEF"), NonTerminal("decls′")}},  // decls → TOKEN "=" PREDEF decls′
+					{"decls", String[Symbol]{Terminal("@left"), NonTerminal("handles"), NonTerminal("decls′")}},             // decls → "@left" handles decls′
+					{"decls", String[Symbol]{Terminal("@right"), NonTerminal("handles"), NonTerminal("decls′")}},            // decls → "@right" handles decls′
+					{"decls", String[Symbol]{Terminal("@none"), NonTerminal("handles"), NonTerminal("decls′")}},             // decls → "@none" handles decls′
+					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs"), NonTerminal("decls′")}}, // decls → lhs "=" rhs decls′
+					{"decls", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("decls′")}},                     // decls → lhs "=" decls′
 					{"decls′", String[Symbol]{NonTerminal("decl"), NonTerminal("decls′")}},                                  // decls′ → decl decls′
 					{"decls′", E}, // decls′ → ε
-					{"decl", String[Symbol]{Terminal("IDENT"), Terminal("="), NonTerminal("rhs")}},                   // decl → IDENT "=" rhs
-					{"decl", String[Symbol]{Terminal("IDENT"), Terminal("=")}},                                       // decl → IDENT "="
-					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},                    // decl → TOKEN "=" REGEX
-					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},                   // decl → TOKEN "=" STRING
+					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},                              // decl → TOKEN "=" REGEX
+					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}},                             // decl → TOKEN "=" STRING
+					{"decl", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("PREDEF")}},                             // decl → TOKEN "=" PREDEF
+					{"decl", String[Symbol]{Terminal("@left"), NonTerminal("handles")}},                                        // decl → "@left" handles
+					{"decl", String[Symbol]{Terminal("@right"), NonTerminal("handles")}},                                       // decl → "@right" handles
+					{"decl", String[Symbol]{Terminal("@none"), NonTerminal("handles")}},                                        // decl → "@none" handles
+					{"decl", String[Symbol]{Terminal("IDENT"), Terminal("="), NonTerminal("rhs")}},                             // decl → IDENT "=" rhs
+					{"decl", String[Symbol]{Terminal("IDENT"), Terminal("=")}},                                                 // decl → IDENT "="
+					{"handles", String[Symbol]{Terminal("TOKEN"), NonTerminal("handles′")}},                                    // handles → TOKEN handles′
+					{"handles", String[Symbol]{Terminal("STRING"), NonTerminal("handles′")}},                                   // handles → STRING handles′
+					{"handles", String[Symbol]{Terminal("IDENT"), Terminal("="), NonTerminal("rhs"), NonTerminal("handles′")}}, // handles → IDENT "=" rhs handles′
+					{"handles", String[Symbol]{Terminal("IDENT"), Terminal("="), NonTerminal("handles′")}},                     // handles → IDENT "=" handles′
+					{"handles′", String[Symbol]{NonTerminal("term"), NonTerminal("handles′")}},                                 // handles′ → term handles′
+					{"handles′", String[Symbol]{NonTerminal("rule"), NonTerminal("handles′")}},                                 // handles′ → rule handles′
+					{"handles′", E}, // handles′ → ε
+					{"rule", String[Symbol]{Terminal("IDENT"), Terminal("="), NonTerminal("rhs")}},                   // rule → IDENT "=" rhs
+					{"rule", String[Symbol]{Terminal("IDENT"), Terminal("=")}},                                       // rule → IDENT "="
 					{"lhs", String[Symbol]{Terminal("IDENT")}},                                                       // lhs → IDENT
-					{"rhs", String[Symbol]{Terminal("("), NonTerminal("rhs"), Terminal(")"), NonTerminal("rhs′")}},   // rhs → "(" rhs ")" rhs′
-					{"rhs", String[Symbol]{Terminal("["), NonTerminal("rhs"), Terminal("]"), NonTerminal("rhs′")}},   // rhs → "[" rhs "]" rhs′
-					{"rhs", String[Symbol]{Terminal("{"), NonTerminal("rhs"), Terminal("}"), NonTerminal("rhs′")}},   // rhs → "{" rhs "}" rhs′
-					{"rhs", String[Symbol]{Terminal("{{"), NonTerminal("rhs"), Terminal("}}"), NonTerminal("rhs′")}}, // rhs → "{{" rhs "}}" rhs′
 					{"rhs", String[Symbol]{Terminal("IDENT"), NonTerminal("rhs′")}},                                  // rhs → IDENT rhs′
 					{"rhs", String[Symbol]{Terminal("TOKEN"), NonTerminal("rhs′")}},                                  // rhs → TOKEN rhs′
 					{"rhs", String[Symbol]{Terminal("STRING"), NonTerminal("rhs′")}},                                 // rhs → STRING rhs′
 					{"rhs′", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs′")}},                                // rhs′ → rhs rhs′
+					{"rhs", String[Symbol]{Terminal("("), NonTerminal("rhs"), Terminal(")"), NonTerminal("rhs′")}},   // rhs → "(" rhs ")" rhs′
+					{"rhs", String[Symbol]{Terminal("["), NonTerminal("rhs"), Terminal("]"), NonTerminal("rhs′")}},   // rhs → "[" rhs "]" rhs′
+					{"rhs", String[Symbol]{Terminal("{"), NonTerminal("rhs"), Terminal("}"), NonTerminal("rhs′")}},   // rhs → "{" rhs "}" rhs′
+					{"rhs", String[Symbol]{Terminal("{{"), NonTerminal("rhs"), Terminal("}}"), NonTerminal("rhs′")}}, // rhs → "{{" rhs "}}" rhs′
 					{"rhs′", String[Symbol]{Terminal("|"), NonTerminal("rhs"), NonTerminal("rhs′")}},                 // rhs′ → "|" rhs rhs′
 					{"rhs′", E}, // rhs′ → ε
+					{"term", String[Symbol]{Terminal("TOKEN")}},  // term → TOKEN
+					{"term", String[Symbol]{Terminal("STRING")}}, // term → STRING
 				},
 				"grammar",
 			),
@@ -2017,27 +2206,44 @@ func TestCFG_LeftFactor(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
-				[]NonTerminal{"grammar", "name", "decls", "decl", "token", "rule", "lhs", "rhs", "rhs′", "nonterm", "term"},
+				[]Terminal{
+					"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}",
+					"grammar", "@left", "@right", "@none",
+					"IDENT", "TOKEN", "STRING", "REGEX", "PREDEF",
+				},
+				[]NonTerminal{
+					"grammar", "name", "decls", "decl", "token", "directive",
+					"handles", "handles′", "rule", "lhs", "rhs", "rhs′", "nonterm", "term",
+				},
 				[]*Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}}, // grammar → name decls
 					{"name", String[Symbol]{Terminal("grammar"), Terminal("IDENT")}},       // name → "grammar" IDENT
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},   // decls → decls decl
 					{"decls", E}, // decls → ε
 					{"decl", String[Symbol]{NonTerminal("token")}},                                  // decl → token
+					{"decl", String[Symbol]{NonTerminal("directive")}},                              // decl → directive
 					{"decl", String[Symbol]{NonTerminal("rule")}},                                   // decl → rule
 					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("STRING")}}, // token → TOKEN "=" STRING
 					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")}},  // token → TOKEN "=" REGEX
+					{"token", String[Symbol]{Terminal("TOKEN"), Terminal("="), Terminal("PREDEF")}}, // token → TOKEN "=" PREDEF
+					{"directive", String[Symbol]{Terminal("@left"), NonTerminal("handles")}},        // directive → "@left" handles
+					{"directive", String[Symbol]{Terminal("@right"), NonTerminal("handles")}},       // directive → "@right" handles
+					{"directive", String[Symbol]{Terminal("@none"), NonTerminal("handles")}},        // directive → "@none" handles
+					{"handles", String[Symbol]{NonTerminal("handles"), NonTerminal("handles′")}},    // handles → handles handles′
+					{"handles", String[Symbol]{NonTerminal("term")}},                                // handles → term
+					{"handles", String[Symbol]{NonTerminal("rule")}},                                // handles → rule
+					{"handles′", String[Symbol]{NonTerminal("term")}},                               // handles′ → term
+					{"handles′", String[Symbol]{NonTerminal("rule")}},                               // handles′ → rule
 					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("="), NonTerminal("rhs")}}, // rule → lhs "=" rhs
 					{"rule", String[Symbol]{NonTerminal("lhs"), Terminal("=")}},                     // rule → lhs "="
 					{"lhs", String[Symbol]{NonTerminal("nonterm")}},                                 // lhs → nonterm
-					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs′")}},                // rhs → rhs rhs′
+					{"rhs", String[Symbol]{NonTerminal("nonterm")}},                                 // rhs → nonterm
+					{"rhs", String[Symbol]{NonTerminal("term")}},                                    // rhs → term
 					{"rhs", String[Symbol]{Terminal("("), NonTerminal("rhs"), Terminal(")")}},       // rhs → "(" rhs ")"
 					{"rhs", String[Symbol]{Terminal("["), NonTerminal("rhs"), Terminal("]")}},       // rhs → "[" rhs "]"
 					{"rhs", String[Symbol]{Terminal("{"), NonTerminal("rhs"), Terminal("}")}},       // rhs → "{" rhs "}"
 					{"rhs", String[Symbol]{Terminal("{{"), NonTerminal("rhs"), Terminal("}}")}},     // rhs → "{{" rhs "}}"
-					{"rhs", String[Symbol]{NonTerminal("nonterm")}},                                 // rhs → nonterm
-					{"rhs", String[Symbol]{NonTerminal("term")}},                                    // rhs → term
+					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs′")}},                // rhs → rhs rhs′
 					{"rhs′", String[Symbol]{Terminal("|"), NonTerminal("rhs")}},                     // rhs′ → "|" rhs
 					{"rhs′", String[Symbol]{NonTerminal("rhs")}},                                    // rhs′ → rhs
 					{"nonterm", String[Symbol]{Terminal("IDENT")}},                                  // nonterm → IDENT
@@ -2408,11 +2614,17 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			expectedGrammar: NewCFG(
-				[]Terminal{"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "grammar", "IDENT", "TOKEN", "STRING", "REGEX"},
+				[]Terminal{
+					"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}",
+					"grammar", "@left", "@right", "@none",
+					"IDENT", "TOKEN", "STRING", "REGEX", "PREDEF",
+				},
 				[]NonTerminal{
-					"grammar", "name", "decls", "decl", "lhs", "rhs",
-					"token₁", "token₂", "rule₁", "rhs₁", "rhs₂", "rhs₃", "rhs₄", "rhs₅",
-					"=ₙ", "|ₙ", "(ₙ", ")ₙ", "[ₙ", "]ₙ", "{ₙ", "}ₙ", "{{ₙ", "}}ₙ", "grammarₙ", "IDENTₙ", "TOKENₙ", "STRINGₙ", "REGEXₙ",
+					"grammar", "name", "decls", "decl", "handles", "rule", "lhs", "rhs", "term",
+					"token₁", "token₂", "token₃", "rule₁", "rhs₁", "rhs₂", "rhs₃", "rhs₄", "rhs₅",
+					"=ₙ", "|ₙ", "(ₙ", ")ₙ", "[ₙ", "]ₙ", "{ₙ", "}ₙ", "{{ₙ", "}}ₙ",
+					"grammarₙ", "@leftₙ", "@rightₙ", "@noneₙ",
+					"IDENTₙ", "TOKENₙ", "STRINGₙ", "REGEXₙ", "PREDEFₙ",
 				},
 				[]*Production{
 					{"grammar", String[Symbol]{NonTerminal("name"), NonTerminal("decls")}},      // grammar → name decls
@@ -2421,30 +2633,49 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					{"decls", String[Symbol]{NonTerminal("decls"), NonTerminal("decl")}},        // decls → decls decl
 					{"decls", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₁")}},     // decls → TOKENₙ token₁
 					{"decls", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₂")}},     // decls → TOKENₙ token₂
+					{"decls", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₃")}},     // decls → TOKENₙ token₃
+					{"decls", String[Symbol]{NonTerminal("@leftₙ"), NonTerminal("handles")}},    // decls → @leftₙ handles
+					{"decls", String[Symbol]{NonTerminal("@rightₙ"), NonTerminal("handles")}},   // decls → @rightₙ handles
+					{"decls", String[Symbol]{NonTerminal("@noneₙ"), NonTerminal("handles")}},    // decls → @noneₙ handles
 					{"decls", String[Symbol]{NonTerminal("lhs"), NonTerminal("rule₁")}},         // decls → lhs rule₁
 					{"decls", String[Symbol]{NonTerminal("lhs"), NonTerminal("=ₙ")}},            // decls → lhs =ₙ
 					{"decl", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₁")}},      // decl → TOKENₙ token₁
 					{"decl", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₂")}},      // decl → TOKENₙ token₂
+					{"decl", String[Symbol]{NonTerminal("TOKENₙ"), NonTerminal("token₃")}},      // decl → TOKENₙ token₃
+					{"decl", String[Symbol]{NonTerminal("@leftₙ"), NonTerminal("handles")}},     // decl → @leftₙ handles
+					{"decl", String[Symbol]{NonTerminal("@rightₙ"), NonTerminal("handles")}},    // decl → @rightₙ handles
+					{"decl", String[Symbol]{NonTerminal("@noneₙ"), NonTerminal("handles")}},     // decl → @noneₙ handles
 					{"decl", String[Symbol]{NonTerminal("lhs"), NonTerminal("rule₁")}},          // decl → lhs rule₁
 					{"decl", String[Symbol]{NonTerminal("lhs"), NonTerminal("=ₙ")}},             // decl → lhs =ₙ
-					{"token₁", String[Symbol]{NonTerminal("=ₙ"), NonTerminal("REGEXₙ")}},        // token₁ → =ₙ REGEXₙ
-					{"token₂", String[Symbol]{NonTerminal("=ₙ"), NonTerminal("STRINGₙ")}},       // token₂ → =ₙ STRINGₙ
+					{"token₁", String[Symbol]{NonTerminal("=ₙ"), NonTerminal("PREDEFₙ")}},       // token₁ → =ₙ PREDEFₙ
+					{"token₂", String[Symbol]{NonTerminal("=ₙ"), NonTerminal("REGEXₙ")}},        // token₂ → =ₙ REGEXₙ
+					{"token₃", String[Symbol]{NonTerminal("=ₙ"), NonTerminal("STRINGₙ")}},       // token₃ → =ₙ STRINGₙ
+					{"handles", String[Symbol]{NonTerminal("handles"), NonTerminal("term")}},    // handles → handles term
+					{"handles", String[Symbol]{NonTerminal("handles"), NonTerminal("rule")}},    // handles → handles rule
+					{"handles", String[Symbol]{Terminal("TOKEN")}},                              // handles → TOKEN
+					{"handles", String[Symbol]{Terminal("STRING")}},                             // handles → STRING
+					{"handles", String[Symbol]{NonTerminal("lhs"), NonTerminal("rule₁")}},       // handles → lhs rule₁
+					{"handles", String[Symbol]{NonTerminal("lhs"), NonTerminal("=ₙ")}},          // handles → lhs =ₙ
+					{"rule", String[Symbol]{NonTerminal("lhs"), NonTerminal("rule₁")}},          // rule → lhs rule₁
+					{"rule", String[Symbol]{NonTerminal("lhs"), NonTerminal("=ₙ")}},             // rule → lhs =ₙ
 					{"rule₁", String[Symbol]{NonTerminal("=ₙ"), NonTerminal("rhs")}},            // rule₁ → =ₙ rhs
 					{"lhs", String[Symbol]{Terminal("IDENT")}},                                  // lhs → IDENT
+					{"rhs", String[Symbol]{Terminal("IDENT")}},                                  // rhs → IDENT
+					{"rhs", String[Symbol]{Terminal("TOKEN")}},                                  // rhs → TOKEN
+					{"rhs", String[Symbol]{Terminal("STRING")}},                                 // rhs → STRING
 					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs")}},             // rhs → rhs rhs
 					{"rhs", String[Symbol]{NonTerminal("(ₙ"), NonTerminal("rhs₁")}},             // rhs → (ₙ rhs₁
 					{"rhs", String[Symbol]{NonTerminal("[ₙ"), NonTerminal("rhs₂")}},             // rhs → [ₙ rhs₂
 					{"rhs", String[Symbol]{NonTerminal("rhs"), NonTerminal("rhs₃")}},            // rhs → rhs rhs₃
 					{"rhs", String[Symbol]{NonTerminal("{{ₙ"), NonTerminal("rhs₄")}},            // rhs → {{ₙ rhs₄
 					{"rhs", String[Symbol]{NonTerminal("{ₙ"), NonTerminal("rhs₅")}},             // rhs → {ₙ rhs₅
-					{"rhs", String[Symbol]{Terminal("IDENT")}},                                  // rhs → IDENT
-					{"rhs", String[Symbol]{Terminal("TOKEN")}},                                  // rhs → TOKEN
-					{"rhs", String[Symbol]{Terminal("STRING")}},                                 // rhs → STRING
 					{"rhs₁", String[Symbol]{NonTerminal("rhs"), NonTerminal(")ₙ")}},             // rhs₁ → rhs )ₙ
 					{"rhs₂", String[Symbol]{NonTerminal("rhs"), NonTerminal("]ₙ")}},             // rhs₂ → rhs ]ₙ
 					{"rhs₃", String[Symbol]{NonTerminal("|ₙ"), NonTerminal("rhs")}},             // rhs₃ → |ₙ rhs
 					{"rhs₄", String[Symbol]{NonTerminal("rhs"), NonTerminal("}}ₙ")}},            // rhs₄ → rhs }}ₙ
 					{"rhs₅", String[Symbol]{NonTerminal("rhs"), NonTerminal("}ₙ")}},             // rhs₅ → rhs }ₙ
+					{"term", String[Symbol]{Terminal("TOKEN")}},                                 // term → TOKEN
+					{"term", String[Symbol]{Terminal("STRING")}},                                // term → STRING
 					{"=ₙ", String[Symbol]{Terminal("=")}},                                       // =ₙ → =
 					{"|ₙ", String[Symbol]{Terminal("|")}},                                       // |ₙ → |
 					{"(ₙ", String[Symbol]{Terminal("(")}},                                       // (ₙ → (
@@ -2456,10 +2687,14 @@ func TestCFG_ChomskyNormalForm(t *testing.T) {
 					{"{{ₙ", String[Symbol]{Terminal("{{")}},                                     // {{ₙ → {{
 					{"}}ₙ", String[Symbol]{Terminal("}}")}},                                     // }}ₙ → }}
 					{"grammarₙ", String[Symbol]{Terminal("grammar")}},                           // grammarₙ → "grammar"
+					{"@leftₙ", String[Symbol]{Terminal("@left")}},                               // @leftₙ → "@left"
+					{"@rightₙ", String[Symbol]{Terminal("@right")}},                             // @rightₙ → "@right"
+					{"@noneₙ", String[Symbol]{Terminal("@none")}},                               // @noneₙ → "@none"
 					{"IDENTₙ", String[Symbol]{Terminal("IDENT")}},                               // IDENTₙ → IDENT
 					{"TOKENₙ", String[Symbol]{Terminal("TOKEN")}},                               // TOKENₙ → TOKEN
 					{"STRINGₙ", String[Symbol]{Terminal("STRING")}},                             // STRINGₙ → STRING
 					{"REGEXₙ", String[Symbol]{Terminal("REGEX")}},                               // REGEXₙ → REGEX
+					{"PREDEFₙ", String[Symbol]{Terminal("PREDEF")}},                             // PREDEFₙ → PREDEF
 				},
 				"grammar",
 			),
@@ -2807,33 +3042,40 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			firsts: []String[Symbol]{
-				E,                        // ε
-				{Terminal("=")},          // =
-				{Terminal("|")},          // |
-				{Terminal("(")},          // (
-				{Terminal(")")},          // )
-				{Terminal("[")},          // [
-				{Terminal("]")},          // ]
-				{Terminal("{")},          // {
-				{Terminal("}")},          // }
-				{Terminal("{{")},         // {{
-				{Terminal("}}")},         // }}
-				{Terminal("grammar")},    // grammar
-				{Terminal("IDENT")},      // IDENT
-				{Terminal("TOKEN")},      // TOKEN
-				{Terminal("STRING")},     // STRING
-				{Terminal("REGEX")},      // REGEX
-				{NonTerminal("grammar")}, // grammar
-				{NonTerminal("name")},    // name
-				{NonTerminal("decls")},   // decls
-				{NonTerminal("decl")},    // decl
-				{NonTerminal("token")},   // token
-				{NonTerminal("rule")},    // rule
-				{NonTerminal("lhs")},     // lhs
-				{NonTerminal("rhs")},     // rhs
-				{NonTerminal("nonterm")}, // nonterm
-				{NonTerminal("term")},    // term
+				E,                          // ε
+				{Terminal("=")},            // =
+				{Terminal("|")},            // |
+				{Terminal("(")},            // (
+				{Terminal(")")},            // )
+				{Terminal("[")},            // [
+				{Terminal("]")},            // ]
+				{Terminal("{")},            // {
+				{Terminal("}")},            // }
+				{Terminal("{{")},           // {{
+				{Terminal("}}")},           // }}
+				{Terminal("grammar")},      // grammar
+				{Terminal("@left")},        // @left
+				{Terminal("@right")},       // @right
+				{Terminal("@none")},        // @none
+				{Terminal("IDENT")},        // IDENT
+				{Terminal("TOKEN")},        // TOKEN
+				{Terminal("STRING")},       // STRING
+				{Terminal("REGEX")},        // REGEX
+				{Terminal("PREDEF")},       // PREDEF
+				{NonTerminal("grammar")},   // grammar
+				{NonTerminal("name")},      // name
+				{NonTerminal("decls")},     // decls
+				{NonTerminal("decl")},      // decl
+				{NonTerminal("token")},     // token
+				{NonTerminal("directive")}, // directive
+				{NonTerminal("handles")},   // handles
+				{NonTerminal("rule")},      // rule
+				{NonTerminal("lhs")},       // lhs
+				{NonTerminal("rhs")},       // rhs
+				{NonTerminal("nonterm")},   // nonterm
+				{NonTerminal("term")},      // term
 				{Terminal("TOKEN"), Terminal("="), Terminal("REGEX")},                                           // TOKEN "=" REGEX
+				{Terminal("@right"), NonTerminal("handles")},                                                    // "@right" handles
 				{NonTerminal("rhs"), NonTerminal("rhs"), NonTerminal("rhs"), NonTerminal("rhs")},                // rhs rhs rhs
 				{NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs"), Terminal("|"), NonTerminal("rhs")},      // rhs "|" rhs "|" rhs
 				{NonTerminal("nonterm"), Terminal("="), Terminal("{{"), Terminal("}}"), NonTerminal("nonterm")}, // nonterm "=" "{{" nonterm "}}"
@@ -2851,21 +3093,28 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{Terminals: set.New(EqTerminal, "{{"), IncludesEmpty: false},                                            // FIRST({{)
 				{Terminals: set.New(EqTerminal, "}}"), IncludesEmpty: false},                                            // FIRST(}})
 				{Terminals: set.New(EqTerminal, "grammar"), IncludesEmpty: false},                                       // FIRST(grammar)
+				{Terminals: set.New(EqTerminal, "@left"), IncludesEmpty: false},                                         // FIRST(@left)
+				{Terminals: set.New(EqTerminal, "@right"), IncludesEmpty: false},                                        // FIRST(@right)
+				{Terminals: set.New(EqTerminal, "@none"), IncludesEmpty: false},                                         // FIRST(@none)
 				{Terminals: set.New(EqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(IDENT)
 				{Terminals: set.New(EqTerminal, "TOKEN"), IncludesEmpty: false},                                         // FIRST(TOKEN)
 				{Terminals: set.New(EqTerminal, "STRING"), IncludesEmpty: false},                                        // FIRST(STRING)
 				{Terminals: set.New(EqTerminal, "REGEX"), IncludesEmpty: false},                                         // FIRST(REGEX)
+				{Terminals: set.New(EqTerminal, "PREDEF"), IncludesEmpty: false},                                        // FIRST(PREDEF)
 				{Terminals: set.New(EqTerminal, "grammar"), IncludesEmpty: false},                                       // FIRST(grammar)
 				{Terminals: set.New(EqTerminal, "grammar"), IncludesEmpty: false},                                       // FIRST(name)
-				{Terminals: set.New(EqTerminal, "TOKEN", "IDENT"), IncludesEmpty: true},                                 // FIRST(decls)
-				{Terminals: set.New(EqTerminal, "TOKEN", "IDENT"), IncludesEmpty: false},                                // FIRST(decl)
+				{Terminals: set.New(EqTerminal, "@left", "@right", "@none", "IDENT", "TOKEN"), IncludesEmpty: true},     // FIRST(decls)
+				{Terminals: set.New(EqTerminal, "@left", "@right", "@none", "IDENT", "TOKEN"), IncludesEmpty: false},    // FIRST(decl)
 				{Terminals: set.New(EqTerminal, "TOKEN"), IncludesEmpty: false},                                         // FIRST(token)
+				{Terminals: set.New(EqTerminal, "@left", "@right", "@none"), IncludesEmpty: false},                      // FIRST(directive)
+				{Terminals: set.New(EqTerminal, "IDENT", "TOKEN", "STRING"), IncludesEmpty: false},                      // FIRST(handles)
 				{Terminals: set.New(EqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(rule)
 				{Terminals: set.New(EqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(lhs)
 				{Terminals: set.New(EqTerminal, "(", "[", "{", "{{", "IDENT", "TOKEN", "STRING"), IncludesEmpty: false}, // FIRST(rhs)
 				{Terminals: set.New(EqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(nonterm)
 				{Terminals: set.New(EqTerminal, "TOKEN", "STRING"), IncludesEmpty: false},                               // FIRST(term)
 				{Terminals: set.New(EqTerminal, "TOKEN"), IncludesEmpty: false},                                         // FIRST(TOKEN "=" REGEX)
+				{Terminals: set.New(EqTerminal, "@right"), IncludesEmpty: false},                                        // "@right" handles
 				{Terminals: set.New(EqTerminal, "(", "[", "{", "{{", "IDENT", "TOKEN", "STRING"), IncludesEmpty: false}, // FIRST(rhs rhs rhs)
 				{Terminals: set.New(EqTerminal, "(", "[", "{", "{{", "IDENT", "TOKEN", "STRING"), IncludesEmpty: false}, // FIRST(rhs "|" rhs "|" rhs)
 				{Terminals: set.New(EqTerminal, "IDENT"), IncludesEmpty: false},                                         // FIRST(nonterm "=" "{{" nonterm "}}")
@@ -3038,28 +3287,32 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 			name: "10th",
 			g:    CFGrammars[9],
 			follows: []NonTerminal{
-				NonTerminal("grammar"), // grammar
-				NonTerminal("name"),    // name
-				NonTerminal("decls"),   // decls
-				NonTerminal("decl"),    // decl
-				NonTerminal("token"),   // token
-				NonTerminal("rule"),    // rule
-				NonTerminal("lhs"),     // lhs
-				NonTerminal("rhs"),     // rhs
-				NonTerminal("nonterm"), // nonterm
-				NonTerminal("term"),    // term
+				NonTerminal("grammar"),   // grammar
+				NonTerminal("name"),      // name
+				NonTerminal("decls"),     // decls
+				NonTerminal("decl"),      // decl
+				NonTerminal("token"),     // token
+				NonTerminal("directive"), // directive
+				NonTerminal("handles"),   // handles
+				NonTerminal("rule"),      // rule
+				NonTerminal("lhs"),       // lhs
+				NonTerminal("rhs"),       // rhs
+				NonTerminal("nonterm"),   // nonterm
+				NonTerminal("term"),      // term
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},                                                                                 // FOLLOW(grammar)
-				{Terminals: set.New(EqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(name)
-				{Terminals: set.New(EqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(decls)
-				{Terminals: set.New(EqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(decl)
-				{Terminals: set.New(EqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(token)
-				{Terminals: set.New(EqTerminal, "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(rule)
-				{Terminals: set.New(EqTerminal, "="), IncludesEndmarker: false},                                                                           // FOLLOW(lhs)
-				{Terminals: set.New(EqTerminal, "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true},      // FOLLOW(rhs)
-				{Terminals: set.New(EqTerminal, "=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true}, // FOLLOW(nonterm)
-				{Terminals: set.New(EqTerminal, "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true},      // FOLLOW(term)
+				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},                                                                                                             // FOLLOW(grammar)
+				{Terminals: set.New(EqTerminal, "@left", "@right", "@none", "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(name)
+				{Terminals: set.New(EqTerminal, "@left", "@right", "@none", "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(decls)
+				{Terminals: set.New(EqTerminal, "@left", "@right", "@none", "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(decl)
+				{Terminals: set.New(EqTerminal, "@left", "@right", "@none", "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(token)
+				{Terminals: set.New(EqTerminal, "@left", "@right", "@none", "IDENT", "TOKEN"), IncludesEndmarker: true},                                                               // FOLLOW(directive)
+				{Terminals: set.New(EqTerminal, "@left", "@right", "@none", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true},                                                     // FOLLOW(handles)
+				{Terminals: set.New(EqTerminal, "@left", "@right", "@none", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true},                                                     // FOLLOW(rule)
+				{Terminals: set.New(EqTerminal, "="), IncludesEndmarker: false},                                                                                                       // FOLLOW(lhs)
+				{Terminals: set.New(EqTerminal, "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "@left", "@right", "@none", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true},      // FOLLOW(rhs)
+				{Terminals: set.New(EqTerminal, "=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "@left", "@right", "@none", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true}, // FOLLOW(nonterm)
+				{Terminals: set.New(EqTerminal, "|", "(", ")", "[", "]", "{", "}", "{{", "}}", "@left", "@right", "@none", "IDENT", "TOKEN", "STRING"), IncludesEndmarker: true},      // FOLLOW(term)
 			},
 		},
 	}
