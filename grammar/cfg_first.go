@@ -19,7 +19,7 @@ var EqTerminalsAndEmpty = func(lhs, rhs *TerminalsAndEmpty) bool {
 // FIRST(α), where α is any string of grammar symbols (terminals and non-terminals),
 // is the set of terminals that begin strings derived from α.
 // If α ⇒* ε, then ε is also in FIRST(α).
-type FIRST func(String[Symbol]) TerminalsAndEmpty
+type FIRST func(String[Symbol]) *TerminalsAndEmpty
 
 // TerminalsAndEmpty is the return type for the FIRST function.
 //

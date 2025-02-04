@@ -20,7 +20,7 @@ var EqTerminalsAndEndmarker = func(lhs, rhs *TerminalsAndEndmarker) bool {
 // that can appear immediately to the right of A in some sentential form;
 // that is; the set of terminals 𝑎 such that there exists a derivation of the form S ⇒* αAaβ
 // for some α and β strings of grammar symbols (terminals and non-terminals).
-type FOLLOW func(NonTerminal) TerminalsAndEndmarker
+type FOLLOW func(NonTerminal) *TerminalsAndEndmarker
 
 // TerminalsAndEndmarker is the return type for the FOLLOW function.
 //

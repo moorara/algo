@@ -302,8 +302,8 @@ func (g *CFG) IsLL1() error {
 						A:           A,
 						Alpha:       α,
 						Beta:        β,
-						FIRSTα:      &firstα,
-						FIRSTβ:      &firstβ,
+						FIRSTα:      firstα,
+						FIRSTβ:      firstβ,
 					})
 				}
 
@@ -314,9 +314,9 @@ func (g *CFG) IsLL1() error {
 						A:           A,
 						Alpha:       α,
 						Beta:        β,
-						FOLLOWA:     &followA,
-						FIRSTα:      &firstα,
-						FIRSTβ:      &firstβ,
+						FOLLOWA:     followA,
+						FIRSTα:      firstα,
+						FIRSTβ:      firstβ,
 					})
 				}
 
@@ -327,9 +327,9 @@ func (g *CFG) IsLL1() error {
 						A:           A,
 						Alpha:       α,
 						Beta:        β,
-						FOLLOWA:     &followA,
-						FIRSTα:      &firstα,
-						FIRSTβ:      &firstβ,
+						FOLLOWA:     followA,
+						FIRSTα:      firstα,
+						FIRSTβ:      firstβ,
 					})
 				}
 			}
@@ -1005,9 +1005,9 @@ func (g *CFG) ComputeFIRST() FIRST {
 		}
 	}
 
-	return func(s String[Symbol]) TerminalsAndEmpty {
+	return func(s String[Symbol]) *TerminalsAndEmpty {
 		if f, ok := firstByString.Get(s); ok {
-			return *f
+			return f
 		}
 
 		firstS := newTerminalsAndEmpty()
@@ -1034,7 +1034,7 @@ func (g *CFG) ComputeFIRST() FIRST {
 			firstS.IncludesEmpty = true
 		}
 
-		return *firstS
+		return firstS
 	}
 }
 
@@ -1106,13 +1106,13 @@ func (g *CFG) ComputeFOLLOW(first FIRST) FOLLOW {
 		}
 	}
 
-	return func(A NonTerminal) TerminalsAndEndmarker {
+	return func(A NonTerminal) *TerminalsAndEndmarker {
 		f, ok := follow.Get(A)
 		if !ok {
 			panic(fmt.Sprintf("undefined non-terminal %s", A))
 		}
 
-		return *f
+		return f
 	}
 }
 
