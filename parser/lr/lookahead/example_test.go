@@ -361,3 +361,102 @@ func Example_ambiguousGrammar() {
 
 	fmt.Println(ast.DOT())
 }
+
+func Example_ebnf() {
+	G := grammar.NewCFG(
+		[]grammar.Terminal{
+			"=", "|", "(", ")", "[", "]", "{", "}", "{{", "}}",
+			"grammar", "@left", "@right", "@none",
+			"IDENT", "TOKEN", "STRING", "REGEX", "PREDEF",
+		},
+		[]grammar.NonTerminal{
+			"grammar", "name", "decls", "decl", "token", "directive",
+			"handles", "rule", "lhs", "rhs", "nonterm", "term",
+		},
+		[]*grammar.Production{ // G5
+			{Head: "grammar", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("name"), grammar.NonTerminal("decls")}}, // grammar → name decls
+			{Head: "name", Body: grammar.String[grammar.Symbol]{grammar.Terminal("grammar"), grammar.Terminal("IDENT")}},       // name → "grammar" IDENT
+			{Head: "decls", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("decls"), grammar.NonTerminal("decl")}},   // decls → decls decl
+			{Head: "decls", Body: grammar.E}, // decls → ε
+			{Head: "decl", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("token")}},                                                  // decl → token
+			{Head: "decl", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("directive")}},                                              // decl → directive
+			{Head: "decl", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rule")}},                                                   // decl → rule
+			{Head: "token", Body: grammar.String[grammar.Symbol]{grammar.Terminal("TOKEN"), grammar.Terminal("="), grammar.Terminal("STRING")}}, // token → TOKEN "=" STRING
+			{Head: "token", Body: grammar.String[grammar.Symbol]{grammar.Terminal("TOKEN"), grammar.Terminal("="), grammar.Terminal("REGEX")}},  // token → TOKEN "=" REGEX
+			{Head: "token", Body: grammar.String[grammar.Symbol]{grammar.Terminal("TOKEN"), grammar.Terminal("="), grammar.Terminal("PREDEF")}}, // token → TOKEN "=" PREDEF
+			{Head: "directive", Body: grammar.String[grammar.Symbol]{grammar.Terminal("@left"), grammar.NonTerminal("handles")}},                // directive → "@left" handles
+			{Head: "directive", Body: grammar.String[grammar.Symbol]{grammar.Terminal("@right"), grammar.NonTerminal("handles")}},               // directive → "@right" handles
+			{Head: "directive", Body: grammar.String[grammar.Symbol]{grammar.Terminal("@none"), grammar.NonTerminal("handles")}},                // directive → "@none" handles
+			{Head: "handles", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("handles"), grammar.NonTerminal("term")}},                // handles → handles term
+			{Head: "handles", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("handles"), grammar.NonTerminal("rule")}},                // handles → handles rule
+			{Head: "handles", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("term")}},                                                // handles → term
+			{Head: "handles", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rule")}},                                                // handles → rule
+			{Head: "rule", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("lhs"), grammar.Terminal("="), grammar.NonTerminal("rhs")}}, // rule → lhs "=" rhs
+			{Head: "rule", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("lhs"), grammar.Terminal("=")}},                             // rule → lhs "="
+			{Head: "lhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("nonterm")}},                                                 // lhs → nonterm
+			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("nonterm")}},                                                 // rhs → nonterm
+			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("term")}},                                                    // rhs → term
+			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")}},                         // rhs → rhs rhs
+			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("("), grammar.NonTerminal("rhs"), grammar.Terminal(")")}},       // rhs → "(" rhs ")"
+			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("["), grammar.NonTerminal("rhs"), grammar.Terminal("]")}},       // rhs → "[" rhs "]"
+			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("{"), grammar.NonTerminal("rhs"), grammar.Terminal("}")}},       // rhs → "{" rhs "}"
+			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.Terminal("{{"), grammar.NonTerminal("rhs"), grammar.Terminal("}}")}},     // rhs → "{{" rhs "}}"
+			{Head: "rhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.Terminal("|"), grammar.NonTerminal("rhs")}},  // rhs → rhs "|" rhs
+			{Head: "nonterm", Body: grammar.String[grammar.Symbol]{grammar.Terminal("IDENT")}},                                                  // nonterm → IDENT
+			{Head: "term", Body: grammar.String[grammar.Symbol]{grammar.Terminal("TOKEN")}},                                                     // term → TOKEN
+			{Head: "term", Body: grammar.String[grammar.Symbol]{grammar.Terminal("STRING")}},                                                    // term → STRING
+		},
+		"grammar",
+	)
+
+	precedences := lr.PrecedenceLevels{
+		{
+			Associativity: lr.LEFT,
+			Handles: lr.NewPrecedenceHandles(
+				lr.PrecedenceHandleForProduction(&grammar.Production{
+					Head: "rhs",
+					Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rhs"), grammar.NonTerminal("rhs")},
+				}),
+			),
+		},
+		{
+			Associativity: lr.LEFT,
+			Handles: lr.NewPrecedenceHandles(
+				lr.PrecedenceHandleForTerminal("("),
+				lr.PrecedenceHandleForTerminal("["),
+				lr.PrecedenceHandleForTerminal("{"),
+				lr.PrecedenceHandleForTerminal("{{"),
+				lr.PrecedenceHandleForTerminal("IDENT"),
+				lr.PrecedenceHandleForTerminal("TOKEN"),
+				lr.PrecedenceHandleForTerminal("STRING"),
+			),
+		},
+		{
+			Associativity: lr.RIGHT,
+			Handles: lr.NewPrecedenceHandles(
+				lr.PrecedenceHandleForTerminal("|"),
+			),
+		},
+		{
+			Associativity: lr.NONE,
+			Handles: lr.NewPrecedenceHandles(
+				lr.PrecedenceHandleForTerminal("="),
+			),
+		},
+		{
+			Associativity: lr.NONE,
+			Handles: lr.NewPrecedenceHandles(
+				lr.PrecedenceHandleForTerminal("@left"),
+				lr.PrecedenceHandleForTerminal("@right"),
+				lr.PrecedenceHandleForTerminal("@none"),
+			),
+		},
+	}
+
+	table, err := lookahead.BuildParsingTable(G, precedences)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(table)
+}

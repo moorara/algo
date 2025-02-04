@@ -25,7 +25,7 @@ var (
 // BuildParsingTable constructs a parsing table for a predictive parser.
 //
 // This method constructs a parsing table for any context-free grammar.
-// To identify errors in the table, use the Error method.
+// To identify errors in the table, use the Conflicts method.
 // Some errors may be resolved by eliminating left recursion and applying left factoring to the grammar.
 // However, certain grammars cannot be transformed into LL(1) even after these transformations.
 // Some languages may have no LL(1) grammar at all.

@@ -386,6 +386,14 @@ var precedences = []PrecedenceLevels{
 				PrecedenceHandleForTerminal("="),
 			),
 		},
+		{
+			Associativity: NONE,
+			Handles: NewPrecedenceHandles(
+				PrecedenceHandleForTerminal("@left"),
+				PrecedenceHandleForTerminal("@right"),
+				PrecedenceHandleForTerminal("@none"),
+			),
+		},
 	},
 }
 
