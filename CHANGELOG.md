@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.10.9](https://github.com/moorara/algo/tree/v0.10.9) (2025-02-05)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.10.8...v0.10.9)
+
+**Merged Changes:**
+
+  - Escape special characteres in DOT code [#277](https://github.com/moorara/algo/pull/277) ([moorara](https://github.com/moorara))
+  - parser: Escape especial characters in DOT code for internal nodes [#276](https://github.com/moorara/algo/pull/276) ([moorara](https://github.com/moorara))
+  - Fix example improper imports [#275](https://github.com/moorara/algo/pull/275) ([moorara](https://github.com/moorara))
+
+
 ## [v0.10.8](https://github.com/moorara/algo/tree/v0.10.8) (2025-02-03)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.10.7...v0.10.8)
