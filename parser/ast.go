@@ -3,7 +3,6 @@ package parser
 import (
 	"bytes"
 	"fmt"
-	"strings"
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
@@ -253,14 +252,8 @@ func (n *InternalNode) DOT() string {
 
 		body := dot.NewRecord()
 		for i, X := range in.Production.Body {
-			label := strings.ReplaceAll(X.String(), "|", "\\|")
-			label = strings.ReplaceAll(label, "{", "\\{")
-			label = strings.ReplaceAll(label, "}", "\\}")
-			label = strings.ReplaceAll(label, "<", "\\<")
-			label = strings.ReplaceAll(label, ">", "\\>")
-
 			body.Fields = append(body.Fields,
-				dot.NewSimpleField(fmt.Sprintf("%d", i), label),
+				dot.NewSimpleField(fmt.Sprintf("%d", i), X.String()),
 			)
 		}
 

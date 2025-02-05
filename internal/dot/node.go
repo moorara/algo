@@ -3,6 +3,7 @@ package dot
 import (
 	"bytes"
 	"fmt"
+	"strings"
 )
 
 // Node represents a graph node.
@@ -34,17 +35,21 @@ func NewNode(name, group, label string, color Color, style Style, shape Shape, f
 // DOT generates a DOT representation of the Node object.
 func (n *Node) DOT() string {
 	first := true
-	buf := new(bytes.Buffer)
+	var b bytes.Buffer
 
-	buf.WriteString(n.Name + " [")
-	first = addListAttr(buf, first, "group", n.Group)
-	first = addListAttr(buf, first, "label", fmt.Sprintf("%q", n.Label))
-	first = addListAttr(buf, first, "color", string(n.Color))
-	first = addListAttr(buf, first, "style", string(n.Style))
-	first = addListAttr(buf, first, "shape", string(n.Shape))
-	first = addListAttr(buf, first, "fontcolor", string(n.FontColor))
-	_ = addListAttr(buf, first, "fontname", `"`+n.FontName+`"`)
-	buf.WriteString("];")
+	label := n.Label
+	label = strings.ReplaceAll(label, `"`, `\"`)
+	label = fmt.Sprintf(`"%s"`, label)
 
-	return buf.String()
+	b.WriteString(n.Name + " [")
+	first = addListAttr(&b, first, "group", n.Group)
+	first = addListAttr(&b, first, "label", label)
+	first = addListAttr(&b, first, "color", string(n.Color))
+	first = addListAttr(&b, first, "style", string(n.Style))
+	first = addListAttr(&b, first, "shape", string(n.Shape))
+	first = addListAttr(&b, first, "fontcolor", string(n.FontColor))
+	_ = addListAttr(&b, first, "fontname", `"`+n.FontName+`"`)
+	b.WriteString("];")
+
+	return b.String()
 }

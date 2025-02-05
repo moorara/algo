@@ -3,6 +3,7 @@ package dot
 import (
 	"bytes"
 	"fmt"
+	"strings"
 )
 
 // Edge represents an edge.
@@ -36,16 +37,20 @@ func NewEdge(from, to string, edgeType EdgeType, edgeDir EdgeDir, label string, 
 // DOT generates a DOT representation of the Edge object.
 func (e *Edge) DOT() string {
 	first := true
-	buf := new(bytes.Buffer)
+	var b bytes.Buffer
 
-	buf.WriteString(e.From + " " + string(e.EdgeType) + " " + e.To + " [")
-	first = addListAttr(buf, first, "dirType", string(e.EdgeDir))
-	first = addListAttr(buf, first, "label", fmt.Sprintf("%q", e.Label))
-	first = addListAttr(buf, first, "color", string(e.Color))
-	first = addListAttr(buf, first, "style", string(e.Style))
-	first = addListAttr(buf, first, "arrowhead", string(e.ArrowHead))
-	_ = addListAttr(buf, first, "arrowtail", string(e.ArrowTail))
-	buf.WriteString("];")
+	label := e.Label
+	label = strings.ReplaceAll(label, `"`, `\"`)
+	label = fmt.Sprintf(`"%s"`, label)
 
-	return buf.String()
+	b.WriteString(e.From + " " + string(e.EdgeType) + " " + e.To + " [")
+	first = addListAttr(&b, first, "dirType", string(e.EdgeDir))
+	first = addListAttr(&b, first, "label", label)
+	first = addListAttr(&b, first, "color", string(e.Color))
+	first = addListAttr(&b, first, "style", string(e.Style))
+	first = addListAttr(&b, first, "arrowhead", string(e.ArrowHead))
+	_ = addListAttr(&b, first, "arrowtail", string(e.ArrowTail))
+	b.WriteString("];")
+
+	return b.String()
 }

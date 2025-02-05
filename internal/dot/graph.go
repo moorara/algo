@@ -59,41 +59,41 @@ func (g *Graph) AddSubgraph(subgraphs ...Subgraph) {
 // DOT generates a DOT representation of the Graph object.
 func (g *Graph) DOT() string {
 	first := true
-	buf := new(bytes.Buffer)
+	var b bytes.Buffer
 
 	if g.Strict {
-		buf.WriteString("strict ")
+		b.WriteString("strict ")
 	}
 
 	if g.Digraph {
-		buf.WriteString("digraph ")
+		b.WriteString("digraph ")
 	} else {
-		buf.WriteString("graph ")
+		b.WriteString("graph ")
 	}
 
 	if g.Name != "" {
-		buf.WriteString(g.Name)
-		buf.WriteString(" ")
+		b.WriteString(g.Name)
+		b.WriteString(" ")
 	}
 
-	buf.WriteString("{\n")
+	b.WriteString("{\n")
 
-	first = addAttr(buf, first, 2, "rankdir", string(g.RankDir))
-	_ = addAttr(buf, first, 2, "concentrate", fmt.Sprintf("%t", g.Concentrate))
+	first = addAttr(&b, first, 2, "rankdir", string(g.RankDir))
+	_ = addAttr(&b, first, 2, "concentrate", fmt.Sprintf("%t", g.Concentrate))
 
 	first = true
-	addIndent(buf, 2)
-	buf.WriteString("node [")
-	first = addListAttr(buf, first, "color", string(g.NodeColor))
-	first = addListAttr(buf, first, "style", string(g.NodeStyle))
-	_ = addListAttr(buf, first, "shape", string(g.NodeShape))
-	buf.WriteString("];\n")
+	addIndent(&b, 2)
+	b.WriteString("node [")
+	first = addListAttr(&b, first, "color", string(g.NodeColor))
+	first = addListAttr(&b, first, "style", string(g.NodeStyle))
+	_ = addListAttr(&b, first, "shape", string(g.NodeShape))
+	b.WriteString("];\n")
 	first = false
 
-	first = addSubgraphs(buf, first, 2, g.Subgraphs)
-	first = addNodes(buf, first, 2, g.Nodes)
-	addEdges(buf, first, 2, g.Edges)
-	buf.WriteString("}")
+	first = addSubgraphs(&b, first, 2, g.Subgraphs)
+	first = addNodes(&b, first, 2, g.Nodes)
+	addEdges(&b, first, 2, g.Edges)
+	b.WriteString("}")
 
-	return buf.String()
+	return b.String()
 }
