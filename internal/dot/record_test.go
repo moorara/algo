@@ -103,13 +103,31 @@ func TestNewSimpleField(t *testing.T) {
 			name:        "Left",
 			fieldName:   "l",
 			label:       "left",
-			expectedDOT: "<l>left",
+			expectedDOT: `<l>left`,
 		},
 		{
 			name:        "Right",
 			fieldName:   "r",
 			label:       "right",
-			expectedDOT: "<r>right",
+			expectedDOT: `<r>right`,
+		},
+		{
+			name:        "EscapeBar",
+			fieldName:   "r",
+			label:       "a|b",
+			expectedDOT: `<r>a\|b`,
+		},
+		{
+			name:        "EscapeBrackets",
+			fieldName:   "r",
+			label:       "{}",
+			expectedDOT: `<r>\{\}`,
+		},
+		{
+			name:        "EscapeAngleBrackets",
+			fieldName:   "r",
+			label:       "<>",
+			expectedDOT: `<r>\<\>`,
 		},
 	}
 

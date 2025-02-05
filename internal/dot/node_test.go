@@ -20,7 +20,7 @@ func TestNode(t *testing.T) {
 		expectedDOT string
 	}{
 		{
-			name:        "SimpleNode",
+			name:        "EmptyNode",
 			nodeName:    "root",
 			group:       "",
 			label:       "",
@@ -35,13 +35,13 @@ func TestNode(t *testing.T) {
 			name:        "NodeWithLabel",
 			nodeName:    "root",
 			group:       "",
-			label:       "root",
+			label:       `"id"`,
 			color:       "",
 			style:       "",
 			shape:       "",
 			fontcolor:   "",
 			fontname:    "",
-			expectedDOT: `root [label="root"];`,
+			expectedDOT: `root [label="\"id\""];`,
 		},
 		{
 			name:        "NodeWithGroup",

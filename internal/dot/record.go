@@ -5,6 +5,14 @@ import (
 	"strings"
 )
 
+var escapes = map[string]string{
+	`|`: `\|`,
+	`{`: `\{`,
+	`}`: `\}`,
+	`<`: `\<`,
+	`>`: `\>`,
+}
+
 // Record represents a record.
 type Record struct {
 	Fields []Field
@@ -53,17 +61,24 @@ func NewSimpleField(name, label string) Field {
 
 // DOT generates a DOT representation of the simpleField object.
 func (f *simpleField) DOT() string {
-	buf := new(bytes.Buffer)
+	var b bytes.Buffer
 
 	if f.Name != "" {
-		buf.WriteString("<" + f.Name + ">")
+		b.WriteRune('<')
+		b.WriteString(f.Name)
+		b.WriteRune('>')
 	}
 
 	if f.Label != "" {
-		buf.WriteString(f.Label)
+		label := f.Label
+		for old, new := range escapes {
+			label = strings.ReplaceAll(label, old, new)
+		}
+
+		b.WriteString(label)
 	}
 
-	return buf.String()
+	return b.String()
 }
 
 // complexField represents a complex field.
@@ -80,11 +95,11 @@ func NewComplexField(record Record) Field {
 
 // DOT generates a DOT representation of the complexField object.
 func (f *complexField) DOT() string {
-	buf := new(bytes.Buffer)
+	var b bytes.Buffer
 
-	buf.WriteString("{ ")
-	buf.WriteString(f.Record.Label())
-	buf.WriteString(" }")
+	b.WriteString("{ ")
+	b.WriteString(f.Record.Label())
+	b.WriteString(" }")
 
-	return buf.String()
+	return b.String()
 }

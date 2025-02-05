@@ -57,37 +57,37 @@ func (s *Subgraph) AddSubgraph(subgraphs ...Subgraph) {
 // DOT generates a DOT representation of the Subgraph object.
 func (s *Subgraph) DOT(indent int) string {
 	first := true
-	buf := new(bytes.Buffer)
+	var b bytes.Buffer
 
-	addIndent(buf, indent)
-	buf.WriteString("subgraph ")
+	addIndent(&b, indent)
+	b.WriteString("subgraph ")
 	if s.Name != "" {
-		buf.WriteString(s.Name)
-		buf.WriteString(" ")
+		b.WriteString(s.Name)
+		b.WriteString(" ")
 	}
-	buf.WriteString("{\n")
+	b.WriteString("{\n")
 
-	first = addAttr(buf, first, indent+2, "label", fmt.Sprintf("%q", s.Label))
-	first = addAttr(buf, first, indent+2, "color", string(s.Color))
-	first = addAttr(buf, first, indent+2, "style", string(s.Style))
-	first = addAttr(buf, first, indent+2, "rank", string(s.Rank))
-	_ = addAttr(buf, first, indent+2, "rankdir", string(s.RankDir))
+	first = addAttr(&b, first, indent+2, "label", fmt.Sprintf("%q", s.Label))
+	first = addAttr(&b, first, indent+2, "color", string(s.Color))
+	first = addAttr(&b, first, indent+2, "style", string(s.Style))
+	first = addAttr(&b, first, indent+2, "rank", string(s.Rank))
+	_ = addAttr(&b, first, indent+2, "rankdir", string(s.RankDir))
 
 	first = true
-	addIndent(buf, indent+2)
-	buf.WriteString("node [")
-	first = addListAttr(buf, first, "color", string(s.NodeColor))
-	first = addListAttr(buf, first, "style", string(s.NodeStyle))
-	_ = addListAttr(buf, first, "shape", string(s.NodeShape))
-	buf.WriteString("];\n")
+	addIndent(&b, indent+2)
+	b.WriteString("node [")
+	first = addListAttr(&b, first, "color", string(s.NodeColor))
+	first = addListAttr(&b, first, "style", string(s.NodeStyle))
+	_ = addListAttr(&b, first, "shape", string(s.NodeShape))
+	b.WriteString("];\n")
 	first = false
 
-	first = addSubgraphs(buf, first, indent+2, s.Subgraphs)
-	first = addNodes(buf, first, indent+2, s.Nodes)
-	_ = addEdges(buf, first, indent+2, s.Edges)
+	first = addSubgraphs(&b, first, indent+2, s.Subgraphs)
+	first = addNodes(&b, first, indent+2, s.Nodes)
+	_ = addEdges(&b, first, indent+2, s.Edges)
 
-	addIndent(buf, indent)
-	buf.WriteString("}")
+	addIndent(&b, indent)
+	b.WriteString("}")
 
-	return buf.String()
+	return b.String()
 }
