@@ -37,9 +37,9 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 	)
 
 	return &ParsingTable{
-		states:       states,
-		terminals:    terminals,
-		nonTerminals: nonTerminals,
+		States:       states,
+		Terminals:    terminals,
+		NonTerminals: nonTerminals,
 		precedences:  precedences,
 		actions:      actions,
 		gotos:        gotos,
@@ -48,9 +48,9 @@ func NewParsingTable(states []State, terminals []grammar.Terminal, nonTerminals 
 
 // ParsingTable represents an LR parsing table.
 type ParsingTable struct {
-	states       []State
-	terminals    []grammar.Terminal
-	nonTerminals []grammar.NonTerminal
+	States       []State
+	Terminals    []grammar.Terminal
+	NonTerminals []grammar.NonTerminal
 	precedences  PrecedenceLevels
 	actions      symboltable.SymbolTable[State, symboltable.SymbolTable[grammar.Terminal, set.Set[*Action]]]
 	gotos        symboltable.SymbolTable[State, symboltable.SymbolTable[grammar.NonTerminal, State]]
@@ -105,11 +105,11 @@ func (t *ParsingTable) getGotoString(s State, A grammar.NonTerminal) string {
 func (t *ParsingTable) String() string {
 	ts := &tableStringer[State, grammar.Terminal, grammar.NonTerminal]{
 		K1Title:  "STATE",
-		K1Values: t.states,
+		K1Values: t.States,
 		K2Title:  "ACTION",
-		K2Values: t.terminals,
+		K2Values: t.Terminals,
 		K3Title:  "GOTO",
-		K3Values: t.nonTerminals,
+		K3Values: t.NonTerminals,
 		GetK1K2:  t.getActionString,
 		GetK1K3:  t.getGotoString,
 	}
@@ -184,8 +184,8 @@ func (t *ParsingTable) ResolveConflicts() error {
 	var errs AggregatedConflictError
 
 	// Check for ACTION conflicts.
-	for _, s := range t.states {
-		for _, a := range t.terminals {
+	for _, s := range t.States {
+		for _, a := range t.Terminals {
 			actions, ok := t.getActions(s, a)
 			if !ok || actions.Size() <= 1 {
 				continue
