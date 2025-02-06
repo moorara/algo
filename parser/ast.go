@@ -3,6 +3,7 @@ package parser
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
@@ -241,6 +242,10 @@ func (n *InternalNode) DOT() string {
 
 		if lf, ok := n.(*LeafNode); ok {
 			label := fmt.Sprintf("%s <%s>", lf.Terminal, lf.Lexeme)
+			label = strings.ReplaceAll(label, `\t`, `\\t`)
+			label = strings.ReplaceAll(label, `\n`, `\\n`)
+			label = strings.ReplaceAll(label, `\r`, `\\r`)
+
 			graph.AddNode(dot.NewNode(name, "", label, "", dot.StyleBold, dot.ShapeOval, "", ""))
 			return true
 		}
@@ -252,8 +257,13 @@ func (n *InternalNode) DOT() string {
 
 		body := dot.NewRecord()
 		for i, X := range in.Production.Body {
+			label := X.String()
+			label = strings.ReplaceAll(label, `\t`, `\\t`)
+			label = strings.ReplaceAll(label, `\n`, `\\n`)
+			label = strings.ReplaceAll(label, `\r`, `\\r`)
+
 			body.Fields = append(body.Fields,
-				dot.NewSimpleField(fmt.Sprintf("%d", i), X.String()),
+				dot.NewSimpleField(fmt.Sprintf("%d", i), label),
 			)
 		}
 
@@ -353,6 +363,9 @@ func (n *LeafNode) Annotation() any {
 // This format is commonly used for visualizing graphs with Graphviz tools.
 func (n *LeafNode) DOT() string {
 	label := fmt.Sprintf("%s <%s>", n.Terminal, n.Lexeme)
+	label = strings.ReplaceAll(label, "\t", `\\t`)
+	label = strings.ReplaceAll(label, "\n", `\\n`)
+	label = strings.ReplaceAll(label, "\r", `\\r`)
 
 	graph := dot.NewGraph(false, false, false, "", "", "", "", "")
 	graph.AddNode(dot.NewNode("1", "", label, "", dot.StyleBold, "", "", ""))
