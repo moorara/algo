@@ -141,16 +141,24 @@ func (p *Parser) Parse(tokenF parser.TokenFunc, prodF parser.ProductionFunc) err
 
 		action, err := p.T.ACTION(s, a)
 		if err != nil {
-			return &parser.ParseError{Cause: err}
+			return &parser.ParseError{
+				Description: fmt.Sprintf("unexpected string %q", token.Lexeme),
+				Cause:       err,
+				Pos:         token.Pos,
+			}
 		}
 
-		if action.Type == SHIFT {
+		switch action.Type {
+		case SHIFT:
 			stack.Push(action.State)
 
 			// Yield the token.
 			if tokenF != nil {
 				if err := tokenF(&token); err != nil {
-					return &parser.ParseError{Cause: err}
+					return &parser.ParseError{
+						Cause: err,
+						Pos:   token.Pos,
+					}
 				}
 			}
 
@@ -159,20 +167,20 @@ func (p *Parser) Parse(tokenF parser.TokenFunc, prodF parser.ProductionFunc) err
 			if err != nil {
 				return &parser.ParseError{Cause: err}
 			}
-		} else if action.Type == REDUCE {
+
+		case REDUCE:
 			A, β := action.Production.Head, action.Production.Body
 
 			for range len(β) {
 				stack.Pop()
 			}
 
-			t, _ := stack.Peek()
-			next, err := p.T.GOTO(t, A)
-			if err != nil {
-				// TODO: If ACTION(s, a) is valid, GOTO(t, A) should also be defined.
-				return &parser.ParseError{Cause: err}
-			}
+			// An LR parser detects an error when it consults the ACTION table.
+			// Errors are never identified by consulting the GOTO table.
+			// If ACTION(s, a) is not an error entry, GOTO(t, A) will also not be an error entry.
 
+			t, _ := stack.Peek()
+			next, _ := p.T.GOTO(t, A)
 			stack.Push(next)
 
 			// Yield the production.
@@ -181,15 +189,15 @@ func (p *Parser) Parse(tokenF parser.TokenFunc, prodF parser.ProductionFunc) err
 					return &parser.ParseError{Cause: err}
 				}
 			}
-		} else if action.Type == ACCEPT {
-			break
-		} /* else {
-			// TODO: This is unreachable currently, since T.ACTION handles the error.
-		} */
-	}
 
-	// Accept the input string.
-	return nil
+		case ACCEPT:
+			// Accept the input string.
+			return nil
+
+		case ERROR:
+			// TODO: This is unreachable currently, since T.ACTION handles the error.
+		}
+	}
 }
 
 // ParseAndBuildAST implements the LR parsing algorithm.
