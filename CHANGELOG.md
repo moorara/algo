@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.10.10](https://github.com/moorara/algo/tree/v0.10.10) (2025-02-05)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.10.9...v0.10.10)
+
+**Merged Changes:**
+
+  - Update EBNF grammar [#279](https://github.com/moorara/algo/pull/279) ([moorara](https://github.com/moorara))
+  - parser: escape tab and newline [#278](https://github.com/moorara/algo/pull/278) ([moorara](https://github.com/moorara))
+
+
 ## [v0.10.9](https://github.com/moorara/algo/tree/v0.10.9) (2025-02-05)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.10.8...v0.10.9)
