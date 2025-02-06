@@ -64,7 +64,7 @@ var Prods = [][]*grammar.Production{
 		{Head: "handles", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("handles"), grammar.NonTerminal("rule_handle")}},            // handles → handles rule_handle
 		{Head: "handles", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("term")}},                                                   // handles → term
 		{Head: "handles", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("rule_handle")}},                                            // handles → rule_handle
-		{Head: "rule_handle", Body: grammar.String[grammar.Symbol]{grammar.Terminal("<"), grammar.NonTerminal("rule"), grammar.Terminal(">")}}, // handles → "<" rule ">"
+		{Head: "rule_handle", Body: grammar.String[grammar.Symbol]{grammar.Terminal("<"), grammar.NonTerminal("rule"), grammar.Terminal(">")}}, // rule_handle → "<" rule ">"
 		{Head: "rule", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("lhs"), grammar.Terminal("="), grammar.NonTerminal("rhs")}},    // rule → lhs "=" rhs
 		{Head: "rule", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("lhs"), grammar.Terminal("=")}},                                // rule → lhs "="
 		{Head: "lhs", Body: grammar.String[grammar.Symbol]{grammar.NonTerminal("nonterm")}},                                                    // lhs → nonterm
