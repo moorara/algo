@@ -27,45 +27,19 @@ func TestNew(t *testing.T) {
 			expectedError: ``,
 		},
 		{
-			name:        "EBNF",
+			name:        "E→E+E",
 			L:           nil,
-			G:           parsertest.Grammars[5],
+			G:           parsertest.Grammars[4],
 			precedences: lr.PrecedenceLevels{},
 			expectedError: `Error:      Ambiguous Grammar
 Cause:      Multiple conflicts in the parsing table:
-              1. Shift/Reduce conflict in ACTION[3, "("]
-              2. Shift/Reduce conflict in ACTION[3, "IDENT"]
-              3. Shift/Reduce conflict in ACTION[3, "STRING"]
-              4. Shift/Reduce conflict in ACTION[3, "TOKEN"]
-              5. Shift/Reduce conflict in ACTION[3, "["]
-              6. Shift/Reduce conflict in ACTION[3, "{"]
-              7. Shift/Reduce conflict in ACTION[3, "{{"]
-              8. Shift/Reduce conflict in ACTION[3, "|"]
-              9. Shift/Reduce conflict in ACTION[17, "TOKEN"]
-              10. Shift/Reduce conflict in ACTION[18, "TOKEN"]
-              11. Shift/Reduce conflict in ACTION[19, "TOKEN"]
-              12. Shift/Reduce conflict in ACTION[24, "("]
-              13. Shift/Reduce conflict in ACTION[24, "IDENT"]
-              14. Shift/Reduce conflict in ACTION[24, "STRING"]
-              15. Shift/Reduce conflict in ACTION[24, "TOKEN"]
-              16. Shift/Reduce conflict in ACTION[24, "["]
-              17. Shift/Reduce conflict in ACTION[24, "{"]
-              18. Shift/Reduce conflict in ACTION[24, "{{"]
-              19. Shift/Reduce conflict in ACTION[25, "("]
-              20. Shift/Reduce conflict in ACTION[25, "IDENT"]
-              21. Shift/Reduce conflict in ACTION[25, "STRING"]
-              22. Shift/Reduce conflict in ACTION[25, "TOKEN"]
-              23. Shift/Reduce conflict in ACTION[25, "["]
-              24. Shift/Reduce conflict in ACTION[25, "{"]
-              25. Shift/Reduce conflict in ACTION[25, "{{"]
-              26. Shift/Reduce conflict in ACTION[25, "|"]
+              1. Shift/Reduce conflict in ACTION[2, "*"]
+              2. Shift/Reduce conflict in ACTION[2, "+"]
+              3. Shift/Reduce conflict in ACTION[3, "*"]
+              4. Shift/Reduce conflict in ACTION[3, "+"]
 Resolution: Specify associativity and precedence for these Terminals/Productions:
-              • "@left" vs. "TOKEN"
-              • "@none" vs. "TOKEN"
-              • "@right" vs. "TOKEN"
-              • "|" vs. "(", "IDENT", "STRING", "TOKEN", "[", "{", "{{"
-              • "|" vs. "(", "IDENT", "STRING", "TOKEN", "[", "{", "{{", "|"
-              • rhs = rhs rhs vs. "(", "IDENT", "STRING", "TOKEN", "[", "{", "{{", "|"
+              • "*" vs. "*", "+"
+              • "+" vs. "*", "+"
             Terminals/Productions listed earlier will have higher precedence.
             Terminals/Productions in the same line will have the same precedence.
 `,
