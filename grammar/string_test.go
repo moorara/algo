@@ -26,6 +26,8 @@ func TestString(t *testing.T) {
 		expectedAnyMatch       bool
 		append                 []Symbol
 		expectedAppend         String[Symbol]
+		prepend                []Symbol
+		expectedPrepend        String[Symbol]
 		concat                 []String[Symbol]
 		expectedConcat         String[Symbol]
 		expectedTerminals      String[Terminal]
@@ -45,6 +47,8 @@ func TestString(t *testing.T) {
 			expectedAnyMatch:       false,
 			append:                 []Symbol{},
 			expectedAppend:         E,
+			prepend:                []Symbol{},
+			expectedPrepend:        E,
 			concat:                 []String[Symbol]{E},
 			expectedConcat:         E,
 			expectedTerminals:      String[Terminal]{},
@@ -64,6 +68,8 @@ func TestString(t *testing.T) {
 			expectedAnyMatch:       false,
 			append:                 []Symbol{Terminal("d")},
 			expectedAppend:         String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d")},
+			prepend:                []Symbol{Terminal("x")},
+			expectedPrepend:        String[Symbol]{Terminal("x"), Terminal("a"), Terminal("b"), Terminal("c")},
 			concat:                 []String[Symbol]{{Terminal("d"), Terminal("e"), Terminal("f")}},
 			expectedConcat:         String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d"), Terminal("e"), Terminal("f")},
 			expectedTerminals:      String[Terminal]{"a", "b", "c"},
@@ -83,6 +89,8 @@ func TestString(t *testing.T) {
 			expectedAnyMatch:       false,
 			append:                 []Symbol{NonTerminal("D")},
 			expectedAppend:         String[Symbol]{NonTerminal("A"), NonTerminal("B"), NonTerminal("C"), NonTerminal("D")},
+			prepend:                []Symbol{NonTerminal("X")},
+			expectedPrepend:        String[Symbol]{NonTerminal("X"), NonTerminal("A"), NonTerminal("B"), NonTerminal("C")},
 			concat:                 []String[Symbol]{{NonTerminal("D"), NonTerminal("E"), NonTerminal("F")}},
 			expectedConcat:         String[Symbol]{NonTerminal("A"), NonTerminal("B"), NonTerminal("C"), NonTerminal("D"), NonTerminal("E"), NonTerminal("F")},
 			expectedTerminals:      String[Terminal]{},
@@ -102,6 +110,8 @@ func TestString(t *testing.T) {
 			expectedAnyMatch:       true,
 			append:                 []Symbol{NonTerminal("C"), Terminal("d"), NonTerminal("D")},
 			expectedAppend:         String[Symbol]{Terminal("a"), NonTerminal("A"), Terminal("b"), NonTerminal("B"), Terminal("c"), NonTerminal("C"), Terminal("d"), NonTerminal("D")},
+			prepend:                []Symbol{NonTerminal("X"), Terminal("x"), NonTerminal("Y")},
+			expectedPrepend:        String[Symbol]{NonTerminal("X"), Terminal("x"), NonTerminal("Y"), Terminal("a"), NonTerminal("A"), Terminal("b"), NonTerminal("B"), Terminal("c")},
 			concat:                 []String[Symbol]{{NonTerminal("C")}, {Terminal("d"), NonTerminal("D")}},
 			expectedConcat:         String[Symbol]{Terminal("a"), NonTerminal("A"), Terminal("b"), NonTerminal("B"), Terminal("c"), NonTerminal("C"), Terminal("d"), NonTerminal("D")},
 			expectedTerminals:      String[Terminal]{"a", "b", "c"},
@@ -121,6 +131,7 @@ func TestString(t *testing.T) {
 			assert.Equal(t, tc.expectedHasSuffix, tc.s.HasSuffix(tc.suffix))
 			assert.Equal(t, tc.expectedAnyMatch, tc.s.AnyMatch(tc.anyMatch))
 			assert.Equal(t, tc.expectedAppend, tc.s.Append(tc.append...))
+			assert.Equal(t, tc.expectedPrepend, tc.s.Prepend(tc.prepend...))
 			assert.Equal(t, tc.expectedConcat, tc.s.Concat(tc.concat...))
 			assert.Equal(t, tc.expectedTerminals, tc.s.Terminals())
 			assert.Equal(t, tc.expectedNonTerminals, tc.s.NonTerminals())
