@@ -610,51 +610,6 @@ func TestInternalNode_Pos(t *testing.T) {
 	}
 }
 
-func TestInternalNode_Child(t *testing.T) {
-	n := getTestInternalNodes()
-
-	tests := []struct {
-		name          string
-		n             *InternalNode
-		i             int
-		expectedChild Node
-		expectedOK    bool
-	}{
-		{
-			name:          "InvalidIndex",
-			n:             n[0],
-			i:             3,
-			expectedChild: nil,
-			expectedOK:    false,
-		},
-		{
-			name: "OK",
-			n:    n[0],
-			i:    1,
-			expectedChild: &LeafNode{
-				Terminal: "+",
-				Lexeme:   "+",
-				Position: lexer.Position{
-					Filename: "test",
-					Offset:   8,
-					Line:     1,
-					Column:   9,
-				},
-			},
-			expectedOK: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			child, ok := tc.n.Child(tc.i)
-
-			assert.Equal(t, tc.expectedChild, child)
-			assert.Equal(t, tc.expectedOK, ok)
-		})
-	}
-}
-
 func TestInternalNode_Annotate(t *testing.T) {
 	n := getTestInternalNodes()
 
@@ -679,7 +634,7 @@ func TestInternalNode_Annotate(t *testing.T) {
 	}
 }
 
-func TestInternalNode_GetAnnotation(t *testing.T) {
+func TestInternalNode_Annotation(t *testing.T) {
 	n := getTestInternalNodes()
 
 	tests := []struct {
@@ -865,33 +820,6 @@ func TestLeafNode_Pos(t *testing.T) {
 	}
 }
 
-func TestLeafNode_Child(t *testing.T) {
-	tests := []struct {
-		name          string
-		n             *LeafNode
-		i             int
-		expectedChild Node
-		expectedOK    bool
-	}{
-		{
-			name:          "OK",
-			n:             &LeafNode{},
-			i:             0,
-			expectedChild: nil,
-			expectedOK:    false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			child, ok := tc.n.Child(tc.i)
-
-			assert.Equal(t, tc.expectedChild, child)
-			assert.Equal(t, tc.expectedOK, ok)
-		})
-	}
-}
-
 func TestLeafNode_Annotate(t *testing.T) {
 	n := getTestLeafNodes()
 
@@ -936,33 +864,6 @@ func TestLeafNode_Annotation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			val := tc.n.Annotation()
 			assert.Equal(t, tc.expectedValue, val)
-		})
-	}
-}
-
-func TestLeafNode_DOT(t *testing.T) {
-	n := getTestLeafNodes()
-
-	tests := []struct {
-		name        string
-		n           *LeafNode
-		expectedDOT string
-	}{
-		{
-			name: "OK",
-			n:    n[0],
-			expectedDOT: `graph {
-  concentrate=false;
-  node [];
-
-  1 [label="\"id\" <fee>", style=bold];
-}`,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedDOT, tc.n.DOT())
 		})
 	}
 }

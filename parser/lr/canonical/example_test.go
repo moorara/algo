@@ -9,6 +9,7 @@ import (
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/lexer/input"
+	"github.com/moorara/algo/parser"
 	"github.com/moorara/algo/parser/lr"
 	"github.com/moorara/algo/parser/lr/canonical"
 )
@@ -161,12 +162,12 @@ func Example_parse() {
 		"E",
 	)
 
-	parser, err := canonical.New(l, G, lr.PrecedenceLevels{})
+	p, err := canonical.New(l, G, lr.PrecedenceLevels{})
 	if err != nil {
 		panic(err)
 	}
 
-	err = parser.Parse(
+	err = p.Parse(
 		func(token *lexer.Token) error {
 			fmt.Printf("Token: %s\n", token)
 			return nil
@@ -209,17 +210,18 @@ func Example_parseAndBuildAST() {
 		"E",
 	)
 
-	parser, err := canonical.New(l, G, lr.PrecedenceLevels{})
+	p, err := canonical.New(l, G, lr.PrecedenceLevels{})
 	if err != nil {
 		panic(err)
 	}
 
-	ast, err := parser.ParseAndBuildAST()
+	root, err := p.ParseAndBuildAST()
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(ast.DOT())
+	n := root.(*parser.InternalNode)
+	fmt.Println(n.DOT())
 }
 
 func Example_parseAndEvaluate() {
@@ -246,12 +248,12 @@ func Example_parseAndEvaluate() {
 		"E",
 	)
 
-	parser, err := canonical.New(l, G, lr.PrecedenceLevels{})
+	p, err := canonical.New(l, G, lr.PrecedenceLevels{})
 	if err != nil {
 		panic(err)
 	}
 
-	val, err := parser.ParseAndEvaluate(func(p *grammar.Production, rhs []*lr.Value) (any, error) {
+	val, err := p.ParseAndEvaluate(func(p *grammar.Production, rhs []*lr.Value) (any, error) {
 		switch {
 		case p.Equal(prods[0]):
 			E := rhs[0].Val.(int)
@@ -348,15 +350,16 @@ func Example_ambiguousGrammar() {
 		},
 	}
 
-	parser, err := canonical.New(l, G, precedences)
+	p, err := canonical.New(l, G, precedences)
 	if err != nil {
 		panic(err)
 	}
 
-	ast, err := parser.ParseAndBuildAST()
+	root, err := p.ParseAndBuildAST()
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(ast.DOT())
+	n := root.(*parser.InternalNode)
+	fmt.Println(n.DOT())
 }
