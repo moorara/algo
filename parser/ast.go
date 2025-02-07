@@ -37,13 +37,6 @@ type Node interface {
 	// Pos returns the leftmost position in the input string that this node represent.
 	Pos() lexer.Position
 
-	// Child returns the child node at the specified index (0-based) for this node.
-	// The child represents a symbol from the right-hand side of the production rule associated with this node.
-	//
-	// If the node is internal and the index is out of bounds, the method returns nil and false.
-	// This method is not applicable for leaf nodes, and will always return nil and false.
-	Child(int) (Node, bool)
-
 	// Annotate associates an annotation with this node.
 	// An annotation often represents the node in a different context or type.
 	//
@@ -61,10 +54,6 @@ type Node interface {
 	//
 	// The caller should cast the returned value to the original type used when annotating.
 	Annotation() any
-
-	// DOT generates and returns a representation of a node and all its descendants in DOT format.
-	// This format is commonly used for visualizing graphs with Graphviz tools.
-	DOT() string
 }
 
 // Traverse performs a depth-first traversal of an abstract syntax tree (AST),
@@ -188,18 +177,6 @@ func (n *InternalNode) Pos() lexer.Position {
 	}
 
 	return lexer.Position{}
-}
-
-// Child returns the child node at the specified index (0-based) for this internal node.
-// The child represents a symbol from the right-hand side of the production rule associated with this node.
-//
-// If the index is out of bounds, the method returns nil and false.
-func (n *InternalNode) Child(i int) (Node, bool) {
-	if 0 <= i && i < len(n.Children) {
-		return n.Children[i], true
-	}
-
-	return nil, false
 }
 
 // Annotate associates an annotation with this internal node.
@@ -334,11 +311,6 @@ func (n *LeafNode) Pos() lexer.Position {
 	return n.Position
 }
 
-// Child method is not applicable for leaf nodes, and will always return nil and false.
-func (n *LeafNode) Child(i int) (Node, bool) {
-	return nil, false
-}
-
 // Annotate associates an annotation with this leaf node.
 // An annotation often represents the node in a different context or type.
 //
@@ -357,18 +329,4 @@ func (n *LeafNode) Annotate(val any) {
 // The caller should cast the returned value to the original type used when annotating.
 func (n *LeafNode) Annotation() any {
 	return n.annotation
-}
-
-// DOT generates and returns a representation of a leaf node in DOT format.
-// This format is commonly used for visualizing graphs with Graphviz tools.
-func (n *LeafNode) DOT() string {
-	label := fmt.Sprintf("%s <%s>", n.Terminal, n.Lexeme)
-	label = strings.ReplaceAll(label, "\t", `\\t`)
-	label = strings.ReplaceAll(label, "\n", `\\n`)
-	label = strings.ReplaceAll(label, "\r", `\\r`)
-
-	graph := dot.NewGraph(false, false, false, "", "", "", "", "")
-	graph.AddNode(dot.NewNode("1", "", label, "", dot.StyleBold, "", "", ""))
-
-	return graph.DOT()
 }

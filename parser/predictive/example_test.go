@@ -8,6 +8,7 @@ import (
 	"github.com/moorara/algo/grammar"
 	"github.com/moorara/algo/lexer"
 	"github.com/moorara/algo/lexer/input"
+	"github.com/moorara/algo/parser"
 	"github.com/moorara/algo/parser/predictive"
 )
 
@@ -161,9 +162,9 @@ func Example_parse() {
 		"E",
 	)
 
-	parser := predictive.New(G, l)
+	p := predictive.New(G, l)
 
-	err = parser.Parse(
+	err = p.Parse(
 		func(token *lexer.Token) error {
 			fmt.Printf("Token: %s\n", token)
 			return nil
@@ -208,14 +209,15 @@ func Example_parseAndBuildAST() {
 		"E",
 	)
 
-	parser := predictive.New(G, l)
+	p := predictive.New(G, l)
 
-	ast, err := parser.ParseAndBuildAST()
+	root, err := p.ParseAndBuildAST()
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(ast.DOT())
+	n := root.(*parser.InternalNode)
+	fmt.Println(n.DOT())
 }
 
 func Example_buildParsingTable() {
