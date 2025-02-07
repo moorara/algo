@@ -91,12 +91,22 @@ func (s String[T]) AnyMatch(pred generic.Predicate1[T]) bool {
 	return false
 }
 
-// Append appends new symbols to the current string and returns a new string
-func (s String[T]) Append(symbols ...T) String[T] {
-	newS := make(String[T], len(s)+len(symbols))
+// Append appends new symbols to the current string and returns a new string.
+func (s String[T]) Append(syms ...T) String[T] {
+	newS := make(String[T], len(s)+len(syms))
 
 	copy(newS, s)
-	copy(newS[len(s):], symbols)
+	copy(newS[len(s):], syms)
+
+	return newS
+}
+
+// Prepend prepends new symbols to the current string and returns a new string.
+func (s String[T]) Prepend(syms ...T) String[T] {
+	newS := make(String[T], len(syms)+len(s))
+
+	copy(newS, syms)
+	copy(newS[len(syms):], s)
 
 	return newS
 }
