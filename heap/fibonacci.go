@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/dot"
+	"github.com/moorara/algo/dot"
+	"github.com/moorara/algo/generic"
 )
 
 // The Left-Child-Right-Sibling (LCRS) representation, a.k.a. the Binary Representation of N-ary Tree,
@@ -27,8 +27,8 @@ type fibonacciNode[K, V any] struct {
 // fibonacci implements a Fibonacci heap.
 // A Fibonacci heap is implemented as a circular doubly linked list of root nodes (root list) of trees.
 type fibonacci[K, V any] struct {
-	cmpKey CompareFunc[K]
-	eqVal  EqualFunc[V]
+	cmpKey generic.CompareFunc[K]
+	eqVal  generic.EqualFunc[V]
 
 	n   int                  // number of items on heap
 	ext *fibonacciNode[K, V] // extremum (minimum or maximum) node of the root list
@@ -49,7 +49,7 @@ type fibonacci[K, V any] struct {
 //
 //   - cmpKey is a function for comparing two keys.
 //   - eqVal is a function for checking the equality of two values.
-func NewFibonacci[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) MergeableHeap[K, V] {
+func NewFibonacci[K, V any](cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) MergeableHeap[K, V] {
 	return &fibonacci[K, V]{
 		cmpKey: cmpKey,
 		eqVal:  eqVal,
@@ -392,7 +392,7 @@ func (h *fibonacci[K, V]) ContainsKey(key K) bool {
 	}
 
 	// A false result indicates a match was found.
-	return !h.traverse(h.ext, VLR, func(n *fibonacciNode[K, V]) bool {
+	return !h.traverse(h.ext, generic.VLR, func(n *fibonacciNode[K, V]) bool {
 		// If a match is found, stop the traversal by returning false.
 		return h.cmpKey(n.key, key) != 0
 	})
@@ -405,7 +405,7 @@ func (h *fibonacci[K, V]) ContainsValue(val V) bool {
 	}
 
 	// A false result indicates a match was found.
-	return !h.traverse(h.ext, VLR, func(n *fibonacciNode[K, V]) bool {
+	return !h.traverse(h.ext, generic.VLR, func(n *fibonacciNode[K, V]) bool {
 		// If a match is found, stop the traversal by returning false.
 		return !h.eqVal(n.val, val)
 	})
@@ -416,7 +416,7 @@ func (h *fibonacci[K, V]) DOT() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*fibonacciNode[K, V]]int{}
-	h.traverse(h.ext, VLR, func(n *fibonacciNode[K, V]) bool {
+	h.traverse(h.ext, generic.VLR, func(n *fibonacciNode[K, V]) bool {
 		id++
 		nodeID[n] = id
 		return true
@@ -424,7 +424,7 @@ func (h *fibonacci[K, V]) DOT() string {
 
 	graph := dot.NewGraph(true, true, false, "Fibonacci Heap", "", "", "", dot.ShapeMrecord)
 
-	h.traverse(h.ext, VLR, func(n *fibonacciNode[K, V]) bool {
+	h.traverse(h.ext, generic.VLR, func(n *fibonacciNode[K, V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 
 		rec := dot.NewRecord(
@@ -465,15 +465,15 @@ func (h *fibonacci[K, V]) DOT() string {
 
 // traverse performs a depth-first traversal of the Fibonacci heap,
 // visiting each node according to the specified traversal order.
-func (h *fibonacci[K, V]) traverse(n *fibonacciNode[K, V], order TraverseOrder, visit func(*fibonacciNode[K, V]) bool) bool {
+func (h *fibonacci[K, V]) traverse(n *fibonacciNode[K, V], order generic.TraverseOrder, visit func(*fibonacciNode[K, V]) bool) bool {
 	if n == nil {
 		return true
 	}
 
 	visited := map[*fibonacciNode[K, V]]bool{}
 
-	var traverse func(n *fibonacciNode[K, V], order TraverseOrder) bool
-	traverse = func(n *fibonacciNode[K, V], order TraverseOrder) bool {
+	var traverse func(n *fibonacciNode[K, V], order generic.TraverseOrder) bool
+	traverse = func(n *fibonacciNode[K, V], order generic.TraverseOrder) bool {
 		if n == nil || visited[n] {
 			return true
 		}
@@ -481,17 +481,17 @@ func (h *fibonacci[K, V]) traverse(n *fibonacciNode[K, V], order TraverseOrder, 
 		visited[n] = true
 
 		switch order {
-		case VLR:
+		case generic.VLR:
 			return visit(n) && traverse(n.child, order) && traverse(n.next, order)
-		case VRL:
+		case generic.VRL:
 			return visit(n) && traverse(n.next, order) && traverse(n.child, order)
-		case LVR:
+		case generic.LVR:
 			return traverse(n.child, order) && visit(n) && traverse(n.next, order)
-		case RVL:
+		case generic.RVL:
 			return traverse(n.next, order) && visit(n) && traverse(n.child, order)
-		case LRV:
+		case generic.LRV:
 			return traverse(n.child, order) && traverse(n.next, order) && visit(n)
-		case RLV:
+		case generic.RLV:
 			return traverse(n.next, order) && traverse(n.child, order) && visit(n)
 		default:
 			return false

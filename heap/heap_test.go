@@ -3,14 +3,14 @@ package heap
 import (
 	"testing"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	eqVal  = NewEqualFunc[string]()
-	cmpMin = NewCompareFunc[int]()
-	cmpMax = NewReverseCompareFunc[int]()
+	eqVal  = generic.NewEqualFunc[string]()
+	cmpMin = generic.NewCompareFunc[int]()
+	cmpMax = generic.NewReverseCompareFunc[int]()
 )
 
 type indexedKeyValue[K, V any] struct {
@@ -23,14 +23,14 @@ type heapTest[K, V any] struct {
 	name             string
 	heap             string
 	size             int
-	cmpKey           CompareFunc[K]
-	eqVal            EqualFunc[V]
-	inserts          []KeyValue[K, V]
+	cmpKey           generic.CompareFunc[K]
+	eqVal            generic.EqualFunc[V]
+	inserts          []generic.KeyValue[K, V]
 	expectedSize     int
 	expectedIsEmpty  bool
-	expectedPeek     KeyValue[K, V]
-	expectedContains []KeyValue[K, V]
-	expectedDelete   []KeyValue[K, V]
+	expectedPeek     generic.KeyValue[K, V]
+	expectedContains []generic.KeyValue[K, V]
+	expectedDelete   []generic.KeyValue[K, V]
 	expectedDOT      string
 }
 
@@ -38,8 +38,8 @@ type indexedHeapTest[K, V any] struct {
 	name                string
 	heap                string
 	cap                 int
-	cmpKey              CompareFunc[K]
-	eqVal               EqualFunc[V]
+	cmpKey              generic.CompareFunc[K]
+	eqVal               generic.EqualFunc[V]
 	inserts             []indexedKeyValue[K, V]
 	changeKeys          []indexedKeyValue[K, V]
 	expectedSize        int
@@ -55,15 +55,15 @@ type indexedHeapTest[K, V any] struct {
 type mergeableHeapTest[K, V any] struct {
 	name             string
 	heap             string
-	cmpKey           CompareFunc[K]
-	eqVal            EqualFunc[V]
-	inserts          []KeyValue[K, V]
+	cmpKey           generic.CompareFunc[K]
+	eqVal            generic.EqualFunc[V]
+	inserts          []generic.KeyValue[K, V]
 	merge            MergeableHeap[K, V]
 	expectedSize     int
 	expectedIsEmpty  bool
-	expectedPeek     KeyValue[K, V]
-	expectedContains []KeyValue[K, V]
-	expectedDelete   []KeyValue[K, V]
+	expectedPeek     generic.KeyValue[K, V]
+	expectedContains []generic.KeyValue[K, V]
+	expectedDelete   []generic.KeyValue[K, V]
 	expectedDOT      string
 }
 
@@ -74,44 +74,44 @@ func getHeapTests() []heapTest[int, string] {
 			size:             2,
 			cmpKey:           cmpMin,
 			eqVal:            eqVal,
-			inserts:          []KeyValue[int, string]{},
+			inserts:          []generic.KeyValue[int, string]{},
 			expectedSize:     0,
 			expectedIsEmpty:  true,
-			expectedPeek:     KeyValue[int, string]{Key: 0, Val: ""},
-			expectedContains: []KeyValue[int, string]{},
-			expectedDelete:   []KeyValue[int, string]{},
+			expectedPeek:     generic.KeyValue[int, string]{Key: 0, Val: ""},
+			expectedContains: []generic.KeyValue[int, string]{},
+			expectedDelete:   []generic.KeyValue[int, string]{},
 		},
 		{
 			name:             "MaxHeap_Empty",
 			size:             2,
 			cmpKey:           cmpMax,
 			eqVal:            eqVal,
-			inserts:          []KeyValue[int, string]{},
+			inserts:          []generic.KeyValue[int, string]{},
 			expectedSize:     0,
 			expectedIsEmpty:  true,
-			expectedPeek:     KeyValue[int, string]{Key: 0, Val: ""},
-			expectedContains: []KeyValue[int, string]{},
-			expectedDelete:   []KeyValue[int, string]{},
+			expectedPeek:     generic.KeyValue[int, string]{Key: 0, Val: ""},
+			expectedContains: []generic.KeyValue[int, string]{},
+			expectedDelete:   []generic.KeyValue[int, string]{},
 		},
 		{
 			name:   "MinHeap_FewItems",
 			size:   2,
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 30, Val: "Task#3"},
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 			},
 			expectedSize:    3,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "Task#1"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 10, Val: "Task#1"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
@@ -122,20 +122,20 @@ func getHeapTests() []heapTest[int, string] {
 			size:   2,
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
 			},
 			expectedSize:    3,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 30, Val: "Task#3"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 30, Val: "Task#3"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 10, Val: "Task#1"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 10, Val: "Task#1"},
@@ -146,7 +146,7 @@ func getHeapTests() []heapTest[int, string] {
 			size:   4,
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 50, Val: "Task#5"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 40, Val: "Task#4"},
@@ -155,15 +155,15 @@ func getHeapTests() []heapTest[int, string] {
 			},
 			expectedSize:    5,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "Task#1"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 10, Val: "Task#1"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 40, Val: "Task#4"},
 				{Key: 50, Val: "Task#5"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
@@ -176,7 +176,7 @@ func getHeapTests() []heapTest[int, string] {
 			size:   4,
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
@@ -185,15 +185,15 @@ func getHeapTests() []heapTest[int, string] {
 			},
 			expectedSize:    5,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 50, Val: "Task#5"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 50, Val: "Task#5"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 50, Val: "Task#5"},
 				{Key: 40, Val: "Task#4"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 10, Val: "Task#1"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 50, Val: "Task#5"},
 				{Key: 40, Val: "Task#4"},
 				{Key: 30, Val: "Task#3"},
@@ -206,7 +206,7 @@ func getHeapTests() []heapTest[int, string] {
 			size:   4,
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 90, Val: "Task#9"},
 				{Key: 80, Val: "Task#8"},
 				{Key: 70, Val: "Task#7"},
@@ -219,8 +219,8 @@ func getHeapTests() []heapTest[int, string] {
 			},
 			expectedSize:    9,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "Task#1"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 10, Val: "Task#1"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
@@ -231,7 +231,7 @@ func getHeapTests() []heapTest[int, string] {
 				{Key: 80, Val: "Task#8"},
 				{Key: 90, Val: "Task#9"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
@@ -248,7 +248,7 @@ func getHeapTests() []heapTest[int, string] {
 			size:   4,
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
@@ -261,8 +261,8 @@ func getHeapTests() []heapTest[int, string] {
 			},
 			expectedSize:    9,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 90, Val: "Task#9"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 90, Val: "Task#9"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 90, Val: "Task#9"},
 				{Key: 80, Val: "Task#8"},
 				{Key: 70, Val: "Task#7"},
@@ -273,7 +273,7 @@ func getHeapTests() []heapTest[int, string] {
 				{Key: 20, Val: "Task#2"},
 				{Key: 10, Val: "Task#1"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 90, Val: "Task#9"},
 				{Key: 80, Val: "Task#8"},
 				{Key: 70, Val: "Task#7"},
@@ -611,42 +611,42 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 			name:             "MinHeap_Empty",
 			cmpKey:           cmpMin,
 			eqVal:            eqVal,
-			inserts:          []KeyValue[int, string]{},
+			inserts:          []generic.KeyValue[int, string]{},
 			expectedSize:     0,
 			expectedIsEmpty:  true,
-			expectedPeek:     KeyValue[int, string]{Key: 0, Val: ""},
-			expectedContains: []KeyValue[int, string]{},
-			expectedDelete:   []KeyValue[int, string]{},
+			expectedPeek:     generic.KeyValue[int, string]{Key: 0, Val: ""},
+			expectedContains: []generic.KeyValue[int, string]{},
+			expectedDelete:   []generic.KeyValue[int, string]{},
 		},
 		{
 			name:             "MaxHeap_Empty",
 			cmpKey:           cmpMax,
 			eqVal:            eqVal,
-			inserts:          []KeyValue[int, string]{},
+			inserts:          []generic.KeyValue[int, string]{},
 			expectedSize:     0,
 			expectedIsEmpty:  true,
-			expectedPeek:     KeyValue[int, string]{Key: 0, Val: ""},
-			expectedContains: []KeyValue[int, string]{},
-			expectedDelete:   []KeyValue[int, string]{},
+			expectedPeek:     generic.KeyValue[int, string]{Key: 0, Val: ""},
+			expectedContains: []generic.KeyValue[int, string]{},
+			expectedDelete:   []generic.KeyValue[int, string]{},
 		},
 		{
 			name:   "MinHeap_FewItems",
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 30, Val: "Task#3"},
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 			},
 			expectedSize:    3,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "Task#1"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 10, Val: "Task#1"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
@@ -656,20 +656,20 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 			name:   "MaxHeap_FewItems",
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
 			},
 			expectedSize:    3,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 30, Val: "Task#3"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 30, Val: "Task#3"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 10, Val: "Task#1"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 10, Val: "Task#1"},
@@ -679,7 +679,7 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 			name:   "MinHeap_SomeItems",
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 50, Val: "Task#5"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 40, Val: "Task#4"},
@@ -688,15 +688,15 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 			},
 			expectedSize:    5,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "Task#1"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 10, Val: "Task#1"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 40, Val: "Task#4"},
 				{Key: 50, Val: "Task#5"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
@@ -708,7 +708,7 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 			name:   "MaxHeap_SomeItems",
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
@@ -717,15 +717,15 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 			},
 			expectedSize:    5,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 50, Val: "Task#5"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 50, Val: "Task#5"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 50, Val: "Task#5"},
 				{Key: 40, Val: "Task#4"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 10, Val: "Task#1"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 50, Val: "Task#5"},
 				{Key: 40, Val: "Task#4"},
 				{Key: 30, Val: "Task#3"},
@@ -737,7 +737,7 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 			name:   "MinHeap_ManyItems",
 			cmpKey: cmpMin,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 90, Val: "Task#9"},
 				{Key: 80, Val: "Task#8"},
 				{Key: 70, Val: "Task#7"},
@@ -750,8 +750,8 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 			},
 			expectedSize:    9,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 10, Val: "Task#1"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 10, Val: "Task#1"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
@@ -762,7 +762,7 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 				{Key: 80, Val: "Task#8"},
 				{Key: 90, Val: "Task#9"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 20, Val: "Task#2"},
 				{Key: 30, Val: "Task#3"},
@@ -778,7 +778,7 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 			name:   "MaxHeap_ManyItems",
 			cmpKey: cmpMax,
 			eqVal:  eqVal,
-			inserts: []KeyValue[int, string]{
+			inserts: []generic.KeyValue[int, string]{
 				{Key: 10, Val: "Task#1"},
 				{Key: 30, Val: "Task#3"},
 				{Key: 20, Val: "Task#2"},
@@ -791,8 +791,8 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 			},
 			expectedSize:    9,
 			expectedIsEmpty: false,
-			expectedPeek:    KeyValue[int, string]{Key: 90, Val: "Task#9"},
-			expectedContains: []KeyValue[int, string]{
+			expectedPeek:    generic.KeyValue[int, string]{Key: 90, Val: "Task#9"},
+			expectedContains: []generic.KeyValue[int, string]{
 				{Key: 90, Val: "Task#9"},
 				{Key: 80, Val: "Task#8"},
 				{Key: 70, Val: "Task#7"},
@@ -803,7 +803,7 @@ func getMergeableHeapTests() []mergeableHeapTest[int, string] {
 				{Key: 20, Val: "Task#2"},
 				{Key: 10, Val: "Task#1"},
 			},
-			expectedDelete: []KeyValue[int, string]{
+			expectedDelete: []generic.KeyValue[int, string]{
 				{Key: 90, Val: "Task#9"},
 				{Key: 80, Val: "Task#8"},
 				{Key: 70, Val: "Task#7"},

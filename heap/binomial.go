@@ -3,8 +3,8 @@ package heap
 import (
 	"fmt"
 
-	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/dot"
+	"github.com/moorara/algo/dot"
+	"github.com/moorara/algo/generic"
 )
 
 // The Left-Child-Right-Sibling (LCRS) representation, a.k.a. the Binary Representation of N-ary Tree,
@@ -48,8 +48,8 @@ type binomialNode[K, V any] struct {
 // A binomial heap is implemented as a linked list of root nodes (root list) of binomial trees
 // sorted by the increasing order of binomial trees.
 type binomial[K, V any] struct {
-	cmpKey CompareFunc[K]
-	eqVal  EqualFunc[V]
+	cmpKey generic.CompareFunc[K]
+	eqVal  generic.EqualFunc[V]
 
 	n    int                 // number of items on heap
 	head *binomialNode[K, V] // head of the root list
@@ -108,7 +108,7 @@ type binomial[K, V any] struct {
 //
 //   - cmpKey is a function for comparing two keys.
 //   - eqVal is a function for checking the equality of two values.
-func NewBinomial[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) MergeableHeap[K, V] {
+func NewBinomial[K, V any](cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) MergeableHeap[K, V] {
 	return &binomial[K, V]{
 		cmpKey: cmpKey,
 		eqVal:  eqVal,
@@ -437,7 +437,7 @@ func (h *binomial[K, V]) ContainsKey(key K) bool {
 	}
 
 	// A false result indicates a match was found.
-	return !h.traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
+	return !h.traverse(h.head, generic.VLR, func(n *binomialNode[K, V]) bool {
 		// If a match is found, stop the traversal by returning false.
 		return h.cmpKey(n.key, key) != 0
 	})
@@ -450,7 +450,7 @@ func (h *binomial[K, V]) ContainsValue(val V) bool {
 	}
 
 	// A false result indicates a match was found.
-	return !h.traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
+	return !h.traverse(h.head, generic.VLR, func(n *binomialNode[K, V]) bool {
 		// If a match is found, stop the traversal by returning false.
 		return !h.eqVal(n.val, val)
 	})
@@ -461,7 +461,7 @@ func (h *binomial[K, V]) DOT() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*binomialNode[K, V]]int{}
-	h.traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
+	h.traverse(h.head, generic.VLR, func(n *binomialNode[K, V]) bool {
 		id++
 		nodeID[n] = id
 		return true
@@ -469,7 +469,7 @@ func (h *binomial[K, V]) DOT() string {
 
 	graph := dot.NewGraph(true, true, false, "Binomial Heap", "", "", "", dot.ShapeMrecord)
 
-	h.traverse(h.head, VLR, func(n *binomialNode[K, V]) bool {
+	h.traverse(h.head, generic.VLR, func(n *binomialNode[K, V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 
 		rec := dot.NewRecord(
@@ -497,23 +497,23 @@ func (h *binomial[K, V]) DOT() string {
 
 // traverse performs a depth-first traversal of the binomial heap,
 // visiting each node according to the specified traversal order.
-func (h *binomial[K, V]) traverse(n *binomialNode[K, V], order TraverseOrder, visit func(*binomialNode[K, V]) bool) bool {
+func (h *binomial[K, V]) traverse(n *binomialNode[K, V], order generic.TraverseOrder, visit func(*binomialNode[K, V]) bool) bool {
 	if n == nil {
 		return true
 	}
 
 	switch order {
-	case VLR:
+	case generic.VLR:
 		return visit(n) && h.traverse(n.child, order, visit) && h.traverse(n.sibling, order, visit)
-	case VRL:
+	case generic.VRL:
 		return visit(n) && h.traverse(n.sibling, order, visit) && h.traverse(n.child, order, visit)
-	case LVR:
+	case generic.LVR:
 		return h.traverse(n.child, order, visit) && visit(n) && h.traverse(n.sibling, order, visit)
-	case RVL:
+	case generic.RVL:
 		return h.traverse(n.sibling, order, visit) && visit(n) && h.traverse(n.child, order, visit)
-	case LRV:
+	case generic.LRV:
 		return h.traverse(n.child, order, visit) && h.traverse(n.sibling, order, visit) && visit(n)
-	case RLV:
+	case generic.RLV:
 		return h.traverse(n.sibling, order, visit) && h.traverse(n.child, order, visit) && visit(n)
 	default:
 		return false

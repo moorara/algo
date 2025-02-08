@@ -3,7 +3,7 @@ package graph
 import (
 	"fmt"
 
-	"github.com/moorara/algo/internal/dot"
+	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/list"
 )
 

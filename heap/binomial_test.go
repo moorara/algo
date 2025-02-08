@@ -3,7 +3,7 @@ package heap
 import (
 	"testing"
 
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 )
 
 func getBinomialTests() []mergeableHeapTest[int, string] {
@@ -29,13 +29,13 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 	tests[2].merge.Insert(11, "Task#1.a")
 	tests[2].merge.Insert(22, "Task#2.a")
 	tests[2].expectedSize += 3
-	tests[2].expectedPeek = KeyValue[int, string]{Key: 10, Val: "Task#1"}
+	tests[2].expectedPeek = generic.KeyValue[int, string]{Key: 10, Val: "Task#1"}
 	tests[2].expectedContains = append(tests[2].expectedContains,
-		KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
-		KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
-		KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
+		generic.KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
+		generic.KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
+		generic.KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
 	)
-	tests[2].expectedDelete = []KeyValue[int, string]{
+	tests[2].expectedDelete = []generic.KeyValue[int, string]{
 		{Key: 10, Val: "Task#1"},
 		{Key: 11, Val: "Task#1.a"},
 		{Key: 20, Val: "Task#2"},
@@ -67,13 +67,13 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 	tests[3].merge.Insert(33, "Task#3.a")
 	tests[3].merge.Insert(22, "Task#2.a")
 	tests[3].expectedSize += 3
-	tests[3].expectedPeek = KeyValue[int, string]{Key: 33, Val: "Task#3.a"}
+	tests[3].expectedPeek = generic.KeyValue[int, string]{Key: 33, Val: "Task#3.a"}
 	tests[3].expectedContains = append(tests[3].expectedContains,
-		KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
-		KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
-		KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
+		generic.KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
+		generic.KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
+		generic.KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
 	)
-	tests[3].expectedDelete = []KeyValue[int, string]{
+	tests[3].expectedDelete = []generic.KeyValue[int, string]{
 		{Key: 33, Val: "Task#3.a"},
 		{Key: 30, Val: "Task#3"},
 		{Key: 22, Val: "Task#2.a"},
@@ -107,15 +107,15 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 	tests[4].merge.Insert(11, "Task#1.a")
 	tests[4].merge.Insert(22, "Task#2.a")
 	tests[4].expectedSize += 5
-	tests[4].expectedPeek = KeyValue[int, string]{Key: 10, Val: "Task#1"}
+	tests[4].expectedPeek = generic.KeyValue[int, string]{Key: 10, Val: "Task#1"}
 	tests[4].expectedContains = append(tests[4].expectedContains,
-		KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
-		KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
-		KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
-		KeyValue[int, string]{Key: 44, Val: "Task#4.a"},
-		KeyValue[int, string]{Key: 55, Val: "Task#5.a"},
+		generic.KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
+		generic.KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
+		generic.KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
+		generic.KeyValue[int, string]{Key: 44, Val: "Task#4.a"},
+		generic.KeyValue[int, string]{Key: 55, Val: "Task#5.a"},
 	)
-	tests[4].expectedDelete = []KeyValue[int, string]{
+	tests[4].expectedDelete = []generic.KeyValue[int, string]{
 		{Key: 10, Val: "Task#1"},
 		{Key: 11, Val: "Task#1.a"},
 		{Key: 20, Val: "Task#2"},
@@ -161,15 +161,15 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 	tests[5].merge.Insert(55, "Task#5.a")
 	tests[5].merge.Insert(44, "Task#4.a")
 	tests[5].expectedSize += 5
-	tests[5].expectedPeek = KeyValue[int, string]{Key: 55, Val: "Task#5.a"}
+	tests[5].expectedPeek = generic.KeyValue[int, string]{Key: 55, Val: "Task#5.a"}
 	tests[5].expectedContains = append(tests[5].expectedContains,
-		KeyValue[int, string]{Key: 55, Val: "Task#5.a"},
-		KeyValue[int, string]{Key: 44, Val: "Task#4.a"},
-		KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
-		KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
-		KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
+		generic.KeyValue[int, string]{Key: 55, Val: "Task#5.a"},
+		generic.KeyValue[int, string]{Key: 44, Val: "Task#4.a"},
+		generic.KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
+		generic.KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
+		generic.KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
 	)
-	tests[5].expectedDelete = []KeyValue[int, string]{
+	tests[5].expectedDelete = []generic.KeyValue[int, string]{
 		{Key: 55, Val: "Task#5.a"},
 		{Key: 50, Val: "Task#5"},
 		{Key: 44, Val: "Task#4.a"},
@@ -219,19 +219,19 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 	tests[6].merge.Insert(11, "Task#1.a")
 	tests[6].merge.Insert(22, "Task#2.a")
 	tests[6].expectedSize += 9
-	tests[6].expectedPeek = KeyValue[int, string]{Key: 10, Val: "Task#1"}
+	tests[6].expectedPeek = generic.KeyValue[int, string]{Key: 10, Val: "Task#1"}
 	tests[6].expectedContains = append(tests[6].expectedContains,
-		KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
-		KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
-		KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
-		KeyValue[int, string]{Key: 44, Val: "Task#4.a"},
-		KeyValue[int, string]{Key: 55, Val: "Task#5.a"},
-		KeyValue[int, string]{Key: 66, Val: "Task#6.a"},
-		KeyValue[int, string]{Key: 77, Val: "Task#7.a"},
-		KeyValue[int, string]{Key: 88, Val: "Task#8.a"},
-		KeyValue[int, string]{Key: 99, Val: "Task#9.a"},
+		generic.KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
+		generic.KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
+		generic.KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
+		generic.KeyValue[int, string]{Key: 44, Val: "Task#4.a"},
+		generic.KeyValue[int, string]{Key: 55, Val: "Task#5.a"},
+		generic.KeyValue[int, string]{Key: 66, Val: "Task#6.a"},
+		generic.KeyValue[int, string]{Key: 77, Val: "Task#7.a"},
+		generic.KeyValue[int, string]{Key: 88, Val: "Task#8.a"},
+		generic.KeyValue[int, string]{Key: 99, Val: "Task#9.a"},
 	)
-	tests[6].expectedDelete = []KeyValue[int, string]{
+	tests[6].expectedDelete = []generic.KeyValue[int, string]{
 		{Key: 10, Val: "Task#1"},
 		{Key: 11, Val: "Task#1.a"},
 		{Key: 20, Val: "Task#2"},
@@ -305,19 +305,19 @@ func getBinomialTests() []mergeableHeapTest[int, string] {
 	tests[7].merge.Insert(99, "Task#9.a")
 	tests[7].merge.Insert(88, "Task#8.a")
 	tests[7].expectedSize += 9
-	tests[7].expectedPeek = KeyValue[int, string]{Key: 99, Val: "Task#9.a"}
+	tests[7].expectedPeek = generic.KeyValue[int, string]{Key: 99, Val: "Task#9.a"}
 	tests[7].expectedContains = append(tests[7].expectedContains,
-		KeyValue[int, string]{Key: 99, Val: "Task#9.a"},
-		KeyValue[int, string]{Key: 88, Val: "Task#8.a"},
-		KeyValue[int, string]{Key: 77, Val: "Task#7.a"},
-		KeyValue[int, string]{Key: 66, Val: "Task#6.a"},
-		KeyValue[int, string]{Key: 55, Val: "Task#5.a"},
-		KeyValue[int, string]{Key: 44, Val: "Task#4.a"},
-		KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
-		KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
-		KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
+		generic.KeyValue[int, string]{Key: 99, Val: "Task#9.a"},
+		generic.KeyValue[int, string]{Key: 88, Val: "Task#8.a"},
+		generic.KeyValue[int, string]{Key: 77, Val: "Task#7.a"},
+		generic.KeyValue[int, string]{Key: 66, Val: "Task#6.a"},
+		generic.KeyValue[int, string]{Key: 55, Val: "Task#5.a"},
+		generic.KeyValue[int, string]{Key: 44, Val: "Task#4.a"},
+		generic.KeyValue[int, string]{Key: 33, Val: "Task#3.a"},
+		generic.KeyValue[int, string]{Key: 22, Val: "Task#2.a"},
+		generic.KeyValue[int, string]{Key: 11, Val: "Task#1.a"},
 	)
-	tests[7].expectedDelete = []KeyValue[int, string]{
+	tests[7].expectedDelete = []generic.KeyValue[int, string]{
 		{Key: 99, Val: "Task#9.a"},
 		{Key: 90, Val: "Task#9"},
 		{Key: 88, Val: "Task#8.a"},

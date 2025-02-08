@@ -3,17 +3,17 @@ package heap
 import (
 	"fmt"
 
-	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/dot"
+	"github.com/moorara/algo/dot"
+	"github.com/moorara/algo/generic"
 )
 
 // binary implements a binary heap tree.
 type binary[K, V any] struct {
-	cmpKey CompareFunc[K]
-	eqVal  EqualFunc[V]
+	cmpKey generic.CompareFunc[K]
+	eqVal  generic.EqualFunc[V]
 
-	n    int               // number of items on heap
-	heap []*KeyValue[K, V] // binary heap of key-values using 1-based indexing
+	n    int                       // number of items on heap
+	heap []*generic.KeyValue[K, V] // binary heap of key-values using 1-based indexing
 }
 
 // NewBinary creates a new binary heap that can be used as a priority queue.
@@ -24,12 +24,12 @@ type binary[K, V any] struct {
 //   - size is the initial size of the heap (priority queue).
 //   - cmpKey is a function for comparing two keys.
 //   - eqVal is a function for checking the equality of two values.
-func NewBinary[K, V any](size int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) Heap[K, V] {
+func NewBinary[K, V any](size int, cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) Heap[K, V] {
 	return &binary[K, V]{
 		cmpKey: cmpKey,
 		eqVal:  eqVal,
 		n:      0,
-		heap:   make([]*KeyValue[K, V], size+1),
+		heap:   make([]*generic.KeyValue[K, V], size+1),
 	}
 }
 
@@ -73,7 +73,7 @@ func (h *binary[K, V]) verify() bool {
 }
 
 func (h *binary[K, V]) resize(size int) {
-	newH := make([]*KeyValue[K, V], size)
+	newH := make([]*generic.KeyValue[K, V], size)
 	copy(newH, h.heap)
 	h.heap = newH
 }
@@ -103,7 +103,7 @@ func (h *binary[K, V]) Insert(key K, val V) {
 		h.heap[k] = h.heap[k/2]
 	}
 
-	h.heap[k] = &KeyValue[K, V]{
+	h.heap[k] = &generic.KeyValue[K, V]{
 		Key: key,
 		Val: val,
 	}
@@ -150,7 +150,7 @@ func (h *binary[K, V]) Delete() (K, V, bool) {
 // DeleteAll deletes all keys with their values on the heap, leaving it empty.
 func (h *binary[K, V]) DeleteAll() {
 	h.n = 0
-	h.heap = make([]*KeyValue[K, V], len(h.heap))
+	h.heap = make([]*generic.KeyValue[K, V], len(h.heap))
 }
 
 // Peek returns the extremum (minimum or maximum) key with its value on the heap without removing it.

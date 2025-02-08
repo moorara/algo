@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/dot"
 	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"

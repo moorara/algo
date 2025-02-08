@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/moorara/algo/internal/dot"
+	"github.com/moorara/algo/dot"
 )
 
 // FlowEdge represents a capacitated edge data type.
