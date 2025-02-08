@@ -3,8 +3,8 @@ package heap
 import (
 	"fmt"
 
-	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/dot"
+	"github.com/moorara/algo/dot"
+	"github.com/moorara/algo/generic"
 )
 
 // The Left-Child-Right-Sibling (LCRS) representation, a.k.a. the Binary Representation of N-ary Tree,
@@ -28,8 +28,8 @@ type indexedBinomialNode[K, V any] struct {
 // An indexed binomial heap is implemented as a linked list of root nodes (root list) of binomial trees
 // sorted by the increasing order of binomial trees as well as a mapping between indices and nodes.
 type indexedBinomial[K, V any] struct {
-	cmpKey CompareFunc[K]
-	eqVal  EqualFunc[V]
+	cmpKey generic.CompareFunc[K]
+	eqVal  generic.EqualFunc[V]
 
 	n     int                          // current number of items on heap
 	head  *indexedBinomialNode[K, V]   // head of the root list
@@ -50,7 +50,7 @@ type indexedBinomial[K, V any] struct {
 //   - cap is the maximum number of items on the heap.
 //   - cmpKey is a function for comparing two keys.
 //   - eqVal is a function for checking the equality of two values.
-func NewIndexedBinomial[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) IndexedHeap[K, V] {
+func NewIndexedBinomial[K, V any](cap int, cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) IndexedHeap[K, V] {
 	return &indexedBinomial[K, V]{
 		cmpKey: cmpKey,
 		eqVal:  eqVal,
@@ -466,7 +466,7 @@ func (h *indexedBinomial[K, V]) ContainsValue(val V) bool {
 func (h *indexedBinomial[K, V]) DOT() string {
 	graph := dot.NewGraph(true, true, false, "Indexed Binomial Heap", "", "", "", dot.ShapeMrecord)
 
-	h.traverse(h.head, VLR, func(n *indexedBinomialNode[K, V]) bool {
+	h.traverse(h.head, generic.VLR, func(n *indexedBinomialNode[K, V]) bool {
 		name := fmt.Sprintf("%d", n.index)
 
 		rec := dot.NewRecord(
@@ -508,23 +508,23 @@ func (h *indexedBinomial[K, V]) DOT() string {
 
 // traverse performs a depth-first traversal of the binomial heap,
 // visiting each node according to the specified traversal order.
-func (h *indexedBinomial[K, V]) traverse(n *indexedBinomialNode[K, V], order TraverseOrder, visit func(*indexedBinomialNode[K, V]) bool) bool {
+func (h *indexedBinomial[K, V]) traverse(n *indexedBinomialNode[K, V], order generic.TraverseOrder, visit func(*indexedBinomialNode[K, V]) bool) bool {
 	if n == nil {
 		return true
 	}
 
 	switch order {
-	case VLR:
+	case generic.VLR:
 		return visit(n) && h.traverse(n.child, order, visit) && h.traverse(n.sibling, order, visit)
-	case VRL:
+	case generic.VRL:
 		return visit(n) && h.traverse(n.sibling, order, visit) && h.traverse(n.child, order, visit)
-	case LVR:
+	case generic.LVR:
 		return h.traverse(n.child, order, visit) && visit(n) && h.traverse(n.sibling, order, visit)
-	case RVL:
+	case generic.RVL:
 		return h.traverse(n.sibling, order, visit) && visit(n) && h.traverse(n.child, order, visit)
-	case LRV:
+	case generic.LRV:
 		return h.traverse(n.child, order, visit) && h.traverse(n.sibling, order, visit) && visit(n)
-	case RLV:
+	case generic.RLV:
 		return h.traverse(n.sibling, order, visit) && h.traverse(n.child, order, visit) && visit(n)
 	default:
 		return false

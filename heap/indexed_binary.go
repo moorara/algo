@@ -3,19 +3,19 @@ package heap
 import (
 	"fmt"
 
-	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/dot"
+	"github.com/moorara/algo/dot"
+	"github.com/moorara/algo/generic"
 )
 
 // binary implements an indexed binary heap tree.
 type indexedBinary[K, V any] struct {
-	cmpKey CompareFunc[K]
-	eqVal  EqualFunc[V]
+	cmpKey generic.CompareFunc[K]
+	eqVal  generic.EqualFunc[V]
 
-	n    int               // current number of items on heap
-	heap []int             // binary heap of indices using 1-based indexing
-	pos  []int             // map of indices to positions on heap
-	kvs  []*KeyValue[K, V] // map of indices to key-values
+	n    int                       // current number of items on heap
+	heap []int                     // binary heap of indices using 1-based indexing
+	pos  []int                     // map of indices to positions on heap
+	kvs  []*generic.KeyValue[K, V] // map of indices to key-values
 }
 
 // NewIndexedBinary creates a new indexed binary heap that can be used as a priority queue.
@@ -29,7 +29,7 @@ type indexedBinary[K, V any] struct {
 //   - cap is the maximum number of items on the heap.
 //   - cmpKey is a function for comparing two keys.
 //   - eqVal is a function for checking the equality of two values.
-func NewIndexedBinary[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) IndexedHeap[K, V] {
+func NewIndexedBinary[K, V any](cap int, cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) IndexedHeap[K, V] {
 	pos := make([]int, cap)
 	for i := range pos {
 		pos[i] = -1
@@ -41,7 +41,7 @@ func NewIndexedBinary[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFunc[
 		n:      0,
 		heap:   make([]int, cap+1),
 		pos:    pos,
-		kvs:    make([]*KeyValue[K, V], cap),
+		kvs:    make([]*generic.KeyValue[K, V], cap),
 	}
 }
 
@@ -131,7 +131,7 @@ func (h *indexedBinary[K, V]) Insert(i int, key K, val V) bool {
 	h.n++
 	h.heap[h.n] = i
 	h.pos[i] = h.n
-	h.kvs[i] = &KeyValue[K, V]{
+	h.kvs[i] = &generic.KeyValue[K, V]{
 		Key: key,
 		Val: val,
 	}
@@ -208,7 +208,7 @@ func (h *indexedBinary[K, V]) DeleteAll() {
 	h.n = 0
 	h.heap = make([]int, len(h.heap))
 	h.pos = make([]int, len(h.pos))
-	h.kvs = make([]*KeyValue[K, V], len(h.kvs))
+	h.kvs = make([]*generic.KeyValue[K, V], len(h.kvs))
 
 	for i := range h.pos {
 		h.pos[i] = -1

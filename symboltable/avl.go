@@ -5,8 +5,8 @@ import (
 	"iter"
 	"strings"
 
+	"github.com/moorara/algo/dot"
 	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/dot"
 )
 
 type avlNode[K, V any] struct {

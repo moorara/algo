@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	. "github.com/moorara/algo/generic"
-	"github.com/moorara/algo/internal/dot"
+	"github.com/moorara/algo/dot"
+	"github.com/moorara/algo/generic"
 )
 
 // The Left-Child-Right-Sibling (LCRS) representation, a.k.a. the Binary Representation of N-ary Tree,
@@ -30,8 +30,8 @@ type indexedFibonacciNode[K, V any] struct {
 // A Fibonacci heap is implemented as a circular doubly linked list of root nodes (root list) of trees
 // as well as a mapping between indices and nodes.
 type indexedFibonacci[K, V any] struct {
-	cmpKey CompareFunc[K]
-	eqVal  EqualFunc[V]
+	cmpKey generic.CompareFunc[K]
+	eqVal  generic.EqualFunc[V]
 
 	n     int                           // current number of items on heap
 	ext   *indexedFibonacciNode[K, V]   // extremum (minimum or maximum) node of the root list
@@ -52,7 +52,7 @@ type indexedFibonacci[K, V any] struct {
 //   - cap is the maximum number of items on the heap.
 //   - cmpKey is a function for comparing two keys.
 //   - eqVal is a function for checking the equality of two values.
-func NewIndexedFibonacci[K, V any](cap int, cmpKey CompareFunc[K], eqVal EqualFunc[V]) IndexedHeap[K, V] {
+func NewIndexedFibonacci[K, V any](cap int, cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) IndexedHeap[K, V] {
 	return &indexedFibonacci[K, V]{
 		cmpKey: cmpKey,
 		eqVal:  eqVal,
@@ -549,7 +549,7 @@ func (h *indexedFibonacci[K, V]) DOT() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*indexedFibonacciNode[K, V]]int{}
-	h.traverse(h.ext, VLR, func(n *indexedFibonacciNode[K, V]) bool {
+	h.traverse(h.ext, generic.VLR, func(n *indexedFibonacciNode[K, V]) bool {
 		id++
 		nodeID[n] = id
 		return true
@@ -557,7 +557,7 @@ func (h *indexedFibonacci[K, V]) DOT() string {
 
 	graph := dot.NewGraph(true, true, false, "Fibonacci Heap", "", "", "", dot.ShapeMrecord)
 
-	h.traverse(h.ext, VLR, func(n *indexedFibonacciNode[K, V]) bool {
+	h.traverse(h.ext, generic.VLR, func(n *indexedFibonacciNode[K, V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 
 		rec := dot.NewRecord(
@@ -607,15 +607,15 @@ func (h *indexedFibonacci[K, V]) DOT() string {
 
 // traverse performs a depth-first traversal of the Fibonacci heap,
 // visiting each node according to the specified traversal order.
-func (h *indexedFibonacci[K, V]) traverse(n *indexedFibonacciNode[K, V], order TraverseOrder, visit func(*indexedFibonacciNode[K, V]) bool) bool {
+func (h *indexedFibonacci[K, V]) traverse(n *indexedFibonacciNode[K, V], order generic.TraverseOrder, visit func(*indexedFibonacciNode[K, V]) bool) bool {
 	if n == nil {
 		return true
 	}
 
 	visited := map[*indexedFibonacciNode[K, V]]bool{}
 
-	var traverse func(n *indexedFibonacciNode[K, V], order TraverseOrder) bool
-	traverse = func(n *indexedFibonacciNode[K, V], order TraverseOrder) bool {
+	var traverse func(n *indexedFibonacciNode[K, V], order generic.TraverseOrder) bool
+	traverse = func(n *indexedFibonacciNode[K, V], order generic.TraverseOrder) bool {
 		if n == nil || visited[n] {
 			return true
 		}
@@ -623,17 +623,17 @@ func (h *indexedFibonacci[K, V]) traverse(n *indexedFibonacciNode[K, V], order T
 		visited[n] = true
 
 		switch order {
-		case VLR:
+		case generic.VLR:
 			return visit(n) && traverse(n.child, order) && traverse(n.next, order)
-		case VRL:
+		case generic.VRL:
 			return visit(n) && traverse(n.next, order) && traverse(n.child, order)
-		case LVR:
+		case generic.LVR:
 			return traverse(n.child, order) && visit(n) && traverse(n.next, order)
-		case RVL:
+		case generic.RVL:
 			return traverse(n.next, order) && visit(n) && traverse(n.child, order)
-		case LRV:
+		case generic.LRV:
 			return traverse(n.child, order) && traverse(n.next, order) && visit(n)
-		case RLV:
+		case generic.RLV:
 			return traverse(n.next, order) && traverse(n.child, order) && visit(n)
 		default:
 			return false
