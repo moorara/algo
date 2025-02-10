@@ -737,3 +737,59 @@ func TestOrderProductionSet(t *testing.T) {
 		})
 	}
 }
+
+func TestCmpProduction(t *testing.T) {
+	tests := []struct {
+		name            string
+		lhs             *Production
+		rhs             *Production
+		expectedCompare int
+	}{
+		{
+			name:            "FirstSmallerByHead",
+			lhs:             &Production{"A", String[Symbol]{Terminal("a")}},
+			rhs:             &Production{"B", String[Symbol]{Terminal("b")}},
+			expectedCompare: -1,
+		},
+		{
+			name:            "SecondSmallerByHead",
+			lhs:             &Production{"B", String[Symbol]{Terminal("b")}},
+			rhs:             &Production{"A", String[Symbol]{Terminal("a")}},
+			expectedCompare: 1,
+		},
+		{
+			name:            "Equal",
+			lhs:             &Production{"A", String[Symbol]{Terminal("a")}},
+			rhs:             &Production{"A", String[Symbol]{Terminal("a")}},
+			expectedCompare: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cmp := cmpProduction(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedCompare, cmp)
+		})
+	}
+}
+
+func TestHashFuncForProduction(t *testing.T) {
+	tests := []struct {
+		p            *Production
+		expectedHash uint64
+	}{
+		{
+			p:            &Production{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}},
+			expectedHash: 0xd832c1186b1f1e1d,
+		},
+		{
+			p:            &Production{"A", String[Symbol]{Terminal("a"), NonTerminal("A")}},
+			expectedHash: 0x20ddcfba9bcf0eca,
+		},
+	}
+
+	for _, tc := range tests {
+		hash := hashFuncForProduction()(tc.p)
+		assert.Equal(t, tc.expectedHash, hash)
+	}
+}

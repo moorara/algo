@@ -3,16 +3,19 @@ package grammar
 import (
 	"bytes"
 	"fmt"
+	"hash/fnv"
 	"iter"
 
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
 
 var (
-	CmpProduction = cmpProduction
+	CmpProduction  = cmpProduction
+	HashProduction = hashFuncForProduction()
 
 	EqProduction = func(lhs, rhs *Production) bool {
 		return lhs.Equal(rhs)
@@ -225,6 +228,19 @@ func (p *Productions) SelectMatch(pred generic.Predicate1[*Production]) *Product
 	return newP
 }
 
+// OrderProductionSet orders an unordered set of production rules in a deterministic way.
+func OrderProductionSet(set set.Set[*Production]) []*Production {
+	prods := generic.Collect1(set.All())
+	orderProductionSlice(prods)
+	return prods
+}
+
+// orderProductionSlice orders a slice of production rules in a deterministic way.
+func orderProductionSlice(prods []*Production) {
+	// Sort the productions using a custom comparison function.
+	sort.Quick[*Production](prods, cmpProduction)
+}
+
 // cmpProduction is a CompareFunc for Production type.
 //
 // The comparing criteria are as follows:
@@ -246,15 +262,14 @@ func cmpProduction(lhs, rhs *Production) int {
 	return CmpString(lhs.Body, rhs.Body)
 }
 
-// OrderProductionSet orders an unordered set of production rules in a deterministic way.
-func OrderProductionSet(set set.Set[*Production]) []*Production {
-	prods := generic.Collect1(set.All())
-	orderProductionSlice(prods)
-	return prods
-}
+// hashFuncForProduction creates a HashFunc for hashing productions.
+func hashFuncForProduction() hash.HashFunc[*Production] {
+	h := fnv.New64()
 
-// orderProductionSlice orders a slice of production rules in a deterministic way.
-func orderProductionSlice(prods []*Production) {
-	// Sort the productions using a custom comparison function.
-	sort.Quick[*Production](prods, CmpProduction)
+	return func(p *Production) uint64 {
+		h.Reset()
+		_, _ = WriteSymbol(h, p.Head) // Hash.Write never returns an error
+		_, _ = WriteString(h, p.Body) // Hash.Write never returns an error
+		return h.Sum64()
+	}
 }
