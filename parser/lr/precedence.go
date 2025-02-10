@@ -71,7 +71,7 @@ func (p *ActionHandlePair) Equal(rhs *ActionHandlePair) bool {
 // PrecedenceLevels represents an ordered list of precedence levels defined
 // for specific terminals or production rules of a context-free grammar.
 // The order of these levels is crucial for resolving conflicts.
-type PrecedenceLevels []PrecedenceLevel
+type PrecedenceLevels []*PrecedenceLevel
 
 // Validate checks whether a list of precedence levels is valid.
 // A precedence handle must not appear in multiple levels.
@@ -182,6 +182,12 @@ func (l PrecedenceLevels) Compare(lhs, rhs *ActionHandlePair) (int, error) {
 type PrecedenceLevel struct {
 	Associativity Associativity
 	Handles       PrecedenceHandles
+}
+
+// Equal determines whether or not two precedence levels are the same.
+func (p *PrecedenceLevel) Equal(rhs *PrecedenceLevel) bool {
+	return p.Associativity == rhs.Associativity &&
+		p.Handles.Equal(rhs.Handles)
 }
 
 // PrecedenceHandles represents a set of terminals and/or production rules (referred to as handles).
