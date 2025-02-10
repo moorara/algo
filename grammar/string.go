@@ -14,6 +14,7 @@ import (
 var E = String[Symbol]{}
 
 var (
+	CmpString  = cmpString
 	HashString = hashFuncForString()
 
 	EqString = func(lhs, rhs String[Symbol]) bool {
@@ -187,6 +188,46 @@ func WriteString(w io.Writer, s String[Symbol]) (n int, err error) {
 	}
 
 	return total, nil
+}
+
+// cmpString is a CompareFunc for String[Symbol] type.
+//
+// The comparing criteria are as follows:
+//
+//  1. strings contain more non-terminal symbols are prioritized first.
+//  3. If two strings have the same number of non-terminals,
+//     those with more terminal symbols come first.
+//  4. If two strings have the same number of non-terminals and terminals,
+//     they are compared alphabetically based on their symbols.
+//
+// This function can be used for sorting strings
+// to ensure a consistent and deterministic order for any given set of strings.
+func cmpString(lhs, rhs String[Symbol]) int {
+	// First, compare based on the number of non-terminal symbols in the strings.
+	lhsNonTermLen, rhsNonTermLen := len(lhs.NonTerminals()), len(rhs.NonTerminals())
+	if lhsNonTermLen > rhsNonTermLen {
+		return -1
+	} else if rhsNonTermLen > lhsNonTermLen {
+		return 1
+	}
+
+	// Second, if the number of non-terminals is the same, compare based on the number of terminals.
+	lhsTermLen, rhsTermLen := len(lhs.Terminals()), len(rhs.Terminals())
+	if lhsTermLen > rhsTermLen {
+		return -1
+	} else if rhsTermLen > lhsTermLen {
+		return 1
+	}
+
+	// Next, if the number of terminals is also the same, compare alphabetically based on the string representations.
+	lhsString, rhsString := lhs.String(), rhs.String()
+	if lhsString < rhsString {
+		return -1
+	} else if rhsString < lhsString {
+		return 1
+	}
+
+	return 0
 }
 
 // hashFuncForString creates a HashFunc for hashing strings of symbols.
