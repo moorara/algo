@@ -230,12 +230,7 @@ func (p *Productions) SelectMatch(pred generic.Predicate1[*Production]) *Product
 // The comparing criteria are as follows:
 //
 //  1. Production heads are compared alphabetically.
-//  2. If two productions have the same heads,
-//     productions whose bodies contain more non-terminal symbols are prioritized first.
-//  3. If two productions have the same number of non-terminals,
-//     those with more terminal symbols in the body come first.
-//  4. If two productions have the same number of non-terminals and terminals,
-//     they are ordered alphabetically based on the symbols in their bodies.
+//  2. If two productions have the same heads, productions bodies are compared.
 //
 // This function can be used for sorting productions
 // to ensure a consistent and deterministic order for any given set of production rules.
@@ -247,34 +242,8 @@ func cmpProduction(lhs, rhs *Production) int {
 		return 1
 	}
 
-	// Second, if the heads of two productions are the same,
-	//   compare based on the number of non-terminal symbols in the body.
-	lhsNonTermsLen, rhsNonTermsLen := len(lhs.Body.NonTerminals()), len(rhs.Body.NonTerminals())
-	if lhsNonTermsLen > rhsNonTermsLen {
-		return -1
-	} else if rhsNonTermsLen > lhsNonTermsLen {
-		return 1
-	}
-
-	// Next, if the number of non-terminals is the same,
-	//   compare based on the number of terminal symbols.
-	lhsTermsLen, rhsTermsLen := len(lhs.Body.Terminals()), len(rhs.Body.Terminals())
-	if lhsTermsLen > rhsTermsLen {
-		return -1
-	} else if rhsTermsLen > lhsTermsLen {
-		return 1
-	}
-
-	// Then, if the number of terminals is also the same,
-	//   compare alphabetically based on the string representation of the bodies.
-	lhsString, rhsString := lhs.String(), rhs.String()
-	if lhsString < rhsString {
-		return -1
-	} else if rhsString < lhsString {
-		return 1
-	}
-
-	return 0
+	// Next, compare production bodies.
+	return CmpString(lhs.Body, rhs.Body)
 }
 
 // OrderProductionSet orders an unordered set of production rules in a deterministic way.

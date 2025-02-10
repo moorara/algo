@@ -211,6 +211,65 @@ func TestWriteString(t *testing.T) {
 	}
 }
 
+func TestCmpString(t *testing.T) {
+	tests := []struct {
+		name            string
+		lhs             String[Symbol]
+		rhs             String[Symbol]
+		expectedCompare int
+	}{
+		{
+			name:            "FirstLargerByNonTerminals",
+			lhs:             String[Symbol]{NonTerminal("A"), NonTerminal("B")},
+			rhs:             String[Symbol]{NonTerminal("A")},
+			expectedCompare: -1,
+		},
+		{
+			name:            "SecondLargerByNonTerminals",
+			lhs:             String[Symbol]{NonTerminal("A")},
+			rhs:             String[Symbol]{NonTerminal("A"), NonTerminal("B")},
+			expectedCompare: 1,
+		},
+		{
+			name:            "FirstLargerByTerminals",
+			lhs:             String[Symbol]{Terminal("a"), Terminal("b")},
+			rhs:             String[Symbol]{Terminal("a")},
+			expectedCompare: -1,
+		},
+		{
+			name:            "SecondLargerByTerminals",
+			lhs:             String[Symbol]{Terminal("a")},
+			rhs:             String[Symbol]{Terminal("a"), Terminal("b")},
+			expectedCompare: 1,
+		},
+		{
+			name:            "FirstLargerAlphabetically",
+			lhs:             String[Symbol]{Terminal("a"), NonTerminal("A")},
+			rhs:             String[Symbol]{Terminal("b"), NonTerminal("B")},
+			expectedCompare: -1,
+		},
+		{
+			name:            "SecondLargerAlphabetically",
+			lhs:             String[Symbol]{Terminal("b"), NonTerminal("B")},
+			rhs:             String[Symbol]{Terminal("a"), NonTerminal("A")},
+			expectedCompare: 1,
+		},
+		{
+			name:            "Equal",
+			lhs:             String[Symbol]{Terminal("a"), NonTerminal("A")},
+			rhs:             String[Symbol]{Terminal("a"), NonTerminal("A")},
+			expectedCompare: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cmp := cmpString(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedCompare, cmp)
+		})
+	}
+}
+
 func TestHashFuncForString(t *testing.T) {
 	tests := []struct {
 		s            String[Symbol]
