@@ -3,6 +3,7 @@ package lr
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/moorara/algo/errors"
 	"github.com/moorara/algo/generic"
@@ -72,6 +73,16 @@ func (p *ActionHandlePair) Equal(rhs *ActionHandlePair) bool {
 // for specific terminals or production rules of a context-free grammar.
 // The order of these levels is crucial for resolving conflicts.
 type PrecedenceLevels []*PrecedenceLevel
+
+// String returns a string representation of the list of precedence levels.
+func (p PrecedenceLevels) String() string {
+	levels := make([]string, len(p))
+	for i, l := range p {
+		levels[i] = l.String()
+	}
+
+	return strings.Join(levels, "\n")
+}
 
 // Equal determines whether or not two ordered list of precedence levels are the same.
 func (p PrecedenceLevels) Equal(rhs PrecedenceLevels) bool {
@@ -197,6 +208,11 @@ func (p PrecedenceLevels) Compare(lhs, rhs *ActionHandlePair) (int, error) {
 type PrecedenceLevel struct {
 	Associativity Associativity
 	Handles       PrecedenceHandles
+}
+
+// String returns a string representation of the precedence level.
+func (p *PrecedenceLevel) String() string {
+	return fmt.Sprintf("%s %s", p.Associativity, p.Handles)
 }
 
 // Equal determines whether or not two precedence levels are the same.
