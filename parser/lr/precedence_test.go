@@ -89,6 +89,34 @@ func TestActionHandlePair(t *testing.T) {
 	}
 }
 
+func TestPrecedenceLevels_Equal(t *testing.T) {
+	tests := []struct {
+		name          string
+		p             PrecedenceLevels
+		rhs           PrecedenceLevels
+		expectedEqual bool
+	}{
+		{
+			name:          "Equal",
+			p:             precedences[0],
+			rhs:           precedences[0],
+			expectedEqual: true,
+		},
+		{
+			name:          "NotEqual",
+			p:             precedences[0],
+			rhs:           precedences[1],
+			expectedEqual: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEqual, tc.p.Equal(tc.rhs))
+		})
+	}
+}
+
 func TestPrecedenceLevels_Validate(t *testing.T) {
 	tests := []struct {
 		name          string

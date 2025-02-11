@@ -73,14 +73,29 @@ func (p *ActionHandlePair) Equal(rhs *ActionHandlePair) bool {
 // The order of these levels is crucial for resolving conflicts.
 type PrecedenceLevels []*PrecedenceLevel
 
+// Equal determines whether or not two ordered list of precedence levels are the same.
+func (p PrecedenceLevels) Equal(rhs PrecedenceLevels) bool {
+	if len(p) != len(rhs) {
+		return false
+	}
+
+	for i := range len(p) {
+		if !p[i].Equal(rhs[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Validate checks whether a list of precedence levels is valid.
 // A precedence handle must not appear in multiple levels.
-func (l PrecedenceLevels) Validate() error {
+func (p PrecedenceLevels) Validate() error {
 	var err *errors.MultiError
 
-	for i := 0; i < len(l); i++ {
-		for j := i + 1; j < len(l); j++ {
-			if h := l[i].Handles.Intersection(l[j].Handles); h.Size() > 0 {
+	for i := 0; i < len(p); i++ {
+		for j := i + 1; j < len(p); j++ {
+			if h := p[i].Handles.Intersection(p[j].Handles); h.Size() > 0 {
 				err = errors.Append(err, fmt.Errorf("%s appeared in more than one precedence level", h))
 			}
 		}
@@ -92,8 +107,8 @@ func (l PrecedenceLevels) Validate() error {
 // Precedence searches for a precedence handle in the list of precedence levels.
 // If found, it returns the handle's associativity and its order in the list.
 // If not found, it returns nil and false.
-func (l PrecedenceLevels) Precedence(h *PrecedenceHandle) (*Precedence, bool) {
-	for i, level := range l {
+func (p PrecedenceLevels) Precedence(h *PrecedenceHandle) (*Precedence, bool) {
+	for i, level := range p {
 		if level.Handles.Contains(h) {
 			return &Precedence{
 				Order:         i,
@@ -111,15 +126,15 @@ func (l PrecedenceLevels) Precedence(h *PrecedenceHandle) (*Precedence, bool) {
 // In this case, the associativity determines which actions types precede.
 //
 // If either handle is not found in the list, the function returns -1 and false.
-func (l PrecedenceLevels) Compare(lhs, rhs *ActionHandlePair) (int, error) {
+func (p PrecedenceLevels) Compare(lhs, rhs *ActionHandlePair) (int, error) {
 	const invalid = 6765
 
 	if lhs.Equal(rhs) {
 		return 0, nil
 	}
 
-	lp, lok := l.Precedence(lhs.Handle)
-	rp, rok := l.Precedence(rhs.Handle)
+	lp, lok := p.Precedence(lhs.Handle)
+	rp, rok := p.Precedence(rhs.Handle)
 
 	switch {
 	case !lok && !rok:
