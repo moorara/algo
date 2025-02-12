@@ -1,6 +1,11 @@
 package automata
 
 import (
+	"bytes"
+	"fmt"
+
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
 
@@ -29,6 +34,32 @@ func newDFA(start State, final States) *DFA {
 		Final: final.Clone(),
 		trans: symboltable.NewRedBlack(cmpState, eqSymbolState),
 	}
+}
+
+// String returns a string representation of the DFA.
+func (d *DFA) String() string {
+	var b bytes.Buffer
+
+	fmt.Fprintf(&b, "Start state: %d\n", d.Start)
+	fmt.Fprintf(&b, "Final states: ")
+
+	for _, s := range sortStates(d.Final) {
+		fmt.Fprintf(&b, "%d, ", s)
+	}
+
+	b.Truncate(b.Len() - 2)
+	b.WriteString("\n")
+
+	b.WriteString("Transitions:\n")
+	for _, s := range d.States() {
+		for _, a := range d.Symbols() {
+			if next := d.Next(s, a); next != -1 {
+				fmt.Fprintf(&b, "  (%d, %c) --> %d\n", s, a, next)
+			}
+		}
+	}
+
+	return b.String()
 }
 
 // Equal determines whether or not two DFAs are identical in structure and labeling.
@@ -102,11 +133,112 @@ func (d *DFA) symbols() Symbols {
 
 	for _, trans := range d.trans.All() {
 		for a := range trans.All() {
-			if a != E {
-				symbols.Add(a)
-			}
+			symbols.Add(a)
 		}
 	}
 
 	return symbols
+}
+
+// ToNFA constructs a new NFA accepting the same language as the DFA (every DFA is an NFA).
+func (d *DFA) ToNFA() *NFA {
+	nfa := newNFA(d.Start, d.Final)
+	for s, strans := range d.trans.All() {
+		for a, next := range strans.All() {
+			nfa.Add(s, a, []State{next})
+		}
+	}
+
+	return nfa
+}
+
+// Isomorphic determines whether or not two DFAs are isomorphically the same.
+//
+// Two DFAs D₁ and D₂ are said to be isomorphic if there exists a bijection f: S(D₁) → S(D₂) between their state sets such that,
+// for every input symbol a, there is a transition from state s to state t on input a in D₁
+// if and only if there is a transition from state f(s) to state f(t) on input a in D₂.
+//
+// In simpler terms, the two DFAs have the same structure:
+// one can be transformed into the other by renaming its states and preserving the transitions.
+func (d *DFA) Isomorphic(rhs *DFA) bool {
+	// D₁ and D₂ must have the same number of final states.
+	if d.Final.Size() != rhs.Final.Size() {
+		return false
+	}
+
+	// D₁ and D₂ must have the same number of states.
+	states1, states2 := d.States(), rhs.States()
+	if len(states1) != len(states2) {
+		return false
+	}
+
+	// D₁ and D₂ must have the same input alphabet.
+	symbols1, symbols2 := d.symbols(), rhs.symbols()
+	if !symbols1.Equal(symbols2) {
+		return false
+	}
+
+	// D₁ and D₂ must have the same sorted degree sequence.
+	// len(degrees1) == len(degrees2) since D₁ and D₂ have the same number of states.
+	degrees1, degrees2 := d.getSortedDegreeSequence(), rhs.getSortedDegreeSequence()
+	for i := range degrees1 {
+		if degrees1[i] != degrees2[i] {
+			return false
+		}
+	}
+
+	// Since generatePermutations uses backtracking and modifies the slice in-place, we need a copy.
+	states := make([]State, len(states1))
+	copy(states, states1)
+
+	// Methodically checking if any permutation of D₁ states is equal to D₂.
+	return !generatePermutations(states, 0, len(states)-1, func(permutation []State) bool {
+		// Create a bijection between the states of D₁ and the current permutation of D₁.
+		// A bijection or bijective function is a type of function that creates a one-to-one correspondence between two sets (states1 ↔ permutation).
+		bijection := make(map[State]State, len(states1))
+		for i, s := range states1 {
+			bijection[s] = permutation[i]
+		}
+
+		permutedStart := bijection[d.Start]
+
+		permutedFinal := make([]State, 0, d.Final.Size())
+		for f := range d.Final.All() {
+			permutedFinal = append(permutedFinal, bijection[f])
+		}
+
+		permutedDFA := NewDFA(permutedStart, permutedFinal)
+
+		for s, strans := range d.trans.All() {
+			for a, t := range strans.All() {
+				ss, tt := bijection[s], bijection[t]
+				permutedDFA.Add(ss, a, tt)
+			}
+		}
+
+		// If the current permutation of D₁ is equal to D₂, we stop checking more permutations by returning false.
+		// If the current permutation of D₁ is not equal to D₂, we continue with checking more permutations by returning true.
+		return !permutedDFA.Equal(rhs)
+	})
+}
+
+// getSortedDegreeSequence calculates the total degree (sum of in-degrees and out-degrees)
+// for each state in the DFA and returns the degree sequence sorted in ascending order.
+func (d *DFA) getSortedDegreeSequence() []int {
+	totalDegrees := map[State]int{}
+	for s, strans := range d.trans.All() {
+		for _, t := range strans.All() {
+			totalDegrees[s]++
+			totalDegrees[t]++
+		}
+	}
+
+	sortedDegrees := make([]int, len(totalDegrees))
+	for i, degree := range totalDegrees {
+		sortedDegrees[i] = degree
+	}
+
+	sort.Quick3Way[int](sortedDegrees, generic.NewCompareFunc[int]())
+
+	return sortedDegrees
 }

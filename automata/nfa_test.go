@@ -139,6 +139,41 @@ func Test_newNFA(t *testing.T) {
 	}
 }
 
+func TestNFA_String(t *testing.T) {
+	nfas := getTestNFAs()
+
+	tests := []struct {
+		name           string
+		n              *NFA
+		expectedString string
+	}{
+		{
+			name: "OK",
+			n:    nfas[1],
+			expectedString: `Start state: 0
+Final states: 10
+Transitions:
+  (0, ε) --> {1, 7}
+  (1, ε) --> {2, 4}
+  (2, a) --> {3}
+  (3, ε) --> {6}
+  (4, b) --> {5}
+  (5, ε) --> {6}
+  (6, ε) --> {1, 7}
+  (7, a) --> {8}
+  (8, b) --> {9}
+  (9, b) --> {10}
+`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedString, tc.n.String())
+		})
+	}
+}
+
 func TestNFA_Equal(t *testing.T) {
 	nfas := getTestNFAs()
 
@@ -329,6 +364,121 @@ func TestNFA_Symbols(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedSymbols, tc.n.Symbols())
+		})
+	}
+}
+
+func TestNFA_ToDFA(t *testing.T) {
+	nfas := getTestNFAs()
+	dfas := getTestDFAs()
+
+	tests := []struct {
+		name        string
+		n           *NFA
+		expectedDFA *DFA
+	}{
+		{
+			name:        "OK",
+			n:           nfas[1],
+			expectedDFA: dfas[1],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.n.ToDFA()
+			assert.True(t, dfa.Equal(tc.expectedDFA))
+		})
+	}
+}
+
+func TestNFA_Isomorphic(t *testing.T) {
+	// aa*|bb*
+	n0 := NewNFA(0, []State{2, 4})
+	n0.Add(0, E, []State{1, 3})
+	n0.Add(1, 'a', []State{2})
+	n0.Add(2, 'a', []State{2})
+	n0.Add(3, 'b', []State{4})
+	n0.Add(4, 'b', []State{4})
+
+	n1 := NewNFA(0, []State{2})
+
+	n2 := NewNFA(0, []State{3, 6})
+	n2.Add(0, E, []State{1, 4})
+	n2.Add(1, 'a', []State{2})
+	n2.Add(2, 'a', []State{3})
+	n2.Add(3, 'a', []State{3})
+	n2.Add(4, 'b', []State{5})
+	n2.Add(5, 'b', []State{6})
+	n2.Add(6, 'b', []State{6})
+
+	n3 := NewNFA(0, []State{2, 4})
+	n3.Add(0, E, []State{1, 3})
+	n3.Add(1, 'a', []State{2})
+	n3.Add(2, 'c', []State{2})
+	n3.Add(3, 'b', []State{4})
+	n3.Add(4, 'c', []State{4})
+
+	n4 := NewNFA(0, []State{2, 4})
+	n4.Add(0, E, []State{1, 3})
+	n4.Add(1, 'a', []State{2})
+	n4.Add(2, 'a', []State{2})
+	n4.Add(3, 'b', []State{4})
+
+	n5 := NewNFA(4, []State{0, 1})
+	n5.Add(4, E, []State{2, 3})
+	n5.Add(2, 'a', []State{0})
+	n5.Add(0, 'a', []State{0})
+	n5.Add(3, 'b', []State{1})
+	n5.Add(1, 'b', []State{1})
+
+	tests := []struct {
+		name               string
+		n                  *NFA
+		rhs                *NFA
+		expectedIsomorphic bool
+	}{
+		{
+			name:               "FinalStatesNotEqualSize",
+			n:                  n0,
+			rhs:                n1,
+			expectedIsomorphic: false,
+		},
+		{
+			name:               "StatesNotEqualSize",
+			n:                  n0,
+			rhs:                n2,
+			expectedIsomorphic: false,
+		},
+		{
+			name:               "SymbolsNotEqual",
+			n:                  n0,
+			rhs:                n3,
+			expectedIsomorphic: false,
+		},
+		{
+			name:               "DegreesNotEqual",
+			n:                  n0,
+			rhs:                n4,
+			expectedIsomorphic: false,
+		},
+		{
+			name:               "Equal",
+			n:                  n0,
+			rhs:                n0,
+			expectedIsomorphic: true,
+		},
+		{
+			name:               "Isomorphic",
+			n:                  n0,
+			rhs:                n5,
+			expectedIsomorphic: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedIsomorphic, tc.n.Isomorphic(tc.rhs))
 		})
 	}
 }

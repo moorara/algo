@@ -7,186 +7,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGroup_Equal(t *testing.T) {
+func TestNewGroups(t *testing.T) {
 	tests := []struct {
-		name          string
-		g             group
-		rhs           group
-		expectedEqual bool
+		name string
+		g    []group
 	}{
 		{
-			name:          "Equal",
-			g:             group{rep: 0, states: States{0, 1, 2}},
-			rhs:           group{rep: 1, states: States{0, 1, 2}},
-			expectedEqual: true,
-		},
-		{
-			name:          "NotEqual",
-			g:             group{rep: 0, states: States{0, 1, 2}},
-			rhs:           group{rep: 1, states: States{0, 1, 2, 3}},
-			expectedEqual: false,
+			name: "OK",
+			g: []group{
+				{States: NewStates(0), rep: 0},
+				{States: NewStates(1, 2), rep: 1},
+				{States: NewStates(3, 4), rep: 2},
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEqual, tc.g.Equal(tc.rhs))
-		})
-	}
-}
+			set := newGroups(tc.g...)
 
-func TestGroups_Contains(t *testing.T) {
-	tests := []struct {
-		name             string
-		g                groups
-		h                group
-		expectedContains bool
-	}{
-		{
-			name: "Yes",
-			g: groups{
-				group{rep: 0, states: States{0}},
-				group{rep: 1, states: States{1, 2}},
-				group{rep: 2, states: States{3, 4}},
-			},
-			h:                group{rep: 1, states: States{1, 2}},
-			expectedContains: true,
-		},
-		{
-			name: "No",
-			g: groups{
-				group{rep: 0, states: States{0}},
-				group{rep: 1, states: States{1, 2}},
-				group{rep: 2, states: States{3, 4}},
-			},
-			h:                group{rep: 1, states: States{2, 4}},
-			expectedContains: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedContains, tc.g.Contains(tc.h))
-		})
-	}
-}
-
-func TestGroups_Equal(t *testing.T) {
-	tests := []struct {
-		name          string
-		g             groups
-		rhs           groups
-		expectedEqual bool
-	}{
-		{
-			name: "Equal",
-			g: groups{
-				group{rep: 0, states: States{0}},
-				group{rep: 1, states: States{1, 2}},
-				group{rep: 2, states: States{3, 4}},
-			},
-			rhs: groups{
-				group{rep: 0, states: States{0}},
-				group{rep: 1, states: States{1, 2}},
-				group{rep: 2, states: States{3, 4}},
-			},
-			expectedEqual: true,
-		},
-		{
-			name: "NotEqual",
-			g: groups{
-				group{rep: 0, states: States{0}},
-				group{rep: 1, states: States{1, 2}},
-				group{rep: 2, states: States{3, 4}},
-			},
-			rhs: groups{
-				group{rep: 0, states: States{0}},
-				group{rep: 1, states: States{1, 2}},
-				group{rep: 2, states: States{3}},
-				group{rep: 3, states: States{4}},
-			},
-			expectedEqual: false,
-		},
-		{
-			name: "NotEqual",
-			g: groups{
-				group{rep: 0, states: States{0}},
-				group{rep: 1, states: States{1, 2}},
-				group{rep: 2, states: States{3, 4}},
-			},
-			rhs: groups{
-				group{rep: 0, states: States{0}},
-				group{rep: 1, states: States{1, 2}},
-				group{rep: 2, states: States{3, 4}},
-				group{rep: 3, states: States{5, 6}},
-			},
-			expectedEqual: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEqual, tc.g.Equal(tc.rhs))
+			assert.NotNil(t, set)
+			assert.True(t, set.Contains(tc.g...))
 		})
 	}
 }
 
 func TestNewPartition(t *testing.T) {
-	p := newPartition()
-	assert.NotNil(t, p)
-}
-
-func TestPartition_Equal(t *testing.T) {
-	tests := []struct {
-		name          string
-		p             *partition
-		rhs           *partition
-		expectedEqual bool
-	}{
-		{
-			name: "Equal",
-			p: &partition{
-				groups: groups{
-					group{rep: 0, states: States{0}},
-					group{rep: 1, states: States{1, 2}},
-				},
-				nextRep: 2,
-			},
-			rhs: &partition{
-				groups: groups{
-					group{rep: 0, states: States{0}},
-					group{rep: 1, states: States{1, 2}},
-				},
-				nextRep: 2,
-			},
-			expectedEqual: true,
-		},
-		{
-			name: "NotEqual",
-			p: &partition{
-				groups: groups{
-					group{rep: 0, states: States{0}},
-					group{rep: 1, states: States{1, 2}},
-				},
-				nextRep: 2,
-			},
-			rhs: &partition{
-				groups: groups{
-					group{rep: 0, states: States{0}},
-					group{rep: 1, states: States{1}},
-					group{rep: 2, states: States{2}},
-				},
-				nextRep: 3,
-			},
-			expectedEqual: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEqual, tc.p.Equal(tc.rhs))
-		})
-	}
+	P := newPartition()
+	assert.NotNil(t, P)
 }
 
 func TestPartition_Add(t *testing.T) {
@@ -199,22 +47,22 @@ func TestPartition_Add(t *testing.T) {
 		{
 			name: "OK",
 			p: &partition{
-				groups: groups{
-					group{rep: 0, states: States{0}},
-				},
+				groups: newGroups(
+					group{States: NewStates(0), rep: 0},
+				),
 				nextRep: 1,
 			},
 			groups: []States{
-				{1, 2},
-				{3, 4},
+				NewStates(1, 2),
+				NewStates(3, 4),
 			},
 			expectedPartition: &partition{
-				groups: groups{
-					group{rep: 0, states: States{0}},
-					group{rep: 1, states: States{1, 2}},
-					group{rep: 2, states: States{3, 4}},
-				},
-				nextRep: 4,
+				groups: newGroups(
+					group{States: NewStates(0), rep: 0},
+					group{States: NewStates(1, 2), rep: 1},
+					group{States: NewStates(3, 4), rep: 2},
+				),
+				nextRep: 3,
 			},
 		},
 	}
@@ -222,7 +70,9 @@ func TestPartition_Add(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.p.Add(tc.groups...)
-			assert.True(t, tc.p.Equal(tc.expectedPartition))
+
+			assert.True(t, tc.p.groups.Equal(tc.expectedPartition.groups))
+			assert.Equal(t, tc.expectedPartition.nextRep, tc.p.nextRep)
 		})
 	}
 }
@@ -232,43 +82,40 @@ func TestPartition_Rep(t *testing.T) {
 		name        string
 		p           *partition
 		s           State
-		expectedOK  bool
 		expectedRep State
 	}{
 		{
 			name: "OK",
 			p: &partition{
-				groups: groups{
-					group{rep: 0, states: States{0}},
-					group{rep: 1, states: States{1, 2}},
-					group{rep: 2, states: States{3, 4}},
-				},
+				groups: newGroups(
+					group{States: NewStates(0), rep: 0},
+					group{States: NewStates(1, 2), rep: 1},
+					group{States: NewStates(3, 4), rep: 2},
+				),
 				nextRep: 4,
 			},
 			s:           State(4),
-			expectedOK:  true,
 			expectedRep: State(2),
 		},
 		{
 			name: "NotOK",
 			p: &partition{
-				groups: groups{
-					group{rep: 0, states: States{0}},
-					group{rep: 1, states: States{1, 2}},
-					group{rep: 2, states: States{3, 4}},
-				},
+				groups: newGroups(
+					group{States: NewStates(0), rep: 0},
+					group{States: NewStates(1, 2), rep: 1},
+					group{States: NewStates(3, 4), rep: 2},
+				),
 				nextRep: 4,
 			},
 			s:           State(8),
-			expectedOK:  false,
-			expectedRep: -1,
+			expectedRep: State(-1),
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			rep, ok := tc.p.Rep(tc.s)
-			assert.Equal(t, tc.expectedOK, ok)
+			rep := tc.p.Rep(tc.s)
+
 			assert.Equal(t, tc.expectedRep, rep)
 		})
 	}
@@ -297,14 +144,14 @@ func TestPartition_BuildGroupTrans(t *testing.T) {
 		{
 			name: "OK",
 			p: &partition{
-				groups: groups{
-					group{rep: 0, states: States{0, 1, 3}},
-					group{rep: 1, states: States{2, 4}},
-				},
+				groups: newGroups(
+					group{States: NewStates(0, 1, 3), rep: 0},
+					group{States: NewStates(2, 4), rep: 1},
+				),
 				nextRep: 2,
 			},
 			dfa:           dfa,
-			G:             group{rep: 1, states: States{2, 4}},
+			G:             group{States: NewStates(2, 4), rep: 1},
 			expectedTrans: trans,
 		},
 	}
@@ -312,6 +159,7 @@ func TestPartition_BuildGroupTrans(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			trans := tc.p.BuildGroupTrans(tc.dfa, tc.G)
+
 			assert.True(t, trans.Equal(tc.expectedTrans))
 		})
 	}
@@ -337,15 +185,15 @@ func TestPartition_PartitionAndAddGroups(t *testing.T) {
 		{
 			name: "OK",
 			p: &partition{
-				groups:  groups{},
+				groups:  newGroups(),
 				nextRep: 0,
 			},
 			Gtrans: trans,
 			expectedPartition: &partition{
-				groups: groups{
-					group{rep: 0, states: States{2}},
-					group{rep: 1, states: States{4}},
-				},
+				groups: newGroups(
+					group{States: NewStates(2), rep: 0},
+					group{States: NewStates(4), rep: 1},
+				),
 				nextRep: 2,
 			},
 		},
@@ -354,7 +202,9 @@ func TestPartition_PartitionAndAddGroups(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.p.PartitionAndAddGroups(tc.Gtrans)
-			assert.True(t, tc.p.Equal(tc.expectedPartition))
+
+			assert.True(t, tc.p.groups.Equal(tc.expectedPartition.groups))
+			assert.Equal(t, tc.expectedPartition.nextRep, tc.p.nextRep)
 		})
 	}
 }
