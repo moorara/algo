@@ -6,20 +6,19 @@ package automata
 
 import (
 	"github.com/moorara/algo/generic"
-	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
 
 var (
-	eqState   = generic.NewEqualFunc[State]()
-	cmpState  = generic.NewCompareFunc[State]()
-	hashState = hash.HashFuncForInt[State](nil)
+	eqState  = generic.NewEqualFunc[State]()
+	cmpState = generic.NewCompareFunc[State]()
+	// hashState = hash.HashFuncForInt[State](nil)
 
-	eqSymbol   = generic.NewEqualFunc[Symbol]()
-	cmpSymbol  = generic.NewCompareFunc[Symbol]()
-	hashSymbol = hash.HashFuncForInt32[Symbol](nil)
+	eqSymbol  = generic.NewEqualFunc[Symbol]()
+	cmpSymbol = generic.NewCompareFunc[Symbol]()
+	// hashSymbol = hash.HashFuncForInt32[Symbol](nil)
 
 	eqStateSet = func(a, b States) bool {
 		return a.Equal(b)
