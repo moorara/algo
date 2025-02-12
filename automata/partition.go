@@ -73,7 +73,7 @@ func (p *partition) Rep(s State) State {
 
 // BuildGroupTrans creates a map of state-symbol pairs to the group representatives in the current partition.
 // Instead of mapping to next states, the map associates each symbol with the representative of the group containing the next state.
-func (p *partition) BuildGroupTrans(dfa *DFA, G group) doubleKeyMap[State, Symbol, State] {
+func (p *partition) BuildGroupTrans(dfa *DFA, G group) symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]] {
 	Gtrans := symboltable.NewRedBlack(cmpState, eqSymbolState)
 
 	// For every state in the current group
@@ -100,7 +100,7 @@ func (p *partition) BuildGroupTrans(dfa *DFA, G group) doubleKeyMap[State, Symbo
 // This method partitions the group G into subgroups such that two states s and t are in the same subgroup
 // if and only if, for all input symbols a, the transitions of s and t on a lead to states in the same group.
 // If no such grouping is possible, a state will be placed in a subgroup by itself.
-func (p *partition) PartitionAndAddGroups(Gtrans doubleKeyMap[State, Symbol, State]) {
+func (p *partition) PartitionAndAddGroups(Gtrans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]]) {
 	pairs := generic.Collect2(Gtrans.All())
 
 	for i := 0; i < len(pairs); i++ {

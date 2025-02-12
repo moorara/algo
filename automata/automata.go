@@ -34,9 +34,6 @@ var (
 	}
 )
 
-// doubleKeyMap is a map (symbol table) data structure with two keys.
-type doubleKeyMap[K1, K2, V any] symboltable.SymbolTable[K1, symboltable.SymbolTable[K2, V]]
-
 // State represents a state in an automaton, identified by an integer.
 type State int
 

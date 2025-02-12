@@ -3,7 +3,9 @@ package automata
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
+	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
@@ -13,7 +15,7 @@ import (
 type DFA struct {
 	Start State
 	Final States
-	trans doubleKeyMap[State, Symbol, State]
+	trans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]]
 }
 
 // NewDFA creates a new deterministic finite automaton.
@@ -244,6 +246,69 @@ func (d *DFA) Minimize() *DFA {
 	return dfa
 }
 
+// EliminateDeadStates eliminates the dead states and all transitions to them.
+// The subset construction and minimization algorithms sometimes produce a DFA with a single dead state.
+//
+// Strictly speaking, a DFA must have a transition from every state on every input symbol in its input alphabet.
+// When we construct a DFA to be used in a lexical analyzer, we need to treat the dead state differently.
+// We must know when there is no longer any possibility of recognizing a longer lexeme.
+// Thus, we should always omit transitions to the dead state and eliminate the dead state itself.
+func (d *DFA) EliminateDeadStates() *DFA {
+	// 1. Construct a directed graph from the DFA with all the transitions reversed.
+	adj := map[State]States{}
+	for s, strans := range d.trans.All() {
+		for _, t := range strans.All() {
+			if adj[t] == nil {
+				adj[t] = NewStates()
+			}
+			adj[t].Add(s)
+		}
+	}
+
+	// 2. Add a new state that transitions to all final states of the DFA.
+	u := State(-1)
+	adj[u] = d.Final.Clone()
+
+	// 3. Finally, we find all states reachable from this new state using a depth-first search (DFS).
+	//    All other states not connected to this new state will be identified as dead states.
+	visited := map[State]bool{}
+	for s := range adj {
+		visited[s] = false
+	}
+
+	dfs(adj, visited, u)
+
+	deads := NewStates()
+	for s, visited := range visited {
+		if !visited {
+			deads.Add(s)
+		}
+	}
+
+	dfa := newDFA(d.Start, d.Final)
+	for s, strans := range d.trans.All() {
+		for a, t := range strans.All() {
+			if !deads.Contains(s) && !deads.Contains(t) {
+				dfa.Add(s, a, t)
+			}
+		}
+	}
+
+	return dfa
+}
+
+func dfs(adj map[State]States, visited map[State]bool, s State) {
+	visited[s] = true
+
+	if adj[s] != nil {
+		for t := range adj[s].All() {
+			if !visited[t] {
+				dfs(adj, visited, t)
+			}
+		}
+	}
+}
+
 // Isomorphic determines whether or not two DFAs are isomorphically the same.
 //
 // Two DFAs D₁ and D₂ are said to be isomorphic if there exists a bijection f: S(D₁) → S(D₂) between their state sets such that,
@@ -333,4 +398,58 @@ func (d *DFA) getSortedDegreeSequence() []int {
 	sort.Quick3Way[int](sortedDegrees, generic.NewCompareFunc[int]())
 
 	return sortedDegrees
+}
+
+// DOT generates a DOT representation of the transition graph of the DFA.
+func (d *DFA) DOT() string {
+	graph := dot.NewGraph(false, true, false, "DFA", dot.RankDirLR, "", "", dot.ShapeCircle)
+
+	for _, s := range d.States() {
+		name := fmt.Sprintf("%d", s)
+		label := fmt.Sprintf("%d", s)
+
+		if s == d.Start {
+			graph.AddNode(dot.NewNode("start", "", "", "", dot.StyleInvis, "", "", ""))
+			graph.AddEdge(dot.NewEdge("start", name, dot.EdgeTypeDirected, "", "", "", "", "", ""))
+		}
+
+		var shape dot.Shape
+		if d.Final.Contains(s) {
+			shape = dot.ShapeDoubleCircle
+		}
+
+		graph.AddNode(dot.NewNode(name, "", label, "", "", shape, "", ""))
+	}
+
+	/* Group all the transitions with the same states and combine their symbols into one label */
+
+	edges := symboltable.NewRedBlack[State, symboltable.SymbolTable[State, []string]](cmpState, nil)
+
+	for from, ftrans := range d.trans.All() {
+		row, ok := edges.Get(from)
+		if !ok {
+			row = symboltable.NewRedBlack[State, []string](cmpState, nil)
+			edges.Put(from, row)
+		}
+
+		for sym, to := range ftrans.All() {
+			labels, _ := row.Get(to)
+			labels = append(labels, string(sym))
+			row.Put(to, labels)
+		}
+	}
+
+	for from, fedges := range edges.All() {
+		for to, labels := range fedges.All() {
+			from := fmt.Sprintf("%d", from)
+			to := fmt.Sprintf("%d", to)
+
+			sort.Quick(labels, generic.NewCompareFunc[string]())
+			label := strings.Join(labels, ",")
+
+			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", label, "", "", "", ""))
+		}
+	}
+
+	return graph.DOT()
 }

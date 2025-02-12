@@ -393,6 +393,29 @@ func TestDFA_Minimize(t *testing.T) {
 	}
 }
 
+func TestDFA_EliminateDeadStates(t *testing.T) {
+	dfas := getTestDFAs()
+
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedDFA *DFA
+	}{
+		{
+			name:        "OK",
+			d:           dfas[4],
+			expectedDFA: dfas[5],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.d.EliminateDeadStates()
+			assert.True(t, dfa.Equal(tc.expectedDFA))
+		})
+	}
+}
+
 func TestDFA_Isomorphic(t *testing.T) {
 	// aa*|bb*
 	d0 := NewDFA(0, []State{1, 2})
@@ -475,6 +498,110 @@ func TestDFA_Isomorphic(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedIsomorphic, tc.d.Isomorphic(tc.rhs))
+		})
+	}
+}
+
+func TestDFA_DOT(t *testing.T) {
+	dfas := getTestDFAs()
+
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedDOT string
+	}{
+		{
+			name: "Empty",
+			d:    NewDFA(0, []State{1}),
+			expectedDOT: `digraph "DFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1", shape=doublecircle];
+
+  start -> 0 [];
+}`,
+		},
+		{
+			name: "First",
+			d:    dfas[0],
+			expectedDOT: `digraph "DFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1"];
+  2 [label="2"];
+  3 [label="3", shape=doublecircle];
+
+  start -> 0 [];
+  0 -> 0 [label="b"];
+  0 -> 1 [label="a"];
+  1 -> 1 [label="a"];
+  1 -> 2 [label="b"];
+  2 -> 1 [label="a"];
+  2 -> 3 [label="b"];
+  3 -> 0 [label="b"];
+  3 -> 1 [label="a"];
+}`,
+		},
+		{
+			name: "Second",
+			d:    dfas[1],
+			expectedDOT: `digraph "DFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1"];
+  2 [label="2"];
+  3 [label="3"];
+  4 [label="4", shape=doublecircle];
+
+  start -> 0 [];
+  0 -> 1 [label="a"];
+  0 -> 2 [label="b"];
+  1 -> 1 [label="a"];
+  1 -> 3 [label="b"];
+  2 -> 1 [label="a"];
+  2 -> 2 [label="b"];
+  3 -> 1 [label="a"];
+  3 -> 4 [label="b"];
+  4 -> 1 [label="a"];
+  4 -> 2 [label="b"];
+}`,
+		},
+		{
+			name: "Third",
+			d:    dfas[3],
+			expectedDOT: `digraph "DFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1"];
+  2 [label="2", shape=doublecircle];
+
+  start -> 0 [];
+  0 -> 1 [label="a"];
+  1 -> 2 [label="b"];
+  2 -> 1 [label="a"];
+}`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedDOT, tc.d.DOT())
 		})
 	}
 }

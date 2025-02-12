@@ -3,7 +3,9 @@ package automata
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
+	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/sort"
@@ -14,7 +16,7 @@ import (
 type NFA struct {
 	Start State
 	Final States
-	trans doubleKeyMap[State, Symbol, States]
+	trans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, States]]
 }
 
 // NewNFA creates a new non-deterministic finite automaton.
@@ -348,4 +350,67 @@ func (n *NFA) getSortedDegreeSequence() []int {
 	sort.Quick3Way[int](sortedDegrees, generic.NewCompareFunc[int]())
 
 	return sortedDegrees
+}
+
+// DOT generates a DOT representation of the transition graph of the NFA.
+func (n *NFA) DOT() string {
+	graph := dot.NewGraph(false, true, false, "NFA", dot.RankDirLR, "", "", dot.ShapeCircle)
+
+	for _, s := range n.States() {
+		name := fmt.Sprintf("%d", s)
+		label := fmt.Sprintf("%d", s)
+
+		if s == n.Start {
+			graph.AddNode(dot.NewNode("start", "", "", "", dot.StyleInvis, "", "", ""))
+			graph.AddEdge(dot.NewEdge("start", name, dot.EdgeTypeDirected, "", "", "", "", "", ""))
+		}
+
+		var shape dot.Shape
+		if n.Final.Contains(s) {
+			shape = dot.ShapeDoubleCircle
+		}
+
+		graph.AddNode(dot.NewNode(name, "", label, "", "", shape, "", ""))
+	}
+
+	/* Group all the transitions with the same states and combine their symbols into one label */
+
+	edges := symboltable.NewRedBlack[State, symboltable.SymbolTable[State, []string]](cmpState, nil)
+
+	for from, ftrans := range n.trans.All() {
+		row, ok := edges.Get(from)
+		if !ok {
+			row = symboltable.NewRedBlack[State, []string](cmpState, nil)
+			edges.Put(from, row)
+		}
+
+		for sym, states := range ftrans.All() {
+			var label string
+			if sym == E {
+				label = "ε"
+			} else {
+				label = string(sym)
+			}
+
+			for to := range states.All() {
+				labels, _ := row.Get(to)
+				labels = append(labels, label)
+				row.Put(to, labels)
+			}
+		}
+	}
+
+	for from, fedges := range edges.All() {
+		for to, labels := range fedges.All() {
+			from := fmt.Sprintf("%d", from)
+			to := fmt.Sprintf("%d", to)
+
+			sort.Quick(labels, generic.NewCompareFunc[string]())
+			label := strings.Join(labels, ",")
+
+			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", label, "", "", "", ""))
+		}
+	}
+
+	return graph.DOT()
 }

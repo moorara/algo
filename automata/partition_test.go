@@ -191,7 +191,7 @@ func TestPartition_BuildGroupTrans(t *testing.T) {
 		p             *partition
 		dfa           *DFA
 		G             group
-		expectedTrans doubleKeyMap[State, Symbol, State]
+		expectedTrans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]]
 	}{
 		{
 			name: "OK",
@@ -231,7 +231,7 @@ func TestPartition_PartitionAndAddGroups(t *testing.T) {
 	tests := []struct {
 		name              string
 		p                 *partition
-		Gtrans            doubleKeyMap[State, Symbol, State]
+		Gtrans            symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]]
 		expectedPartition *partition
 	}{
 		{

@@ -482,3 +482,115 @@ func TestNFA_Isomorphic(t *testing.T) {
 		})
 	}
 }
+
+func TestNFA_DOT(t *testing.T) {
+	nfas := getTestNFAs()
+
+	tests := []struct {
+		name        string
+		n           *NFA
+		expectedDOT string
+	}{
+		{
+			name: "Empty",
+			n:    NewNFA(0, []State{1}),
+			expectedDOT: `digraph "NFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1", shape=doublecircle];
+
+  start -> 0 [];
+}`,
+		},
+		{
+			name: "First",
+			n:    nfas[0],
+			expectedDOT: `digraph "NFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1"];
+  2 [label="2", shape=doublecircle];
+  3 [label="3"];
+  4 [label="4", shape=doublecircle];
+
+  start -> 0 [];
+  0 -> 1 [label="ε"];
+  0 -> 3 [label="ε"];
+  1 -> 2 [label="a"];
+  2 -> 2 [label="a"];
+  3 -> 4 [label="b"];
+  4 -> 4 [label="b"];
+}`,
+		},
+		{
+			name: "Second",
+			n:    nfas[1],
+			expectedDOT: `digraph "NFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1"];
+  2 [label="2"];
+  3 [label="3"];
+  4 [label="4"];
+  5 [label="5"];
+  6 [label="6"];
+  7 [label="7"];
+  8 [label="8"];
+  9 [label="9"];
+  10 [label="10", shape=doublecircle];
+
+  start -> 0 [];
+  0 -> 1 [label="ε"];
+  0 -> 7 [label="ε"];
+  1 -> 2 [label="ε"];
+  1 -> 4 [label="ε"];
+  2 -> 3 [label="a"];
+  3 -> 6 [label="ε"];
+  4 -> 5 [label="b"];
+  5 -> 6 [label="ε"];
+  6 -> 1 [label="ε"];
+  6 -> 7 [label="ε"];
+  7 -> 8 [label="a"];
+  8 -> 9 [label="b"];
+  9 -> 10 [label="b"];
+}`,
+		},
+		{
+			name: "Third",
+			n:    nfas[3],
+			expectedDOT: `digraph "NFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1"];
+  2 [label="2", shape=doublecircle];
+
+  start -> 0 [];
+  0 -> 1 [label="a"];
+  1 -> 2 [label="b"];
+  2 -> 1 [label="a"];
+}`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedDOT, tc.n.DOT())
+		})
+	}
+}
