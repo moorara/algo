@@ -37,6 +37,59 @@ func TestNewPartition(t *testing.T) {
 	assert.NotNil(t, P)
 }
 
+func TestPartition_Equal(t *testing.T) {
+	tests := []struct {
+		name          string
+		p             *partition
+		rhs           *partition
+		expectedEqual bool
+	}{
+		{
+			name: "Equal",
+			p: &partition{
+				groups: newGroups(
+					group{States: NewStates(0), rep: 0},
+					group{States: NewStates(1, 2), rep: 1},
+				),
+				nextRep: 2,
+			},
+			rhs: &partition{
+				groups: newGroups(
+					group{States: NewStates(0), rep: 0},
+					group{States: NewStates(1, 2), rep: 1},
+				),
+				nextRep: 2,
+			},
+			expectedEqual: true,
+		},
+		{
+			name: "NotEqual",
+			p: &partition{
+				groups: newGroups(
+					group{States: NewStates(0), rep: 0},
+					group{States: NewStates(1, 2), rep: 1},
+				),
+				nextRep: 2,
+			},
+			rhs: &partition{
+				groups: newGroups(
+					group{States: NewStates(0), rep: 0},
+					group{States: NewStates(1), rep: 1},
+					group{States: NewStates(2), rep: 2},
+				),
+				nextRep: 3,
+			},
+			expectedEqual: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEqual, tc.p.Equal(tc.rhs))
+		})
+	}
+}
+
 func TestPartition_Add(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -71,8 +124,7 @@ func TestPartition_Add(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.p.Add(tc.groups...)
 
-			assert.True(t, tc.p.groups.Equal(tc.expectedPartition.groups))
-			assert.Equal(t, tc.expectedPartition.nextRep, tc.p.nextRep)
+			assert.True(t, tc.p.Equal(tc.expectedPartition))
 		})
 	}
 }
@@ -203,8 +255,7 @@ func TestPartition_PartitionAndAddGroups(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.p.PartitionAndAddGroups(tc.Gtrans)
 
-			assert.True(t, tc.p.groups.Equal(tc.expectedPartition.groups))
-			assert.Equal(t, tc.expectedPartition.nextRep, tc.p.nextRep)
+			assert.True(t, tc.p.Equal(tc.expectedPartition))
 		})
 	}
 }

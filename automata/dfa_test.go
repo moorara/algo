@@ -370,6 +370,29 @@ func TestDFA_ToNFA(t *testing.T) {
 	}
 }
 
+func TestDFA_Minimize(t *testing.T) {
+	dfas := getTestDFAs()
+
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedDFA *DFA
+	}{
+		{
+			name:        "OK",
+			d:           dfas[1],
+			expectedDFA: dfas[0],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.d.Minimize()
+			assert.True(t, dfa.Isomorphic(tc.expectedDFA))
+		})
+	}
+}
+
 func TestDFA_Isomorphic(t *testing.T) {
 	// aa*|bb*
 	d0 := NewDFA(0, []State{1, 2})

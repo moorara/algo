@@ -41,6 +41,11 @@ func newPartition() *partition {
 	}
 }
 
+// Equal determines whether or not two partitions are the same.
+func (p *partition) Equal(rhs *partition) bool {
+	return p.groups.Equal(rhs.groups) && p.nextRep == rhs.nextRep
+}
+
 // Add adds new groups into the partition set.
 // Each group is a set of states and assigned a unique representative state.
 func (p *partition) Add(groups ...States) {

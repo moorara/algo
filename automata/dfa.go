@@ -152,6 +152,98 @@ func (d *DFA) ToNFA() *NFA {
 	return nfa
 }
 
+// Minimize creates a unique DFA with the minimum number of states.
+//
+// The minimization algorithm sometimes produces a DFA with one dead state.
+// This state is not accepting and transfers to itself on each input symbol.
+//
+// We often want to know when there is no longer any possibility of acceptance.
+// If so, we may want to eliminate the dead state and use an automaton that is missing some transitions.
+// This automaton has one fewer state than the minimum-state DFA.
+// Strictly speaking, such an automaton is not a DFA, because of the missing transitions to the dead state.
+//
+// For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
+func (d *DFA) Minimize() *DFA {
+	/*
+	 * 1. Start with an initial partition P with two groups,
+	 *    F and S - F, the accepting and non-accepting states.
+	 */
+
+	F := d.Final.Clone()           // F
+	NF := d.states().Difference(F) // S - F
+
+	Π := newPartition()
+	Π.Add(NF, F)
+
+	/*
+	 * 2. Initially, let Πnew = Π.
+	 *    For (each group G of Π) {
+	 *      Partition G into subgroups such that two states s and t are in the same subgroup
+	 *      if and only if for all input symbols a, states s and t have transitions on a to states in the same group of Π
+	 *      (at worst, a state will be in a subgroup by itself).
+	 *
+	 *      Replace G in Pnew by the set of all subgroups formed.
+	 *    }
+	 *
+	 * 3. If Πnew = Π, let Πfinal = Π and continue with step (4).
+	 *    Otherwise, repeat step (2) with Πnew in place of Π.
+	 */
+
+	for {
+		Πnew := newPartition()
+
+		// For every group in the current partition
+		for G := range Π.groups.All() {
+			Gtrans := Π.BuildGroupTrans(d, G)
+			Πnew.PartitionAndAddGroups(Gtrans)
+		}
+
+		if Πnew.Equal(Π) {
+			break
+		}
+
+		Π = Πnew
+	}
+
+	/*
+	 * 4. Choose one state in each group of Πfinal as the representative for that group.
+	 *    The representatives will be the states of the minimum-state DFA D′.
+	 *    The other components of D′ are constructed as follows:
+	 *
+	 *    (a) The start state of D′ is the representative of the group containing the start state of D.
+	 *    (b) The accepting states of D′ are the representatives of those groups that contain an accepting state of D
+	 *        (each group contains either only accepting states, or only non-accepting states).
+	 *    (c) Let s be the representative of some group G of Πfinal, and let the transition of D from s on input a be to state t.
+	 *        Let r be the representative of t's group H. Then in D′, there is a transition from s to r on input a.
+	 */
+
+	start := Π.Rep(d.Start)
+
+	final := NewStates()
+	for f := range d.Final.All() {
+		g := Π.Rep(f)
+		final.Add(g)
+	}
+
+	dfa := newDFA(start, final)
+
+	for G := range Π.groups.All() {
+		// Get any state in the group
+		s, _ := G.States.FirstMatch(func(State) bool {
+			return true
+		})
+
+		if v, ok := d.trans.Get(s); ok {
+			for a, next := range v.All() {
+				rep := Π.Rep(next)
+				dfa.Add(G.rep, a, rep)
+			}
+		}
+	}
+
+	return dfa
+}
+
 // Isomorphic determines whether or not two DFAs are isomorphically the same.
 //
 // Two DFAs D₁ and D₂ are said to be isomorphic if there exists a bijection f: S(D₁) → S(D₂) between their state sets such that,
