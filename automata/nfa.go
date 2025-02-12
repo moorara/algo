@@ -208,6 +208,129 @@ func (n *NFA) symbols() Symbols {
 	return symbols
 }
 
+// Star constructs a new NFA that accepts the Kleene star closure of the language accepted by the NFA.
+func (n *NFA) Star() *NFA {
+	start, final := State(0), State(1)
+	star := NewNFA(start, []State{final})
+
+	factory := newStateFactory(final)
+
+	for s, strans := range n.trans.All() {
+		ss := factory.StateFor(0, s)
+
+		for a, states := range strans.All() {
+			next := make([]State, 0, states.Size())
+			for t := range states.All() {
+				tt := factory.StateFor(0, t)
+				next = append(next, tt)
+			}
+
+			star.Add(ss, a, next)
+		}
+	}
+
+	ss := factory.StateFor(0, n.Start)
+
+	star.Add(start, E, []State{ss})
+	star.Add(start, E, []State{final})
+
+	for f := range n.Final.All() {
+		ff := factory.StateFor(0, f)
+		star.Add(ff, E, []State{ss})
+		star.Add(ff, E, []State{final})
+	}
+
+	return star
+}
+
+// Union constructs a new NFA that accepts the union of languages accepted by each individual NFA.
+func (n *NFA) Union(ns ...*NFA) *NFA {
+	start, final := State(0), State(1)
+	union := NewNFA(start, []State{final})
+
+	nfas := append([]*NFA{n}, ns...)
+	factory := newStateFactory(final)
+
+	for id, nfa := range nfas {
+		for s, strans := range nfa.trans.All() {
+			ss := factory.StateFor(id, s)
+
+			for a, states := range strans.All() {
+				next := make([]State, 0, states.Size())
+				for t := range states.All() {
+					tt := factory.StateFor(id, t)
+					next = append(next, tt)
+				}
+
+				union.Add(ss, a, next)
+			}
+		}
+
+		ss := factory.StateFor(id, nfa.Start)
+		union.Add(start, E, []State{ss})
+
+		for f := range nfa.Final.All() {
+			ff := factory.StateFor(id, f)
+			union.Add(ff, E, []State{final})
+		}
+	}
+
+	return union
+}
+
+// Concat constructs a new NFA that accepts the concatenation of languages accepted by each individual NFA.
+func (n *NFA) Concat(ns ...*NFA) *NFA {
+	final := []State{0}
+	concat := NewNFA(0, final)
+
+	nfas := append([]*NFA{n}, ns...)
+	factory := newStateFactory(0)
+
+	for id, nfa := range nfas {
+		for s, strans := range nfa.trans.All() {
+			// If s is the start state of the current NFA,
+			// we need to map it to the previous NFA final states.
+			var sp []State
+			if s == nfa.Start {
+				sp = final
+			} else {
+				ss := factory.StateFor(id, s)
+				sp = append(sp, ss)
+			}
+
+			for a, next := range strans.All() {
+				// If any of the next state is the start state of the current NFA,
+				// we need to map it to the previous NFA final states.
+				var nextp []State
+				for s := range next.All() {
+					if s == nfa.Start {
+						nextp = append(nextp, final...)
+					} else {
+						ss := factory.StateFor(id, s)
+						nextp = append(nextp, ss)
+					}
+				}
+
+				// Add new transitions
+				for _, s := range sp {
+					concat.Add(s, a, nextp)
+				}
+			}
+		}
+
+		// Update the current final states
+		final = make([]State, 0, nfa.Final.Size())
+		for f := range nfa.Final.All() {
+			ff := factory.StateFor(id, f)
+			final = append(final, ff)
+		}
+	}
+
+	concat.Final = NewStates(final...)
+
+	return concat
+}
+
 // ToDFA constructs a new DFA accepting the same language as the NFA.
 // It implements the subset construction algorithm.
 //

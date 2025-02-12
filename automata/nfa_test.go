@@ -368,6 +368,79 @@ func TestNFA_Symbols(t *testing.T) {
 	}
 }
 
+func TestNFA_Star(t *testing.T) {
+	nfas := getTestNFAs()
+
+	tests := []struct {
+		name        string
+		n           *NFA
+		expectedNFA *NFA
+	}{
+		{
+			name:        "OK",
+			n:           nfas[2],
+			expectedNFA: nfas[4],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			nfa := tc.n.Star()
+			assert.True(t, nfa.Equal(tc.expectedNFA))
+		})
+	}
+}
+
+func TestNFA_Union(t *testing.T) {
+	nfas := getTestNFAs()
+
+	tests := []struct {
+		name        string
+		n           *NFA
+		ns          []*NFA
+		expectedNFA *NFA
+	}{
+		{
+			name:        "OK",
+			n:           nfas[2],
+			ns:          nfas[3:4],
+			expectedNFA: nfas[5],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			nfa := tc.n.Union(tc.ns...)
+			assert.True(t, nfa.Equal(tc.expectedNFA))
+		})
+	}
+}
+
+func TestNFA_Concat(t *testing.T) {
+	nfas := getTestNFAs()
+
+	tests := []struct {
+		name        string
+		n           *NFA
+		ns          []*NFA
+		expectedNFA *NFA
+	}{
+		{
+			name:        "OK",
+			n:           nfas[2],
+			ns:          nfas[3:4],
+			expectedNFA: nfas[6],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			nfa := tc.n.Concat(tc.ns...)
+			assert.True(t, nfa.Equal(tc.expectedNFA))
+		})
+	}
+}
+
 func TestNFA_ToDFA(t *testing.T) {
 	nfas := getTestNFAs()
 	dfas := getTestDFAs()
