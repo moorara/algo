@@ -2,50 +2,28 @@ package automata
 
 import (
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/symboltable"
 )
 
 // group represents a subset of states within a partition.
 // Each group is uniquely identified by a representative state.
 type group struct {
-	rep    State
-	states States
+	States
+	rep State
 }
 
-// Equal determines whether or not two partition groups are equal.
-func (g group) Equal(rhs group) bool {
-	return g.states.Equal(rhs.states)
-}
+// groups represents a set of groups.
+type groups set.Set[group]
 
-// groups represents a list of partition groups.
-type groups []group
-
-// Contains determines whether or not a list of partition groups contains a given group.
-func (g groups) Contains(h group) bool {
-	for _, group := range g {
-		if group.Equal(h) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// Equal determines whether or not two lists of partition groups are equal.
-func (g groups) Equal(rhs groups) bool {
-	for _, group := range g {
-		if !rhs.Contains(group) {
-			return false
-		}
-	}
-
-	for _, group := range rhs {
-		if !g.Contains(group) {
-			return false
-		}
-	}
-
-	return true
+// newGroups creates a new set of groups.
+func newGroups(g ...group) groups {
+	return set.New(
+		func(lhs, rhs group) bool {
+			return lhs.Equal(rhs)
+		},
+		g...,
+	)
 }
 
 // partition represents a partition of the states in an automaton.
@@ -58,23 +36,23 @@ type partition struct {
 // newPartition creates a new partition set.
 func newPartition() *partition {
 	return &partition{
-		groups:  groups{},
+		groups:  newGroups(),
 		nextRep: 0,
 	}
 }
 
-// Equal determines whether or not two partitions are equal.
+// Equal determines whether or not two partitions are the same.
 func (p *partition) Equal(rhs *partition) bool {
-	return p.groups.Equal(rhs.groups)
+	return p.groups.Equal(rhs.groups) && p.nextRep == rhs.nextRep
 }
 
 // Add adds new groups into the partition set.
 // Each group is a set of states and assigned a unique representative state.
 func (p *partition) Add(groups ...States) {
-	for _, groupStates := range groups {
-		p.groups = append(p.groups, group{
+	for _, states := range groups {
+		p.groups.Add(group{
+			States: states,
 			rep:    p.nextRep,
-			states: groupStates,
 		})
 
 		p.nextRep++
@@ -82,36 +60,36 @@ func (p *partition) Add(groups ...States) {
 }
 
 // Rep finds the group containing the given state and returns its representative state.
-// If the state is not found in any group, it returns -1 and false.
-func (p *partition) Rep(s State) (State, bool) {
-	for _, G := range p.groups {
-		if G.states.Contains(s) {
-			return G.rep, true
+// If the state is not found in any group, it returns -1.
+func (p *partition) Rep(s State) State {
+	for G := range p.groups.All() {
+		if G.Contains(s) {
+			return G.rep
 		}
 	}
 
-	return -1, false
+	return State(-1)
 }
 
 // BuildGroupTrans creates a map of state-symbol pairs to the group representatives in the current partition.
 // Instead of mapping to next states, the map associates each symbol with the representative of the group containing the next state.
-func (p *partition) BuildGroupTrans(dfa *DFA, G group) doubleKeyMap[State, Symbol, State] {
-	Gtrans := symboltable.NewRedBlack[State, symboltable.SymbolTable[Symbol, State]](cmpState, eqSymbolState)
+func (p *partition) BuildGroupTrans(dfa *DFA, G group) symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]] {
+	Gtrans := symboltable.NewRedBlack(cmpState, eqSymbolState)
 
 	// For every state in the current group
-	for _, s := range G.states {
-		strans := symboltable.NewRedBlack[Symbol, State](cmpSymbol, eqState)
+	for s := range G.States.All() {
+		Gstrans := symboltable.NewRedBlack(cmpSymbol, eqState)
 
 		// Create a map of symbols to the current partition's group representatives (instead of next states)
-		if v, ok := dfa.trans.Get(s); ok {
-			for a, next := range v.All() {
-				if rep, ok := p.Rep(next); ok {
-					strans.Put(a, rep)
+		if strans, ok := dfa.trans.Get(s); ok {
+			for a, next := range strans.All() {
+				if rep := p.Rep(next); rep != -1 {
+					Gstrans.Put(a, rep)
 				}
 			}
 		}
 
-		Gtrans.Put(s, strans)
+		Gtrans.Put(s, Gstrans)
 	}
 
 	return Gtrans
@@ -122,24 +100,23 @@ func (p *partition) BuildGroupTrans(dfa *DFA, G group) doubleKeyMap[State, Symbo
 // This method partitions the group G into subgroups such that two states s and t are in the same subgroup
 // if and only if, for all input symbols a, the transitions of s and t on a lead to states in the same group.
 // If no such grouping is possible, a state will be placed in a subgroup by itself.
-func (p *partition) PartitionAndAddGroups(Gtrans doubleKeyMap[State, Symbol, State]) {
+func (p *partition) PartitionAndAddGroups(Gtrans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]]) {
 	pairs := generic.Collect2(Gtrans.All())
 
 	for i := 0; i < len(pairs); i++ {
 		s, strans := pairs[i].Key, pairs[i].Val
 
 		// If s is not already added to the new partition
-		if _, ok := p.Rep(s); !ok {
+		if p.Rep(s) == -1 {
 			// Create a new group in the new partition
-			H := States{}
-			H = append(H, s)
+			H := NewStates(s)
 
 			// Add all other state with same symbol->rep map to the new group
 			for j := 1; j < len(pairs); j++ {
 				t, ttrans := pairs[j].Key, pairs[j].Val
 
 				if strans.Equal(ttrans) && !H.Contains(t) {
-					H = append(H, t)
+					H.Add(t)
 				}
 			}
 
