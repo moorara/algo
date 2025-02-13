@@ -15,7 +15,7 @@ var (
 	cmpState = generic.NewCompareFunc[State]()
 	// hashState = hash.HashFuncForInt[State](nil)
 
-	eqSymbol  = generic.NewEqualFunc[Symbol]()
+	// eqSymbol  = generic.NewEqualFunc[Symbol]()
 	cmpSymbol = generic.NewCompareFunc[Symbol]()
 	// hashSymbol = hash.HashFuncForInt32[Symbol](nil)
 
