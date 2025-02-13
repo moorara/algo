@@ -157,6 +157,18 @@ func TestSet_Equal(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "NotEqual_Superset",
+			s: &set[string]{
+				members: []string{"a", "b", "c", "d", "e", "f"},
+				equal:   eqFunc,
+			},
+			t: &set[string]{
+				members: []string{"a", "b", "c", "d"},
+				equal:   eqFunc,
+			},
+			expected: false,
+		},
 	}
 
 	for _, tc := range tests {
@@ -1013,7 +1025,7 @@ func TestSet_Difference(t *testing.T) {
 	}
 }
 
-func TestSet_Powerset(t *testing.T) {
+func TestPowerset(t *testing.T) {
 	eqFunc := generic.NewEqualFunc[string]()
 	setEqFunc := func(a, b Set[string]) bool { return a.Equal(b) }
 
@@ -1140,7 +1152,7 @@ func TestSet_Powerset(t *testing.T) {
 	}
 }
 
-func TestSet_Partitions(t *testing.T) {
+func TestPartitions(t *testing.T) {
 	eqFunc := generic.NewEqualFunc[string]()
 	setEqFunc := func(a, b Set[string]) bool { return a.Equal(b) }
 	partEqFunc := func(a, b Set[Set[string]]) bool { return a.Equal(b) }

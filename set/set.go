@@ -28,6 +28,8 @@ type Set[T any] interface {
 	Difference(...Set[T]) Set[T]
 }
 
+// set is an implementation of the Set interface.
+// It does not maintain any specific order for its members.
 type set[T any] struct {
 	members []T
 	equal   generic.EqualFunc[T]
@@ -75,14 +77,12 @@ func (s *set[T]) String() string {
 }
 
 func (s *set[T]) Equal(rhs Set[T]) bool {
-	for _, m := range s.members {
-		if !rhs.Contains(m) {
-			return false
-		}
+	if s.Size() != rhs.Size() {
+		return false
 	}
 
-	for m := range rhs.All() {
-		if !s.Contains(m) {
+	for _, m := range s.members {
+		if !rhs.Contains(m) {
 			return false
 		}
 	}
@@ -103,13 +103,11 @@ func (s *set[T]) Clone() Set[T] {
 }
 
 func (s *set[T]) CloneEmpty() Set[T] {
-	t := &set[T]{
+	return &set[T]{
 		members: make([]T, 0),
 		equal:   s.equal,
 		format:  s.format,
 	}
-
-	return t
 }
 
 func (s *set[T]) Size() int {
@@ -146,6 +144,7 @@ func (s *set[T]) Contains(vals ...T) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -203,15 +202,15 @@ func (s *set[T]) FirstMatch(p generic.Predicate1[T]) (T, bool) {
 }
 
 func (s *set[T]) SelectMatch(p generic.Predicate1[T]) generic.Collection1[T] {
-	newS := s.CloneEmpty()
+	matched := s.CloneEmpty()
 
 	for _, m := range s.members {
 		if p(m) {
-			newS.Add(m)
+			matched.Add(m)
 		}
 	}
 
-	return newS
+	return matched
 }
 
 func (s *set[T]) PartitionMatch(p generic.Predicate1[T]) (generic.Collection1[T], generic.Collection1[T]) {
@@ -265,13 +264,9 @@ func (s *set[T]) Intersection(sets ...Set[T]) Set[T] {
 	t := s.CloneEmpty()
 
 	for _, m := range s.members {
-		isInAll := true
-		for _, set := range sets {
-			if !set.Contains(m) {
-				isInAll = false
-				break
-			}
-		}
+		isInAll := generic.AllMatch(sets, func(set Set[T]) bool {
+			return set.Contains(m)
+		})
 
 		if isInAll {
 			t.Add(m)
