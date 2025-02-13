@@ -440,7 +440,7 @@ func TestDFA_EliminateDeadStates(t *testing.T) {
 	}
 }
 
-func Test(t *testing.T) {
+func TestDFA_ReindexStates(t *testing.T) {
 	dfas := getTestDFAs()
 
 	tests := []struct {
