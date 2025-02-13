@@ -45,7 +45,7 @@ func (d *DFA) String() string {
 	fmt.Fprintf(&b, "Start state: %d\n", d.Start)
 	fmt.Fprintf(&b, "Final states: ")
 
-	for _, s := range sortStates(d.Final) {
+	for s := range d.Final.All() {
 		fmt.Fprintf(&b, "%d, ", s)
 	}
 
@@ -109,7 +109,7 @@ func (d *DFA) Accept(s String) bool {
 
 // States returns the set of all states of the DFA.
 func (d *DFA) States() []State {
-	return sortStates(d.states())
+	return generic.Collect1(d.states().All())
 }
 
 func (d *DFA) states() States {
@@ -127,7 +127,7 @@ func (d *DFA) states() States {
 
 // Symbols returns the set of all input symbols of the DFA.
 func (d *DFA) Symbols() []Symbol {
-	return sortSymbols(d.symbols())
+	return generic.Collect1(d.symbols().All())
 }
 
 func (d *DFA) symbols() Symbols {

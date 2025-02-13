@@ -27,28 +27,6 @@ func TestNewStates(t *testing.T) {
 	}
 }
 
-func TestSortStates(t *testing.T) {
-	tests := []struct {
-		name           string
-		states         States
-		expectedStates []State
-	}{
-		{
-			name:           "OK",
-			states:         NewStates(2, 1, 3, 0),
-			expectedStates: []State{0, 1, 2, 3},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			states := sortStates(tc.states)
-
-			assert.Equal(t, tc.expectedStates, states)
-		})
-	}
-}
-
 func TestNewSymbols(t *testing.T) {
 	tests := []struct {
 		name string
@@ -66,28 +44,6 @@ func TestNewSymbols(t *testing.T) {
 
 			assert.NotNil(t, set)
 			assert.True(t, set.Contains(tc.a...))
-		})
-	}
-}
-
-func TestSortSymbols(t *testing.T) {
-	tests := []struct {
-		name            string
-		symbols         Symbols
-		expectedSymbols []Symbol
-	}{
-		{
-			name:            "OK",
-			symbols:         NewSymbols('c', 'd', 'b', 'a'),
-			expectedSymbols: []Symbol{'a', 'b', 'c', 'd'},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			symbols := sortSymbols(tc.symbols)
-
-			assert.Equal(t, tc.expectedSymbols, symbols)
 		})
 	}
 }

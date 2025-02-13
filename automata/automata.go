@@ -7,7 +7,6 @@ package automata
 import (
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/set"
-	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
 
@@ -41,15 +40,7 @@ type States set.Set[State]
 
 // NewStates creates a new set of states, initialized with the given states.
 func NewStates(s ...State) States {
-	return set.New(eqState, s...)
-}
-
-// sortStates sorts a set of states into a canonical order, ensuring a consistent representation.
-func sortStates(states States) []State {
-	sorted := generic.Collect1(states.All())
-	sort.Quick(sorted, cmpState)
-
-	return sorted
+	return set.NewSorted(cmpState, s...)
 }
 
 // Symbol represents an input symbol in an automaton, identified by a rune.
@@ -63,15 +54,7 @@ type Symbols set.Set[Symbol]
 
 // NewSymbols creates a new set of symbols, initialized with the given symbols.
 func NewSymbols(a ...Symbol) set.Set[Symbol] {
-	return set.New(eqSymbol, a...)
-}
-
-// sortSymbols sorts a set of symbols into a canonical order, ensuring a consistent representation.
-func sortSymbols(symbols Symbols) []Symbol {
-	sorted := generic.Collect1(symbols.All())
-	sort.Insertion(sorted, cmpSymbol)
-
-	return sorted
+	return set.NewSorted(cmpSymbol, a...)
 }
 
 // String represents a sequence of symbols in an automaton.
