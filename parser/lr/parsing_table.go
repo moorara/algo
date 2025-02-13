@@ -177,7 +177,7 @@ func (t *ParsingTable) SetGOTO(s State, A grammar.NonTerminal, next State) {
 //
 // If a conflict cannot be resolved, a detailed error describing the conflict is created and accumulated.
 func (t *ParsingTable) ResolveConflicts() error {
-	if err := t.precedences.Validate(); err != nil {
+	if err := t.precedences.Verify(); err != nil {
 		return err
 	}
 

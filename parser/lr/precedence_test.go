@@ -139,7 +139,7 @@ func TestPrecedenceLevels_Equal(t *testing.T) {
 	}
 }
 
-func TestPrecedenceLevels_Validate(t *testing.T) {
+func TestPrecedenceLevels_Verify(t *testing.T) {
 	tests := []struct {
 		name          string
 		p             PrecedenceLevels
@@ -172,7 +172,7 @@ func TestPrecedenceLevels_Validate(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.p.Validate()
+			err := tc.p.Verify()
 
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
