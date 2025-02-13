@@ -8,8 +8,8 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
-// sorted is an implementation of the Set interface that always keeps its members sorted,
-// useful for use cases requiring a deterministic order of set members.
+// sorted is an implementation of the Set interface that always keeps its members sorted.
+// This is useful for cases where a sorted ordering of set members is required.
 type sorted[T any] struct {
 	members []T
 	compare generic.CompareFunc[T]
@@ -17,7 +17,7 @@ type sorted[T any] struct {
 }
 
 // NewSorted creates a new set that maintains its members in sorted order.
-// This is useful for cases where a deterministic ordering of set members is required.
+// This is useful for cases where a sorted ordering of set members is required.
 func NewSorted[T any](compare generic.CompareFunc[T], vals ...T) Set[T] {
 	s := &sorted[T]{
 		members: make([]T, 0),

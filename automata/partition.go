@@ -13,17 +13,16 @@ type group struct {
 	rep State
 }
 
+func eqGroup(lhs, rhs group) bool {
+	return lhs.Equal(rhs)
+}
+
 // groups represents a set of groups.
 type groups set.Set[group]
 
 // newGroups creates a new set of groups.
 func newGroups(g ...group) groups {
-	return set.New(
-		func(lhs, rhs group) bool {
-			return lhs.Equal(rhs)
-		},
-		g...,
-	)
+	return set.NewStable(eqGroup, g...)
 }
 
 // partition represents a partition of the states in an automaton.
