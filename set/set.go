@@ -36,7 +36,7 @@ type set[T any] struct {
 	format  StringFormat[T]
 }
 
-// New creates a new set.
+// New creates a new set that does not maintain any specific order for its members.
 func New[T any](equal generic.EqualFunc[T], vals ...T) Set[T] {
 	s := &set[T]{
 		members: make([]T, 0),
