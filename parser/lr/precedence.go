@@ -99,9 +99,9 @@ func (p PrecedenceLevels) Equal(rhs PrecedenceLevels) bool {
 	return true
 }
 
-// Validate checks whether a list of precedence levels is valid.
+// Verify checks whether a list of precedence levels is valid.
 // A precedence handle must not appear in multiple levels.
-func (p PrecedenceLevels) Validate() error {
+func (p PrecedenceLevels) Verify() error {
 	var err *errors.MultiError
 
 	for i := 0; i < len(p); i++ {
