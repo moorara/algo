@@ -84,7 +84,7 @@ func (n *NFA) String() string {
 	fmt.Fprintf(&b, "Start state: %d\n", n.Start)
 	fmt.Fprintf(&b, "Final states: ")
 
-	for _, s := range sortStates(n.Final) {
+	for s := range n.Final.All() {
 		fmt.Fprintf(&b, "%d, ", s)
 	}
 
@@ -138,7 +138,7 @@ func (n *NFA) Add(s State, a Symbol, next []State) {
 // If no valid transition exists, it returns nil
 func (n *NFA) Next(s State, a Symbol) []State {
 	if next := n.next(s, a); next != nil {
-		return sortStates(next)
+		return generic.Collect1(next.All())
 	}
 
 	return nil
@@ -172,7 +172,7 @@ func (n *NFA) Accept(s String) bool {
 
 // States returns the set of all states of the NFA.
 func (n *NFA) States() []State {
-	return sortStates(n.states())
+	return generic.Collect1(n.states().All())
 }
 
 func (n *NFA) states() States {
@@ -191,7 +191,7 @@ func (n *NFA) states() States {
 
 // Symbols returns the set of all input symbols of the NFA.
 func (n *NFA) Symbols() []Symbol {
-	return sortSymbols(n.symbols())
+	return generic.Collect1(n.symbols().All())
 }
 
 func (n *NFA) symbols() Symbols {
@@ -220,7 +220,7 @@ func (n *NFA) Star() *NFA {
 
 		for a, states := range strans.All() {
 			next := make([]State, 0, states.Size())
-			for _, t := range sortStates(states) {
+			for t := range states.All() {
 				tt := sm.GetOrCreateState(0, t)
 				next = append(next, tt)
 			}
@@ -233,7 +233,7 @@ func (n *NFA) Star() *NFA {
 	star.Add(start, E, []State{ss})
 	star.Add(start, E, []State{final})
 
-	for _, f := range sortStates(n.Final) {
+	for f := range n.Final.All() {
 		ff := sm.GetOrCreateState(0, f)
 		star.Add(ff, E, []State{ss})
 		star.Add(ff, E, []State{final})
@@ -256,7 +256,7 @@ func (n *NFA) Union(ns ...*NFA) *NFA {
 
 			for a, states := range strans.All() {
 				next := make([]State, 0, states.Size())
-				for _, t := range sortStates(states) {
+				for t := range states.All() {
 					tt := sm.GetOrCreateState(id, t)
 					next = append(next, tt)
 				}
@@ -268,7 +268,7 @@ func (n *NFA) Union(ns ...*NFA) *NFA {
 		ss := sm.GetOrCreateState(id, nfa.Start)
 		union.Add(start, E, []State{ss})
 
-		for _, f := range sortStates(nfa.Final) {
+		for f := range nfa.Final.All() {
 			ff := sm.GetOrCreateState(id, f)
 			union.Add(ff, E, []State{final})
 		}
@@ -301,7 +301,7 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 				// If any of the next state is the start state of the current NFA,
 				// we need to map it to the previous NFA final states.
 				var nextp []State
-				for _, t := range sortStates(states) {
+				for t := range states.All() {
 					if t == nfa.Start {
 						nextp = append(nextp, final...)
 					} else {
@@ -319,7 +319,7 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 
 		// Update the current final states
 		final = make([]State, 0, nfa.Final.Size())
-		for _, f := range sortStates(nfa.Final) {
+		for f := range nfa.Final.All() {
 			ff := sm.GetOrCreateState(id, f)
 			final = append(final, ff)
 		}
