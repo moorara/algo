@@ -7,6 +7,7 @@ import (
 
 	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
@@ -307,6 +308,51 @@ func dfs(adj map[State]States, visited map[State]bool, s State) {
 			}
 		}
 	}
+}
+
+// ReindexStates reassigns indices to states based on a
+// breadth-first traversal of the DFA, starting from the initial state.
+// This method is typically called after removing unreachable or dead states from the DFA.
+func (d *DFA) ReindexStates() *DFA {
+	sm := newStateManager(-1)
+
+	visited := map[State]bool{}
+	queue := list.NewQueue[State](64, nil)
+
+	visited[d.Start] = true
+	queue.Enqueue(d.Start)
+	sm.GetOrCreateState(0, d.Start)
+
+	for !queue.IsEmpty() {
+		s, _ := queue.Dequeue()
+		if adj, ok := d.trans.Get(s); ok {
+			for _, t := range adj.All() {
+				if !visited[t] {
+					visited[t] = true
+					queue.Enqueue(t)
+					sm.GetOrCreateState(0, t)
+				}
+			}
+		}
+	}
+
+	start := sm.GetOrCreateState(0, d.Start)
+	dfa := NewDFA(start, nil)
+
+	for f := range d.Final.All() {
+		ff := sm.GetOrCreateState(0, f)
+		dfa.Final.Add(ff)
+	}
+
+	for s, strans := range d.trans.All() {
+		ss := sm.GetOrCreateState(0, s)
+		for a, t := range strans.All() {
+			tt := sm.GetOrCreateState(0, t)
+			dfa.Add(ss, a, tt)
+		}
+	}
+
+	return dfa
 }
 
 // Isomorphic determines whether or not two DFAs are isomorphically the same.

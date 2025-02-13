@@ -66,7 +66,31 @@ func getTestDFAs() []*DFA {
 	d5.Add(2, 'a', 2)
 	d5.Add(2, 'b', 2)
 
-	return []*DFA{d0, d1, d2, d3, d4, d5}
+	// (0|1)+.(0|1)+
+	d6 := NewDFA(0, []State{3, 4})
+	d6.Add(0, '0', 3)
+	d6.Add(0, '1', 3)
+	d6.Add(3, '0', 3)
+	d6.Add(3, '1', 3)
+	d6.Add(3, '.', 1)
+	d6.Add(1, '0', 4)
+	d6.Add(1, '1', 4)
+	d6.Add(4, '0', 4)
+	d6.Add(4, '1', 4)
+
+	// (0|1)+.(0|1)+
+	d7 := NewDFA(0, []State{1, 3})
+	d7.Add(0, '0', 1)
+	d7.Add(0, '1', 1)
+	d7.Add(1, '0', 1)
+	d7.Add(1, '1', 1)
+	d7.Add(1, '.', 2)
+	d7.Add(2, '0', 3)
+	d7.Add(2, '1', 3)
+	d7.Add(3, '0', 3)
+	d7.Add(3, '1', 3)
+
+	return []*DFA{d0, d1, d2, d3, d4, d5, d6, d7}
 }
 
 func TestNewDFA(t *testing.T) {
@@ -411,6 +435,29 @@ func TestDFA_EliminateDeadStates(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			dfa := tc.d.EliminateDeadStates()
+			assert.True(t, dfa.Equal(tc.expectedDFA))
+		})
+	}
+}
+
+func Test(t *testing.T) {
+	dfas := getTestDFAs()
+
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedDFA *DFA
+	}{
+		{
+			name:        "OK",
+			d:           dfas[6],
+			expectedDFA: dfas[7],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.d.ReindexStates()
 			assert.True(t, dfa.Equal(tc.expectedDFA))
 		})
 	}
