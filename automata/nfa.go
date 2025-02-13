@@ -213,15 +213,15 @@ func (n *NFA) Star() *NFA {
 	start, final := State(0), State(1)
 	star := NewNFA(start, []State{final})
 
-	factory := newStateFactory(final)
+	sm := newStateManager(final)
 
 	for s, strans := range n.trans.All() {
-		ss := factory.StateFor(0, s)
+		ss := sm.GetOrCreateState(0, s)
 
 		for a, states := range strans.All() {
 			next := make([]State, 0, states.Size())
-			for t := range states.All() {
-				tt := factory.StateFor(0, t)
+			for _, t := range sortStates(states) {
+				tt := sm.GetOrCreateState(0, t)
 				next = append(next, tt)
 			}
 
@@ -229,13 +229,12 @@ func (n *NFA) Star() *NFA {
 		}
 	}
 
-	ss := factory.StateFor(0, n.Start)
-
+	ss := sm.GetOrCreateState(0, n.Start)
 	star.Add(start, E, []State{ss})
 	star.Add(start, E, []State{final})
 
-	for f := range n.Final.All() {
-		ff := factory.StateFor(0, f)
+	for _, f := range sortStates(n.Final) {
+		ff := sm.GetOrCreateState(0, f)
 		star.Add(ff, E, []State{ss})
 		star.Add(ff, E, []State{final})
 	}
@@ -249,16 +248,16 @@ func (n *NFA) Union(ns ...*NFA) *NFA {
 	union := NewNFA(start, []State{final})
 
 	nfas := append([]*NFA{n}, ns...)
-	factory := newStateFactory(final)
+	sm := newStateManager(final)
 
 	for id, nfa := range nfas {
 		for s, strans := range nfa.trans.All() {
-			ss := factory.StateFor(id, s)
+			ss := sm.GetOrCreateState(id, s)
 
 			for a, states := range strans.All() {
 				next := make([]State, 0, states.Size())
-				for t := range states.All() {
-					tt := factory.StateFor(id, t)
+				for _, t := range sortStates(states) {
+					tt := sm.GetOrCreateState(id, t)
 					next = append(next, tt)
 				}
 
@@ -266,11 +265,11 @@ func (n *NFA) Union(ns ...*NFA) *NFA {
 			}
 		}
 
-		ss := factory.StateFor(id, nfa.Start)
+		ss := sm.GetOrCreateState(id, nfa.Start)
 		union.Add(start, E, []State{ss})
 
-		for f := range nfa.Final.All() {
-			ff := factory.StateFor(id, f)
+		for _, f := range sortStates(nfa.Final) {
+			ff := sm.GetOrCreateState(id, f)
 			union.Add(ff, E, []State{final})
 		}
 	}
@@ -284,7 +283,7 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 	concat := NewNFA(0, final)
 
 	nfas := append([]*NFA{n}, ns...)
-	factory := newStateFactory(0)
+	sm := newStateManager(0)
 
 	for id, nfa := range nfas {
 		for s, strans := range nfa.trans.All() {
@@ -294,20 +293,20 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 			if s == nfa.Start {
 				sp = final
 			} else {
-				ss := factory.StateFor(id, s)
-				sp = append(sp, ss)
+				ss := sm.GetOrCreateState(id, s)
+				sp = []State{ss}
 			}
 
-			for a, next := range strans.All() {
+			for a, states := range strans.All() {
 				// If any of the next state is the start state of the current NFA,
 				// we need to map it to the previous NFA final states.
 				var nextp []State
-				for s := range next.All() {
-					if s == nfa.Start {
+				for _, t := range sortStates(states) {
+					if t == nfa.Start {
 						nextp = append(nextp, final...)
 					} else {
-						ss := factory.StateFor(id, s)
-						nextp = append(nextp, ss)
+						tt := sm.GetOrCreateState(id, t)
+						nextp = append(nextp, tt)
 					}
 				}
 
@@ -320,8 +319,8 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 
 		// Update the current final states
 		final = make([]State, 0, nfa.Final.Size())
-		for f := range nfa.Final.All() {
-			ff := factory.StateFor(id, f)
+		for _, f := range sortStates(nfa.Final) {
+			ff := sm.GetOrCreateState(id, f)
 			final = append(final, ff)
 		}
 	}

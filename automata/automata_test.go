@@ -112,7 +112,7 @@ func TestToString(t *testing.T) {
 	}
 }
 
-func TestStateFactory(t *testing.T) {
+func TestStateManager(t *testing.T) {
 	tests := []struct {
 		name          string
 		last          State
@@ -131,8 +131,8 @@ func TestStateFactory(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			factory := newStateFactory(tc.last)
-			state := factory.StateFor(tc.id, tc.s)
+			sm := newStateManager(tc.last)
+			state := sm.GetOrCreateState(tc.id, tc.s)
 			assert.Equal(t, tc.expectedState, state)
 		})
 	}

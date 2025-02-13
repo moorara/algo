@@ -87,34 +87,31 @@ func toString(s string) String {
 	return res
 }
 
-// stateFactory is used for keeping track of states when combining multiple automata.
-type stateFactory struct {
+// stateManager is used for keeping track of states when combining multiple automata.
+type stateManager struct {
 	last   State
 	states map[int]map[State]State
 }
 
-func newStateFactory(last State) *stateFactory {
-	return &stateFactory{
+func newStateManager(last State) *stateManager {
+	return &stateManager{
 		last:   last,
 		states: map[int]map[State]State{},
 	}
 }
 
-func (f *stateFactory) StateFor(id int, s State) State {
-	m, ok := f.states[id]
-	if !ok {
-		m = map[State]State{}
-		f.states[id] = m
+func (m *stateManager) GetOrCreateState(id int, s State) State {
+	if _, ok := m.states[id]; !ok {
+		m.states[id] = make(map[State]State)
 	}
 
-	t, ok := m[s]
-	if !ok {
-		f.last++
-		t = f.last
-		m[s] = t
+	if t, ok := m.states[id][s]; ok {
+		return t
 	}
 
-	return t
+	m.last++
+	m.states[id][s] = m.last
+	return m.last
 }
 
 // generatePermutations generates all permutations of a sequence of states using recursion and backtracking.
