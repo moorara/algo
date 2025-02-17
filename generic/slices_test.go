@@ -2,6 +2,7 @@ package generic
 
 import (
 	"iter"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -284,6 +285,31 @@ func TestSelectMatch(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedSelectMatch, SelectMatch(tc.s, tc.p))
+		})
+	}
+}
+
+func TestTransform(t *testing.T) {
+	tests := []struct {
+		name           string
+		s              []string
+		f              func(string) int
+		expectedResult []int
+	}{
+		{
+			name: "OK",
+			s:    []string{"27", "69"},
+			f: func(s string) int {
+				i, _ := strconv.Atoi(s)
+				return i
+			},
+			expectedResult: []int{27, 69},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedResult, Transform(tc.s, tc.f))
 		})
 	}
 }
