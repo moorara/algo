@@ -350,6 +350,7 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 // For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 func (n *NFA) ToDFA() *DFA {
 	dfa := NewDFA(0, nil)
+
 	Dstates := list.NewSoftQueue(func(s, t States) bool {
 		return s.Equal(t)
 	})
@@ -372,7 +373,6 @@ func (n *NFA) ToDFA() *DFA {
 		}
 	}
 
-	dfa.Start = State(0)
 	dfa.Final = NewStates()
 
 	for i, S := range Dstates.Values() {

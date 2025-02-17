@@ -512,3 +512,178 @@ func (d *DFA) DOT() string {
 
 	return graph.DOT()
 }
+
+// CombineDFA merges multiple deterministic finite automata (DFAs) into a single DFA
+// that recognizes the union of the languages accepted by each individual DFA.
+//
+// The process follows these steps:
+//
+//  1. Convert each DFA into a nondeterministic finite automaton (NFA).
+//  2. Construct a single NFA that accepts the union of all individual NFAs.
+//  3. Convert the unified NFA into a DFA.
+//  4. Remove dead states and eliminate transitions leading to them.
+//  5. Reassign state indices to maintain a compact representation.
+//
+// Throughout this process, the method tracks the final states of each original DFA,
+// returning a slice where each index maps to the final states of the corresponding DFA.
+//
+// Note: This method does not minimize the resulting DFA, as minimization would merge final states,
+// making it impossible to distinguish between the final states of the individual DFAs.
+//
+// This function is commonly used when constructing a DFA for lexical analysis.
+func CombineDFA(ds ...*DFA) (*DFA, [][]State) {
+	var finalMap [][]State
+
+	// 1. Convert all DFAs to NFAs.
+	ns := make([]*NFA, len(ds))
+	for i, d := range ds {
+		ns[i] = d.ToNFA()
+	}
+
+	// 2. Construct a new NFA that accepts the union of the languages accepted by each NFA.
+	var union *NFA
+
+	{
+		start, final := State(0), State(1)
+		union = NewNFA(start, []State{final})
+		finalMap = make([][]State, len(ns))
+
+		sm := newStateManager(final)
+
+		for id, n := range ns {
+			for s, strans := range n.trans.All() {
+				ss := sm.GetOrCreateState(id, s)
+
+				for a, states := range strans.All() {
+					next := make([]State, 0, states.Size())
+					for t := range states.All() {
+						tt := sm.GetOrCreateState(id, t)
+						next = append(next, tt)
+					}
+
+					union.Add(ss, a, next)
+				}
+			}
+
+			ss := sm.GetOrCreateState(id, n.Start)
+			union.Add(start, E, []State{ss})
+
+			for f := range n.Final.All() {
+				ff := sm.GetOrCreateState(id, f)
+				union.Add(ff, E, []State{final})
+				finalMap[id] = append(finalMap[id], ff)
+			}
+		}
+	}
+
+	// 3. Convert the NFA into a DFA.
+	var combined *DFA
+
+	{
+		combined = NewDFA(0, nil)
+
+		Dstates := list.NewSoftQueue(func(s, t States) bool {
+			return s.Equal(t)
+		})
+
+		// Initially, ε-closure(s0) is the only state in Dstates
+		S0 := NewStates(union.Start)
+		Dstates.Enqueue(union.εClosure(S0))
+
+		for T, i := Dstates.Dequeue(); i >= 0; T, i = Dstates.Dequeue() {
+			for _, a := range union.Symbols() { // for each input symbol c
+				U := union.εClosure(union.move(T, a))
+
+				// If U is not in Dstates, add U to Dstates
+				j := Dstates.Contains(U)
+				if j == -1 {
+					j = Dstates.Enqueue(U)
+				}
+
+				combined.Add(State(i), a, State(j))
+			}
+		}
+
+		combined.Final = NewStates()
+
+		for i, S := range Dstates.Values() {
+			for f := range union.Final.All() {
+				if S.Contains(f) {
+					combined.Final.Add(State(i))
+					break
+				}
+			}
+		}
+
+		// Remap the final states from the union NFA to combined DFA.
+		for id, states := range finalMap {
+			mapped := NewStates()
+			for _, f := range states {
+				for i, S := range Dstates.Values() {
+					if S.Contains(f) {
+						mapped.Add(State(i))
+					}
+				}
+			}
+			finalMap[id] = generic.Collect1(mapped.All())
+		}
+	}
+
+	// 4. Remove dead states and their transitions.
+	combined = combined.EliminateDeadStates()
+
+	// 5. Reassign state indices.
+	var reindexed *DFA
+
+	{
+		sm := newStateManager(-1)
+
+		visited := map[State]bool{}
+		queue := list.NewQueue[State](64, nil)
+
+		visited[combined.Start] = true
+		queue.Enqueue(combined.Start)
+		sm.GetOrCreateState(0, combined.Start)
+
+		for !queue.IsEmpty() {
+			s, _ := queue.Dequeue()
+			if adj, ok := combined.trans.Get(s); ok {
+				for _, t := range adj.All() {
+					if !visited[t] {
+						visited[t] = true
+						queue.Enqueue(t)
+						sm.GetOrCreateState(0, t)
+					}
+				}
+			}
+		}
+
+		start := sm.GetOrCreateState(0, combined.Start)
+		reindexed = NewDFA(start, nil)
+
+		for f := range combined.Final.All() {
+			ff := sm.GetOrCreateState(0, f)
+			reindexed.Final.Add(ff)
+		}
+
+		for s, strans := range combined.trans.All() {
+			ss := sm.GetOrCreateState(0, s)
+			for a, t := range strans.All() {
+				tt := sm.GetOrCreateState(0, t)
+				reindexed.Add(ss, a, tt)
+			}
+		}
+
+		// Remap the final states from the old indices to new indices.
+		for id, states := range finalMap {
+			mapped := NewStates()
+			for _, f := range states {
+				ff := sm.GetOrCreateState(0, f)
+				mapped.Add(ff)
+			}
+			finalMap[id] = generic.Collect1(mapped.All())
+		}
+	}
+
+	return reindexed, finalMap
+}
