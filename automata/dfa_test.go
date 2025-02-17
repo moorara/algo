@@ -206,6 +206,27 @@ func TestDFA_Equal(t *testing.T) {
 	}
 }
 
+func TestDFA_Clone(t *testing.T) {
+	dfas := getTestDFAs()
+
+	tests := []struct {
+		name string
+		d    *DFA
+	}{
+		{
+			name: "OK",
+			d:    dfas[0],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.d.Clone()
+			assert.True(t, dfa.Equal(tc.d))
+		})
+	}
+}
+
 func TestDFA_Add(t *testing.T) {
 	dfa := NewDFA(0, []State{1, 2})
 
@@ -649,6 +670,58 @@ func TestDFA_DOT(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedDOT, tc.d.DOT())
+		})
+	}
+}
+
+func TestCombineDFA(t *testing.T) {
+	dfas := getTestDFAs()
+
+	dfa := NewDFA(0, []State{3, 4, 5, 6, 7, 8})
+	dfa.Add(0, 'a', 1)
+	dfa.Add(0, 'b', 2)
+	dfa.Add(1, 'b', 3)
+	dfa.Add(2, 'a', 4)
+	dfa.Add(3, 'a', 5)
+	dfa.Add(3, 'b', 6)
+	dfa.Add(4, 'a', 4)
+	dfa.Add(5, 'a', 7)
+	dfa.Add(5, 'b', 8)
+	dfa.Add(6, 'a', 7)
+	dfa.Add(6, 'b', 6)
+	dfa.Add(7, 'a', 7)
+	dfa.Add(7, 'b', 7)
+	dfa.Add(8, 'a', 5)
+	dfa.Add(8, 'b', 7)
+
+	tests := []struct {
+		name             string
+		ds               []*DFA
+		expectedDFA      *DFA
+		expectedFinalMap [][]State
+	}{
+		{
+			name: "OK",
+			ds: []*DFA{
+				dfas[2],
+				dfas[3],
+				dfas[5],
+			},
+			expectedDFA: dfa,
+			expectedFinalMap: [][]State{
+				{3, 4, 6},
+				{3, 8},
+				{3, 5, 6, 7, 8},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa, finalMap := CombineDFA(tc.ds...)
+
+			assert.True(t, dfa.Equal(tc.expectedDFA))
+			assert.Equal(t, tc.expectedFinalMap, finalMap)
 		})
 	}
 }

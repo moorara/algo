@@ -117,6 +117,20 @@ func (n *NFA) Equal(rhs *NFA) bool {
 		n.trans.Equal(rhs.trans)
 }
 
+// Clone returns a deep copy of the NFA, ensuring the clone is independent of the original.
+func (n *NFA) Clone() *NFA {
+	nfa := newNFA(n.Start, n.Final)
+
+	for s, strans := range n.trans.All() {
+		for a, states := range strans.All() {
+			next := generic.Collect1(states.All())
+			nfa.Add(s, a, next)
+		}
+	}
+
+	return nfa
+}
+
 // Add inserts a new transition into the NFA.
 func (n *NFA) Add(s State, a Symbol, next []State) {
 	strans, ok := n.trans.Get(s)
@@ -246,8 +260,8 @@ func (n *NFA) Star() *NFA {
 func (n *NFA) Union(ns ...*NFA) *NFA {
 	start, final := State(0), State(1)
 	union := NewNFA(start, []State{final})
-
 	nfas := append([]*NFA{n}, ns...)
+
 	sm := newStateManager(final)
 
 	for id, nfa := range nfas {
@@ -335,10 +349,9 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 //
 // For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 func (n *NFA) ToDFA() *DFA {
-	symbols := n.Symbols()
-
 	dfa := NewDFA(0, nil)
-	Dstates := list.NewSoftQueue[States](func(s, t States) bool {
+
+	Dstates := list.NewSoftQueue(func(s, t States) bool {
 		return s.Equal(t)
 	})
 
@@ -347,7 +360,7 @@ func (n *NFA) ToDFA() *DFA {
 	Dstates.Enqueue(n.εClosure(S0))
 
 	for T, i := Dstates.Dequeue(); i >= 0; T, i = Dstates.Dequeue() {
-		for _, a := range symbols { // for each input symbol c
+		for _, a := range n.Symbols() { // for each input symbol c
 			U := n.εClosure(n.move(T, a))
 
 			// If U is not in Dstates, add U to Dstates
@@ -360,7 +373,6 @@ func (n *NFA) ToDFA() *DFA {
 		}
 	}
 
-	dfa.Start = State(0)
 	dfa.Final = NewStates()
 
 	for i, S := range Dstates.Values() {
