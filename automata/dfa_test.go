@@ -206,6 +206,27 @@ func TestDFA_Equal(t *testing.T) {
 	}
 }
 
+func TestDFA_Clone(t *testing.T) {
+	dfas := getTestDFAs()
+
+	tests := []struct {
+		name string
+		d    *DFA
+	}{
+		{
+			name: "OK",
+			d:    dfas[0],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.d.Clone()
+			assert.True(t, dfa.Equal(tc.d))
+		})
+	}
+}
+
 func TestDFA_Add(t *testing.T) {
 	dfa := NewDFA(0, []State{1, 2})
 

@@ -75,6 +75,19 @@ func (d *DFA) Equal(rhs *DFA) bool {
 		d.trans.Equal(rhs.trans)
 }
 
+// Clone returns a deep copy of the DFA, ensuring the clone is independent of the original.
+func (d *DFA) Clone() *DFA {
+	dfa := newDFA(d.Start, d.Final)
+
+	for s, strans := range d.trans.All() {
+		for a, next := range strans.All() {
+			dfa.Add(s, a, next)
+		}
+	}
+
+	return dfa
+}
+
 // Add inserts a new transition into the DFA.
 func (d *DFA) Add(s State, a Symbol, next State) {
 	strans, ok := d.trans.Get(s)

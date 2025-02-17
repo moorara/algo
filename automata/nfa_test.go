@@ -204,6 +204,27 @@ func TestNFA_Equal(t *testing.T) {
 	}
 }
 
+func TestNFA_Clone(t *testing.T) {
+	nfas := getTestNFAs()
+
+	tests := []struct {
+		name string
+		n    *NFA
+	}{
+		{
+			name: "OK",
+			n:    nfas[0],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			nfa := tc.n.Clone()
+			assert.True(t, nfa.Equal(tc.n))
+		})
+	}
+}
+
 func TestNFA_Add(t *testing.T) {
 	nfa := NewNFA(0, []State{1, 2, 3, 4})
 
