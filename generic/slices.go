@@ -111,3 +111,14 @@ func SelectMatch[T any](s []T, p Predicate1[T]) []T {
 
 	return ss
 }
+
+// Transform applies a given transformation function to each element of a slice,
+// converting it from type T to type U, and returns a new slice.
+func Transform[T, U any](s []T, f func(T) U) []U {
+	u := make([]U, len(s))
+	for i := range s {
+		u[i] = f(s[i])
+	}
+
+	return u
+}
