@@ -269,22 +269,49 @@ func TestFirstMatch(t *testing.T) {
 
 func TestSelectMatch(t *testing.T) {
 	tests := []struct {
-		name                string
-		s                   []string
-		p                   Predicate1[string]
-		expectedSelectMatch []string
+		name             string
+		s                []string
+		p                Predicate1[string]
+		expectedSelected []string
 	}{
 		{
-			name:                "OK",
-			s:                   []string{"Eagle", "Sparrow", "Owl", "Hummingbird", "Falcon", "Parrot", "Swan", "Seagull"},
-			p:                   func(s string) bool { return s[0] == 'S' },
-			expectedSelectMatch: []string{"Sparrow", "Swan", "Seagull"},
+			name:             "OK",
+			s:                []string{"Eagle", "Sparrow", "Owl", "Hummingbird", "Falcon", "Parrot", "Swan", "Seagull"},
+			p:                func(s string) bool { return s[0] == 'S' },
+			expectedSelected: []string{"Sparrow", "Swan", "Seagull"},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedSelectMatch, SelectMatch(tc.s, tc.p))
+			assert.Equal(t, tc.expectedSelected, SelectMatch(tc.s, tc.p))
+		})
+	}
+}
+
+func TestPartitionMatch(t *testing.T) {
+	tests := []struct {
+		name              string
+		s                 []string
+		p                 Predicate1[string]
+		expectedMatched   []string
+		expectedUnmatched []string
+	}{
+		{
+			name:              "OK",
+			s:                 []string{"Eagle", "Sparrow", "Owl", "Hummingbird", "Falcon", "Parrot", "Swan", "Seagull"},
+			p:                 func(s string) bool { return s[0] == 'S' },
+			expectedMatched:   []string{"Sparrow", "Swan", "Seagull"},
+			expectedUnmatched: []string{"Eagle", "Owl", "Hummingbird", "Falcon", "Parrot"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			matched, unmatched := PartitionMatch(tc.s, tc.p)
+
+			assert.Equal(t, tc.expectedMatched, matched)
+			assert.Equal(t, tc.expectedUnmatched, unmatched)
 		})
 	}
 }

@@ -61,8 +61,8 @@ func Contains[T any](s []T, eq EqualFunc[T], vals ...T) bool {
 	return true
 }
 
-// AnyMatch returns true if at least one item in a slice satisfies the provided predicate function.
-// If no items satisfy the predicate or a slice is empty, it returns false.
+// AnyMatch returns true if at least one element in a slice satisfies the provided predicate function.
+// If no elements satisfy the predicate or a slice is empty, it returns false.
 func AnyMatch[T any](s []T, p Predicate1[T]) bool {
 	for _, v := range s {
 		if p(v) {
@@ -73,7 +73,7 @@ func AnyMatch[T any](s []T, p Predicate1[T]) bool {
 	return false
 }
 
-// AllMatch returns true if all items in a slice satisfy the provided predicate function.
+// AllMatch returns true if all elements in a slice satisfy the provided predicate function.
 // If a slice is empty, it returns true.
 func AllMatch[T any](s []T, p Predicate1[T]) bool {
 	for _, v := range s {
@@ -85,7 +85,7 @@ func AllMatch[T any](s []T, p Predicate1[T]) bool {
 	return true
 }
 
-// FirstMatch returns the first item in a slice that satisfies the given predicate.
+// FirstMatch returns the first element in a slice that satisfies the given predicate.
 // If no match is found, it returns the zero value of T and false.
 func FirstMatch[T any](s []T, p Predicate1[T]) (T, bool) {
 	for _, v := range s {
@@ -98,18 +98,38 @@ func FirstMatch[T any](s []T, p Predicate1[T]) (T, bool) {
 	return zeroT, false
 }
 
-// SelectMatch selects a subset of items from a slice that satisfy the given predicate.
-// It returns a new slice containing the matching items, of the same type as the original slice.
+// SelectMatch selects a subset of elements from a slice that satisfy the given predicate.
+// It returns a new slice containing the matching elements, of the same type as the original slice.
 func SelectMatch[T any](s []T, p Predicate1[T]) []T {
-	ss := make([]T, 0)
+	matched := make([]T, 0)
 
 	for _, v := range s {
 		if p(v) {
-			ss = append(ss, v)
+			matched = append(matched, v)
 		}
 	}
 
-	return ss
+	return matched
+}
+
+// PartitionMatch partitions the elements in a slice
+// into two separate slices based on the provided predicate.
+// The first slice contains the elements that satisfy the predicate (matched elements),
+// while the second slice contains those that do not satisfy the predicate (unmatched elements).
+// Both slices are of the same type as the original slice.
+func PartitionMatch[T any](s []T, p Predicate1[T]) ([]T, []T) {
+	matched := make([]T, 0)
+	unmatched := make([]T, 0)
+
+	for _, v := range s {
+		if p(v) {
+			matched = append(matched, v)
+		} else {
+			unmatched = append(unmatched, v)
+		}
+	}
+
+	return matched, unmatched
 }
 
 // Transform applies a given transformation function to each element of a slice,
