@@ -104,7 +104,7 @@ func (p *predictiveParser) Parse(tokenF parser.TokenFunc, prodF parser.Productio
 		}
 	}
 
-	stack := list.NewStack[grammar.Symbol](1024, grammar.EqSymbol)
+	stack := list.NewStack(1024, grammar.EqSymbol)
 	stack.Push(grammar.Endmarker)
 	stack.Push(p.G.Start)
 
@@ -134,41 +134,37 @@ func (p *predictiveParser) Parse(tokenF parser.TokenFunc, prodF parser.Productio
 			if err != nil {
 				return &parser.ParseError{Cause: err}
 			}
-
-			continue
-		}
-
-		if X.IsTerminal() {
+		} else if X.IsTerminal() {
 			return &parser.ParseError{
 				Description: fmt.Sprintf("unexpected terminal %s on stack", X),
 			}
-		}
+		} else {
+			A := X.(grammar.NonTerminal)
 
-		A := X.(grammar.NonTerminal)
-
-		if M.IsEmpty(A, token.Terminal) {
-			return &parser.ParseError{
-				Description: fmt.Sprintf("unacceptable input <%s, %s> for non-terminal %s", token.Terminal, token.Lexeme, A),
-				Pos:         token.Pos,
+			if M.IsEmpty(A, token.Terminal) {
+				return &parser.ParseError{
+					Description: fmt.Sprintf("unacceptable input <%s, %s> for non-terminal %s", token.Terminal, token.Lexeme, A),
+					Pos:         token.Pos,
+				}
 			}
-		}
 
-		// At this point, it is guaranteed that M[A,a] contains exactly one production.
-		prod, _ := M.GetProduction(A, token.Terminal)
+			// At this point, it is guaranteed that M[A,a] contains exactly one production.
+			prod, _ := M.GetProduction(A, token.Terminal)
 
-		// Yield the production.
-		if prodF != nil {
-			if err := prodF(prod); err != nil {
-				return &parser.ParseError{Cause: err}
+			// Yield the production.
+			if prodF != nil {
+				if err := prodF(prod); err != nil {
+					return &parser.ParseError{Cause: err}
+				}
 			}
-		}
 
-		// Pop X from the stack.
-		stack.Pop()
+			// Pop X from the stack.
+			stack.Pop()
 
-		// Pushes the symbols of the production body onto the stack in reverse order.
-		for i := len(prod.Body) - 1; i >= 0; i-- {
-			stack.Push(prod.Body[i])
+			// Pushes the symbols of the production body onto the stack in reverse order.
+			for i := len(prod.Body) - 1; i >= 0; i-- {
+				stack.Push(prod.Body[i])
+			}
 		}
 	}
 
