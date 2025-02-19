@@ -16,7 +16,7 @@ import (
 type DFA struct {
 	Start State
 	Final States
-	trans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]]
+	Trans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]]
 }
 
 // NewDFA creates a new deterministic finite automaton.
@@ -25,7 +25,7 @@ func NewDFA(start State, final []State) *DFA {
 	return &DFA{
 		Start: start,
 		Final: NewStates(final...),
-		trans: symboltable.NewRedBlack(cmpState, eqSymbolState),
+		Trans: symboltable.NewRedBlack(cmpState, eqSymbolState),
 	}
 }
 
@@ -35,7 +35,7 @@ func newDFA(start State, final States) *DFA {
 	return &DFA{
 		Start: start,
 		Final: final.Clone(),
-		trans: symboltable.NewRedBlack(cmpState, eqSymbolState),
+		Trans: symboltable.NewRedBlack(cmpState, eqSymbolState),
 	}
 }
 
@@ -72,14 +72,14 @@ func (d *DFA) String() string {
 func (d *DFA) Equal(rhs *DFA) bool {
 	return d.Start == rhs.Start &&
 		d.Final.Equal(rhs.Final) &&
-		d.trans.Equal(rhs.trans)
+		d.Trans.Equal(rhs.Trans)
 }
 
 // Clone returns a deep copy of the DFA, ensuring the clone is independent of the original.
 func (d *DFA) Clone() *DFA {
 	dfa := newDFA(d.Start, d.Final)
 
-	for s, strans := range d.trans.All() {
+	for s, strans := range d.Trans.All() {
 		for a, next := range strans.All() {
 			dfa.Add(s, a, next)
 		}
@@ -90,10 +90,10 @@ func (d *DFA) Clone() *DFA {
 
 // Add inserts a new transition into the DFA.
 func (d *DFA) Add(s State, a Symbol, next State) {
-	strans, ok := d.trans.Get(s)
+	strans, ok := d.Trans.Get(s)
 	if !ok {
 		strans = symboltable.NewRedBlack(cmpSymbol, eqState)
-		d.trans.Put(s, strans)
+		d.Trans.Put(s, strans)
 	}
 
 	strans.Put(a, next)
@@ -102,7 +102,7 @@ func (d *DFA) Add(s State, a Symbol, next State) {
 // Next returns the next state based on the current state s and the input symbol a.
 // If no valid transition exists, it returns an invalid state (-1).
 func (d *DFA) Next(s State, a Symbol) State {
-	if strans, ok := d.trans.Get(s); ok {
+	if strans, ok := d.Trans.Get(s); ok {
 		if next, ok := strans.Get(a); ok {
 			return next
 		}
@@ -130,7 +130,7 @@ func (d *DFA) states() States {
 	states := NewStates(d.Start)
 	states = states.Union(d.Final)
 
-	for s, strans := range d.trans.All() {
+	for s, strans := range d.Trans.All() {
 		for _, t := range strans.All() {
 			states.Add(s, t)
 		}
@@ -147,7 +147,7 @@ func (d *DFA) Symbols() []Symbol {
 func (d *DFA) symbols() Symbols {
 	symbols := NewSymbols()
 
-	for _, trans := range d.trans.All() {
+	for _, trans := range d.Trans.All() {
 		for a := range trans.All() {
 			symbols.Add(a)
 		}
@@ -159,7 +159,7 @@ func (d *DFA) symbols() Symbols {
 // ToNFA constructs a new NFA accepting the same language as the DFA (every DFA is an NFA).
 func (d *DFA) ToNFA() *NFA {
 	nfa := newNFA(d.Start, d.Final)
-	for s, strans := range d.trans.All() {
+	for s, strans := range d.Trans.All() {
 		for a, next := range strans.All() {
 			nfa.Add(s, a, []State{next})
 		}
@@ -249,7 +249,7 @@ func (d *DFA) Minimize() *DFA {
 			return true
 		})
 
-		if v, ok := d.trans.Get(s); ok {
+		if v, ok := d.Trans.Get(s); ok {
 			for a, next := range v.All() {
 				rep := Π.Rep(next)
 				dfa.Add(G.rep, a, rep)
@@ -270,7 +270,7 @@ func (d *DFA) Minimize() *DFA {
 func (d *DFA) EliminateDeadStates() *DFA {
 	// 1. Construct a directed graph from the DFA with all the transitions reversed.
 	adj := map[State]States{}
-	for s, strans := range d.trans.All() {
+	for s, strans := range d.Trans.All() {
 		for _, t := range strans.All() {
 			if adj[t] == nil {
 				adj[t] = NewStates()
@@ -300,7 +300,7 @@ func (d *DFA) EliminateDeadStates() *DFA {
 	}
 
 	dfa := newDFA(d.Start, d.Final)
-	for s, strans := range d.trans.All() {
+	for s, strans := range d.Trans.All() {
 		for a, t := range strans.All() {
 			if !deads.Contains(s) && !deads.Contains(t) {
 				dfa.Add(s, a, t)
@@ -338,7 +338,7 @@ func (d *DFA) ReindexStates() *DFA {
 
 	for !queue.IsEmpty() {
 		s, _ := queue.Dequeue()
-		if adj, ok := d.trans.Get(s); ok {
+		if adj, ok := d.Trans.Get(s); ok {
 			for _, t := range adj.All() {
 				if !visited[t] {
 					visited[t] = true
@@ -357,7 +357,7 @@ func (d *DFA) ReindexStates() *DFA {
 		dfa.Final.Add(ff)
 	}
 
-	for s, strans := range d.trans.All() {
+	for s, strans := range d.Trans.All() {
 		ss := sm.GetOrCreateState(0, s)
 		for a, t := range strans.All() {
 			tt := sm.GetOrCreateState(0, t)
@@ -425,7 +425,7 @@ func (d *DFA) Isomorphic(rhs *DFA) bool {
 
 		permutedDFA := NewDFA(permutedStart, permutedFinal)
 
-		for s, strans := range d.trans.All() {
+		for s, strans := range d.Trans.All() {
 			for a, t := range strans.All() {
 				ss, tt := bijection[s], bijection[t]
 				permutedDFA.Add(ss, a, tt)
@@ -442,7 +442,7 @@ func (d *DFA) Isomorphic(rhs *DFA) bool {
 // for each state in the DFA and returns the degree sequence sorted in ascending order.
 func (d *DFA) getSortedDegreeSequence() []int {
 	totalDegrees := map[State]int{}
-	for s, strans := range d.trans.All() {
+	for s, strans := range d.Trans.All() {
 		for _, t := range strans.All() {
 			totalDegrees[s]++
 			totalDegrees[t]++
@@ -484,7 +484,7 @@ func (d *DFA) DOT() string {
 
 	edges := symboltable.NewRedBlack[State, symboltable.SymbolTable[State, []string]](cmpState, nil)
 
-	for from, ftrans := range d.trans.All() {
+	for from, ftrans := range d.Trans.All() {
 		row, ok := edges.Get(from)
 		if !ok {
 			row = symboltable.NewRedBlack[State, []string](cmpState, nil)
@@ -551,7 +551,7 @@ func CombineDFA(ds ...*DFA) (*DFA, [][]State) {
 		sm := newStateManager(final)
 
 		for id, n := range ns {
-			for s, strans := range n.trans.All() {
+			for s, strans := range n.Trans.All() {
 				ss := sm.GetOrCreateState(id, s)
 
 				for a, states := range strans.All() {
@@ -647,7 +647,7 @@ func CombineDFA(ds ...*DFA) (*DFA, [][]State) {
 
 		for !queue.IsEmpty() {
 			s, _ := queue.Dequeue()
-			if adj, ok := combined.trans.Get(s); ok {
+			if adj, ok := combined.Trans.Get(s); ok {
 				for _, t := range adj.All() {
 					if !visited[t] {
 						visited[t] = true
@@ -666,7 +666,7 @@ func CombineDFA(ds ...*DFA) (*DFA, [][]State) {
 			reindexed.Final.Add(ff)
 		}
 
-		for s, strans := range combined.trans.All() {
+		for s, strans := range combined.Trans.All() {
 			ss := sm.GetOrCreateState(0, s)
 			for a, t := range strans.All() {
 				tt := sm.GetOrCreateState(0, t)
