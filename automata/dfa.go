@@ -25,7 +25,7 @@ func NewDFA(start State, final []State) *DFA {
 	return &DFA{
 		Start: start,
 		Final: NewStates(final...),
-		Trans: symboltable.NewRedBlack(cmpState, eqSymbolState),
+		Trans: symboltable.NewRedBlack(CmpState, eqSymbolState),
 	}
 }
 
@@ -35,7 +35,7 @@ func newDFA(start State, final States) *DFA {
 	return &DFA{
 		Start: start,
 		Final: final.Clone(),
-		Trans: symboltable.NewRedBlack(cmpState, eqSymbolState),
+		Trans: symboltable.NewRedBlack(CmpState, eqSymbolState),
 	}
 }
 
@@ -92,7 +92,7 @@ func (d *DFA) Clone() *DFA {
 func (d *DFA) Add(s State, a Symbol, next State) {
 	strans, ok := d.Trans.Get(s)
 	if !ok {
-		strans = symboltable.NewRedBlack(cmpSymbol, eqState)
+		strans = symboltable.NewRedBlack(CmpSymbol, EqState)
 		d.Trans.Put(s, strans)
 	}
 
@@ -482,12 +482,12 @@ func (d *DFA) DOT() string {
 
 	/* Group all the transitions with the same states and combine their symbols into one label */
 
-	edges := symboltable.NewRedBlack[State, symboltable.SymbolTable[State, []string]](cmpState, nil)
+	edges := symboltable.NewRedBlack[State, symboltable.SymbolTable[State, []string]](CmpState, nil)
 
 	for from, ftrans := range d.Trans.All() {
 		row, ok := edges.Get(from)
 		if !ok {
-			row = symboltable.NewRedBlack[State, []string](cmpState, nil)
+			row = symboltable.NewRedBlack[State, []string](CmpState, nil)
 			edges.Put(from, row)
 		}
 

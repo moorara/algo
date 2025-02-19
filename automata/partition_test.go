@@ -176,13 +176,13 @@ func TestPartition_Rep(t *testing.T) {
 func TestPartition_BuildGroupTrans(t *testing.T) {
 	dfa := getTestDFAs()[2]
 
-	trans := symboltable.NewRedBlack(cmpState, eqSymbolState)
+	trans := symboltable.NewRedBlack(CmpState, eqSymbolState)
 
-	s2Trans := symboltable.NewRedBlack(cmpSymbol, eqState)
+	s2Trans := symboltable.NewRedBlack(CmpSymbol, EqState)
 	s2Trans.Put('b', 1)
 	trans.Put(2, s2Trans)
 
-	s4Trans := symboltable.NewRedBlack(cmpSymbol, eqState)
+	s4Trans := symboltable.NewRedBlack(CmpSymbol, EqState)
 	s4Trans.Put('a', 1)
 	trans.Put(4, s4Trans)
 
@@ -218,13 +218,13 @@ func TestPartition_BuildGroupTrans(t *testing.T) {
 }
 
 func TestPartition_PartitionAndAddGroups(t *testing.T) {
-	trans := symboltable.NewRedBlack(cmpState, eqSymbolState)
+	trans := symboltable.NewRedBlack(CmpState, eqSymbolState)
 
-	s2Trans := symboltable.NewRedBlack(cmpSymbol, eqState)
+	s2Trans := symboltable.NewRedBlack(CmpSymbol, EqState)
 	s2Trans.Put('b', 1)
 	trans.Put(2, s2Trans)
 
-	s4Trans := symboltable.NewRedBlack(cmpSymbol, eqState)
+	s4Trans := symboltable.NewRedBlack(CmpSymbol, EqState)
 	s4Trans.Put('a', 1)
 	trans.Put(4, s4Trans)
 
