@@ -80,7 +80,7 @@ func (p *partition) BuildGroupTrans(dfa *DFA, G group) symboltable.SymbolTable[S
 		Gstrans := symboltable.NewRedBlack(cmpSymbol, eqState)
 
 		// Create a map of symbols to the current partition's group representatives (instead of next states)
-		if strans, ok := dfa.trans.Get(s); ok {
+		if strans, ok := dfa.Trans.Get(s); ok {
 			for a, next := range strans.All() {
 				if rep := p.Rep(next); rep != -1 {
 					Gstrans.Put(a, rep)

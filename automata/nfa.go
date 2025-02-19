@@ -16,7 +16,7 @@ import (
 type NFA struct {
 	Start State
 	Final States
-	trans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, States]]
+	Trans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, States]]
 }
 
 // NewNFA creates a new non-deterministic finite automaton.
@@ -25,7 +25,7 @@ func NewNFA(start State, final []State) *NFA {
 	return &NFA{
 		Start: start,
 		Final: NewStates(final...),
-		trans: symboltable.NewRedBlack(cmpState, eqSymbolStates),
+		Trans: symboltable.NewRedBlack(cmpState, eqSymbolStates),
 	}
 }
 
@@ -35,7 +35,7 @@ func newNFA(start State, final States) *NFA {
 	return &NFA{
 		Start: start,
 		Final: final.Clone(),
-		trans: symboltable.NewRedBlack(cmpState, eqSymbolStates),
+		Trans: symboltable.NewRedBlack(cmpState, eqSymbolStates),
 	}
 }
 
@@ -114,14 +114,14 @@ func (n *NFA) String() string {
 func (n *NFA) Equal(rhs *NFA) bool {
 	return n.Start == rhs.Start &&
 		n.Final.Equal(rhs.Final) &&
-		n.trans.Equal(rhs.trans)
+		n.Trans.Equal(rhs.Trans)
 }
 
 // Clone returns a deep copy of the NFA, ensuring the clone is independent of the original.
 func (n *NFA) Clone() *NFA {
 	nfa := newNFA(n.Start, n.Final)
 
-	for s, strans := range n.trans.All() {
+	for s, strans := range n.Trans.All() {
 		for a, states := range strans.All() {
 			next := generic.Collect1(states.All())
 			nfa.Add(s, a, next)
@@ -133,10 +133,10 @@ func (n *NFA) Clone() *NFA {
 
 // Add inserts a new transition into the NFA.
 func (n *NFA) Add(s State, a Symbol, next []State) {
-	strans, ok := n.trans.Get(s)
+	strans, ok := n.Trans.Get(s)
 	if !ok {
 		strans = symboltable.NewRedBlack(cmpSymbol, eqStateSet)
-		n.trans.Put(s, strans)
+		n.Trans.Put(s, strans)
 	}
 
 	states, ok := strans.Get(a)
@@ -159,7 +159,7 @@ func (n *NFA) Next(s State, a Symbol) []State {
 }
 
 func (n *NFA) next(s State, a Symbol) States {
-	if strans, ok := n.trans.Get(s); ok {
+	if strans, ok := n.Trans.Get(s); ok {
 		if next, ok := strans.Get(a); ok {
 			return next
 		}
@@ -193,7 +193,7 @@ func (n *NFA) states() States {
 	states := NewStates(n.Start)
 	states = states.Union(n.Final)
 
-	for s, strans := range n.trans.All() {
+	for s, strans := range n.Trans.All() {
 		for _, next := range strans.All() {
 			states.Add(s)
 			states = states.Union(next)
@@ -211,7 +211,7 @@ func (n *NFA) Symbols() []Symbol {
 func (n *NFA) symbols() Symbols {
 	symbols := NewSymbols()
 
-	for _, trans := range n.trans.All() {
+	for _, trans := range n.Trans.All() {
 		for a := range trans.All() {
 			if a != E {
 				symbols.Add(a)
@@ -229,7 +229,7 @@ func (n *NFA) Star() *NFA {
 
 	sm := newStateManager(final)
 
-	for s, strans := range n.trans.All() {
+	for s, strans := range n.Trans.All() {
 		ss := sm.GetOrCreateState(0, s)
 
 		for a, states := range strans.All() {
@@ -265,7 +265,7 @@ func (n *NFA) Union(ns ...*NFA) *NFA {
 	sm := newStateManager(final)
 
 	for id, nfa := range nfas {
-		for s, strans := range nfa.trans.All() {
+		for s, strans := range nfa.Trans.All() {
 			ss := sm.GetOrCreateState(id, s)
 
 			for a, states := range strans.All() {
@@ -300,7 +300,7 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 	sm := newStateManager(0)
 
 	for id, nfa := range nfas {
-		for s, strans := range nfa.trans.All() {
+		for s, strans := range nfa.Trans.All() {
 			// If s is the start state of the current NFA,
 			// we need to map it to the previous NFA final states.
 			var sp []State
@@ -444,7 +444,7 @@ func (n *NFA) Isomorphic(rhs *NFA) bool {
 
 		permutedNFA := NewNFA(permutedStart, permutedFinal)
 
-		for s, strans := range n.trans.All() {
+		for s, strans := range n.Trans.All() {
 			for a, ts := range strans.All() {
 				ss := bijection[s]
 
@@ -467,7 +467,7 @@ func (n *NFA) Isomorphic(rhs *NFA) bool {
 // for each state in the NFA and returns the degree sequence sorted in ascending order.
 func (n *NFA) getSortedDegreeSequence() []int {
 	totalDegrees := map[State]int{}
-	for s, strans := range n.trans.All() {
+	for s, strans := range n.Trans.All() {
 		for _, states := range strans.All() {
 			for t := range states.All() {
 				totalDegrees[s]++
@@ -511,7 +511,7 @@ func (n *NFA) DOT() string {
 
 	edges := symboltable.NewRedBlack[State, symboltable.SymbolTable[State, []string]](cmpState, nil)
 
-	for from, ftrans := range n.trans.All() {
+	for from, ftrans := range n.Trans.All() {
 		row, ok := edges.Get(from)
 		if !ok {
 			row = symboltable.NewRedBlack[State, []string](cmpState, nil)
