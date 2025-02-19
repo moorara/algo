@@ -73,11 +73,11 @@ func (p *partition) Rep(s State) State {
 // BuildGroupTrans creates a map of state-symbol pairs to the group representatives in the current partition.
 // Instead of mapping to next states, the map associates each symbol with the representative of the group containing the next state.
 func (p *partition) BuildGroupTrans(dfa *DFA, G group) symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]] {
-	Gtrans := symboltable.NewRedBlack(cmpState, eqSymbolState)
+	Gtrans := symboltable.NewRedBlack(CmpState, eqSymbolState)
 
 	// For every state in the current group
 	for s := range G.States.All() {
-		Gstrans := symboltable.NewRedBlack(cmpSymbol, eqState)
+		Gstrans := symboltable.NewRedBlack(CmpSymbol, EqState)
 
 		// Create a map of symbols to the current partition's group representatives (instead of next states)
 		if strans, ok := dfa.Trans.Get(s); ok {

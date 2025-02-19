@@ -6,18 +6,19 @@ package automata
 
 import (
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/symboltable"
 )
 
 var (
-	eqState  = generic.NewEqualFunc[State]()
-	cmpState = generic.NewCompareFunc[State]()
-	// hashState = hash.HashFuncForInt[State](nil)
+	EqState   = generic.NewEqualFunc[State]()
+	CmpState  = generic.NewCompareFunc[State]()
+	HashState = hash.HashFuncForInt[State](nil)
 
-	// eqSymbol  = generic.NewEqualFunc[Symbol]()
-	cmpSymbol = generic.NewCompareFunc[Symbol]()
-	// hashSymbol = hash.HashFuncForInt32[Symbol](nil)
+	EqSymbol   = generic.NewEqualFunc[Symbol]()
+	CmpSymbol  = generic.NewCompareFunc[Symbol]()
+	HashSymbol = hash.HashFuncForInt32[Symbol](nil)
 
 	eqStateSet = func(a, b States) bool {
 		return a.Equal(b)
@@ -40,7 +41,7 @@ type States set.Set[State]
 
 // NewStates creates a new set of states, initialized with the given states.
 func NewStates(s ...State) States {
-	return set.NewSorted(cmpState, s...)
+	return set.NewSorted(CmpState, s...)
 }
 
 // Symbol represents an input symbol in an automaton, identified by a rune.
@@ -54,7 +55,7 @@ type Symbols set.Set[Symbol]
 
 // NewSymbols creates a new set of symbols, initialized with the given symbols.
 func NewSymbols(a ...Symbol) set.Set[Symbol] {
-	return set.NewSorted(cmpSymbol, a...)
+	return set.NewSorted(CmpSymbol, a...)
 }
 
 // String represents a sequence of symbols in an automaton.
