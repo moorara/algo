@@ -1,5 +1,44 @@
 # Changelog
 
+## [v0.11.0](https://github.com/moorara/algo/tree/v0.11.0) (2025-02-22)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.10.10...v0.11.0)
+
+**Merged Changes:**
+
+  - Update golang.org/x/exp digest to aa4b98e [#307](https://github.com/moorara/algo/pull/307) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Add automata transition type [#312](https://github.com/moorara/algo/pull/312) ([moorara](https://github.com/moorara))
+  - Export automata functions [#309](https://github.com/moorara/algo/pull/309) ([moorara](https://github.com/moorara))
+  - Export automata transitions [#308](https://github.com/moorara/algo/pull/308) ([moorara](https://github.com/moorara))
+  - Add PartitionMatch method for slices [#306](https://github.com/moorara/algo/pull/306) ([moorara](https://github.com/moorara))
+  - Add Transform method for slices [#305](https://github.com/moorara/algo/pull/305) ([moorara](https://github.com/moorara))
+  - Add to automata [#304](https://github.com/moorara/algo/pull/304) ([moorara](https://github.com/moorara))
+  - Update golang.org/x/exp digest to eff6e97 [#303](https://github.com/moorara/algo/pull/303) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Fix DFA test name [#302](https://github.com/moorara/algo/pull/302) ([moorara](https://github.com/moorara))
+  - DFA: Add Reindex method [#301](https://github.com/moorara/algo/pull/301) ([moorara](https://github.com/moorara))
+  - PrecedenceLevels: rename Validate to Verify [#300](https://github.com/moorara/algo/pull/300) ([moorara](https://github.com/moorara))
+  - Implement stable set data type [#299](https://github.com/moorara/algo/pull/299) ([moorara](https://github.com/moorara))
+  - Use sorted set for managing automata states [#298](https://github.com/moorara/algo/pull/298) ([moorara](https://github.com/moorara))
+  - Implement sorted set [#297](https://github.com/moorara/algo/pull/297) ([moorara](https://github.com/moorara))
+  - Fix undeterministic NFA state numbering [#296](https://github.com/moorara/algo/pull/296) ([moorara](https://github.com/moorara))
+  - Update golang.org/x/exp digest to 939b2ce [#292](https://github.com/moorara/algo/pull/292) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Overhaul automata [#295](https://github.com/moorara/algo/pull/295) ([moorara](https://github.com/moorara))
+  - Implement Stringer interface for PrecedenceLevel and PrecedenceLevels [#294](https://github.com/moorara/algo/pull/294) ([moorara](https://github.com/moorara))
+  - Implement Equal method for PrecedenceLevels [#293](https://github.com/moorara/algo/pull/293) ([moorara](https://github.com/moorara))
+  - Implement Equal method for PrecedenceLevel [#291](https://github.com/moorara/algo/pull/291) ([moorara](https://github.com/moorara))
+  - Add HashProduction method [#290](https://github.com/moorara/algo/pull/290) ([moorara](https://github.com/moorara))
+  - Add CmpString function for comparing strings [#289](https://github.com/moorara/algo/pull/289) ([moorara](https://github.com/moorara))
+  - Make dot package available [#288](https://github.com/moorara/algo/pull/288) ([moorara](https://github.com/moorara))
+  - Add Prepend method to grammar String [#287](https://github.com/moorara/algo/pull/287) ([moorara](https://github.com/moorara))
+  - Remove EBNF grammar from fixtures [#286](https://github.com/moorara/algo/pull/286) ([moorara](https://github.com/moorara))
+  - Update golang.org/x/exp digest to f9890c6 [#284](https://github.com/moorara/algo/pull/284) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Update EBNF grammar [#285](https://github.com/moorara/algo/pull/285) ([moorara](https://github.com/moorara))
+  - Refactor parse Node interface [#283](https://github.com/moorara/algo/pull/283) ([moorara](https://github.com/moorara))
+  - Export parsing table fields [#282](https://github.com/moorara/algo/pull/282) ([moorara](https://github.com/moorara))
+  - Improve LE parser error messages [#281](https://github.com/moorara/algo/pull/281) ([moorara](https://github.com/moorara))
+  - Fix comment typo [#280](https://github.com/moorara/algo/pull/280) ([moorara](https://github.com/moorara))
+
+
 ## [v0.10.10](https://github.com/moorara/algo/tree/v0.10.10) (2025-02-05)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.10.9...v0.10.10)
