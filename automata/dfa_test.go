@@ -3,6 +3,7 @@ package automata
 import (
 	"testing"
 
+	"github.com/moorara/algo/generic"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -387,6 +388,54 @@ func TestDFA_Symbols(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedSymbols, tc.d.Symbols())
+		})
+	}
+}
+
+func TestDFA_Transitions(t *testing.T) {
+	dfas := getTestDFAs()
+
+	tests := []struct {
+		name                string
+		d                   *DFA
+		expectedTransitions []*Transition[State]
+	}{
+		{
+			name: "First",
+			d:    dfas[0],
+			expectedTransitions: []*Transition[State]{
+				{0, 'a', 1},
+				{0, 'b', 0},
+				{1, 'a', 1},
+				{1, 'b', 2},
+				{2, 'a', 1},
+				{2, 'b', 3},
+				{3, 'a', 1},
+				{3, 'b', 0},
+			},
+		},
+		{
+			name: "Second",
+			d:    dfas[1],
+			expectedTransitions: []*Transition[State]{
+				{0, 'a', 1},
+				{0, 'b', 2},
+				{1, 'a', 1},
+				{1, 'b', 3},
+				{2, 'a', 1},
+				{2, 'b', 2},
+				{3, 'a', 1},
+				{3, 'b', 4},
+				{4, 'a', 1},
+				{4, 'b', 2},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			transitions := generic.Collect1(tc.d.Transitions())
+			assert.Equal(t, tc.expectedTransitions, transitions)
 		})
 	}
 }

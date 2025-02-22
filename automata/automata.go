@@ -71,6 +71,14 @@ func toString(s string) String {
 	return res
 }
 
+// Transition represents a transition in a finite automaton.
+// It can be either a DFA transition with a single next state or an NFA transition with multiple next states.
+type Transition[T State | []State] struct {
+	State
+	Symbol
+	Next T
+}
+
 // stateManager is used for keeping track of states when combining multiple automata.
 type stateManager struct {
 	last   State

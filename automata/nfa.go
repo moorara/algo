@@ -3,6 +3,7 @@ package automata
 import (
 	"bytes"
 	"fmt"
+	"iter"
 	"strings"
 
 	"github.com/moorara/algo/dot"
@@ -16,7 +17,7 @@ import (
 type NFA struct {
 	Start State
 	Final States
-	Trans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, States]]
+	trans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, States]]
 }
 
 // NewNFA creates a new non-deterministic finite automaton.
@@ -25,7 +26,7 @@ func NewNFA(start State, final []State) *NFA {
 	return &NFA{
 		Start: start,
 		Final: NewStates(final...),
-		Trans: symboltable.NewRedBlack(CmpState, eqSymbolStates),
+		trans: symboltable.NewRedBlack(CmpState, eqSymbolStates),
 	}
 }
 
@@ -35,7 +36,7 @@ func newNFA(start State, final States) *NFA {
 	return &NFA{
 		Start: start,
 		Final: final.Clone(),
-		Trans: symboltable.NewRedBlack(CmpState, eqSymbolStates),
+		trans: symboltable.NewRedBlack(CmpState, eqSymbolStates),
 	}
 }
 
@@ -114,14 +115,14 @@ func (n *NFA) String() string {
 func (n *NFA) Equal(rhs *NFA) bool {
 	return n.Start == rhs.Start &&
 		n.Final.Equal(rhs.Final) &&
-		n.Trans.Equal(rhs.Trans)
+		n.trans.Equal(rhs.trans)
 }
 
 // Clone returns a deep copy of the NFA, ensuring the clone is independent of the original.
 func (n *NFA) Clone() *NFA {
 	nfa := newNFA(n.Start, n.Final)
 
-	for s, strans := range n.Trans.All() {
+	for s, strans := range n.trans.All() {
 		for a, states := range strans.All() {
 			next := generic.Collect1(states.All())
 			nfa.Add(s, a, next)
@@ -133,10 +134,10 @@ func (n *NFA) Clone() *NFA {
 
 // Add inserts a new transition into the NFA.
 func (n *NFA) Add(s State, a Symbol, next []State) {
-	strans, ok := n.Trans.Get(s)
+	strans, ok := n.trans.Get(s)
 	if !ok {
 		strans = symboltable.NewRedBlack(CmpSymbol, eqStateSet)
-		n.Trans.Put(s, strans)
+		n.trans.Put(s, strans)
 	}
 
 	states, ok := strans.Get(a)
@@ -159,7 +160,7 @@ func (n *NFA) Next(s State, a Symbol) []State {
 }
 
 func (n *NFA) next(s State, a Symbol) States {
-	if strans, ok := n.Trans.Get(s); ok {
+	if strans, ok := n.trans.Get(s); ok {
 		if next, ok := strans.Get(a); ok {
 			return next
 		}
@@ -193,7 +194,7 @@ func (n *NFA) states() States {
 	states := NewStates(n.Start)
 	states = states.Union(n.Final)
 
-	for s, strans := range n.Trans.All() {
+	for s, strans := range n.trans.All() {
 		for _, next := range strans.All() {
 			states.Add(s)
 			states = states.Union(next)
@@ -211,8 +212,8 @@ func (n *NFA) Symbols() []Symbol {
 func (n *NFA) symbols() Symbols {
 	symbols := NewSymbols()
 
-	for _, trans := range n.Trans.All() {
-		for a := range trans.All() {
+	for _, strans := range n.trans.All() {
+		for a := range strans.All() {
 			if a != E {
 				symbols.Add(a)
 			}
@@ -222,6 +223,25 @@ func (n *NFA) symbols() Symbols {
 	return symbols
 }
 
+// Transitions returns an iterator sequence containing all transitions in the NFA.
+func (n *NFA) Transitions() iter.Seq[*Transition[[]State]] {
+	return func(yield func(*Transition[[]State]) bool) {
+		for s, strans := range n.trans.All() {
+			for a, next := range strans.All() {
+				tr := &Transition[[]State]{
+					State:  s,
+					Symbol: a,
+					Next:   generic.Collect1(next.All()),
+				}
+
+				if !yield(tr) {
+					return
+				}
+			}
+		}
+	}
+}
+
 // Star constructs a new NFA that accepts the Kleene star closure of the language accepted by the NFA.
 func (n *NFA) Star() *NFA {
 	start, final := State(0), State(1)
@@ -229,7 +249,7 @@ func (n *NFA) Star() *NFA {
 
 	sm := newStateManager(final)
 
-	for s, strans := range n.Trans.All() {
+	for s, strans := range n.trans.All() {
 		ss := sm.GetOrCreateState(0, s)
 
 		for a, states := range strans.All() {
@@ -265,7 +285,7 @@ func (n *NFA) Union(ns ...*NFA) *NFA {
 	sm := newStateManager(final)
 
 	for id, nfa := range nfas {
-		for s, strans := range nfa.Trans.All() {
+		for s, strans := range nfa.trans.All() {
 			ss := sm.GetOrCreateState(id, s)
 
 			for a, states := range strans.All() {
@@ -300,7 +320,7 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 	sm := newStateManager(0)
 
 	for id, nfa := range nfas {
-		for s, strans := range nfa.Trans.All() {
+		for s, strans := range nfa.trans.All() {
 			// If s is the start state of the current NFA,
 			// we need to map it to the previous NFA final states.
 			var sp []State
@@ -444,7 +464,7 @@ func (n *NFA) Isomorphic(rhs *NFA) bool {
 
 		permutedNFA := NewNFA(permutedStart, permutedFinal)
 
-		for s, strans := range n.Trans.All() {
+		for s, strans := range n.trans.All() {
 			for a, ts := range strans.All() {
 				ss := bijection[s]
 
@@ -467,7 +487,7 @@ func (n *NFA) Isomorphic(rhs *NFA) bool {
 // for each state in the NFA and returns the degree sequence sorted in ascending order.
 func (n *NFA) getSortedDegreeSequence() []int {
 	totalDegrees := map[State]int{}
-	for s, strans := range n.Trans.All() {
+	for s, strans := range n.trans.All() {
 		for _, states := range strans.All() {
 			for t := range states.All() {
 				totalDegrees[s]++
@@ -511,7 +531,7 @@ func (n *NFA) DOT() string {
 
 	edges := symboltable.NewRedBlack[State, symboltable.SymbolTable[State, []string]](CmpState, nil)
 
-	for from, ftrans := range n.Trans.All() {
+	for from, ftrans := range n.trans.All() {
 		row, ok := edges.Get(from)
 		if !ok {
 			row = symboltable.NewRedBlack[State, []string](CmpState, nil)
