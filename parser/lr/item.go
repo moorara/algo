@@ -184,12 +184,12 @@ func (i *Item0) IsComplete() bool {
 	return i.Dot == len(i.Body)
 }
 
-// IsInitial checks if an LR(0) item is the final item "S′ → S•" in the augmented grammar.
+// IsFinal checks if an LR(0) item is the final item "S′ → S•" in the augmented grammar.
 func (i *Item0) IsFinal() bool {
 	return i.Production.Head.Equal(i.Start) && i.IsComplete()
 }
 
-// Dot returns the grammar symbol at the dot position in the item's body.
+// DotSymbol returns the grammar symbol at the dot position in the item's body.
 // If the dot is at the end of the body, it returns nil and false.
 // For example, in the LR(0) item A → α•Bβ, it returns B.
 func (i *Item0) DotSymbol() (grammar.Symbol, bool) {
@@ -200,7 +200,7 @@ func (i *Item0) DotSymbol() (grammar.Symbol, bool) {
 	return i.Body[i.Dot], true
 }
 
-// NextItem generates a new LR(0) item by advancing the dot one position forward in the item's body.
+// Next generates a new LR(0) item by advancing the dot one position forward in the item's body.
 // If the dot is at the end of the body, it returns an empty LR(0) item and false.
 // For example, for the LR(0) item A → α•Bβ, it returns A → αB•β.
 func (i *Item0) Next() (Item, bool) {
@@ -350,13 +350,13 @@ func (i *Item1) IsComplete() bool {
 	return i.Dot == len(i.Body)
 }
 
-// IsInitial checks if an LR(1) item is the final item "S′ → S•, $" in the augmented grammar.
+// IsFinal checks if an LR(1) item is the final item "S′ → S•, $" in the augmented grammar.
 func (i *Item1) IsFinal() bool {
 	return i.Production.Head.Equal(i.Start) && i.IsComplete() &&
 		i.Lookahead.Equal(grammar.Endmarker)
 }
 
-// Dot returns the grammar symbol at the dot position in the item's body.
+// DotSymbol returns the grammar symbol at the dot position in the item's body.
 // If the dot is at the end of the body, it returns nil and false.
 // For example, in the LR(1) item A → α•Bβ, it returns B.
 func (i *Item1) DotSymbol() (grammar.Symbol, bool) {
@@ -367,7 +367,7 @@ func (i *Item1) DotSymbol() (grammar.Symbol, bool) {
 	return i.Body[i.Dot], true
 }
 
-// NextItem generates a new LR(1) item by advancing the dot one position forward in the item's body.
+// Next generates a new LR(1) item by advancing the dot one position forward in the item's body.
 // If the dot is at the end of the body, it returns an empty LR(1) item and false.
 // For example, for the LR(1) item A → α•Bβ, it returns A → αB•β.
 func (i *Item1) Next() (Item, bool) {
@@ -546,7 +546,7 @@ func (s *itemSetStringer) printBottomLine() {
 	s.b.WriteRune('\n')
 }
 
-// ItemSet represents a collection of item sets for a context-free grammar.
+// ItemSetCollection represents a collection of item sets for a context-free grammar.
 type ItemSetCollection set.Set[ItemSet]
 
 // NewItemSetCollection creates a new collection of item sets.

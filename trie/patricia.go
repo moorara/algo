@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/moorara/algo/dot"
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 )
 
 type patriciaNode[V any] struct {
@@ -19,7 +19,7 @@ type patriciaNode[V any] struct {
 type patricia[V any] struct {
 	size  int
 	root  *patriciaNode[V]
-	eqVal EqualFunc[V]
+	eqVal generic.EqualFunc[V]
 }
 
 // NewPatricia creates a new Patricia trie.
@@ -101,7 +101,7 @@ type patricia[V any] struct {
 // Patricia trie performs admirably when its bit-testing loops are well tuned.
 //
 // The second parameter (eqVal) is needed only if you want to use the Equal method.
-func NewPatricia[V any](eqVal EqualFunc[V]) Trie[V] {
+func NewPatricia[V any](eqVal generic.EqualFunc[V]) Trie[V] {
 	return &patricia[V]{
 		size:  0,
 		root:  nil,
@@ -144,7 +144,7 @@ func (t *patricia[V]) _isSizeOK() bool {
 	size := 0
 
 	if t.root != nil {
-		t._traverse(t.root.left, Ascending, func(n *patriciaNode[V]) bool {
+		t._traverse(t.root.left, generic.Ascending, func(n *patriciaNode[V]) bool {
 			size++
 			return true
 		})
@@ -433,7 +433,7 @@ func (t *patricia[V]) Floor(key string) (string, V, bool) {
 	var lastVal V
 	var ok bool
 
-	t._traverse(t.root, Ascending, func(n *patriciaNode[V]) bool {
+	t._traverse(t.root, generic.Ascending, func(n *patriciaNode[V]) bool {
 		if key < n.key.String() {
 			return false
 		}
@@ -450,7 +450,7 @@ func (t *patricia[V]) Ceiling(key string) (string, V, bool) {
 	var lastVal V
 	var ok bool
 
-	t._traverse(t.root, Descending, func(n *patriciaNode[V]) bool {
+	t._traverse(t.root, generic.Descending, func(n *patriciaNode[V]) bool {
 		if n.key.String() < key {
 			return false
 		}
@@ -520,7 +520,7 @@ func (t *patricia[V]) Select(rank int) (string, V, bool) {
 	}
 
 	i := 0
-	t._traverse(t.root.left, Ascending, func(n *patriciaNode[V]) bool {
+	t._traverse(t.root.left, generic.Ascending, func(n *patriciaNode[V]) bool {
 		if i == rank {
 			lastKey, lastVal, ok = n.key.String(), n.val, true
 			return false
@@ -538,7 +538,7 @@ func (t *patricia[V]) Rank(key string) int {
 	i := 0
 
 	if t.root != nil {
-		t._traverse(t.root.left, Ascending, func(n *patriciaNode[V]) bool {
+		t._traverse(t.root.left, generic.Ascending, func(n *patriciaNode[V]) bool {
 			if n.key.String() == key {
 				return false
 			}
@@ -552,13 +552,13 @@ func (t *patricia[V]) Rank(key string) int {
 }
 
 // Range returns all keys and associated values in the Patricia trie between two given keys.
-func (t *patricia[V]) Range(lo, hi string) []KeyValue[string, V] {
-	kvs := []KeyValue[string, V]{}
+func (t *patricia[V]) Range(lo, hi string) []generic.KeyValue[string, V] {
+	kvs := []generic.KeyValue[string, V]{}
 
 	if t.root != nil {
-		t._traverse(t.root.left, Ascending, func(n *patriciaNode[V]) bool {
+		t._traverse(t.root.left, generic.Ascending, func(n *patriciaNode[V]) bool {
 			if lo <= n.key.String() && n.key.String() <= hi {
-				kvs = append(kvs, KeyValue[string, V]{Key: n.key.String(), Val: n.val})
+				kvs = append(kvs, generic.KeyValue[string, V]{Key: n.key.String(), Val: n.val})
 			} else if n.key.String() > hi {
 				return false
 			}
@@ -575,7 +575,7 @@ func (t *patricia[V]) RangeSize(lo, hi string) int {
 	i := 0
 
 	if t.root != nil {
-		t._traverse(t.root.left, Ascending, func(n *patriciaNode[V]) bool {
+		t._traverse(t.root.left, generic.Ascending, func(n *patriciaNode[V]) bool {
 			if lo <= n.key.String() && n.key.String() <= hi {
 				i++
 			} else if n.key.String() > hi {
@@ -591,10 +591,10 @@ func (t *patricia[V]) RangeSize(lo, hi string) int {
 
 // Match returns all the keys and associated values in the Patricia trie
 // that match the given pattern in which * matches any character.
-func (t *patricia[V]) Match(pattern string) []KeyValue[string, V] {
-	kvs := []KeyValue[string, V]{}
+func (t *patricia[V]) Match(pattern string) []generic.KeyValue[string, V] {
+	kvs := []generic.KeyValue[string, V]{}
 	t._match(t.root, t.root.left, newBitPattern(pattern), func(n *patriciaNode[V]) {
-		kvs = append(kvs, KeyValue[string, V]{Key: n.key.String(), Val: n.val})
+		kvs = append(kvs, generic.KeyValue[string, V]{Key: n.key.String(), Val: n.val})
 	})
 
 	return kvs
@@ -620,15 +620,15 @@ func (t *patricia[V]) _match(prev, curr *patriciaNode[V], pattern *bitPattern, v
 }
 
 // WithPrefix returns all the keys and associated values in the Patricia trie with the given prefix.
-func (t *patricia[V]) WithPrefix(key string) []KeyValue[string, V] {
-	kvs := []KeyValue[string, V]{}
+func (t *patricia[V]) WithPrefix(key string) []generic.KeyValue[string, V] {
+	kvs := []generic.KeyValue[string, V]{}
 	bitKey := newBitString(key)
 
 	if n := t.search(bitKey); n != nil && n.key.Equal(bitKey) {
-		kvs = append(kvs, KeyValue[string, V]{Key: n.key.String(), Val: n.val})
+		kvs = append(kvs, generic.KeyValue[string, V]{Key: n.key.String(), Val: n.val})
 	} else {
-		t._traverse(n, Ascending, func(n *patriciaNode[V]) bool {
-			kvs = append(kvs, KeyValue[string, V]{Key: n.key.String(), Val: n.val})
+		t._traverse(n, generic.Ascending, func(n *patriciaNode[V]) bool {
+			kvs = append(kvs, generic.KeyValue[string, V]{Key: n.key.String(), Val: n.val})
 			return true
 		})
 	}
@@ -653,7 +653,7 @@ func (t *patricia[V]) String() string {
 	i := 0
 	pairs := make([]string, t.Size())
 
-	t._traverse(t.root, Ascending, func(n *patriciaNode[V]) bool {
+	t._traverse(t.root, generic.Ascending, func(n *patriciaNode[V]) bool {
 		pairs[i] = fmt.Sprintf("<%v:%v>", n.key, n.val)
 		i++
 		return true
@@ -669,10 +669,10 @@ func (t *patricia[V]) Equal(rhs Trie[V]) bool {
 		return false
 	}
 
-	return t._traverse(t.root, Ascending, func(n *patriciaNode[V]) bool { // t ⊂ t2
+	return t._traverse(t.root, generic.Ascending, func(n *patriciaNode[V]) bool { // t ⊂ t2
 		val, ok := t2._get(n.key)
 		return ok && t.eqVal(n.val, val)
-	}) && t2._traverse(t2.root, Ascending, func(n *patriciaNode[V]) bool { // t2 ⊂ t
+	}) && t2._traverse(t2.root, generic.Ascending, func(n *patriciaNode[V]) bool { // t2 ⊂ t
 		val, ok := t._get(n.key)
 		return ok && t.eqVal(n.val, val)
 	})
@@ -681,35 +681,35 @@ func (t *patricia[V]) Equal(rhs Trie[V]) bool {
 // All returns an iterator sequence containing all the key-values in the Patricia trie.
 func (t *patricia[V]) All() iter.Seq2[string, V] {
 	return func(yield func(string, V) bool) {
-		t._traverse(t.root, Ascending, func(n *patriciaNode[V]) bool {
+		t._traverse(t.root, generic.Ascending, func(n *patriciaNode[V]) bool {
 			return yield(n.key.String(), n.val)
 		})
 	}
 }
 
 // AnyMatch returns true if at least one key-value in the Patricia trie satisfies the provided predicate.
-func (t *patricia[V]) AnyMatch(p Predicate2[string, V]) bool {
-	return !t._traverse(t.root, VLR, func(n *patriciaNode[V]) bool {
+func (t *patricia[V]) AnyMatch(p generic.Predicate2[string, V]) bool {
+	return !t._traverse(t.root, generic.VLR, func(n *patriciaNode[V]) bool {
 		return !p(n.key.String(), n.val)
 	})
 }
 
 // AllMatch returns true if all key-values in the Patricia trie satisfy the provided predicate.
 // If the Patricia trie is empty, it returns true.
-func (t *patricia[V]) AllMatch(p Predicate2[string, V]) bool {
-	return t._traverse(t.root, VLR, func(n *patriciaNode[V]) bool {
+func (t *patricia[V]) AllMatch(p generic.Predicate2[string, V]) bool {
+	return t._traverse(t.root, generic.VLR, func(n *patriciaNode[V]) bool {
 		return p(n.key.String(), n.val)
 	})
 }
 
 // FirstMatch returns the first key-value in the Patricia trie that satisfies the given predicate.
 // If no match is found, it returns the zero values of K and V, along with false.
-func (t *patricia[V]) FirstMatch(p Predicate2[string, V]) (string, V, bool) {
+func (t *patricia[V]) FirstMatch(p generic.Predicate2[string, V]) (string, V, bool) {
 	var k string
 	var v V
 	var ok bool
 
-	t._traverse(t.root, VLR, func(n *patriciaNode[V]) bool {
+	t._traverse(t.root, generic.VLR, func(n *patriciaNode[V]) bool {
 		if key := n.key.String(); p(key, n.val) {
 			k, v, ok = key, n.val, true
 			return false
@@ -722,10 +722,10 @@ func (t *patricia[V]) FirstMatch(p Predicate2[string, V]) (string, V, bool) {
 
 // SelectMatch selects a subset of key-values from the Patricia trie that satisfy the given predicate.
 // It returns a new Patricia trie containing the matching key-values, of the same type as the original Patricia trie.
-func (t *patricia[V]) SelectMatch(p Predicate2[string, V]) Collection2[string, V] {
+func (t *patricia[V]) SelectMatch(p generic.Predicate2[string, V]) generic.Collection2[string, V] {
 	newT := NewPatricia[V](t.eqVal)
 
-	t._traverse(t.root, VLR, func(n *patriciaNode[V]) bool {
+	t._traverse(t.root, generic.VLR, func(n *patriciaNode[V]) bool {
 		if key := n.key.String(); p(key, n.val) {
 			newT.Put(key, n.val)
 		}
@@ -740,11 +740,11 @@ func (t *patricia[V]) SelectMatch(p Predicate2[string, V]) Collection2[string, V
 // The first Patricia trie contains the key-values that satisfy the predicate (matched key-values),
 // while the second Patricia trie contains those that do not satisfy the predicate (unmatched key-values).
 // Both Patricia tries are of the same type as the original Patricia trie.
-func (t *patricia[V]) PartitionMatch(p Predicate2[string, V]) (Collection2[string, V], Collection2[string, V]) {
+func (t *patricia[V]) PartitionMatch(p generic.Predicate2[string, V]) (generic.Collection2[string, V], generic.Collection2[string, V]) {
 	matched := NewPatricia[V](t.eqVal)
 	unmatched := NewPatricia[V](t.eqVal)
 
-	t._traverse(t.root, VLR, func(n *patriciaNode[V]) bool {
+	t._traverse(t.root, generic.VLR, func(n *patriciaNode[V]) bool {
 		if key := n.key.String(); p(key, n.val) {
 			matched.Put(key, n.val)
 		} else {
@@ -760,7 +760,7 @@ func (t *patricia[V]) PartitionMatch(p Predicate2[string, V]) (Collection2[strin
 // and yields the key-value of each node to the provided VisitFunc2 function.
 //
 // If the function returns false, the traversal is halted.
-func (t *patricia[V]) Traverse(order TraverseOrder, visit VisitFunc2[string, V]) {
+func (t *patricia[V]) Traverse(order generic.TraverseOrder, visit generic.VisitFunc2[string, V]) {
 	t._traverse(t.root, order, func(n *patriciaNode[V]) bool {
 		return visit(n.key.String(), n.val)
 	})
@@ -768,7 +768,7 @@ func (t *patricia[V]) Traverse(order TraverseOrder, visit VisitFunc2[string, V])
 
 // AllMatch returns true if all key-values in the Patricia trie satisfy the provided predicate.
 // If the Patricia trie is empty, it returns false.
-func (t *patricia[V]) _traverse(n *patriciaNode[V], order TraverseOrder, visit func(*patriciaNode[V]) bool) bool {
+func (t *patricia[V]) _traverse(n *patriciaNode[V], order generic.TraverseOrder, visit func(*patriciaNode[V]) bool) bool {
 	if n == nil {
 		return true
 	}
@@ -777,43 +777,43 @@ func (t *patricia[V]) _traverse(n *patriciaNode[V], order TraverseOrder, visit f
 	isRightThread := n != t.root && n.right.bp <= n.bp // Only the root node has a nil right
 
 	switch order {
-	case VLR:
+	case generic.VLR:
 		return visit(n) &&
 			(isLeftThread || t._traverse(n.left, order, visit)) &&
 			(isRightThread || t._traverse(n.right, order, visit))
 
-	case VRL:
+	case generic.VRL:
 		return visit(n) &&
 			(isRightThread || t._traverse(n.right, order, visit)) &&
 			(isLeftThread || t._traverse(n.left, order, visit))
 
-	case LVR:
+	case generic.LVR:
 		return (isLeftThread || t._traverse(n.left, order, visit)) &&
 			visit(n) &&
 			(isRightThread || t._traverse(n.right, order, visit))
 
-	case RVL:
+	case generic.RVL:
 		return (isRightThread || t._traverse(n.right, order, visit)) &&
 			visit(n) &&
 			(isLeftThread || t._traverse(n.left, order, visit))
 
-	case LRV:
+	case generic.LRV:
 		return (isLeftThread || t._traverse(n.left, order, visit)) &&
 			(isRightThread || t._traverse(n.right, order, visit)) &&
 			visit(n)
 
-	case RLV:
+	case generic.RLV:
 		return (isRightThread || t._traverse(n.right, order, visit)) &&
 			(isLeftThread || t._traverse(n.left, order, visit)) &&
 			visit(n)
 
-	case Ascending:
+	case generic.Ascending:
 		return (!isLeftThread || visit(n.left)) && // visit the left child only if the left link is threaded (leaf node)
 			(isLeftThread || t._traverse(n.left, order, visit)) && // visit the left sub-tree if the left link is not threaded (internal node)
 			(!isRightThread || visit(n.right)) && // visit the right child only if the right link is threaded (leaf node)
 			(isRightThread || t._traverse(n.right, order, visit)) // visit the right sub-tree if the right link is not threaded (internal node)
 
-	case Descending:
+	case generic.Descending:
 		return (!isRightThread || visit(n.right)) && // visit the right child only if the right link is threaded (leaf node)
 			(isRightThread || t._traverse(n.right, order, visit)) && // visit the right sub-tree if the right link is not threaded (internal node)
 			(!isLeftThread || visit(n.left)) && // visit the left child only if the left link is threaded (leaf node)
@@ -830,7 +830,7 @@ func (t *patricia[V]) DOT() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*patriciaNode[V]]int{}
-	t._traverse(t.root, VLR, func(n *patriciaNode[V]) bool {
+	t._traverse(t.root, generic.VLR, func(n *patriciaNode[V]) bool {
 		id++
 		nodeID[n] = id
 		return true
@@ -838,7 +838,7 @@ func (t *patricia[V]) DOT() string {
 
 	graph := dot.NewGraph(true, true, false, "Patricia Trie", dot.RankDirTB, "", "", dot.ShapeMrecord)
 
-	t._traverse(t.root, VLR, func(n *patriciaNode[V]) bool {
+	t._traverse(t.root, generic.VLR, func(n *patriciaNode[V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 
 		rec := dot.NewRecord(

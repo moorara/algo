@@ -1,4 +1,4 @@
-// Package grammar provides data types and algorithms for building parsers.
+// Package parser provides data types and algorithms for building parsers.
 //
 // A parser generally relies on a lexer (also known as a lexical analyzer or scanner)
 // to process a stream of tokens.

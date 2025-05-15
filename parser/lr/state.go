@@ -54,7 +54,7 @@ func (m StateMap) ItemSet(s State) ItemSet {
 	return NewItemSet(m[s]...)
 }
 
-// FindItemSet finds the state corresponding to a given item set.
+// FindItem finds the state corresponding to a given item set.
 // It returns the state if found, or ErrState if no match exists.
 func (m StateMap) FindItem(s State, item Item) int {
 	for i, it := range m[s] {

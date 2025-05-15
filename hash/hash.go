@@ -71,7 +71,7 @@ func HashFuncForBoolSlice[T ~[]bool](h hash.Hash64) HashFunc[T] {
 	}
 }
 
-// HashFuncForBool creates a HashFunc for int8-like types.
+// HashFuncForInt8 creates a HashFunc for int8-like types.
 // If h is nil, a default hash.Hash64 implementation will be used.
 func HashFuncForInt8[T ~int8](h hash.Hash64) HashFunc[T] {
 	h = ensureHasher(h)

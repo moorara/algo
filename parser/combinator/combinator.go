@@ -24,7 +24,7 @@ package combinator
 type (
 	// BagKey is the type for the keys in Bag type.
 	BagKey string
-	// BagKey is the type for the values in Bag type.
+	// BagVal is the type for the values in Bag type.
 	BagVal any
 	// Bag is the type for a collection of key-value pairs.
 	Bag map[BagKey]BagVal

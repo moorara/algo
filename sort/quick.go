@@ -9,7 +9,7 @@ import (
 
 func partition[T any](a []T, lo, hi int, cmp generic.CompareFunc[T]) int {
 	v := a[lo]
-	var i, j int = lo, hi + 1
+	i, j := lo, hi+1
 
 	for {
 		for i++; i < hi && cmp(a[i], v) < 0; i++ {
@@ -32,7 +32,7 @@ func Select[T any](a []T, k int, cmp generic.CompareFunc[T]) T {
 	r := rand.New(rand.NewSource(seed))
 	Shuffle[T](a, r)
 
-	var lo, hi int = 0, len(a) - 1
+	lo, hi := 0, len(a)-1
 	for lo < hi {
 		j := partition[T](a, lo, hi, cmp)
 		switch {

@@ -52,7 +52,7 @@ type MultiError struct {
 	Format ErrorFormat
 }
 
-// // ErrorOrNil returns an error if the MultiError instance contains any errors, or nil if it has none.
+// ErrorOrNil returns an error if the MultiError instance contains any errors, or nil if it has none.
 // This method is useful for ensuring that a valid error value is returned after accumulating errors,
 // indicating whether errors are present or not.
 func (e *MultiError) ErrorOrNil() error {

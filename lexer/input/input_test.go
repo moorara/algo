@@ -155,7 +155,12 @@ func TestInput_next(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			f, err := os.Open(tc.file)
 			assert.NoError(t, err)
-			defer f.Close()
+
+			defer func() {
+				if err := f.Close(); err != nil {
+					assert.Failf(t, "error on closing %s: %s", f.Name(), err)
+				}
+			}()
 
 			in, err := New(tc.file, f, tc.n)
 			assert.NoError(t, err)

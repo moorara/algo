@@ -39,11 +39,11 @@ func LSDString(a []string, w int) {
 // LSDInt is the LSD (least significant digit) sorting algorithm for integer numbers (signed).
 func LSDInt(a []int) {
 	const (
-		BYTE_SIZE = 8
-		INT_SIZE  = bits.UintSize
-		W         = INT_SIZE / BYTE_SIZE
-		R         = 1 << BYTE_SIZE
-		MASK      = R - 1
+		ByteSize = 8
+		IntSize  = bits.UintSize
+		W        = IntSize / ByteSize
+		R        = 1 << ByteSize
+		Mask     = R - 1
 	)
 
 	n := len(a)
@@ -52,11 +52,11 @@ func LSDInt(a []int) {
 	// sort by key-indexed counting on dth char (stable)
 	for d := 0; d < W; d++ {
 		count := make([]int, R+1)
-		shift := BYTE_SIZE * d
+		shift := ByteSize * d
 
 		// compute frequency counts
 		for _, v := range a {
-			c := (v >> shift) & MASK
+			c := (v >> shift) & Mask
 			count[c+1]++
 		}
 
@@ -81,7 +81,7 @@ func LSDInt(a []int) {
 
 		// distribute keys to aux
 		for _, v := range a {
-			c := (v >> shift) & MASK
+			c := (v >> shift) & Mask
 			aux[count[c]] = v
 			count[c]++
 		}
@@ -96,11 +96,11 @@ func LSDInt(a []int) {
 // LSDUint is the LSD (least significant digit) sorting algorithm for integer numbers (unsigned).
 func LSDUint(a []uint) {
 	const (
-		BYTE_SIZE = 8
-		UINT_SIZE = bits.UintSize
-		W         = UINT_SIZE / BYTE_SIZE
-		R         = 1 << BYTE_SIZE
-		MASK      = R - 1
+		ByteSize = 8
+		UintSize = bits.UintSize
+		W        = UintSize / ByteSize
+		R        = 1 << ByteSize
+		Mask     = R - 1
 	)
 
 	n := len(a)
@@ -109,11 +109,11 @@ func LSDUint(a []uint) {
 	// sort by key-indexed counting on dth char (stable)
 	for d := 0; d < W; d++ {
 		count := make([]int, R+1)
-		shift := BYTE_SIZE * d
+		shift := ByteSize * d
 
 		// compute frequency counts
 		for _, v := range a {
-			c := (v >> shift) & MASK
+			c := (v >> shift) & Mask
 			count[c+1]++
 		}
 
@@ -124,7 +124,7 @@ func LSDUint(a []uint) {
 
 		// distribute keys to aux
 		for _, v := range a {
-			c := (v >> shift) & MASK
+			c := (v >> shift) & Mask
 			aux[count[c]] = v
 			count[c]++
 		}

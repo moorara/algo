@@ -5,8 +5,8 @@ import (
 	"iter"
 	"strings"
 
-	. "github.com/moorara/algo/generic"
-	. "github.com/moorara/algo/hash"
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/hash"
 )
 
 /*
@@ -34,9 +34,9 @@ type quadraticHashTable[K, V any] struct {
 	minLF   float32 // The minimum load factor before resizing (shrinking) the hash table
 	maxLF   float32 // The maximum load factor before resizing (expanding) the hash table
 
-	hashKey HashFunc[K]
-	eqKey   EqualFunc[K]
-	eqVal   EqualFunc[V]
+	hashKey hash.HashFunc[K]
+	eqKey   generic.EqualFunc[K]
+	eqVal   generic.EqualFunc[V]
 }
 
 // NewQuadraticHashTable creates a new hash table with quadratic probing for conflict resolution.
@@ -44,7 +44,7 @@ type quadraticHashTable[K, V any] struct {
 // A hash table is an unordered symbol table providing efficient insertion, deletion, and lookup operations.
 // This hash table implements open addressing with quadratic probing, where collisions are resolved
 // by checking subsequent indices using a quadratic function (i+1², i+2², i+3², ...) until an empty slot is found.
-func NewQuadraticHashTable[K, V any](hashKey HashFunc[K], eqKey EqualFunc[K], eqVal EqualFunc[V], opts HashOpts) SymbolTable[K, V] {
+func NewQuadraticHashTable[K, V any](hashKey hash.HashFunc[K], eqKey generic.EqualFunc[K], eqVal generic.EqualFunc[V], opts HashOpts) SymbolTable[K, V] {
 	if opts.InitialCap == 0 {
 		opts.InitialCap = qpMinM
 	}
@@ -281,7 +281,7 @@ func (ht *quadraticHashTable[K, V]) All() iter.Seq2[K, V] {
 }
 
 // AnyMatch returns true if at least one key-value in the hash table satisfies the provided predicate.
-func (ht *quadraticHashTable[K, V]) AnyMatch(p Predicate2[K, V]) bool {
+func (ht *quadraticHashTable[K, V]) AnyMatch(p generic.Predicate2[K, V]) bool {
 	for key, val := range ht.All() {
 		if p(key, val) {
 			return true
@@ -292,7 +292,7 @@ func (ht *quadraticHashTable[K, V]) AnyMatch(p Predicate2[K, V]) bool {
 
 // AllMatch returns true if all key-values in the hash table satisfy the provided predicate.
 // If the BST is empty, it returns true.
-func (ht *quadraticHashTable[K, V]) AllMatch(p Predicate2[K, V]) bool {
+func (ht *quadraticHashTable[K, V]) AllMatch(p generic.Predicate2[K, V]) bool {
 	for key, val := range ht.All() {
 		if !p(key, val) {
 			return false
@@ -303,7 +303,7 @@ func (ht *quadraticHashTable[K, V]) AllMatch(p Predicate2[K, V]) bool {
 
 // FirstMatch returns the first key-value in the hash table that satisfies the given predicate.
 // If no match is found, it returns the zero values of K and V, along with false.
-func (ht *quadraticHashTable[K, V]) FirstMatch(p Predicate2[K, V]) (K, V, bool) {
+func (ht *quadraticHashTable[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V, bool) {
 	for key, val := range ht.All() {
 		if p(key, val) {
 			return key, val, true
@@ -317,7 +317,7 @@ func (ht *quadraticHashTable[K, V]) FirstMatch(p Predicate2[K, V]) (K, V, bool) 
 
 // SelectMatch selects a subset of key-values from the hash table that satisfy the given predicate.
 // It returns a new hash table containing the matching key-values, of the same type as the original hash table.
-func (ht *quadraticHashTable[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
+func (ht *quadraticHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic.Collection2[K, V] {
 	newHT := NewQuadraticHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
@@ -337,7 +337,7 @@ func (ht *quadraticHashTable[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[
 // The first hash table contains the key-values that satisfy the predicate (matched key-values),
 // while the second hash table contains those that do not satisfy the predicate (unmatched key-values).
 // Both hash tables are of the same type as the original hash table.
-func (ht *quadraticHashTable[K, V]) PartitionMatch(p Predicate2[K, V]) (Collection2[K, V], Collection2[K, V]) {
+func (ht *quadraticHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (generic.Collection2[K, V], generic.Collection2[K, V]) {
 	matched := NewQuadraticHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
