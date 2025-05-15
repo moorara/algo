@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/moorara/algo/dot"
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 )
 
 type binaryNode[V any] struct {
@@ -19,10 +19,10 @@ type binaryNode[V any] struct {
 type binary[V any] struct {
 	size  int
 	root  *binaryNode[V]
-	eqVal EqualFunc[V]
+	eqVal generic.EqualFunc[V]
 }
 
-// NewBinaryTrie creates a new binary trie tree.
+// NewBinary creates a new binary trie tree.
 //
 // A trie, or prefix tree, is an ordered tree uses the digits in the keys where the keys are usually strings.
 // We can use any radix to decompose the keys into digits.
@@ -52,7 +52,7 @@ type binary[V any] struct {
 // Includes words baby, bad, bank, box, dad, and dance.
 //
 // The second parameter (eqVal) is needed only if you want to use the Equal method.
-func NewBinary[V any](eqVal EqualFunc[V]) Trie[V] {
+func NewBinary[V any](eqVal generic.EqualFunc[V]) Trie[V] {
 	return &binary[V]{
 		size:  0,
 		root:  new(binaryNode[V]),
@@ -81,7 +81,7 @@ func (t *binary[V]) _isTrie(n *binaryNode[V]) bool {
 // nolint: unused
 func (t *binary[V]) _isSizeOK() bool {
 	size := 0
-	t._traverse(t.root.left, "", VLR, func(_ string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.VLR, func(_ string, n *binaryNode[V]) bool {
 		if n.term {
 			size++
 		}
@@ -246,7 +246,7 @@ func (t *binary[V]) Min() (string, V, bool) {
 	var val V
 	var ok bool
 
-	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			key, val, ok = k, n.val, true
 			return false
@@ -263,7 +263,7 @@ func (t *binary[V]) Max() (string, V, bool) {
 	var val V
 	var ok bool
 
-	t._traverse(t.root.left, "", Descending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.Descending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			key, val, ok = k, n.val, true
 			return false
@@ -280,7 +280,7 @@ func (t *binary[V]) Floor(key string) (string, V, bool) {
 	var lastVal V
 	var ok bool
 
-	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if key < k {
 				return false
@@ -300,7 +300,7 @@ func (t *binary[V]) Ceiling(key string) (string, V, bool) {
 	var lastVal V
 	var ok bool
 
-	t._traverse(t.root.left, "", Descending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.Descending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if k < key {
 				return false
@@ -353,7 +353,7 @@ func (t *binary[V]) Select(rank int) (string, V, bool) {
 	}
 
 	i := 0
-	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if i == rank {
 				lastKey, lastVal, ok = k, n.val, true
@@ -372,7 +372,7 @@ func (t *binary[V]) Select(rank int) (string, V, bool) {
 // Rank returns the number of keys in the binary trie less than key.
 func (t *binary[V]) Rank(key string) int {
 	i := 0
-	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if k == key {
 				return false
@@ -388,12 +388,12 @@ func (t *binary[V]) Rank(key string) int {
 }
 
 // Range returns all keys and associated values in the binary trie between two given keys.
-func (t *binary[V]) Range(lo, hi string) []KeyValue[string, V] {
-	kvs := []KeyValue[string, V]{}
-	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
+func (t *binary[V]) Range(lo, hi string) []generic.KeyValue[string, V] {
+	kvs := []generic.KeyValue[string, V]{}
+	t._traverse(t.root.left, "", generic.Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if lo <= k && k <= hi {
-				kvs = append(kvs, KeyValue[string, V]{Key: k, Val: n.val})
+				kvs = append(kvs, generic.KeyValue[string, V]{Key: k, Val: n.val})
 			} else if k > hi {
 				return false
 			}
@@ -408,7 +408,7 @@ func (t *binary[V]) Range(lo, hi string) []KeyValue[string, V] {
 // RangeSize returns the number of keys in the binary trie between two given keys.
 func (t *binary[V]) RangeSize(lo, hi string) int {
 	i := 0
-	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			if lo <= k && k <= hi {
 				i++
@@ -425,10 +425,10 @@ func (t *binary[V]) RangeSize(lo, hi string) int {
 
 // Match returns all the keys and associated values in binary trie
 // that match the given pattern in which * matches any character.
-func (t *binary[V]) Match(pattern string) []KeyValue[string, V] {
-	kvs := []KeyValue[string, V]{}
+func (t *binary[V]) Match(pattern string) []generic.KeyValue[string, V] {
+	kvs := []generic.KeyValue[string, V]{}
 	t._match(t.root.left, "", pattern, func(k string, n *binaryNode[V]) {
-		kvs = append(kvs, KeyValue[string, V]{Key: k, Val: n.val})
+		kvs = append(kvs, generic.KeyValue[string, V]{Key: k, Val: n.val})
 	})
 
 	return kvs
@@ -453,10 +453,10 @@ func (t *binary[V]) _match(n *binaryNode[V], prefix, pattern string, visit func(
 }
 
 // WithPrefix returns all the keys and associated values in binary trie with the given prefix.
-func (t *binary[V]) WithPrefix(key string) []KeyValue[string, V] {
-	kvs := []KeyValue[string, V]{}
+func (t *binary[V]) WithPrefix(key string) []generic.KeyValue[string, V] {
+	kvs := []generic.KeyValue[string, V]{}
 	t._withPrefix(t.root.left, "", key, func(k string, n *binaryNode[V]) {
-		kvs = append(kvs, KeyValue[string, V]{Key: k, Val: n.val})
+		kvs = append(kvs, generic.KeyValue[string, V]{Key: k, Val: n.val})
 	})
 
 	return kvs
@@ -520,7 +520,7 @@ func (t *binary[V]) String() string {
 	i := 0
 	pairs := make([]string, t.Size())
 
-	t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.Ascending, func(k string, n *binaryNode[V]) bool {
 		if n.term {
 			pairs[i] = fmt.Sprintf("<%v:%v>", k, n.val)
 			i++
@@ -538,13 +538,13 @@ func (t *binary[V]) Equal(rhs Trie[V]) bool {
 		return false
 	}
 
-	return t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool { // t ⊂ t2
+	return t._traverse(t.root.left, "", generic.Ascending, func(k string, n *binaryNode[V]) bool { // t ⊂ t2
 		if n.term {
 			val, ok := t2.Get(k)
 			return ok && t.eqVal(n.val, val)
 		}
 		return true
-	}) && t2._traverse(t2.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool { // t2 ⊂ t
+	}) && t2._traverse(t2.root.left, "", generic.Ascending, func(k string, n *binaryNode[V]) bool { // t2 ⊂ t
 		if n.term {
 			val, ok := t.Get(k)
 			return ok && t.eqVal(n.val, val)
@@ -556,35 +556,35 @@ func (t *binary[V]) Equal(rhs Trie[V]) bool {
 // All returns an iterator sequence containing all the key-values in the binary trie.
 func (t *binary[V]) All() iter.Seq2[string, V] {
 	return func(yield func(string, V) bool) {
-		t._traverse(t.root.left, "", Ascending, func(k string, n *binaryNode[V]) bool {
+		t._traverse(t.root.left, "", generic.Ascending, func(k string, n *binaryNode[V]) bool {
 			return !n.term || yield(k, n.val)
 		})
 	}
 }
 
 // AnyMatch returns true if at least one key-value in the binary trie satisfies the provided predicate.
-func (t *binary[V]) AnyMatch(p Predicate2[string, V]) bool {
-	return !t._traverse(t.root.left, "", VLR, func(key string, n *binaryNode[V]) bool {
+func (t *binary[V]) AnyMatch(p generic.Predicate2[string, V]) bool {
+	return !t._traverse(t.root.left, "", generic.VLR, func(key string, n *binaryNode[V]) bool {
 		return !n.term || !p(key, n.val)
 	})
 }
 
 // AllMatch returns true if all key-values in the binary trie satisfy the provided predicate.
 // If the binary trie is empty, it returns true.
-func (t *binary[V]) AllMatch(p Predicate2[string, V]) bool {
-	return t._traverse(t.root.left, "", VLR, func(key string, n *binaryNode[V]) bool {
+func (t *binary[V]) AllMatch(p generic.Predicate2[string, V]) bool {
+	return t._traverse(t.root.left, "", generic.VLR, func(key string, n *binaryNode[V]) bool {
 		return !n.term || p(key, n.val)
 	})
 }
 
 // FirstMatch returns the first key-value in the binary trie that satisfies the given predicate.
 // If no match is found, it returns the zero values of K and V, along with false.
-func (t *binary[V]) FirstMatch(p Predicate2[string, V]) (string, V, bool) {
+func (t *binary[V]) FirstMatch(p generic.Predicate2[string, V]) (string, V, bool) {
 	var k string
 	var v V
 	var ok bool
 
-	t._traverse(t.root.left, "", VLR, func(key string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.VLR, func(key string, n *binaryNode[V]) bool {
 		if n.term && p(key, n.val) {
 			k, v, ok = key, n.val, true
 			return false
@@ -597,10 +597,10 @@ func (t *binary[V]) FirstMatch(p Predicate2[string, V]) (string, V, bool) {
 
 // SelectMatch selects a subset of key-values from the binary trie that satisfy the given predicate.
 // It returns a new binary trie containing the matching key-values, of the same type as the original binary trie.
-func (t *binary[V]) SelectMatch(p Predicate2[string, V]) Collection2[string, V] {
+func (t *binary[V]) SelectMatch(p generic.Predicate2[string, V]) generic.Collection2[string, V] {
 	newT := NewBinary[V](t.eqVal)
 
-	t._traverse(t.root.left, "", VLR, func(key string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.VLR, func(key string, n *binaryNode[V]) bool {
 		if n.term && p(key, n.val) {
 			newT.Put(key, n.val)
 		}
@@ -615,11 +615,11 @@ func (t *binary[V]) SelectMatch(p Predicate2[string, V]) Collection2[string, V] 
 // The first binary trie contains the key-values that satisfy the predicate (matched key-values),
 // while the second binary trie contains those that do not satisfy the predicate (unmatched key-values).
 // Both binary tries are of the same type as the original binary trie.
-func (t *binary[V]) PartitionMatch(p Predicate2[string, V]) (Collection2[string, V], Collection2[string, V]) {
+func (t *binary[V]) PartitionMatch(p generic.Predicate2[string, V]) (generic.Collection2[string, V], generic.Collection2[string, V]) {
 	matched := NewBinary[V](t.eqVal)
 	ummatched := NewBinary[V](t.eqVal)
 
-	t._traverse(t.root.left, "", VLR, func(key string, n *binaryNode[V]) bool {
+	t._traverse(t.root.left, "", generic.VLR, func(key string, n *binaryNode[V]) bool {
 		if n.term {
 			if p(key, n.val) {
 				matched.Put(key, n.val)
@@ -637,7 +637,7 @@ func (t *binary[V]) PartitionMatch(p Predicate2[string, V]) (Collection2[string,
 // and yields the key-value of each node to the provided VisitFunc2 function.
 //
 // If the function returns false, the traversal is halted.
-func (t *binary[V]) Traverse(order TraverseOrder, visit VisitFunc2[string, V]) {
+func (t *binary[V]) Traverse(order generic.TraverseOrder, visit generic.VisitFunc2[string, V]) {
 	t._traverse(t.root, "", order, func(_ string, n *binaryNode[V]) bool {
 		// Special case of empty string
 		if n == t.root {
@@ -649,7 +649,7 @@ func (t *binary[V]) Traverse(order TraverseOrder, visit VisitFunc2[string, V]) {
 
 // AllMatch returns true if all key-values in the binary trie satisfy the provided predicate.
 // If the binary trie is empty, it returns false.
-func (t *binary[V]) _traverse(n *binaryNode[V], prefix string, order TraverseOrder, visit func(string, *binaryNode[V]) bool) bool {
+func (t *binary[V]) _traverse(n *binaryNode[V], prefix string, order generic.TraverseOrder, visit func(string, *binaryNode[V]) bool) bool {
 	if n == nil {
 		return true
 	}
@@ -657,17 +657,17 @@ func (t *binary[V]) _traverse(n *binaryNode[V], prefix string, order TraverseOrd
 	next := prefix + string(n.char)
 
 	switch order {
-	case VLR, Ascending:
+	case generic.VLR, generic.Ascending:
 		return visit(next, n) && t._traverse(n.left, next, order, visit) && t._traverse(n.right, prefix, order, visit)
-	case VRL:
+	case generic.VRL:
 		return visit(next, n) && t._traverse(n.right, prefix, order, visit) && t._traverse(n.left, next, order, visit)
-	case LVR:
+	case generic.LVR:
 		return t._traverse(n.left, next, order, visit) && visit(next, n) && t._traverse(n.right, prefix, order, visit)
-	case RVL:
+	case generic.RVL:
 		return t._traverse(n.right, prefix, order, visit) && visit(next, n) && t._traverse(n.left, next, order, visit)
-	case LRV:
+	case generic.LRV:
 		return t._traverse(n.left, next, order, visit) && t._traverse(n.right, prefix, order, visit) && visit(next, n)
-	case RLV, Descending:
+	case generic.RLV, generic.Descending:
 		return t._traverse(n.right, prefix, order, visit) && t._traverse(n.left, next, order, visit) && visit(next, n)
 	default:
 		return false
@@ -680,7 +680,7 @@ func (t *binary[V]) DOT() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*binaryNode[V]]int{}
-	t._traverse(t.root, "", VLR, func(_ string, n *binaryNode[V]) bool {
+	t._traverse(t.root, "", generic.VLR, func(_ string, n *binaryNode[V]) bool {
 		id++
 		nodeID[n] = id
 		return true
@@ -688,7 +688,7 @@ func (t *binary[V]) DOT() string {
 
 	graph := dot.NewGraph(true, true, false, "Binary Trie", "", "", "", dot.ShapeCircle)
 
-	t._traverse(t.root, "", VLR, func(_ string, n *binaryNode[V]) bool {
+	t._traverse(t.root, "", generic.VLR, func(_ string, n *binaryNode[V]) bool {
 		name := fmt.Sprintf("%d", nodeID[n])
 
 		var label string

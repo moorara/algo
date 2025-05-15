@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/moorara/algo/dot"
-	. "github.com/moorara/algo/generic"
+	"github.com/moorara/algo/generic"
 )
 
 const (
@@ -25,8 +25,8 @@ type rbNode[K, V any] struct {
 // redBlack is a left-leaning Red-Black tree.
 type redBlack[K, V any] struct {
 	root   *rbNode[K, V]
-	cmpKey CompareFunc[K]
-	eqVal  EqualFunc[V]
+	cmpKey generic.CompareFunc[K]
+	eqVal  generic.EqualFunc[V]
 }
 
 // NewRedBlack creates a new Red-Black tree.
@@ -40,7 +40,7 @@ type redBlack[K, V any] struct {
 //	Every path from root to null link has the same number of black links.
 //
 // The second parameter (eqVal) is needed only if you want to use the Equal method.
-func NewRedBlack[K, V any](cmpKey CompareFunc[K], eqVal EqualFunc[V]) OrderedSymbolTable[K, V] {
+func NewRedBlack[K, V any](cmpKey generic.CompareFunc[K], eqVal generic.EqualFunc[V]) OrderedSymbolTable[K, V] {
 	return &redBlack[K, V]{
 		root:   nil,
 		cmpKey: cmpKey,
@@ -617,13 +617,13 @@ func (t *redBlack[K, V]) _rank(n *rbNode[K, V], key K) int {
 }
 
 // Range returns all keys and associated values in the Red-Black tree between two given keys.
-func (t *redBlack[K, V]) Range(lo, hi K) []KeyValue[K, V] {
-	kvs := make([]KeyValue[K, V], 0)
+func (t *redBlack[K, V]) Range(lo, hi K) []generic.KeyValue[K, V] {
+	kvs := make([]generic.KeyValue[K, V], 0)
 	len := t._range(t.root, &kvs, lo, hi)
 	return kvs[0:len]
 }
 
-func (t *redBlack[K, V]) _range(n *rbNode[K, V], kvs *[]KeyValue[K, V], lo, hi K) int {
+func (t *redBlack[K, V]) _range(n *rbNode[K, V], kvs *[]generic.KeyValue[K, V], lo, hi K) int {
 	if n == nil {
 		return 0
 	}
@@ -636,7 +636,7 @@ func (t *redBlack[K, V]) _range(n *rbNode[K, V], kvs *[]KeyValue[K, V], lo, hi K
 		len += t._range(n.left, kvs, lo, hi)
 	}
 	if cmpLo <= 0 && cmpHi >= 0 {
-		*kvs = append(*kvs, KeyValue[K, V]{Key: n.key, Val: n.val})
+		*kvs = append(*kvs, generic.KeyValue[K, V]{Key: n.key, Val: n.val})
 		len++
 	}
 	if cmpHi > 0 {
@@ -662,7 +662,7 @@ func (t *redBlack[K, V]) String() string {
 	i := 0
 	pairs := make([]string, t.Size())
 
-	t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool {
+	t._traverse(t.root, generic.Ascending, func(n *rbNode[K, V]) bool {
 		pairs[i] = fmt.Sprintf("<%v:%v>", n.key, n.val)
 		i++
 		return true
@@ -678,10 +678,10 @@ func (t *redBlack[K, V]) Equal(rhs SymbolTable[K, V]) bool {
 		return false
 	}
 
-	return t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool { // t ⊂ t2
+	return t._traverse(t.root, generic.Ascending, func(n *rbNode[K, V]) bool { // t ⊂ t2
 		val, ok := t2.Get(n.key)
 		return ok && t.eqVal(n.val, val)
-	}) && t2._traverse(t2.root, Ascending, func(n *rbNode[K, V]) bool { // t2 ⊂ t
+	}) && t2._traverse(t2.root, generic.Ascending, func(n *rbNode[K, V]) bool { // t2 ⊂ t
 		val, ok := t.Get(n.key)
 		return ok && t.eqVal(n.val, val)
 	})
@@ -690,35 +690,35 @@ func (t *redBlack[K, V]) Equal(rhs SymbolTable[K, V]) bool {
 // All returns an iterator sequence containing all the key-values in the Red-Black tree.
 func (t *redBlack[K, V]) All() iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
-		t._traverse(t.root, Ascending, func(n *rbNode[K, V]) bool {
+		t._traverse(t.root, generic.Ascending, func(n *rbNode[K, V]) bool {
 			return yield(n.key, n.val)
 		})
 	}
 }
 
 // AnyMatch returns true if at least one key-value in the Red-Black tree satisfies the provided predicate.
-func (t *redBlack[K, V]) AnyMatch(p Predicate2[K, V]) bool {
-	return !t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+func (t *redBlack[K, V]) AnyMatch(p generic.Predicate2[K, V]) bool {
+	return !t._traverse(t.root, generic.VLR, func(n *rbNode[K, V]) bool {
 		return !p(n.key, n.val)
 	})
 }
 
 // AllMatch returns true if all key-values in the Red-Black tree satisfy the provided predicate.
 // If the Red-Black tree is empty, it returns true.
-func (t *redBlack[K, V]) AllMatch(p Predicate2[K, V]) bool {
-	return t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+func (t *redBlack[K, V]) AllMatch(p generic.Predicate2[K, V]) bool {
+	return t._traverse(t.root, generic.VLR, func(n *rbNode[K, V]) bool {
 		return p(n.key, n.val)
 	})
 }
 
 // FirstMatch returns the first key-value in the colRed-Black treelection that satisfies the given predicate.
 // If no match is found, it returns the zero values of K and V, along with false.
-func (t *redBlack[K, V]) FirstMatch(p Predicate2[K, V]) (K, V, bool) {
+func (t *redBlack[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V, bool) {
 	var k K
 	var v V
 	var ok bool
 
-	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+	t._traverse(t.root, generic.VLR, func(n *rbNode[K, V]) bool {
 		if p(n.key, n.val) {
 			k, v, ok = n.key, n.val, true
 			return false
@@ -731,10 +731,10 @@ func (t *redBlack[K, V]) FirstMatch(p Predicate2[K, V]) (K, V, bool) {
 
 // SelectMatch selects a subset of key-values from the Red-Black tree that satisfy the given predicate.
 // It returns a new Red-Black tree containing the matching key-values, of the same type as the original Red-Black tree.
-func (t *redBlack[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
+func (t *redBlack[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic.Collection2[K, V] {
 	newST := NewRedBlack[K, V](t.cmpKey, t.eqVal)
 
-	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+	t._traverse(t.root, generic.VLR, func(n *rbNode[K, V]) bool {
 		if p(n.key, n.val) {
 			newST.Put(n.key, n.val)
 		}
@@ -749,11 +749,11 @@ func (t *redBlack[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
 // The first Red-Black tree contains the key-values that satisfy the predicate (matched key-values),
 // while the second Red-Black tree contains those that do not satisfy the predicate (unmatched key-values).
 // Both Red-Black trees are of the same type as the original Red-Black tree.
-func (t *redBlack[K, V]) PartitionMatch(p Predicate2[K, V]) (Collection2[K, V], Collection2[K, V]) {
+func (t *redBlack[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (generic.Collection2[K, V], generic.Collection2[K, V]) {
 	matched := NewRedBlack[K, V](t.cmpKey, t.eqVal)
 	unmatched := NewRedBlack[K, V](t.cmpKey, t.eqVal)
 
-	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+	t._traverse(t.root, generic.VLR, func(n *rbNode[K, V]) bool {
 		if p(n.key, n.val) {
 			matched.Put(n.key, n.val)
 		} else {
@@ -769,29 +769,29 @@ func (t *redBlack[K, V]) PartitionMatch(p Predicate2[K, V]) (Collection2[K, V], 
 // and yields the key-value of each node to the provided VisitFunc2 function.
 //
 // If the function returns false, the traversal is halted.
-func (t *redBlack[K, V]) Traverse(order TraverseOrder, visit VisitFunc2[K, V]) {
+func (t *redBlack[K, V]) Traverse(order generic.TraverseOrder, visit generic.VisitFunc2[K, V]) {
 	t._traverse(t.root, order, func(n *rbNode[K, V]) bool {
 		return visit(n.key, n.val)
 	})
 }
 
-func (t *redBlack[K, V]) _traverse(n *rbNode[K, V], order TraverseOrder, visit func(*rbNode[K, V]) bool) bool {
+func (t *redBlack[K, V]) _traverse(n *rbNode[K, V], order generic.TraverseOrder, visit func(*rbNode[K, V]) bool) bool {
 	if n == nil {
 		return true
 	}
 
 	switch order {
-	case VLR:
+	case generic.VLR:
 		return visit(n) && t._traverse(n.left, order, visit) && t._traverse(n.right, order, visit)
-	case VRL:
+	case generic.VRL:
 		return visit(n) && t._traverse(n.right, order, visit) && t._traverse(n.left, order, visit)
-	case LVR, Ascending:
+	case generic.LVR, generic.Ascending:
 		return t._traverse(n.left, order, visit) && visit(n) && t._traverse(n.right, order, visit)
-	case RVL, Descending:
+	case generic.RVL, generic.Descending:
 		return t._traverse(n.right, order, visit) && visit(n) && t._traverse(n.left, order, visit)
-	case LRV:
+	case generic.LRV:
 		return t._traverse(n.left, order, visit) && t._traverse(n.right, order, visit) && visit(n)
-	case RLV:
+	case generic.RLV:
 		return t._traverse(n.right, order, visit) && t._traverse(n.left, order, visit) && visit(n)
 	default:
 		return false
@@ -804,7 +804,7 @@ func (t *redBlack[K, V]) DOT() string {
 	// Create a map of node --> id
 	var id int
 	nodeID := map[*rbNode[K, V]]int{}
-	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+	t._traverse(t.root, generic.VLR, func(n *rbNode[K, V]) bool {
 		id++
 		nodeID[n] = id
 		return true
@@ -812,7 +812,7 @@ func (t *redBlack[K, V]) DOT() string {
 
 	graph := dot.NewGraph(true, true, false, "Red-Black", "", "", dot.StyleFilled, dot.ShapeOval)
 
-	t._traverse(t.root, VLR, func(n *rbNode[K, V]) bool {
+	t._traverse(t.root, generic.VLR, func(n *rbNode[K, V]) bool {
 		var nodeColor, fontColor, edgeColor dot.Color
 
 		name := fmt.Sprintf("%d", nodeID[n])

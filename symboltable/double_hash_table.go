@@ -5,8 +5,8 @@ import (
 	"iter"
 	"strings"
 
-	. "github.com/moorara/algo/generic"
-	. "github.com/moorara/algo/hash"
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/hash"
 )
 
 const (
@@ -24,9 +24,9 @@ type doubleHashTable[K, V any] struct {
 	minLF   float32 // Minimum load factor before resizing (shrinking) the hash table
 	maxLF   float32 // Maximum load factor before resizing (expanding) the hash table
 
-	hashKey HashFunc[K]
-	eqKey   EqualFunc[K]
-	eqVal   EqualFunc[V]
+	hashKey hash.HashFunc[K]
+	eqKey   generic.EqualFunc[K]
+	eqVal   generic.EqualFunc[V]
 }
 
 // NewDoubleHashTable creates a new hash table with double hashing for conflict resolution.
@@ -36,7 +36,7 @@ type doubleHashTable[K, V any] struct {
 // by applying a second hash function to determine the step size for probing.
 // The indices are computed as h₁, h₁ + h₂, h₁ + 2h₂, h₁ + 3h₂, ...,
 // where h₁ is the primary hash and h₂ is the secondary hash.
-func NewDoubleHashTable[K, V any](hashKey HashFunc[K], eqKey EqualFunc[K], eqVal EqualFunc[V], opts HashOpts) SymbolTable[K, V] {
+func NewDoubleHashTable[K, V any](hashKey hash.HashFunc[K], eqKey generic.EqualFunc[K], eqVal generic.EqualFunc[V], opts HashOpts) SymbolTable[K, V] {
 	if opts.InitialCap == 0 {
 		opts.InitialCap = dhMinM
 	}
@@ -291,7 +291,7 @@ func (ht *doubleHashTable[K, V]) All() iter.Seq2[K, V] {
 }
 
 // AnyMatch returns true if at least one key-value in the hash table satisfies the provided predicate.
-func (ht *doubleHashTable[K, V]) AnyMatch(p Predicate2[K, V]) bool {
+func (ht *doubleHashTable[K, V]) AnyMatch(p generic.Predicate2[K, V]) bool {
 	for key, val := range ht.All() {
 		if p(key, val) {
 			return true
@@ -302,7 +302,7 @@ func (ht *doubleHashTable[K, V]) AnyMatch(p Predicate2[K, V]) bool {
 
 // AllMatch returns true if all key-values in the hash table satisfy the provided predicate.
 // If the BST is empty, it returns true.
-func (ht *doubleHashTable[K, V]) AllMatch(p Predicate2[K, V]) bool {
+func (ht *doubleHashTable[K, V]) AllMatch(p generic.Predicate2[K, V]) bool {
 	for key, val := range ht.All() {
 		if !p(key, val) {
 			return false
@@ -313,7 +313,7 @@ func (ht *doubleHashTable[K, V]) AllMatch(p Predicate2[K, V]) bool {
 
 // FirstMatch returns the first key-value in the hash table that satisfies the given predicate.
 // If no match is found, it returns the zero values of K and V, along with false.
-func (ht *doubleHashTable[K, V]) FirstMatch(p Predicate2[K, V]) (K, V, bool) {
+func (ht *doubleHashTable[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V, bool) {
 	for key, val := range ht.All() {
 		if p(key, val) {
 			return key, val, true
@@ -327,7 +327,7 @@ func (ht *doubleHashTable[K, V]) FirstMatch(p Predicate2[K, V]) (K, V, bool) {
 
 // SelectMatch selects a subset of key-values from the hash table that satisfy the given predicate.
 // It returns a new hash table containing the matching key-values, of the same type as the original hash table.
-func (ht *doubleHashTable[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, V] {
+func (ht *doubleHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic.Collection2[K, V] {
 	newHT := NewDoubleHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
@@ -347,7 +347,7 @@ func (ht *doubleHashTable[K, V]) SelectMatch(p Predicate2[K, V]) Collection2[K, 
 // The first hash table contains the key-values that satisfy the predicate (matched key-values),
 // while the second hash table contains those that do not satisfy the predicate (unmatched key-values).
 // Both hash tables are of the same type as the original hash table.
-func (ht *doubleHashTable[K, V]) PartitionMatch(p Predicate2[K, V]) (Collection2[K, V], Collection2[K, V]) {
+func (ht *doubleHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (generic.Collection2[K, V], generic.Collection2[K, V]) {
 	matched := NewDoubleHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,

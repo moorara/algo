@@ -94,7 +94,7 @@ func NewCFG(terms []Terminal, nonTerms []NonTerminal, prods []*Production, start
 	return g
 }
 
-// verify takes a context-free grammar and determines whether or not it is valid.
+// Verify takes a context-free grammar and determines whether or not it is valid.
 // If the given grammar is invalid, an error with a descriptive message will be returned.
 func (g *CFG) Verify() error {
 	var err error

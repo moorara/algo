@@ -10,7 +10,7 @@ func min(a, b int) int {
 }
 
 func merge[T any](a, aux []T, lo, mid, hi int, cmp generic.CompareFunc[T]) {
-	var i, j int = lo, mid + 1
+	i, j := lo, mid+1
 	copy(aux[lo:hi+1], a[lo:hi+1])
 	for k := lo; k <= hi; k++ {
 		switch {

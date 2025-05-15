@@ -17,7 +17,7 @@ func msdString(a, aux []string, lo, hi, d int) {
 
 	// cutoff to insertion sort for small subarrays
 	if hi <= lo+CUTOFF {
-		insertion[string](a, lo, hi)
+		insertion(a, lo, hi)
 		return
 	}
 
@@ -61,26 +61,26 @@ func MSDInt(a []int) {
 
 func msdInt(a, aux []int, lo, hi, d int) {
 	const (
-		CUTOFF    = 15
-		BYTE_SIZE = 8
-		INT_SIZE  = bits.UintSize
-		W         = INT_SIZE / BYTE_SIZE
-		R         = 1 << BYTE_SIZE
-		MASK      = R - 1
+		CutOff   = 15
+		ByteSize = 8
+		IntSize  = bits.UintSize
+		W        = IntSize / ByteSize
+		R        = 1 << ByteSize
+		Mask     = R - 1
 	)
 
 	// cutoff to insertion sort for small subarrays
-	if hi <= lo+CUTOFF {
+	if hi <= lo+CutOff {
 		insertion[int](a, lo, hi)
 		return
 	}
 
 	count := make([]int, R+1)
-	shift := INT_SIZE - BYTE_SIZE - BYTE_SIZE*d
+	shift := IntSize - ByteSize - ByteSize*d
 
 	// compute frequency counts
 	for i := lo; i <= hi; i++ {
-		c := (a[i] >> shift) & MASK
+		c := (a[i] >> shift) & Mask
 		count[c+1]++
 	}
 
@@ -108,7 +108,7 @@ func msdInt(a, aux []int, lo, hi, d int) {
 
 	// distribute keys to aux
 	for i := lo; i <= hi; i++ {
-		c := (a[i] >> shift) & MASK
+		c := (a[i] >> shift) & Mask
 		aux[count[c]] = a[i]
 		count[c]++
 	}
@@ -150,26 +150,26 @@ func MSDUint(a []uint) {
 
 func msdUint(a, aux []uint, lo, hi, d int) {
 	const (
-		CUTOFF    = 15
-		BYTE_SIZE = 8
-		INT_SIZE  = bits.UintSize
-		W         = INT_SIZE / BYTE_SIZE
-		R         = 1 << BYTE_SIZE
-		MASK      = R - 1
+		CutOff   = 15
+		ByteSize = 8
+		IntSize  = bits.UintSize
+		W        = IntSize / ByteSize
+		R        = 1 << ByteSize
+		Mask     = R - 1
 	)
 
 	// cutoff to insertion sort for small subarrays
-	if hi <= lo+CUTOFF {
-		insertion[uint](a, lo, hi)
+	if hi <= lo+CutOff {
+		insertion(a, lo, hi)
 		return
 	}
 
 	count := make([]int, R+1)
-	shift := INT_SIZE - BYTE_SIZE - BYTE_SIZE*d
+	shift := IntSize - ByteSize - ByteSize*d
 
 	// compute frequency counts
 	for i := lo; i <= hi; i++ {
-		c := (a[i] >> shift) & MASK
+		c := (a[i] >> shift) & Mask
 		count[c+1]++
 	}
 
@@ -180,7 +180,7 @@ func msdUint(a, aux []uint, lo, hi, d int) {
 
 	// distribute keys to aux
 	for i := lo; i <= hi; i++ {
-		c := (a[i] >> shift) & MASK
+		c := (a[i] >> shift) & Mask
 		aux[count[c]] = a[i]
 		count[c]++
 	}
