@@ -38,9 +38,11 @@ func TestWriteSymbol(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		n, err := WriteSymbol(tc.w, tc.s)
-		assert.Equal(t, tc.expectedN, n)
-		assert.Equal(t, tc.expectedError, err)
+		t.Run(tc.name, func(t *testing.T) {
+			n, err := WriteSymbol(tc.w, tc.s)
+			assert.Equal(t, tc.expectedN, n)
+			assert.Equal(t, tc.expectedError, err)
+		})
 	}
 }
 
@@ -90,8 +92,10 @@ func TestCompareFuncForSymbol(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		cmp := compareFuncForSymbol()(tc.lhs, tc.rhs)
-		assert.Equal(t, tc.expectedCompare, cmp)
+		t.Run(tc.name, func(t *testing.T) {
+			cmp := compareFuncForSymbol()(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedCompare, cmp)
+		})
 	}
 }
 
@@ -111,8 +115,10 @@ func TestHashFuncForSymbol(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		hash := hashFuncForSymbol()(tc.s)
-		assert.Equal(t, tc.expectedHash, hash)
+		t.Run(tc.s.Name(), func(t *testing.T) {
+			hash := hashFuncForSymbol()(tc.s)
+			assert.Equal(t, tc.expectedHash, hash)
+		})
 	}
 }
 
