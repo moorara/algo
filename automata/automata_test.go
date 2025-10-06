@@ -47,3 +47,45 @@ func TestNewSymbols(t *testing.T) {
 		})
 	}
 }
+
+func TestSymbolRange(t *testing.T) {
+	tests := []struct {
+		name           string
+		r              SymbolRange
+		expectedString string
+		equal          SymbolRange
+		expectedEqual  bool
+	}{
+		{
+			name:           "Equal_Empty",
+			r:              SymbolRange{Start: E, End: E},
+			expectedString: "[ε]",
+			equal:          SymbolRange{Start: E, End: E},
+			expectedEqual:  true,
+		},
+		{
+			name:           "Equal_Range",
+			r:              SymbolRange{Start: '0', End: '9'},
+			expectedString: "[0..9]",
+			equal:          SymbolRange{Start: '0', End: '9'},
+			expectedEqual:  true,
+		},
+		{
+			name:           "NotEqual_Range",
+			r:              SymbolRange{Start: 'a', End: 'z'},
+			expectedString: "[a..z]",
+			equal:          SymbolRange{Start: 'α', End: 'ω'},
+			expectedEqual:  false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Run("Validate", func(t *testing.T) {
+				tc.r.Validate()
+				assert.Equal(t, tc.expectedString, tc.r.String())
+				assert.Equal(t, tc.expectedEqual, tc.r.Equal(tc.equal))
+			})
+		})
+	}
+}

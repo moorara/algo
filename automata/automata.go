@@ -5,6 +5,8 @@
 package automata
 
 import (
+	"fmt"
+
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/set"
@@ -21,6 +23,26 @@ var (
 	HashSymbol = hash.HashFuncForInt32[Symbol](nil)
 
 	eqStates = func(a, b States) bool {
+		if a == nil && b == nil {
+			return true
+		}
+
+		if a == nil || b == nil {
+			return false
+		}
+
+		return a.Equal(b)
+	}
+
+	eqSymbols = func(a, b Symbols) bool {
+		if a == nil && b == nil {
+			return true
+		}
+
+		if a == nil || b == nil {
+			return false
+		}
+
 		return a.Equal(b)
 	}
 
@@ -61,8 +83,42 @@ func NewSymbols(a ...Symbol) set.Set[Symbol] {
 // String represents a sequence of symbols in an automaton.
 type String []Symbol
 
-// SymbolRange represents a range of symbols inclusive.
+// SymbolRange represents an inclusive range of input symbols.
 type SymbolRange struct {
 	Start Symbol
 	End   Symbol
+}
+
+func (r SymbolRange) Validate() {
+	if r.End < r.Start {
+		panic(fmt.Sprintf("invalid symbol range [%c-%c]", r.Start, r.End))
+	}
+}
+
+// String implements the fmt.Stringer interface.
+func (r SymbolRange) String() string {
+	var start, end string
+
+	if r.Start == E {
+		start = "ε"
+	} else {
+		start = fmt.Sprintf("%c", r.Start)
+	}
+
+	if r.End == E {
+		end = "ε"
+	} else {
+		end = fmt.Sprintf("%c", r.End)
+	}
+
+	if start == end {
+		return fmt.Sprintf("[%s]", start)
+	}
+
+	return fmt.Sprintf("[%s..%s]", start, end)
+}
+
+// Equal implements the generic.Equaler interface.
+func (r SymbolRange) Equal(rhs SymbolRange) bool {
+	return r.Start == rhs.Start && r.End == rhs.End
 }
