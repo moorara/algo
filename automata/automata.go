@@ -10,7 +10,6 @@ import (
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/set"
-	"github.com/moorara/algo/symboltable"
 )
 
 var (
@@ -22,7 +21,7 @@ var (
 	CmpSymbol  = generic.NewCompareFunc[Symbol]()
 	HashSymbol = hash.HashFuncForInt32[Symbol](nil)
 
-	eqStates = func(a, b States) bool {
+	EqStates = func(a, b States) bool {
 		if a == nil && b == nil {
 			return true
 		}
@@ -34,7 +33,7 @@ var (
 		return a.Equal(b)
 	}
 
-	eqSymbols = func(a, b Symbols) bool {
+	EqSymbols = func(a, b Symbols) bool {
 		if a == nil && b == nil {
 			return true
 		}
@@ -43,14 +42,6 @@ var (
 			return false
 		}
 
-		return a.Equal(b)
-	}
-
-	eqSymbolState = func(a, b symboltable.SymbolTable[Symbol, State]) bool {
-		return a.Equal(b)
-	}
-
-	eqSymbolStates = func(a, b symboltable.SymbolTable[Symbol, States]) bool {
 		return a.Equal(b)
 	}
 )

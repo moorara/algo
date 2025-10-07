@@ -9,16 +9,71 @@ import (
 )
 
 var testDFA = []*DFA{
+	// 1(0|1)*
 	{
 		start: 0,
 		final: NewStates(1),
 		trans: newDFATransitionTable(
 			map[State][]rangeState{
 				0: {
-					{SymbolRange{Start: '1', End: '1'}, 0},
+					{SymbolRange{Start: '1', End: '1'}, 1},
 				},
 				1: {
 					{SymbolRange{Start: '0', End: '1'}, 1},
+				},
+			},
+		),
+	},
+	// ab+|ba+
+	{
+		start: 0,
+		final: NewStates(2, 4),
+		trans: newDFATransitionTable(
+			map[State][]rangeState{
+				0: {
+					{SymbolRange{Start: 'a', End: 'a'}, 1},
+					{SymbolRange{Start: 'b', End: 'b'}, 3},
+				},
+				1: {
+					{SymbolRange{Start: 'b', End: 'b'}, 2},
+				},
+				2: {
+					{SymbolRange{Start: 'b', End: 'b'}, 2},
+				},
+				3: {
+					{SymbolRange{Start: 'a', End: 'a'}, 4},
+				},
+				4: {
+					{SymbolRange{Start: 'a', End: 'a'}, 4},
+				},
+			},
+		),
+	},
+	// (a|b)*abb
+	{
+		start: 0,
+		final: NewStates(4),
+		trans: newDFATransitionTable(
+			map[State][]rangeState{
+				0: {
+					{SymbolRange{Start: 'a', End: 'a'}, 1},
+					{SymbolRange{Start: 'b', End: 'b'}, 2},
+				},
+				1: {
+					{SymbolRange{Start: 'a', End: 'a'}, 1},
+					{SymbolRange{Start: 'b', End: 'b'}, 3},
+				},
+				2: {
+					{SymbolRange{Start: 'a', End: 'a'}, 1},
+					{SymbolRange{Start: 'b', End: 'b'}, 2},
+				},
+				3: {
+					{SymbolRange{Start: 'a', End: 'a'}, 1},
+					{SymbolRange{Start: 'b', End: 'b'}, 4},
+				},
+				4: {
+					{SymbolRange{Start: 'a', End: 'a'}, 1},
+					{SymbolRange{Start: 'b', End: 'b'}, 2},
 				},
 			},
 		),
@@ -38,7 +93,7 @@ func TestDFABuilder(t *testing.T) {
 			start: 0,
 			final: []State{1},
 			trans: map[State]map[SymbolRange]State{
-				0: {SymbolRange{Start: '1', End: '1'}: 0},
+				0: {SymbolRange{Start: '1', End: '1'}: 1},
 				1: {SymbolRange{Start: '0', End: '1'}: 1},
 			},
 			expectedDFA: testDFA[0],
@@ -73,7 +128,7 @@ func TestDFA_String(t *testing.T) {
 			expectedString: `Start state: 0
 Final states: 1
 Transitions:
-  0 --[1]--> 0
+  0 --[1]--> 1
   1 --[0..1]--> 1
 `,
 		},
@@ -88,8 +143,8 @@ Transitions:
 
 func TestDFA_Clone(t *testing.T) {
 	dfa := testDFA[0].Clone()
-	dfa.states = NewStates(0, 1)
-	dfa.symbols = NewSymbols('0', '1')
+	dfa.states = []State{0, 1}
+	dfa.symbols = []SymbolRange{{Start: '0', End: '1'}}
 
 	tests := []struct {
 		name string
@@ -227,12 +282,14 @@ func TestDFA_Symbols(t *testing.T) {
 	tests := []struct {
 		name            string
 		d               *DFA
-		expectedSymbols []Symbol
+		expectedSymbols []SymbolRange
 	}{
 		{
-			name:            "OK",
-			d:               testDFA[0],
-			expectedSymbols: []Symbol{'0', '1'},
+			name: "OK",
+			d:    testDFA[0],
+			expectedSymbols: []SymbolRange{
+				{'0', '1'},
+			},
 		},
 	}
 
@@ -259,7 +316,7 @@ func TestDFA_Transitions(t *testing.T) {
 			name: "OK",
 			d:    testDFA[0],
 			expectedTransitions: []transition{
-				{0, SymbolRange{Start: '1', End: '1'}, 0},
+				{0, SymbolRange{Start: '1', End: '1'}, 1},
 				{1, SymbolRange{Start: '0', End: '1'}, 1},
 			},
 		},
@@ -291,7 +348,7 @@ func TestDFA_TransitionsFrom(t *testing.T) {
 			d:    testDFA[0],
 			s:    0,
 			expectedTransitionsFrom: []generic.KeyValue[SymbolRange, State]{
-				{Key: SymbolRange{Start: '1', End: '1'}, Val: 0},
+				{Key: SymbolRange{Start: '1', End: '1'}, Val: 1},
 			},
 		},
 	}
@@ -300,6 +357,45 @@ func TestDFA_TransitionsFrom(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			from := generic.Collect2(tc.d.TransitionsFrom(tc.s))
 			assert.Equal(t, tc.expectedTransitionsFrom, from)
+		})
+	}
+}
+
+func TestDFA_DOT(t *testing.T) {
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedDOT string
+	}{
+		{
+			name: "OK",
+			d:    testDFA[1],
+			expectedDOT: `digraph "DFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1"];
+  2 [label="2", shape=doublecircle];
+  3 [label="3"];
+  4 [label="4", shape=doublecircle];
+
+  start -> 0 [];
+  0 -> 1 [label="[a]"];
+  0 -> 3 [label="[b]"];
+  1 -> 2 [label="[b]"];
+  2 -> 2 [label="[b]"];
+  3 -> 4 [label="[a]"];
+  4 -> 4 [label="[a]"];
+}`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedDOT, tc.d.DOT())
 		})
 	}
 }

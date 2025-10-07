@@ -72,6 +72,13 @@ func TestNFATransitionTable(t *testing.T) {
 		expectedOK   bool
 	}
 
+	type nextOnRangeTest struct {
+		s             State
+		r             SymbolRange
+		expectedPairs []rangeStates
+		expectedOK    bool
+	}
+
 	type fromTest struct {
 		s            State
 		expectedFrom []generic.KeyValue[SymbolRange, []State]
@@ -84,14 +91,16 @@ func TestNFATransitionTable(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		trans          map[State][]rangeStates
-		equalTests     []equalTest
-		addTests       []addTest
-		nextTests      []nextTest
-		fromTests      []fromTest
-		expectedAll    []transition
-		expectedString string
+		name                 string
+		trans                map[State][]rangeStates
+		equalTests           []equalTest
+		addTests             []addTest
+		nextTests            []nextTest
+		nextOnRangeTests     []nextOnRangeTest
+		fromTests            []fromTest
+		expectedAll          []transition
+		expectedSymbolRanges []SymbolRange
+		expectedString       string
 	}{
 		{
 			name: "CurrentEndOnLastEnd_SameStates",
@@ -167,6 +176,29 @@ func TestNFATransitionTable(t *testing.T) {
 				{s: 0, a: '|', expectedNext: nil, expectedOK: false},
 				{s: 0, a: 'ω', expectedNext: nil, expectedOK: false},
 			},
+			nextOnRangeTests: []nextOnRangeTest{
+				{
+					s:             0,
+					r:             SymbolRange{'ε', 'ω'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s:             1,
+					r:             SymbolRange{'A', 'Z'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s: 0,
+					r: SymbolRange{'A', 'z'},
+					expectedPairs: []rangeStates{
+						{SymbolRange{'A', 'Z'}, NewStates(30, 31)},
+						{SymbolRange{'a', 'z'}, NewStates(10, 11)},
+					},
+					expectedOK: true,
+				},
+			},
 			fromTests: []fromTest{
 				{
 					s: 0,
@@ -185,6 +217,13 @@ func TestNFATransitionTable(t *testing.T) {
 				{0, SymbolRange{'A', 'Z'}, []State{30, 31}},
 				{0, SymbolRange{'a', 'z'}, []State{10, 11}},
 				{0, SymbolRange{'α', 'δ'}, []State{40, 41}},
+			},
+			expectedSymbolRanges: []SymbolRange{
+				{'+', '-'},
+				{'0', '9'},
+				{'A', 'Z'},
+				{'a', 'z'},
+				{'α', 'δ'},
 			},
 			expectedString: `Transitions:
   0 --[+..-]--> {20, 21}
@@ -284,6 +323,33 @@ func TestNFATransitionTable(t *testing.T) {
 				{s: 0, a: '|', expectedNext: nil, expectedOK: false},
 				{s: 0, a: 'ω', expectedNext: nil, expectedOK: false},
 			},
+			nextOnRangeTests: []nextOnRangeTest{
+				{
+					s:             0,
+					r:             SymbolRange{'ε', 'ω'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s:             1,
+					r:             SymbolRange{'A', 'Z'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s: 0,
+					r: SymbolRange{'A', 'z'},
+					expectedPairs: []rangeStates{
+						{SymbolRange{'A', 'M'}, NewStates(30, 31)},
+						{SymbolRange{'N', 'O'}, NewStates(32, 33)},
+						{SymbolRange{'P', 'Z'}, NewStates(34, 35)},
+						{SymbolRange{'a', 'm'}, NewStates(10, 11)},
+						{SymbolRange{'n', 'o'}, NewStates(12, 13)},
+						{SymbolRange{'p', 'z'}, NewStates(14, 15)},
+					},
+					expectedOK: true,
+				},
+			},
 			fromTests: []fromTest{
 				{
 					s: 0,
@@ -310,6 +376,13 @@ func TestNFATransitionTable(t *testing.T) {
 				{0, SymbolRange{'n', 'o'}, []State{12, 13}},
 				{0, SymbolRange{'p', 'z'}, []State{14, 15}},
 				{0, SymbolRange{'α', 'δ'}, []State{40, 41}},
+			},
+			expectedSymbolRanges: []SymbolRange{
+				{'+', '-'},
+				{'0', '9'},
+				{'A', 'Z'},
+				{'a', 'z'},
+				{'α', 'δ'},
 			},
 			expectedString: `Transitions:
   0 --[+..-]--> {20, 21}
@@ -401,6 +474,29 @@ func TestNFATransitionTable(t *testing.T) {
 				{s: 0, a: '|', expectedNext: nil, expectedOK: false},
 				{s: 0, a: 'ω', expectedNext: nil, expectedOK: false},
 			},
+			nextOnRangeTests: []nextOnRangeTest{
+				{
+					s:             0,
+					r:             SymbolRange{'ε', 'ω'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s:             1,
+					r:             SymbolRange{'A', 'Z'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s: 0,
+					r: SymbolRange{'A', 'z'},
+					expectedPairs: []rangeStates{
+						{SymbolRange{'A', 'Z'}, NewStates(30, 31)},
+						{SymbolRange{'a', 'z'}, NewStates(10, 11)},
+					},
+					expectedOK: true,
+				},
+			},
 			fromTests: []fromTest{
 				{
 					s: 0,
@@ -419,6 +515,13 @@ func TestNFATransitionTable(t *testing.T) {
 				{0, SymbolRange{'A', 'Z'}, []State{30, 31}},
 				{0, SymbolRange{'a', 'z'}, []State{10, 11}},
 				{0, SymbolRange{'α', 'δ'}, []State{40, 41}},
+			},
+			expectedSymbolRanges: []SymbolRange{
+				{'+', '-'},
+				{'0', '9'},
+				{'A', 'Z'},
+				{'a', 'z'},
+				{'α', 'δ'},
 			},
 			expectedString: `Transitions:
   0 --[+..-]--> {20, 21}
@@ -528,6 +631,37 @@ func TestNFATransitionTable(t *testing.T) {
 				{s: 0, a: '|', expectedNext: nil, expectedOK: false},
 				{s: 0, a: 'ω', expectedNext: nil, expectedOK: false},
 			},
+			nextOnRangeTests: []nextOnRangeTest{
+				{
+					s:             0,
+					r:             SymbolRange{'ε', 'ω'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s:             1,
+					r:             SymbolRange{'A', 'Z'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s: 0,
+					r: SymbolRange{'A', 'z'},
+					expectedPairs: []rangeStates{
+						{SymbolRange{'A', 'H'}, NewStates(30, 31)},
+						{SymbolRange{'I', 'M'}, NewStates(32, 33)},
+						{SymbolRange{'N', 'Q'}, NewStates(30, 31)},
+						{SymbolRange{'R', 'U'}, NewStates(32, 33)},
+						{SymbolRange{'V', 'Z'}, NewStates(34, 35)},
+						{SymbolRange{'a', 'h'}, NewStates(10, 11)},
+						{SymbolRange{'i', 'm'}, NewStates(12, 13)},
+						{SymbolRange{'n', 'q'}, NewStates(10, 11)},
+						{SymbolRange{'r', 'u'}, NewStates(12, 13)},
+						{SymbolRange{'v', 'z'}, NewStates(14, 15)},
+					},
+					expectedOK: true,
+				},
+			},
 			fromTests: []fromTest{
 				{
 					s: 0,
@@ -562,6 +696,13 @@ func TestNFATransitionTable(t *testing.T) {
 				{0, SymbolRange{'r', 'u'}, []State{12, 13}},
 				{0, SymbolRange{'v', 'z'}, []State{14, 15}},
 				{0, SymbolRange{'α', 'δ'}, []State{40, 41}},
+			},
+			expectedSymbolRanges: []SymbolRange{
+				{'+', '-'},
+				{'0', '9'},
+				{'A', 'Z'},
+				{'a', 'z'},
+				{'α', 'δ'},
 			},
 			expectedString: `Transitions:
   0 --[+..-]--> {20, 21}
@@ -659,6 +800,29 @@ func TestNFATransitionTable(t *testing.T) {
 				{s: 0, a: '|', expectedNext: nil, expectedOK: false},
 				{s: 0, a: 'ω', expectedNext: nil, expectedOK: false},
 			},
+			nextOnRangeTests: []nextOnRangeTest{
+				{
+					s:             0,
+					r:             SymbolRange{'ε', 'ω'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s:             1,
+					r:             SymbolRange{'A', 'Z'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s: 0,
+					r: SymbolRange{'A', 'z'},
+					expectedPairs: []rangeStates{
+						{SymbolRange{'A', 'Z'}, NewStates(30, 31)},
+						{SymbolRange{'a', 'z'}, NewStates(10, 11)},
+					},
+					expectedOK: true,
+				},
+			},
 			fromTests: []fromTest{
 				{
 					s: 0,
@@ -677,6 +841,13 @@ func TestNFATransitionTable(t *testing.T) {
 				{0, SymbolRange{'A', 'Z'}, []State{30, 31}},
 				{0, SymbolRange{'a', 'z'}, []State{10, 11}},
 				{0, SymbolRange{'α', 'δ'}, []State{40, 41}},
+			},
+			expectedSymbolRanges: []SymbolRange{
+				{'+', '-'},
+				{'0', '9'},
+				{'A', 'Z'},
+				{'a', 'z'},
+				{'α', 'δ'},
 			},
 			expectedString: `Transitions:
   0 --[+..-]--> {20, 21}
@@ -712,8 +883,21 @@ func TestNFATransitionTable(t *testing.T) {
 			t.Run("Next", func(t *testing.T) {
 				for _, tc := range tc.nextTests {
 					states, ok := m.Next(tc.s, tc.a)
+
 					assert.Equal(t, tc.expectedOK, ok)
 					assert.Equal(t, tc.expectedNext, states, "From state %s on symbol %q expected %v, but got %v", tc.s, tc.a, tc.expectedNext, states)
+				}
+			})
+
+			t.Run("NextOnRange", func(t *testing.T) {
+				for _, tc := range tc.nextOnRangeTests {
+					pairs, ok := m.NextOnRange(tc.s, tc.r)
+
+					assert.Equal(t, tc.expectedOK, ok)
+					assert.Len(t, pairs, len(tc.expectedPairs))
+					for i, pair := range pairs {
+						assert.True(t, pair.Equal(tc.expectedPairs[i]))
+					}
 				}
 			})
 
@@ -733,6 +917,11 @@ func TestNFATransitionTable(t *testing.T) {
 				}
 
 				assert.Equal(t, tc.expectedAll, all)
+			})
+
+			t.Run("SymbolRanges", func(t *testing.T) {
+				symbols := m.SymbolRanges()
+				assert.Equal(t, tc.expectedSymbolRanges, symbols)
 			})
 
 			t.Run("String", func(t *testing.T) {

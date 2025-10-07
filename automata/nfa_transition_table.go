@@ -111,43 +111,6 @@ func (t *nfaTransitionTable) Equal(rhs *nfaTransitionTable) bool {
 	return true
 }
 
-// All returns all transitions in the table.
-func (t *nfaTransitionTable) All() iter.Seq2[State, iter.Seq2[SymbolRange, []State]] {
-	return func(yield func(State, iter.Seq2[SymbolRange, []State]) bool) {
-		for s := range t.table.All() {
-			if !yield(s, t.From(s)) {
-				return
-			}
-		}
-	}
-}
-
-// From returns all transitions from the given state in the table.
-func (t *nfaTransitionTable) From(s State) iter.Seq2[SymbolRange, []State] {
-	return func(yield func(SymbolRange, []State) bool) {
-		if pairs, ok := t.table.Get(s); ok {
-			for _, pair := range pairs {
-				states := generic.Collect1(pair.States.All())
-				if !yield(pair.SymbolRange, states) {
-					return
-				}
-			}
-		}
-	}
-}
-
-// Next returns the next state for the given state and input symbol.
-func (t *nfaTransitionTable) Next(s State, a Symbol) ([]State, bool) {
-	if pairs, ok := t.table.Get(s); ok {
-		if i, ok := searchRangeStatesSortedList(pairs, a); ok {
-			states := generic.Collect1(pairs[i].States.All())
-			return states, true
-		}
-	}
-
-	return nil, false
-}
-
 // Add inserts a new transition to the NFA transition table.
 // It will merge any overlapping or adjacent ranges as necessary.
 // The states associated with any overlapping range will be overridden by the new states given in the new range.
@@ -177,6 +140,109 @@ func (t *nfaTransitionTable) Add(s State, start, end Symbol, next []State) {
 
 	// Merge overlapping or adjacent ranges
 	t.table.Put(s, mergeRangeStatesSortedList(pairs))
+}
+
+// Next returns the next state for the given state and input symbol.
+func (t *nfaTransitionTable) Next(s State, a Symbol) ([]State, bool) {
+	if states, ok := t.next(s, a); ok {
+		return generic.Collect1(states.All()), true
+	}
+
+	return nil, false
+}
+
+func (t *nfaTransitionTable) next(s State, a Symbol) (States, bool) {
+	if pairs, ok := t.table.Get(s); ok {
+		if i, ok := searchRangeStatesSortedList(pairs, a); ok {
+			return pairs[i].States, true
+		}
+	}
+
+	return nil, false
+}
+
+// NextOnRange receives a range of input symbols and returns the next states for each subset of the range that has a defined transition.
+// The returned ranges are non-overlapping and sorted in ascending order.
+// If there are no transitions for the given state and input range, it returns false.
+func (t *nfaTransitionTable) NextOnRange(s State, r SymbolRange) ([]rangeStates, bool) {
+	var result []rangeStates
+
+	if pairs, ok := t.table.Get(s); ok {
+		for _, pair := range pairs {
+			if r.Start > pair.End {
+				continue
+			}
+
+			if r.End < pair.Start {
+				break
+			}
+
+			result = append(result, rangeStates{
+				SymbolRange{
+					Start: max(r.Start, pair.Start),
+					End:   min(r.End, pair.End),
+				},
+				pair.States.Clone(),
+			})
+		}
+	}
+
+	return result, result != nil
+}
+
+// All returns all transitions in the table.
+func (t *nfaTransitionTable) All() iter.Seq2[State, iter.Seq2[SymbolRange, []State]] {
+	return func(yield func(State, iter.Seq2[SymbolRange, []State]) bool) {
+		for s := range t.table.All() {
+			if !yield(s, t.From(s)) {
+				return
+			}
+		}
+	}
+}
+
+// From returns all transitions from the given state in the table.
+func (t *nfaTransitionTable) From(s State) iter.Seq2[SymbolRange, []State] {
+	return func(yield func(SymbolRange, []State) bool) {
+		if pairs, ok := t.table.Get(s); ok {
+			for _, pair := range pairs {
+				states := generic.Collect1(pair.States.All())
+				if !yield(pair.SymbolRange, states) {
+					return
+				}
+			}
+		}
+	}
+}
+
+// SymbolRanges returns all unique symbol ranges present in the NFA transition table.
+// The returned ranges are non-overlapping and sorted in ascending order.
+func (t *nfaTransitionTable) SymbolRanges() []SymbolRange {
+	all := make([]rangeStates, 0)
+
+	for _, pairs := range t.table.All() {
+		for _, pair := range pairs {
+			if pair.Start != E && pair.End != E {
+				all = append(all, rangeStates{
+					pair.SymbolRange,
+					nil, // States is not relevant
+				})
+			}
+		}
+	}
+
+	slices.SortFunc(all, func(lhs, rhs rangeStates) int {
+		return int(lhs.Start) - int(rhs.Start)
+	})
+
+	all = mergeRangeStatesSortedList(all)
+
+	ranges := make([]SymbolRange, len(all))
+	for i, pair := range all {
+		ranges[i] = pair.SymbolRange
+	}
+
+	return ranges
 }
 
 // searchRangeStatesSortedList performs a binary search to find the index of the range that contains the given symbol.
@@ -213,7 +279,7 @@ func mergeRangeStatesSortedList(pairs []rangeStates) []rangeStates {
 
 		if curr.Start <= last.End {
 			if curr.End < last.End {
-				if last.States.Equal(curr.States) {
+				if EqStates(last.States, curr.States) {
 					// Case curr.Start < last.End && curr.End < last.End && last.States == curr.States:
 					//
 					//   last:  |_____|_____|_____|  States: {1,2}    ---->    |_________________|  States: {1,2}
@@ -240,7 +306,7 @@ func mergeRangeStatesSortedList(pairs []rangeStates) []rangeStates {
 					})
 				}
 			} else if curr.End == last.End {
-				if last.States.Equal(curr.States) {
+				if EqStates(last.States, curr.States) {
 					// Case curr.Start < last.End && curr.End == last.End && last.States == curr.States:
 					//
 					//   last:  |_____|___________|  States: {1,2}    ---->    |_________________|  States: {1,2}
@@ -267,7 +333,7 @@ func mergeRangeStatesSortedList(pairs []rangeStates) []rangeStates {
 					merged = append(merged, curr)
 				}
 			} else /* if curr.End > last.End */ {
-				if last.States.Equal(curr.States) {
+				if EqStates(last.States, curr.States) {
 					// Case curr.Start < last.End && curr.End > last.End && last.States == curr.States:
 					//
 					//   last:  |_____|_____|     |  States: {1,2}    ---->    |_________________|  States: {1,2}
@@ -296,7 +362,7 @@ func mergeRangeStatesSortedList(pairs []rangeStates) []rangeStates {
 					merged = append(merged, curr)
 				}
 			}
-		} else if curr.Start == last.End+1 && last.States.Equal(curr.States) {
+		} else if curr.Start == last.End+1 && EqStates(last.States, curr.States) {
 			// Case curr.Start is adjacent to last.End && last.States != curr.States:
 			//
 			//   last:  |__________||     |  States: {1,2}    ---->    |_________________|  States: {1,2}

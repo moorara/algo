@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/generic"
 )
 
@@ -59,8 +60,8 @@ type NFA struct {
 	trans *nfaTransitionTable
 
 	// Derived values calculated lazily
-	states  States
-	symbols Symbols
+	states  []State
+	symbols []SymbolRange
 }
 
 // String implements the fmt.Stringer interface.
@@ -91,11 +92,13 @@ func (n *NFA) Clone() *NFA {
 	}
 
 	if n.states != nil {
-		nn.states = n.states.Clone()
+		nn.states = make([]State, len(n.states))
+		copy(nn.states, n.states)
 	}
 
 	if n.symbols != nil {
-		nn.symbols = n.symbols.Clone()
+		nn.symbols = make([]SymbolRange, len(n.symbols))
+		copy(nn.symbols, n.symbols)
 	}
 
 	return nn
@@ -122,35 +125,28 @@ func (n *NFA) Final() []State {
 func (n *NFA) States() []State {
 	// Lazy initialization
 	if n.states == nil {
-		n.states = NewStates(n.start).Union(n.final)
+		states := NewStates(n.start).Union(n.final)
 		for s, pairs := range n.trans.All() {
-			n.states.Add(s)
+			states.Add(s)
 			for _, next := range pairs {
-				n.states.Add(next...)
+				states.Add(next...)
 			}
 		}
+
+		n.states = generic.Collect1(states.All())
 	}
 
-	return generic.Collect1(n.states.All())
+	return n.states
 }
 
-// Symbols returns all symbols in the NFA.
-func (n *NFA) Symbols() []Symbol {
+// Symbols returns all symbol ranges in the NFA.
+func (n *NFA) Symbols() []SymbolRange {
 	// Lazy initialization
 	if n.symbols == nil {
-		n.symbols = NewSymbols()
-		for _, pairs := range n.trans.All() {
-			for r := range pairs {
-				for a := r.Start; a <= r.End; a++ {
-					if a != E {
-						n.symbols.Add(a)
-					}
-				}
-			}
-		}
+		n.symbols = n.trans.SymbolRanges()
 	}
 
-	return generic.Collect1(n.symbols.All())
+	return n.symbols
 }
 
 // Transitions returns all transitions in the NFA.
@@ -161,4 +157,39 @@ func (n *NFA) Transitions() iter.Seq2[State, iter.Seq2[SymbolRange, []State]] {
 // TransitionsFrom returns all transitions from the given state in the NFA.
 func (n *NFA) TransitionsFrom(s State) iter.Seq2[SymbolRange, []State] {
 	return n.trans.From(s)
+}
+
+// DOT generates a DOT representation of the NFA transition graph for visualization.
+func (n *NFA) DOT() string {
+	graph := dot.NewGraph(false, true, false, "NFA", dot.RankDirLR, "", "", dot.ShapeCircle)
+
+	for _, s := range n.States() {
+		name := fmt.Sprintf("%d", s)
+		label := fmt.Sprintf("%d", s)
+
+		if s == n.start {
+			graph.AddNode(dot.NewNode("start", "", "", "", dot.StyleInvis, "", "", ""))
+			graph.AddEdge(dot.NewEdge("start", name, dot.EdgeTypeDirected, "", "", "", "", "", ""))
+		}
+
+		var shape dot.Shape
+		if n.final.Contains(s) {
+			shape = dot.ShapeDoubleCircle
+		}
+
+		graph.AddNode(dot.NewNode(name, "", label, "", "", shape, "", ""))
+	}
+
+	for s, pairs := range n.trans.All() {
+		for r, next := range pairs {
+			for _, t := range next {
+				from := fmt.Sprintf("%d", s)
+				to := fmt.Sprintf("%d", t)
+
+				graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", r.String(), "", "", "", ""))
+			}
+		}
+	}
+
+	return graph.DOT()
 }

@@ -110,41 +110,6 @@ func (t *dfaTransitionTable) Equal(rhs *dfaTransitionTable) bool {
 	return true
 }
 
-// All returns all transitions in the table.
-func (t *dfaTransitionTable) All() iter.Seq2[State, iter.Seq2[SymbolRange, State]] {
-	return func(yield func(State, iter.Seq2[SymbolRange, State]) bool) {
-		for s := range t.table.All() {
-			if !yield(s, t.From(s)) {
-				return
-			}
-		}
-	}
-}
-
-// From returns all transitions from the given state in the table.
-func (t *dfaTransitionTable) From(s State) iter.Seq2[SymbolRange, State] {
-	return func(yield func(SymbolRange, State) bool) {
-		if pairs, ok := t.table.Get(s); ok {
-			for _, pair := range pairs {
-				if !yield(pair.SymbolRange, pair.State) {
-					return
-				}
-			}
-		}
-	}
-}
-
-// Next returns the next state for the given state and input symbol.
-func (t *dfaTransitionTable) Next(s State, a Symbol) (State, bool) {
-	if pairs, ok := t.table.Get(s); ok {
-		if i, ok := searchRangeStateSortedList(pairs, a); ok {
-			return pairs[i].State, true
-		}
-	}
-
-	return -1, false
-}
-
 // Add inserts a new transition to the DFA transition table.
 // It will merge any overlapping or adjacent ranges as necessary.
 // The state associated with any overlapping range will be overridden by the new state given in the new range.
@@ -174,6 +139,98 @@ func (t *dfaTransitionTable) Add(s State, start, end Symbol, next State) {
 
 	// Merge overlapping or adjacent ranges
 	t.table.Put(s, mergeRangeStateSortedList(pairs))
+}
+
+// Next returns the next state for the given state and input symbol.
+func (t *dfaTransitionTable) Next(s State, a Symbol) (State, bool) {
+	if pairs, ok := t.table.Get(s); ok {
+		if i, ok := searchRangeStateSortedList(pairs, a); ok {
+			return pairs[i].State, true
+		}
+	}
+
+	return -1, false
+}
+
+// NextOnRange receives a range of input symbols and returns the next state for each subset of the range that has a defined transition.
+// The returned ranges are non-overlapping and sorted in ascending order.
+// If there are no transitions for the given state and input range, it returns false.
+func (t *dfaTransitionTable) NextOnRange(s State, r SymbolRange) ([]rangeState, bool) {
+	var result []rangeState
+
+	if pairs, ok := t.table.Get(s); ok {
+		for _, pair := range pairs {
+			if r.Start > pair.End {
+				continue
+			}
+
+			if r.End < pair.Start {
+				break
+			}
+
+			result = append(result, rangeState{
+				SymbolRange{
+					Start: max(r.Start, pair.Start),
+					End:   min(r.End, pair.End),
+				},
+				pair.State,
+			})
+		}
+	}
+
+	return result, result != nil
+}
+
+// All returns all transitions in the table.
+func (t *dfaTransitionTable) All() iter.Seq2[State, iter.Seq2[SymbolRange, State]] {
+	return func(yield func(State, iter.Seq2[SymbolRange, State]) bool) {
+		for s := range t.table.All() {
+			if !yield(s, t.From(s)) {
+				return
+			}
+		}
+	}
+}
+
+// From returns all transitions from the given state in the table.
+func (t *dfaTransitionTable) From(s State) iter.Seq2[SymbolRange, State] {
+	return func(yield func(SymbolRange, State) bool) {
+		if pairs, ok := t.table.Get(s); ok {
+			for _, pair := range pairs {
+				if !yield(pair.SymbolRange, pair.State) {
+					return
+				}
+			}
+		}
+	}
+}
+
+// SymbolRanges returns all unique symbol ranges present in the DFA transition table.
+// The returned ranges are non-overlapping and sorted in ascending order.
+func (t *dfaTransitionTable) SymbolRanges() []SymbolRange {
+	all := make([]rangeState, 0)
+
+	for _, pairs := range t.table.All() {
+		for _, pair := range pairs {
+			all = append(all, rangeState{
+				pair.SymbolRange,
+				0, // State is not relevant
+			})
+		}
+	}
+
+	slices.SortFunc(all, func(lhs, rhs rangeState) int {
+		return int(lhs.Start) - int(rhs.Start)
+	})
+
+	all = mergeRangeStateSortedList(all)
+
+	ranges := make([]SymbolRange, len(all))
+	for i, pair := range all {
+		ranges[i] = pair.SymbolRange
+	}
+
+	return ranges
 }
 
 // searchRangeStateSortedList performs a binary search to find the index of the range that contains the given symbol.

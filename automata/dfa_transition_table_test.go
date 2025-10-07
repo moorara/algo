@@ -72,6 +72,13 @@ func TestDFATransitionTable(t *testing.T) {
 		expectedOK   bool
 	}
 
+	type nextOnRangeTest struct {
+		s             State
+		r             SymbolRange
+		expectedPairs []rangeState
+		expectedOK    bool
+	}
+
 	type fromTest struct {
 		s            State
 		expectedFrom []generic.KeyValue[SymbolRange, State]
@@ -84,14 +91,16 @@ func TestDFATransitionTable(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		trans          map[State][]rangeState
-		equalTests     []equalTest
-		addTests       []addTest
-		nextTests      []nextTest
-		fromTests      []fromTest
-		expectedAll    []transition
-		expectedString string
+		name                 string
+		trans                map[State][]rangeState
+		equalTests           []equalTest
+		addTests             []addTest
+		nextTests            []nextTest
+		nextOnRangeTests     []nextOnRangeTest
+		fromTests            []fromTest
+		expectedAll          []transition
+		expectedSymbolRanges []SymbolRange
+		expectedString       string
 	}{
 		{
 			name: "CurrentEndOnLastEnd_SameStates",
@@ -167,6 +176,29 @@ func TestDFATransitionTable(t *testing.T) {
 				{s: 0, a: '|', expectedNext: -1, expectedOK: false},
 				{s: 0, a: 'ω', expectedNext: -1, expectedOK: false},
 			},
+			nextOnRangeTests: []nextOnRangeTest{
+				{
+					s:             0,
+					r:             SymbolRange{'ε', 'ω'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s:             1,
+					r:             SymbolRange{'A', 'Z'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s: 0,
+					r: SymbolRange{'A', 'z'},
+					expectedPairs: []rangeState{
+						{SymbolRange{'A', 'Z'}, 30},
+						{SymbolRange{'a', 'z'}, 10},
+					},
+					expectedOK: true,
+				},
+			},
 			fromTests: []fromTest{
 				{
 					s: 0,
@@ -185,6 +217,13 @@ func TestDFATransitionTable(t *testing.T) {
 				{0, SymbolRange{'A', 'Z'}, 30},
 				{0, SymbolRange{'a', 'z'}, 10},
 				{0, SymbolRange{'α', 'δ'}, 40},
+			},
+			expectedSymbolRanges: []SymbolRange{
+				{'+', '-'},
+				{'0', '9'},
+				{'A', 'Z'},
+				{'a', 'z'},
+				{'α', 'δ'},
 			},
 			expectedString: `Transitions:
   0 --[+..-]--> 20
@@ -284,6 +323,33 @@ func TestDFATransitionTable(t *testing.T) {
 				{s: 0, a: '|', expectedNext: -1, expectedOK: false},
 				{s: 0, a: 'ω', expectedNext: -1, expectedOK: false},
 			},
+			nextOnRangeTests: []nextOnRangeTest{
+				{
+					s:             0,
+					r:             SymbolRange{'ε', 'ω'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s:             1,
+					r:             SymbolRange{'A', 'Z'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s: 0,
+					r: SymbolRange{'A', 'z'},
+					expectedPairs: []rangeState{
+						{SymbolRange{'A', 'M'}, 30},
+						{SymbolRange{'N', 'O'}, 31},
+						{SymbolRange{'P', 'Z'}, 32},
+						{SymbolRange{'a', 'm'}, 10},
+						{SymbolRange{'n', 'o'}, 11},
+						{SymbolRange{'p', 'z'}, 12},
+					},
+					expectedOK: true,
+				},
+			},
 			fromTests: []fromTest{
 				{
 					s: 0,
@@ -310,6 +376,13 @@ func TestDFATransitionTable(t *testing.T) {
 				{0, SymbolRange{'n', 'o'}, 11},
 				{0, SymbolRange{'p', 'z'}, 12},
 				{0, SymbolRange{'α', 'δ'}, 40},
+			},
+			expectedSymbolRanges: []SymbolRange{
+				{'+', '-'},
+				{'0', '9'},
+				{'A', 'Z'},
+				{'a', 'z'},
+				{'α', 'δ'},
 			},
 			expectedString: `Transitions:
   0 --[+..-]--> 20
@@ -401,6 +474,29 @@ func TestDFATransitionTable(t *testing.T) {
 				{s: 0, a: '|', expectedNext: -1, expectedOK: false},
 				{s: 0, a: 'ω', expectedNext: -1, expectedOK: false},
 			},
+			nextOnRangeTests: []nextOnRangeTest{
+				{
+					s:             0,
+					r:             SymbolRange{'ε', 'ω'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s:             1,
+					r:             SymbolRange{'A', 'Z'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s: 0,
+					r: SymbolRange{'A', 'z'},
+					expectedPairs: []rangeState{
+						{SymbolRange{'A', 'Z'}, 30},
+						{SymbolRange{'a', 'z'}, 10},
+					},
+					expectedOK: true,
+				},
+			},
 			fromTests: []fromTest{
 				{
 					s: 0,
@@ -419,6 +515,13 @@ func TestDFATransitionTable(t *testing.T) {
 				{0, SymbolRange{'A', 'Z'}, 30},
 				{0, SymbolRange{'a', 'z'}, 10},
 				{0, SymbolRange{'α', 'δ'}, 40},
+			},
+			expectedSymbolRanges: []SymbolRange{
+				{'+', '-'},
+				{'0', '9'},
+				{'A', 'Z'},
+				{'a', 'z'},
+				{'α', 'δ'},
 			},
 			expectedString: `Transitions:
   0 --[+..-]--> 20
@@ -528,6 +631,37 @@ func TestDFATransitionTable(t *testing.T) {
 				{s: 0, a: '|', expectedNext: -1, expectedOK: false},
 				{s: 0, a: 'ω', expectedNext: -1, expectedOK: false},
 			},
+			nextOnRangeTests: []nextOnRangeTest{
+				{
+					s:             0,
+					r:             SymbolRange{'ε', 'ω'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s:             1,
+					r:             SymbolRange{'A', 'Z'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s: 0,
+					r: SymbolRange{'A', 'z'},
+					expectedPairs: []rangeState{
+						{SymbolRange{'A', 'H'}, 30},
+						{SymbolRange{'I', 'M'}, 31},
+						{SymbolRange{'N', 'Q'}, 30},
+						{SymbolRange{'R', 'U'}, 31},
+						{SymbolRange{'V', 'Z'}, 32},
+						{SymbolRange{'a', 'h'}, 10},
+						{SymbolRange{'i', 'm'}, 11},
+						{SymbolRange{'n', 'q'}, 10},
+						{SymbolRange{'r', 'u'}, 11},
+						{SymbolRange{'v', 'z'}, 12},
+					},
+					expectedOK: true,
+				},
+			},
 			fromTests: []fromTest{
 				{
 					s: 0,
@@ -562,6 +696,13 @@ func TestDFATransitionTable(t *testing.T) {
 				{0, SymbolRange{'r', 'u'}, 11},
 				{0, SymbolRange{'v', 'z'}, 12},
 				{0, SymbolRange{'α', 'δ'}, 40},
+			},
+			expectedSymbolRanges: []SymbolRange{
+				{'+', '-'},
+				{'0', '9'},
+				{'A', 'Z'},
+				{'a', 'z'},
+				{'α', 'δ'},
 			},
 			expectedString: `Transitions:
   0 --[+..-]--> 20
@@ -659,6 +800,29 @@ func TestDFATransitionTable(t *testing.T) {
 				{s: 0, a: '|', expectedNext: -1, expectedOK: false},
 				{s: 0, a: 'ω', expectedNext: -1, expectedOK: false},
 			},
+			nextOnRangeTests: []nextOnRangeTest{
+				{
+					s:             0,
+					r:             SymbolRange{'ε', 'ω'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s:             1,
+					r:             SymbolRange{'A', 'Z'},
+					expectedPairs: nil,
+					expectedOK:    false,
+				},
+				{
+					s: 0,
+					r: SymbolRange{'A', 'z'},
+					expectedPairs: []rangeState{
+						{SymbolRange{'A', 'Z'}, 30},
+						{SymbolRange{'a', 'z'}, 10},
+					},
+					expectedOK: true,
+				},
+			},
 			fromTests: []fromTest{
 				{
 					s: 0,
@@ -677,6 +841,13 @@ func TestDFATransitionTable(t *testing.T) {
 				{0, SymbolRange{'A', 'Z'}, 30},
 				{0, SymbolRange{'a', 'z'}, 10},
 				{0, SymbolRange{'α', 'δ'}, 40},
+			},
+			expectedSymbolRanges: []SymbolRange{
+				{'+', '-'},
+				{'0', '9'},
+				{'A', 'Z'},
+				{'a', 'z'},
+				{'α', 'δ'},
 			},
 			expectedString: `Transitions:
   0 --[+..-]--> 20
@@ -712,8 +883,18 @@ func TestDFATransitionTable(t *testing.T) {
 			t.Run("Next", func(t *testing.T) {
 				for _, tc := range tc.nextTests {
 					state, ok := m.Next(tc.s, tc.a)
+
 					assert.Equal(t, tc.expectedOK, ok)
 					assert.Equal(t, tc.expectedNext, state, "From state %s on symbol %q expected %d, but got %d", tc.s, tc.a, tc.expectedNext, state)
+				}
+			})
+
+			t.Run("NextOnRange", func(t *testing.T) {
+				for _, tc := range tc.nextOnRangeTests {
+					pairs, ok := m.NextOnRange(tc.s, tc.r)
+
+					assert.Equal(t, tc.expectedOK, ok)
+					assert.Equal(t, tc.expectedPairs, pairs)
 				}
 			})
 
@@ -733,6 +914,11 @@ func TestDFATransitionTable(t *testing.T) {
 				}
 
 				assert.Equal(t, tc.expectedAll, all)
+			})
+
+			t.Run("SymbolRanges", func(t *testing.T) {
+				symbols := m.SymbolRanges()
+				assert.Equal(t, tc.expectedSymbolRanges, symbols)
 			})
 
 			t.Run("String", func(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/generic"
 )
 
@@ -59,8 +60,8 @@ type DFA struct {
 	trans *dfaTransitionTable
 
 	// Derived values calculated lazily
-	states  States
-	symbols Symbols
+	states  []State
+	symbols []SymbolRange
 }
 
 // String implements the fmt.Stringer interface.
@@ -91,11 +92,13 @@ func (d *DFA) Clone() *DFA {
 	}
 
 	if d.states != nil {
-		dd.states = d.states.Clone()
+		dd.states = make([]State, len(d.states))
+		copy(dd.states, d.states)
 	}
 
 	if d.symbols != nil {
-		dd.symbols = d.symbols.Clone()
+		dd.symbols = make([]SymbolRange, len(d.symbols))
+		copy(dd.symbols, d.symbols)
 	}
 
 	return dd
@@ -122,33 +125,28 @@ func (d *DFA) Final() []State {
 func (d *DFA) States() []State {
 	// Lazy initialization
 	if d.states == nil {
-		d.states = NewStates(d.start).Union(d.final)
+		states := NewStates(d.start).Union(d.final)
 		for s, pairs := range d.trans.All() {
-			d.states.Add(s)
+			states.Add(s)
 			for _, next := range pairs {
-				d.states.Add(next)
+				states.Add(next)
 			}
 		}
+
+		d.states = generic.Collect1(states.All())
 	}
 
-	return generic.Collect1(d.states.All())
+	return d.states
 }
 
-// Symbols returns all symbols in the DFA.
-func (d *DFA) Symbols() []Symbol {
+// Symbols returns all symbol ranges in the DFA.
+func (d *DFA) Symbols() []SymbolRange {
 	// Lazy initialization
 	if d.symbols == nil {
-		d.symbols = NewSymbols()
-		for _, pairs := range d.trans.All() {
-			for r := range pairs {
-				for a := r.Start; a <= r.End; a++ {
-					d.symbols.Add(a)
-				}
-			}
-		}
+		d.symbols = d.trans.SymbolRanges()
 	}
 
-	return generic.Collect1(d.symbols.All())
+	return d.symbols
 }
 
 // Transitions returns all transitions in the DFA.
@@ -159,4 +157,37 @@ func (d *DFA) Transitions() iter.Seq2[State, iter.Seq2[SymbolRange, State]] {
 // TransitionsFrom returns all transitions from the given state in the DFA.
 func (d *DFA) TransitionsFrom(s State) iter.Seq2[SymbolRange, State] {
 	return d.trans.From(s)
+}
+
+// DOT generates a DOT representation of the DFA transition graph for visualization.
+func (d *DFA) DOT() string {
+	graph := dot.NewGraph(false, true, false, "DFA", dot.RankDirLR, "", "", dot.ShapeCircle)
+
+	for _, s := range d.States() {
+		name := fmt.Sprintf("%d", s)
+		label := fmt.Sprintf("%d", s)
+
+		if s == d.start {
+			graph.AddNode(dot.NewNode("start", "", "", "", dot.StyleInvis, "", "", ""))
+			graph.AddEdge(dot.NewEdge("start", name, dot.EdgeTypeDirected, "", "", "", "", "", ""))
+		}
+
+		var shape dot.Shape
+		if d.final.Contains(s) {
+			shape = dot.ShapeDoubleCircle
+		}
+
+		graph.AddNode(dot.NewNode(name, "", label, "", "", shape, "", ""))
+	}
+
+	for s, pairs := range d.trans.All() {
+		for r, next := range pairs {
+			from := fmt.Sprintf("%d", s)
+			to := fmt.Sprintf("%d", next)
+
+			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", r.String(), "", "", "", ""))
+		}
+	}
+
+	return graph.DOT()
 }

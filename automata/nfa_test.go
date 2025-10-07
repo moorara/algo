@@ -9,6 +9,7 @@ import (
 )
 
 var testNFA = []*NFA{
+	// (a+|b+)
 	{
 		start: 0,
 		final: NewStates(2, 4),
@@ -28,6 +29,70 @@ var testNFA = []*NFA{
 				},
 				4: {
 					{SymbolRange{Start: 'b', End: 'b'}, NewStates(4)},
+				},
+			},
+		),
+	},
+	// ab+|ba+
+	{
+		start: 0,
+		final: NewStates(2, 4),
+		trans: newNFATransitionTable(
+			map[State][]rangeStates{
+				0: {
+					{SymbolRange{Start: 'a', End: 'a'}, NewStates(1)},
+					{SymbolRange{Start: 'b', End: 'b'}, NewStates(3)},
+				},
+				1: {
+					{SymbolRange{Start: 'b', End: 'b'}, NewStates(2)},
+				},
+				2: {
+					{SymbolRange{Start: 'b', End: 'b'}, NewStates(2)},
+				},
+				3: {
+					{SymbolRange{Start: 'a', End: 'a'}, NewStates(4)},
+				},
+				4: {
+					{SymbolRange{Start: 'a', End: 'a'}, NewStates(4)},
+				},
+			},
+		),
+	},
+	// (a|b)*abb
+	{
+		start: 0,
+		final: NewStates(10),
+		trans: newNFATransitionTable(
+			map[State][]rangeStates{
+				0: {
+					{SymbolRange{Start: E, End: E}, NewStates(1, 7)},
+				},
+				1: {
+					{SymbolRange{Start: E, End: E}, NewStates(2, 4)},
+				},
+				2: {
+					{SymbolRange{Start: 'a', End: 'a'}, NewStates(3)},
+				},
+				3: {
+					{SymbolRange{Start: E, End: E}, NewStates(6)},
+				},
+				4: {
+					{SymbolRange{Start: 'b', End: 'b'}, NewStates(5)},
+				},
+				5: {
+					{SymbolRange{Start: E, End: E}, NewStates(6)},
+				},
+				6: {
+					{SymbolRange{Start: E, End: E}, NewStates(1, 7)},
+				},
+				7: {
+					{SymbolRange{Start: 'a', End: 'a'}, NewStates(8)},
+				},
+				8: {
+					{SymbolRange{Start: 'b', End: 'b'}, NewStates(9)},
+				},
+				9: {
+					{SymbolRange{Start: 'b', End: 'b'}, NewStates(10)},
 				},
 			},
 		),
@@ -103,8 +168,8 @@ Transitions:
 
 func TestNFA_Clone(t *testing.T) {
 	nfa := testNFA[0].Clone()
-	nfa.states = NewStates(0, 1, 2, 3, 4)
-	nfa.symbols = NewSymbols('a', 'b')
+	nfa.states = []State{0, 1, 2, 3, 4}
+	nfa.symbols = []SymbolRange{{Start: 'a', End: 'b'}}
 
 	tests := []struct {
 		name string
@@ -243,12 +308,14 @@ func TestNFA_Symbols(t *testing.T) {
 	tests := []struct {
 		name            string
 		n               *NFA
-		expectedSymbols []Symbol
+		expectedSymbols []SymbolRange
 	}{
 		{
-			name:            "OK",
-			n:               testNFA[0],
-			expectedSymbols: []Symbol{'a', 'b'},
+			name: "OK",
+			n:    testNFA[0],
+			expectedSymbols: []SymbolRange{
+				{'a', 'b'},
+			},
 		},
 	}
 
@@ -319,6 +386,58 @@ func TestNFA_TransitionsFrom(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			from := generic.Collect2(tc.n.TransitionsFrom(tc.s))
 			assert.Equal(t, tc.expectedTransitionsFrom, from)
+		})
+	}
+}
+
+func TestNFA_DOT(t *testing.T) {
+	tests := []struct {
+		name        string
+		n           *NFA
+		expectedDOT string
+	}{
+		{
+			name: "OK",
+			n:    testNFA[2],
+			expectedDOT: `digraph "NFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1"];
+  2 [label="2"];
+  3 [label="3"];
+  4 [label="4"];
+  5 [label="5"];
+  6 [label="6"];
+  7 [label="7"];
+  8 [label="8"];
+  9 [label="9"];
+  10 [label="10", shape=doublecircle];
+
+  start -> 0 [];
+  0 -> 1 [label="[ε]"];
+  0 -> 7 [label="[ε]"];
+  1 -> 2 [label="[ε]"];
+  1 -> 4 [label="[ε]"];
+  2 -> 3 [label="[a]"];
+  3 -> 6 [label="[ε]"];
+  4 -> 5 [label="[b]"];
+  5 -> 6 [label="[ε]"];
+  6 -> 1 [label="[ε]"];
+  6 -> 7 [label="[ε]"];
+  7 -> 8 [label="[a]"];
+  8 -> 9 [label="[b]"];
+  9 -> 10 [label="[b]"];
+}`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedDOT, tc.n.DOT())
 		})
 	}
 }
