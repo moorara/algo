@@ -40,14 +40,14 @@ func TestNewSortedWithFormat(t *testing.T) {
 	tests := []struct {
 		name            string
 		compare         generic.CompareFunc[string]
-		format          StringFormat[string]
+		format          Format[string]
 		vals            []string
 		expectedMembers []string
 	}{
 		{
 			name:            "OK",
 			compare:         generic.NewCompareFunc[string](),
-			format:          defaultStringFormat[string],
+			format:          defaultFormat[string],
 			vals:            []string{"d", "c", "b", "a"},
 			expectedMembers: []string{"a", "b", "c", "d"},
 		},
@@ -78,7 +78,7 @@ func TestSorted_String(t *testing.T) {
 			s: &sorted[string]{
 				members: []string{},
 				compare: cmpFunc,
-				format:  defaultStringFormat[string],
+				format:  defaultFormat[string],
 			},
 			expectedString: "{}",
 		},
@@ -87,7 +87,7 @@ func TestSorted_String(t *testing.T) {
 			s: &sorted[string]{
 				members: []string{"a", "b", "c", "d"},
 				compare: cmpFunc,
-				format:  defaultStringFormat[string],
+				format:  defaultFormat[string],
 			},
 			expectedString: "{a, b, c, d}",
 		},

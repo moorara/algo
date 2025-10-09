@@ -13,7 +13,7 @@ import (
 type stable[T any] struct {
 	members []T
 	equal   generic.EqualFunc[T]
-	format  StringFormat[T]
+	format  Format[T]
 }
 
 // NewStable creates a new set that preserves the order in which members are added.
@@ -22,7 +22,7 @@ func NewStable[T any](equal generic.EqualFunc[T], vals ...T) Set[T] {
 	s := &stable[T]{
 		members: make([]T, 0),
 		equal:   equal,
-		format:  defaultStringFormat[T],
+		format:  defaultFormat[T],
 	}
 
 	s.Add(vals...)
@@ -31,7 +31,7 @@ func NewStable[T any](equal generic.EqualFunc[T], vals ...T) Set[T] {
 }
 
 // NewStableWithFormat creates a new stable set with a custom format for String method.
-func NewStableWithFormat[T any](equal generic.EqualFunc[T], format StringFormat[T], vals ...T) Set[T] {
+func NewStableWithFormat[T any](equal generic.EqualFunc[T], format Format[T], vals ...T) Set[T] {
 	s := &stable[T]{
 		members: make([]T, 0),
 		equal:   equal,

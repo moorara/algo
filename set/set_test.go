@@ -40,14 +40,14 @@ func TestNewWithFormat(t *testing.T) {
 	tests := []struct {
 		name            string
 		equal           generic.EqualFunc[string]
-		format          StringFormat[string]
+		format          Format[string]
 		vals            []string
 		expectedMembers []string
 	}{
 		{
 			name:            "OK",
 			equal:           generic.NewEqualFunc[string](),
-			format:          defaultStringFormat[string],
+			format:          defaultFormat[string],
 			vals:            []string{"a", "b", "c", "d"},
 			expectedMembers: []string{"a", "b", "c", "d"},
 		},
@@ -78,7 +78,7 @@ func TestSet_String(t *testing.T) {
 			s: &set[string]{
 				members: []string{},
 				equal:   eqFunc,
-				format:  defaultStringFormat[string],
+				format:  defaultFormat[string],
 			},
 			expectedString: "{}",
 		},
@@ -87,7 +87,7 @@ func TestSet_String(t *testing.T) {
 			s: &set[string]{
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
-				format:  defaultStringFormat[string],
+				format:  defaultFormat[string],
 			},
 			expectedString: "{a, b, c, d}",
 		},

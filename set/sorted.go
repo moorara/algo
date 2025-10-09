@@ -13,7 +13,7 @@ import (
 type sorted[T any] struct {
 	members []T
 	compare generic.CompareFunc[T]
-	format  StringFormat[T]
+	format  Format[T]
 }
 
 // NewSorted creates a new set that maintains its members in sorted order.
@@ -22,7 +22,7 @@ func NewSorted[T any](compare generic.CompareFunc[T], vals ...T) Set[T] {
 	s := &sorted[T]{
 		members: make([]T, 0),
 		compare: compare,
-		format:  defaultStringFormat[T],
+		format:  defaultFormat[T],
 	}
 
 	s.Add(vals...)
@@ -31,7 +31,7 @@ func NewSorted[T any](compare generic.CompareFunc[T], vals ...T) Set[T] {
 }
 
 // NewSortedWithFormat creates a new sorted set with a custom format for String method.
-func NewSortedWithFormat[T any](compare generic.CompareFunc[T], format StringFormat[T], vals ...T) Set[T] {
+func NewSortedWithFormat[T any](compare generic.CompareFunc[T], format Format[T], vals ...T) Set[T] {
 	s := &sorted[T]{
 		members: make([]T, 0),
 		compare: compare,

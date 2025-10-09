@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDefaultStringFormat(t *testing.T) {
+func TestDefaultFormat(t *testing.T) {
 	tests := []struct {
 		name           string
 		members        []int
@@ -36,7 +36,7 @@ func TestDefaultStringFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s := defaultStringFormat(tc.members)
+			s := defaultFormat(tc.members)
 
 			assert.Equal(t, tc.expectedString, s)
 		})

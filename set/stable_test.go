@@ -40,14 +40,14 @@ func TestNewStableWithFormat(t *testing.T) {
 	tests := []struct {
 		name            string
 		equal           generic.EqualFunc[string]
-		format          StringFormat[string]
+		format          Format[string]
 		vals            []string
 		expectedMembers []string
 	}{
 		{
 			name:            "OK",
 			equal:           generic.NewEqualFunc[string](),
-			format:          defaultStringFormat[string],
+			format:          defaultFormat[string],
 			vals:            []string{"b", "c", "a", "d"},
 			expectedMembers: []string{"b", "c", "a", "d"},
 		},
@@ -78,7 +78,7 @@ func TestStable_String(t *testing.T) {
 			s: &stable[string]{
 				members: []string{},
 				equal:   eqFunc,
-				format:  defaultStringFormat[string],
+				format:  defaultFormat[string],
 			},
 			expectedString: "{}",
 		},
@@ -87,7 +87,7 @@ func TestStable_String(t *testing.T) {
 			s: &stable[string]{
 				members: []string{"b", "d", "a", "c"},
 				equal:   eqFunc,
-				format:  defaultStringFormat[string],
+				format:  defaultFormat[string],
 			},
 			expectedString: "{b, d, a, c}",
 		},

@@ -33,7 +33,7 @@ type Set[T any] interface {
 type set[T any] struct {
 	members []T
 	equal   generic.EqualFunc[T]
-	format  StringFormat[T]
+	format  Format[T]
 }
 
 // New creates a new set that does not maintain any specific order for its members.
@@ -41,7 +41,7 @@ func New[T any](equal generic.EqualFunc[T], vals ...T) Set[T] {
 	s := &set[T]{
 		members: make([]T, 0),
 		equal:   equal,
-		format:  defaultStringFormat[T],
+		format:  defaultFormat[T],
 	}
 
 	s.Add(vals...)
@@ -50,7 +50,7 @@ func New[T any](equal generic.EqualFunc[T], vals ...T) Set[T] {
 }
 
 // NewWithFormat creates a new set with a custom format for String method.
-func NewWithFormat[T any](equal generic.EqualFunc[T], format StringFormat[T], vals ...T) Set[T] {
+func NewWithFormat[T any](equal generic.EqualFunc[T], format Format[T], vals ...T) Set[T] {
 	s := &set[T]{
 		members: make([]T, 0),
 		equal:   equal,
