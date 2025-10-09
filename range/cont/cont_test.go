@@ -1,0 +1,1345 @@
+package cont
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestRange(t *testing.T) {
+	type equalTest[T Continuous] struct {
+		rhs           Range[T]
+		expectedEqual bool
+	}
+
+	type adjacentTest[T Continuous] struct {
+		rr             Range[T]
+		expectedBefore bool
+		expectedAfter  bool
+	}
+
+	type intersectTest[T Continuous] struct {
+		rr             Range[T]
+		expectedOK     bool
+		expectedResult Range[T]
+	}
+
+	tests := []struct {
+		name           string
+		r              Range[float64]
+		expectedValid  bool
+		expectedString string
+		equalTests     []equalTest[float64]
+		adjacentTests  []adjacentTest[float64]
+		intersectTests []intersectTest[float64]
+	}{
+		{
+			name: "Invalid_HiLessThanLo",
+			r: Range[float64]{
+				Lo: Bound[float64]{4, false},
+				Hi: Bound[float64]{2, false},
+			},
+			expectedValid:  false,
+			expectedString: "[4, 2]",
+			equalTests:     nil,
+			adjacentTests:  nil,
+			intersectTests: nil,
+		},
+		{
+			name: "Invalid_EqualBounds_HiBoundOpen",
+			r: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{2, true},
+			},
+			expectedValid:  false,
+			expectedString: "[2, 2)",
+			equalTests:     nil,
+			adjacentTests:  nil,
+			intersectTests: nil,
+		},
+		{
+			name: "Invalid_EqualBounds_LoBoundOpen",
+			r: Range[float64]{
+				Lo: Bound[float64]{2, true},
+				Hi: Bound[float64]{2, false},
+			},
+			expectedValid:  false,
+			expectedString: "(2, 2]",
+			equalTests:     nil,
+			adjacentTests:  nil,
+			intersectTests: nil,
+		},
+		{
+			name: "Invalid_EqualBounds_BothBoundsOpen",
+			r: Range[float64]{
+				Lo: Bound[float64]{2, true},
+				Hi: Bound[float64]{2, true},
+			},
+			expectedValid:  false,
+			expectedString: "(2, 2)",
+			equalTests:     nil,
+			adjacentTests:  nil,
+			intersectTests: nil,
+		},
+		{
+			name: "EqualBounds",
+			r: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{2, false},
+			},
+			expectedValid:  true,
+			expectedString: "[2, 2]",
+			equalTests: []equalTest[float64]{
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedEqual: true,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedEqual: false,
+				},
+			},
+			adjacentTests: []adjacentTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedBefore: false,
+					expectedAfter:  true,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedBefore: true,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+			},
+			intersectTests: []intersectTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+			},
+		},
+		{
+			name: "DiffBounds_BothBoundsClosed",
+			r: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{4, false},
+			},
+			expectedValid:  true,
+			expectedString: "[2, 4]",
+			equalTests: []equalTest[float64]{
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedEqual: true,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedEqual: false,
+				},
+			},
+			adjacentTests: []adjacentTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedBefore: false,
+					expectedAfter:  true,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedBefore: true,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+			},
+			intersectTests: []intersectTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{4, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+			},
+		},
+		{
+			name: "DiffBounds_HiBoundOpen",
+			r: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{4, true},
+			},
+			expectedValid:  true,
+			expectedString: "[2, 4)",
+			equalTests: []equalTest[float64]{
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedEqual: true,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedEqual: false,
+				},
+			},
+			adjacentTests: []adjacentTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedBefore: false,
+					expectedAfter:  true,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedBefore: true,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+			},
+			intersectTests: []intersectTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+			},
+		},
+		{
+			name: "DiffBounds_LoBoundOpen",
+			r: Range[float64]{
+				Lo: Bound[float64]{2, true},
+				Hi: Bound[float64]{4, false},
+			},
+			expectedValid:  true,
+			expectedString: "(2, 4]",
+			equalTests: []equalTest[float64]{
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedEqual: true,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedEqual: false,
+				},
+			},
+			adjacentTests: []adjacentTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  true,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedBefore: true,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+			},
+			intersectTests: []intersectTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{4, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+			},
+		},
+		{
+			name: "DiffBounds_BothBoundsOpen",
+			r: Range[float64]{
+				Lo: Bound[float64]{2, true},
+				Hi: Bound[float64]{4, true},
+			},
+			expectedValid:  true,
+			expectedString: "(2, 4)",
+			equalTests: []equalTest[float64]{
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedEqual: false,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedEqual: true,
+				},
+				{
+					rhs: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedEqual: false,
+				},
+			},
+			adjacentTests: []adjacentTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  true,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedBefore: true,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedBefore: false,
+					expectedAfter:  false,
+				},
+			},
+			intersectTests: []intersectTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK: true,
+					expectedResult: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedOK:     false,
+					expectedResult: Range[float64]{},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		r := tc.r
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Run("Valid", func(t *testing.T) {
+				assert.Equal(t, tc.expectedValid, r.Valid())
+			})
+
+			t.Run("String", func(t *testing.T) {
+				assert.Equal(t, tc.expectedString, r.String())
+			})
+
+			for i, tc := range tc.adjacentTests {
+				t.Run(fmt.Sprintf("Adjacent/%d", i), func(t *testing.T) {
+					before, after := r.Adjacent(tc.rr)
+
+					assert.Equal(t, tc.expectedBefore, before)
+					assert.Equal(t, tc.expectedAfter, after)
+				})
+			}
+
+			for i, tc := range tc.equalTests {
+				t.Run(fmt.Sprintf("Equal/%d", i), func(t *testing.T) {
+					assert.Equal(t, tc.expectedEqual, r.Equal(tc.rhs))
+				})
+			}
+
+			for i, tc := range tc.intersectTests {
+				t.Run(fmt.Sprintf("Intersect/%d", i), func(t *testing.T) {
+					result, ok := r.Intersect(tc.rr)
+
+					assert.Equal(t, tc.expectedOK, ok)
+					assert.Equal(t, tc.expectedResult, result)
+				})
+			}
+		})
+	}
+}
