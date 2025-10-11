@@ -1,9 +1,7 @@
 // Package cont provides algorithms and data structures for continuous ranges.
 package cont
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // Continuous represents continuous numerical types.
 type Continuous interface {
@@ -95,4 +93,68 @@ func (r Range[T]) Intersect(rr Range[T]) (Range[T], bool) {
 	}
 
 	return Range[T]{}, false
+}
+
+// compareLoLo compares two low bounds.
+func compareLoLo[T Continuous](lhs, rhs Bound[T]) int {
+	if lhs.Val < rhs.Val {
+		return -1
+	} else if lhs.Val > rhs.Val {
+		return 1
+	} else {
+		if !lhs.Open && rhs.Open {
+			return -1
+		} else if lhs.Open && !rhs.Open {
+			return 1
+		} else {
+			return 0
+		}
+	}
+}
+
+// compareLoHi compares a low bound with a high bound.
+func compareLoHi[T Continuous](lhs, rhs Bound[T]) int {
+	if lhs.Val < rhs.Val {
+		return -1
+	} else if lhs.Val > rhs.Val {
+		return 1
+	} else {
+		if lhs.Open || rhs.Open {
+			return 1
+		} else {
+			return 0
+		}
+	}
+}
+
+// compareHiLo compares a high bound with a low bound.
+func compareHiLo[T Continuous](lhs, rhs Bound[T]) int {
+	if lhs.Val < rhs.Val {
+		return -1
+	} else if lhs.Val > rhs.Val {
+		return 1
+	} else {
+		if lhs.Open || rhs.Open {
+			return -1
+		} else {
+			return 0
+		}
+	}
+}
+
+// compareHiHi compares two high bounds.
+func compareHiHi[T Continuous](lhs, rhs Bound[T]) int {
+	if lhs.Val < rhs.Val {
+		return -1
+	} else if lhs.Val > rhs.Val {
+		return 1
+	} else {
+		if lhs.Open && !rhs.Open {
+			return -1
+		} else if !lhs.Open && rhs.Open {
+			return 1
+		} else {
+			return 0
+		}
+	}
 }

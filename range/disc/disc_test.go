@@ -97,9 +97,9 @@ func TestRange(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		r := tc.r
-
 		t.Run(tc.name, func(t *testing.T) {
+			r := tc.r
+
 			t.Run("Valid", func(t *testing.T) {
 				assert.Equal(t, tc.expectedValid, r.Valid())
 			})

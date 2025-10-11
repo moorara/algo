@@ -1343,3 +1343,134 @@ func TestRange(t *testing.T) {
 		})
 	}
 }
+
+func TestCompareFuncs(t *testing.T) {
+	type compareTest[T Continuous] struct {
+		lhs, rhs        Bound[T]
+		expectedCompare int
+	}
+
+	t.Run("compareLoLo", func(t *testing.T) {
+		tests := []compareTest[float64]{
+			{
+				lhs:             Bound[float64]{2, false},
+				rhs:             Bound[float64]{2, false},
+				expectedCompare: 0,
+			},
+			{
+				lhs:             Bound[float64]{2, false},
+				rhs:             Bound[float64]{2, true},
+				expectedCompare: -1,
+			},
+			{
+				lhs:             Bound[float64]{2, true},
+				rhs:             Bound[float64]{2, false},
+				expectedCompare: 1,
+			},
+			{
+				lhs:             Bound[float64]{2, true},
+				rhs:             Bound[float64]{2, true},
+				expectedCompare: 0,
+			},
+		}
+
+		for i, tc := range tests {
+			t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+				assert.Equal(t, tc.expectedCompare, compareLoLo(tc.lhs, tc.rhs))
+			})
+		}
+	})
+
+	t.Run("compareLoHi", func(t *testing.T) {
+		tests := []compareTest[float64]{
+			{
+				lhs:             Bound[float64]{2, false},
+				rhs:             Bound[float64]{2, false},
+				expectedCompare: 0,
+			},
+			{
+				lhs:             Bound[float64]{2, false},
+				rhs:             Bound[float64]{2, true},
+				expectedCompare: 1,
+			},
+			{
+				lhs:             Bound[float64]{2, true},
+				rhs:             Bound[float64]{2, false},
+				expectedCompare: 1,
+			},
+			{
+				lhs:             Bound[float64]{2, true},
+				rhs:             Bound[float64]{2, true},
+				expectedCompare: 1,
+			},
+		}
+
+		for i, tc := range tests {
+			t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+				assert.Equal(t, tc.expectedCompare, compareLoHi(tc.lhs, tc.rhs))
+			})
+		}
+	})
+
+	t.Run("compareHiLo", func(t *testing.T) {
+		tests := []compareTest[float64]{
+			{
+				lhs:             Bound[float64]{2, false},
+				rhs:             Bound[float64]{2, false},
+				expectedCompare: 0,
+			},
+			{
+				lhs:             Bound[float64]{2, false},
+				rhs:             Bound[float64]{2, true},
+				expectedCompare: -1,
+			},
+			{
+				lhs:             Bound[float64]{2, true},
+				rhs:             Bound[float64]{2, false},
+				expectedCompare: -1,
+			},
+			{
+				lhs:             Bound[float64]{2, true},
+				rhs:             Bound[float64]{2, true},
+				expectedCompare: -1,
+			},
+		}
+
+		for i, tc := range tests {
+			t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+				assert.Equal(t, tc.expectedCompare, compareHiLo(tc.lhs, tc.rhs))
+			})
+		}
+	})
+
+	t.Run("compareHiHi", func(t *testing.T) {
+		tests := []compareTest[float64]{
+			{
+				lhs:             Bound[float64]{2, false},
+				rhs:             Bound[float64]{2, false},
+				expectedCompare: 0,
+			},
+			{
+				lhs:             Bound[float64]{2, false},
+				rhs:             Bound[float64]{2, true},
+				expectedCompare: 1,
+			},
+			{
+				lhs:             Bound[float64]{2, true},
+				rhs:             Bound[float64]{2, false},
+				expectedCompare: -1,
+			},
+			{
+				lhs:             Bound[float64]{2, true},
+				rhs:             Bound[float64]{2, true},
+				expectedCompare: 0,
+			},
+		}
+
+		for i, tc := range tests {
+			t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+				assert.Equal(t, tc.expectedCompare, compareHiHi(tc.lhs, tc.rhs))
+			})
+		}
+	})
+}

@@ -1,7 +1,6 @@
 package disc
 
 import (
-	"bytes"
 	"fmt"
 	"iter"
 	"slices"
@@ -18,16 +17,18 @@ type rangeValue[K Discrete, V any] struct {
 // RangeMap represents a map from discrete ranges to values.
 // The ranges are always non-overlapping and sorted.
 type RangeMap[K Discrete, V any] struct {
-	pairs []rangeValue[K, V]
-	eqVal generic.EqualFunc[V]
+	pairs  []rangeValue[K, V]
+	eqVal  generic.EqualFunc[V]
+	format FormatMap[K, V]
 }
 
 // NewRangeMap creates a new range map from the given ranges.
 // It panics if any of the given ranges are invalid.
 func NewRangeMap[K Discrete, V any](eqVal generic.EqualFunc[V], pairs map[Range[K]]V) *RangeMap[K, V] {
 	m := &RangeMap[K, V]{
-		pairs: make([]rangeValue[K, V], 0, len(pairs)),
-		eqVal: eqVal,
+		pairs:  make([]rangeValue[K, V], 0, len(pairs)),
+		eqVal:  eqVal,
+		format: defaultFormatMap[K, V],
 	}
 
 	for r, v := range pairs {
@@ -187,16 +188,7 @@ func (m *RangeMap[K, V]) mergeAndSplitRanges() {
 
 // String implements the fmt.Stringer interface.
 func (m *RangeMap[K, V]) String() string {
-	var b bytes.Buffer
-
-	for _, p := range m.pairs {
-		fmt.Fprintf(&b, "%s:%v ", p.Range, p.Value)
-	}
-
-	// Remove the last space
-	b.Truncate(b.Len() - 1)
-
-	return b.String()
+	return m.format(m.All())
 }
 
 // Clone implements the generic.Cloner interface.
@@ -237,8 +229,8 @@ func (m *RangeMap[K, V]) Get(k K) (Range[K], V, bool) {
 	return Range[K]{}, zero, false
 }
 
-// Add inserts the given ranges to the range map.
-// It panics if any of the given ranges are invalid.
+// Add inserts the given range to the range map.
+// It panics if any of the given range are invalid.
 func (m *RangeMap[K, V]) Add(k Range[K], v V) {
 	p := rangeValue[K, V]{
 		Range: k,
@@ -262,6 +254,18 @@ func (m *RangeMap[K, V]) Add(k Range[K], v V) {
 
 	// Merge and/or split overlapping and adjacent ranges
 	m.mergeAndSplitRanges()
+}
+
+// Remove deletes the given range from the range map.
+// It panics if any of the given range are invalid.
+func (m *RangeMap[K, V]) Remove(k Range[K]) {
+	if !k.Valid() {
+		panic(fmt.Sprintf("invalid range: %s", k))
+	}
+
+	for i, _ := m.searchRanges(k.Lo); i < len(m.pairs); i++ {
+
+	}
 }
 
 // All returns an iterator over all range-value pairs in the range map.

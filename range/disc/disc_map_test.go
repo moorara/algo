@@ -547,7 +547,7 @@ func TestRangeMap(t *testing.T) {
 				})
 			}
 
-			t.Run("From", func(t *testing.T) {
+			t.Run("All", func(t *testing.T) {
 				all := generic.Collect2(m.All())
 				assert.Equal(t, tc.expectedAll, all)
 			})

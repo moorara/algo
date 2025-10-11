@@ -303,7 +303,7 @@ func TestRangeList(t *testing.T) {
 				})
 			}
 
-			t.Run("From", func(t *testing.T) {
+			t.Run("All", func(t *testing.T) {
 				all := generic.Collect1(l.All())
 				assert.Equal(t, tc.expectedAll, all)
 			})

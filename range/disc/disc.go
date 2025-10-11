@@ -1,9 +1,7 @@
 // Package disc provides algorithms and data structures for discrete ranges.
 package disc
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // Discrete represents discrete numerical types.
 type Discrete interface {

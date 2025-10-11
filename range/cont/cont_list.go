@@ -1,21 +1,21 @@
-package disc
+package cont
 
 import (
-	"bytes"
 	"fmt"
 	"iter"
 	"slices"
 )
 
-// RangeList represents a list of discrete ranges.
+// RangeList represents a list of continuous ranges.
 // The ranges are always non-overlapping and sorted.
-type RangeList[T Discrete] struct {
+type RangeList[T Continuous] struct {
 	ranges []Range[T]
+	format FormatList[T]
 }
 
 // NewRangeList creates a new range list from the given ranges.
 // It panics if any of the given ranges are invalid.
-func NewRangeList[T Discrete](rs ...Range[T]) *RangeList[T] {
+func NewRangeList[T Continuous](rs ...Range[T]) *RangeList[T] {
 	for _, r := range rs {
 		if !r.Valid() {
 			panic(fmt.Sprintf("invalid range: %s", r))
@@ -24,11 +24,12 @@ func NewRangeList[T Discrete](rs ...Range[T]) *RangeList[T] {
 
 	l := &RangeList[T]{
 		ranges: rs,
+		format: defaultFormatList[T],
 	}
 
 	// Sort ranges by their low bound ascending
 	slices.SortFunc(l.ranges, func(lhs, rhs Range[T]) int {
-		return int(lhs.Lo) - int(rhs.Lo)
+		return compareLoLo(lhs.Lo, rhs.Lo)
 	})
 
 	// Merge overlapping and adjacent ranges
@@ -39,15 +40,15 @@ func NewRangeList[T Discrete](rs ...Range[T]) *RangeList[T] {
 
 // searchRanges performs a binary search to find the index of the range that contains the given value.
 // If found, it returns the index and true; otherwise, it returns the insertion point and false.
-func (l *RangeList[T]) searchRanges(v T) (int, bool) {
+func (l *RangeList[T]) searchRanges(v Bound[T]) (int, bool) {
 	lo, hi := 0, len(l.ranges)-1
 
 	for lo <= hi {
 		mid := (lo + hi) / 2
 
-		if v < l.ranges[mid].Lo {
+		if compareLoLo(v, l.ranges[mid].Lo) < 0 {
 			hi = mid - 1
-		} else if l.ranges[mid].Hi < v {
+		} else if compareHiLo(l.ranges[mid].Hi, v) < 0 {
 			lo = mid + 1
 		} else {
 			return mid, true
@@ -69,8 +70,8 @@ func (l *RangeList[T]) mergeRanges() {
 
 		last := &merged[len(merged)-1]
 
-		if curr.Lo <= last.Hi {
-			if curr.Hi > last.Hi {
+		if compareLoHi(curr.Lo, last.Hi) <= 0 {
+			if compareHiHi(curr.Hi, last.Hi) > 0 {
 				// Case curr.Lo < last.Hi && curr.Hi > last.Hi
 				//
 				//   last:  |_____|_____|     |    ---->    |_________________|
@@ -102,16 +103,7 @@ func (l *RangeList[T]) mergeRanges() {
 
 // String implements the fmt.Stringer interface.
 func (l *RangeList[T]) String() string {
-	var b bytes.Buffer
-
-	for _, r := range l.ranges {
-		fmt.Fprintf(&b, "%s ", r)
-	}
-
-	// Remove the last space
-	b.Truncate(b.Len() - 1)
-
-	return b.String()
+	return l.format(l.All())
 }
 
 // Clone implements the generic.Cloner interface.
@@ -143,7 +135,7 @@ func (l *RangeList[T]) Equal(rhs *RangeList[T]) bool {
 // Get returns the range that includes the given value.
 // The second return value indicates if such a range exists.
 func (l *RangeList[T]) Get(v T) (Range[T], bool) {
-	if i, ok := l.searchRanges(v); ok {
+	if i, ok := l.searchRanges(Bound[T]{v, false}); ok {
 		return l.ranges[i], true
 	}
 
@@ -171,6 +163,20 @@ func (l *RangeList[T]) Add(rs ...Range[T]) {
 
 		// Merge overlapping and adjacent ranges
 		l.mergeRanges()
+	}
+}
+
+// Remove deletes the given ranges from the range list.
+// It panics if any of the given ranges are invalid.
+func (l *RangeList[T]) Remove(rs ...Range[T]) {
+	for _, r := range rs {
+		if !r.Valid() {
+			panic(fmt.Sprintf("invalid range: %s", r))
+		}
+
+		for i, _ := l.searchRanges(r.Lo); i < len(l.ranges); i++ {
+
+		}
 	}
 }
 
