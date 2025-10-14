@@ -25,6 +25,11 @@ func TestRange(t *testing.T) {
 		expectedResult Range[T]
 	}
 
+	type subtractTest[T Continuous] struct {
+		rr             Range[T]
+		expectedResult []Range[T]
+	}
+
 	tests := []struct {
 		name           string
 		r              Range[float64]
@@ -33,6 +38,7 @@ func TestRange(t *testing.T) {
 		equalTests     []equalTest[float64]
 		adjacentTests  []adjacentTest[float64]
 		intersectTests []intersectTest[float64]
+		subtractTests  []subtractTest[float64]
 	}{
 		{
 			name: "Invalid_HiLessThanLo",
@@ -45,6 +51,7 @@ func TestRange(t *testing.T) {
 			equalTests:     nil,
 			adjacentTests:  nil,
 			intersectTests: nil,
+			subtractTests:  nil,
 		},
 		{
 			name: "Invalid_EqualBounds_HiBoundOpen",
@@ -57,6 +64,7 @@ func TestRange(t *testing.T) {
 			equalTests:     nil,
 			adjacentTests:  nil,
 			intersectTests: nil,
+			subtractTests:  nil,
 		},
 		{
 			name: "Invalid_EqualBounds_LoBoundOpen",
@@ -69,6 +77,7 @@ func TestRange(t *testing.T) {
 			equalTests:     nil,
 			adjacentTests:  nil,
 			intersectTests: nil,
+			subtractTests:  nil,
 		},
 		{
 			name: "Invalid_EqualBounds_BothBoundsOpen",
@@ -81,6 +90,7 @@ func TestRange(t *testing.T) {
 			equalTests:     nil,
 			adjacentTests:  nil,
 			intersectTests: nil,
+			subtractTests:  nil,
 		},
 		{
 			name: "EqualBounds",
@@ -104,27 +114,6 @@ func TestRange(t *testing.T) {
 						Hi: Bound[float64]{2, false},
 					},
 					expectedEqual: true,
-				},
-				{
-					rhs: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{2, true},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{2, false},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{2, true},
-					},
-					expectedEqual: false,
 				},
 				{
 					rhs: Range[float64]{
@@ -260,6 +249,77 @@ func TestRange(t *testing.T) {
 					},
 					expectedOK:     false,
 					expectedResult: Range[float64]{},
+				},
+			},
+			subtractTests: []subtractTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+					},
 				},
 			},
 		},
@@ -525,6 +585,408 @@ func TestRange(t *testing.T) {
 					expectedResult: Range[float64]{},
 				},
 			},
+			subtractTests: []subtractTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+						{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, true},
+						},
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, true},
+						},
+						{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, false},
+						},
+						{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, true},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "DiffBounds_HiBoundOpen",
@@ -783,6 +1245,386 @@ func TestRange(t *testing.T) {
 					},
 					expectedOK:     false,
 					expectedResult: Range[float64]{},
+				},
+			},
+			subtractTests: []subtractTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, true},
+						},
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, true},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
 				},
 			},
 		},
@@ -1045,6 +1887,386 @@ func TestRange(t *testing.T) {
 					expectedResult: Range[float64]{},
 				},
 			},
+			subtractTests: []subtractTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, true},
+						},
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, true},
+						},
+						{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
+						{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, true},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "DiffBounds_BothBoundsOpen",
@@ -1302,6 +2524,363 @@ func TestRange(t *testing.T) {
 					expectedResult: Range[float64]{},
 				},
 			},
+			subtractTests: []subtractTest[float64]{
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{0, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{1, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{1, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{2, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{2, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: nil,
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{3, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, true},
+						},
+						{
+							Lo: Bound[float64]{3, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{4, true},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{3, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{4, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{4, true},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{5, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, false},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+				{
+					rr: Range[float64]{
+						Lo: Bound[float64]{5, true},
+						Hi: Bound[float64]{6, false},
+					},
+					expectedResult: []Range[float64]{
+						{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -1334,10 +2913,18 @@ func TestRange(t *testing.T) {
 
 			for i, tc := range tc.intersectTests {
 				t.Run(fmt.Sprintf("Intersect/%d", i), func(t *testing.T) {
-					result, ok := r.Intersect(tc.rr)
+					res, ok := r.Intersect(tc.rr)
 
 					assert.Equal(t, tc.expectedOK, ok)
-					assert.Equal(t, tc.expectedResult, result)
+					assert.Equal(t, tc.expectedResult, res)
+				})
+			}
+
+			for i, tc := range tc.subtractTests {
+				t.Run(fmt.Sprintf("Subtract/%d", i), func(t *testing.T) {
+					res := r.Subtract(tc.rr)
+
+					assert.Equal(t, tc.expectedResult, res)
 				})
 			}
 		})

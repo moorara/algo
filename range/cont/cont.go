@@ -47,6 +47,10 @@ func (r Range[T]) String() string {
 
 // Equal implements the generic.Equaler interface.
 func (r Range[T]) Equal(rhs Range[T]) bool {
+	if !rhs.Valid() {
+		panic(fmt.Sprintf("invalid range: %s", rhs))
+	}
+
 	return r.Lo.Val == rhs.Lo.Val && r.Lo.Open == rhs.Lo.Open &&
 		r.Hi.Val == rhs.Hi.Val && r.Hi.Open == rhs.Hi.Open
 }
@@ -55,6 +59,10 @@ func (r Range[T]) Equal(rhs Range[T]) bool {
 // The first return value indicates if r is immediately before rr.
 // The second return value indicates if r is immediately after rr.
 func (r Range[T]) Adjacent(rr Range[T]) (bool, bool) {
+	if !rr.Valid() {
+		panic(fmt.Sprintf("invalid range: %s", rr))
+	}
+
 	return r.Hi.Val == rr.Lo.Val && r.Hi.Open != rr.Lo.Open,
 		rr.Hi.Val == r.Lo.Val && rr.Hi.Open != r.Lo.Open
 }
@@ -62,6 +70,10 @@ func (r Range[T]) Adjacent(rr Range[T]) (bool, bool) {
 // Intersect returns the intersection of two continuous ranges.
 // The second return value indicates if the intersection is non-empty.
 func (r Range[T]) Intersect(rr Range[T]) (Range[T], bool) {
+	if !rr.Valid() {
+		panic(fmt.Sprintf("invalid range: %s", rr))
+	}
+
 	res := Range[T]{}
 
 	// Determine the low bound (max of low bounds)
@@ -93,6 +105,54 @@ func (r Range[T]) Intersect(rr Range[T]) (Range[T], bool) {
 	}
 
 	return Range[T]{}, false
+}
+
+// Subtract returns the subtraction of two discrete ranges.
+// The second return value indicates if the subtraction is non-empty.
+func (r Range[T]) Subtract(rr Range[T]) []Range[T] {
+	if !rr.Valid() {
+		panic(fmt.Sprintf("invalid range: %s", rr))
+	}
+
+	var res []Range[T]
+
+	left := Range[T]{
+		Lo: r.Lo,
+	}
+
+	// Determine the high bound of the left part
+	if compareHiLo(r.Hi, rr.Lo) < 0 {
+		left.Hi = r.Hi
+	} else {
+		left.Hi = Bound[T]{
+			Val:  rr.Lo.Val,
+			Open: !rr.Lo.Open,
+		}
+	}
+
+	if left.Valid() {
+		res = append(res, left)
+	}
+
+	right := Range[T]{
+		Hi: r.Hi,
+	}
+
+	// Determine the low bound of the right part
+	if compareLoHi(r.Lo, rr.Hi) > 0 {
+		right.Lo = r.Lo
+	} else {
+		right.Lo = Bound[T]{
+			Val:  rr.Hi.Val,
+			Open: !rr.Hi.Open,
+		}
+	}
+
+	if right.Valid() {
+		res = append(res, right)
+	}
+
+	return res
 }
 
 // compareLoLo compares two low bounds.

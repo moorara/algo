@@ -25,6 +25,11 @@ func TestRange(t *testing.T) {
 		expectedResult Range[T]
 	}
 
+	type subtractTest[T Discrete] struct {
+		rr             Range[T]
+		expectedResult []Range[T]
+	}
+
 	tests := []struct {
 		name           string
 		r              Range[int]
@@ -33,6 +38,7 @@ func TestRange(t *testing.T) {
 		equalTests     []equalTest[int]
 		adjacentTests  []adjacentTest[int]
 		intersectTests []intersectTest[int]
+		subtractTests  []subtractTest[int]
 	}{
 		{
 			name:           "Invalid",
@@ -42,6 +48,7 @@ func TestRange(t *testing.T) {
 			equalTests:     nil,
 			adjacentTests:  nil,
 			intersectTests: nil,
+			subtractTests:  nil,
 		},
 		{
 			name:           "EqualBounds",
@@ -64,6 +71,13 @@ func TestRange(t *testing.T) {
 				{rr: Range[int]{1, 3}, expectedOK: true, expectedResult: Range[int]{2, 2}},
 				{rr: Range[int]{2, 2}, expectedOK: true, expectedResult: Range[int]{2, 2}},
 				{rr: Range[int]{3, 4}, expectedOK: false, expectedResult: Range[int]{}},
+			},
+			subtractTests: []subtractTest[int]{
+				{rr: Range[int]{0, 1}, expectedResult: []Range[int]{{2, 2}}},
+				{rr: Range[int]{1, 2}, expectedResult: nil},
+				{rr: Range[int]{2, 2}, expectedResult: nil},
+				{rr: Range[int]{2, 3}, expectedResult: nil},
+				{rr: Range[int]{3, 4}, expectedResult: []Range[int]{{2, 2}}},
 			},
 		},
 		{
@@ -92,6 +106,25 @@ func TestRange(t *testing.T) {
 				{rr: Range[int]{2, 4}, expectedOK: true, expectedResult: Range[int]{2, 4}},
 				{rr: Range[int]{3, 5}, expectedOK: true, expectedResult: Range[int]{3, 4}},
 				{rr: Range[int]{5, 6}, expectedOK: false, expectedResult: Range[int]{}},
+			},
+			subtractTests: []subtractTest[int]{
+				{rr: Range[int]{0, 1}, expectedResult: []Range[int]{{2, 4}}},
+				{rr: Range[int]{1, 1}, expectedResult: []Range[int]{{2, 4}}},
+				{rr: Range[int]{1, 2}, expectedResult: []Range[int]{{3, 4}}},
+				{rr: Range[int]{1, 3}, expectedResult: []Range[int]{{4, 4}}},
+				{rr: Range[int]{1, 4}, expectedResult: nil},
+				{rr: Range[int]{1, 5}, expectedResult: nil},
+				{rr: Range[int]{2, 2}, expectedResult: []Range[int]{{3, 4}}},
+				{rr: Range[int]{2, 3}, expectedResult: []Range[int]{{4, 4}}},
+				{rr: Range[int]{2, 4}, expectedResult: nil},
+				{rr: Range[int]{2, 5}, expectedResult: nil},
+				{rr: Range[int]{3, 3}, expectedResult: []Range[int]{{2, 2}, {4, 4}}},
+				{rr: Range[int]{3, 4}, expectedResult: []Range[int]{{2, 2}}},
+				{rr: Range[int]{3, 5}, expectedResult: []Range[int]{{2, 2}}},
+				{rr: Range[int]{4, 4}, expectedResult: []Range[int]{{2, 3}}},
+				{rr: Range[int]{4, 5}, expectedResult: []Range[int]{{2, 3}}},
+				{rr: Range[int]{5, 5}, expectedResult: []Range[int]{{2, 4}}},
+				{rr: Range[int]{5, 6}, expectedResult: []Range[int]{{2, 4}}},
 			},
 		},
 	}
@@ -125,10 +158,18 @@ func TestRange(t *testing.T) {
 
 			for i, tc := range tc.intersectTests {
 				t.Run(fmt.Sprintf("Intersect/%d", i), func(t *testing.T) {
-					result, ok := r.Intersect(tc.rr)
+					res, ok := r.Intersect(tc.rr)
 
 					assert.Equal(t, tc.expectedOK, ok)
-					assert.Equal(t, tc.expectedResult, result)
+					assert.Equal(t, tc.expectedResult, res)
+				})
+			}
+
+			for i, tc := range tc.subtractTests {
+				t.Run(fmt.Sprintf("Subtract/%d", i), func(t *testing.T) {
+					res := r.Subtract(tc.rr)
+
+					assert.Equal(t, tc.expectedResult, res)
 				})
 			}
 		})

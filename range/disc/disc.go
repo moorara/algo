@@ -28,6 +28,10 @@ func (r Range[T]) String() string {
 
 // Equal implements the generic.Equaler interface.
 func (r Range[T]) Equal(rhs Range[T]) bool {
+	if !rhs.Valid() {
+		panic(fmt.Sprintf("invalid range: %s", rhs))
+	}
+
 	return r.Lo == rhs.Lo && r.Hi == rhs.Hi
 }
 
@@ -35,21 +39,58 @@ func (r Range[T]) Equal(rhs Range[T]) bool {
 // The first return value indicates if r is immediately before rr.
 // The second return value indicates if r is immediately after rr.
 func (r Range[T]) Adjacent(rr Range[T]) (bool, bool) {
+	if !rr.Valid() {
+		panic(fmt.Sprintf("invalid range: %s", rr))
+	}
+
 	return r.Hi+1 == rr.Lo, rr.Hi+1 == r.Lo
 }
 
 // Intersect returns the intersection of two discrete ranges.
 // The second return value indicates if the intersection is non-empty.
 func (r Range[T]) Intersect(rr Range[T]) (Range[T], bool) {
-	lo := max(r.Lo, rr.Lo)
-	hi := min(r.Hi, rr.Hi)
-
-	if hi < lo {
-		return Range[T]{}, false
+	if !rr.Valid() {
+		panic(fmt.Sprintf("invalid range: %s", rr))
 	}
 
-	return Range[T]{
-		Lo: lo,
-		Hi: hi,
-	}, true
+	res := Range[T]{
+		Lo: max(r.Lo, rr.Lo),
+		Hi: min(r.Hi, rr.Hi),
+	}
+
+	if res.Valid() {
+		return res, true
+	}
+
+	return Range[T]{}, false
+}
+
+// Subtract returns the subtraction of two discrete ranges.
+// The second return value indicates if the subtraction is non-empty.
+func (r Range[T]) Subtract(rr Range[T]) []Range[T] {
+	if !rr.Valid() {
+		panic(fmt.Sprintf("invalid range: %s", rr))
+	}
+
+	var res []Range[T]
+
+	left := Range[T]{
+		Lo: r.Lo,
+		Hi: min(r.Hi, rr.Lo-1),
+	}
+
+	if left.Valid() {
+		res = append(res, left)
+	}
+
+	right := Range[T]{
+		Lo: max(r.Lo, rr.Hi+1),
+		Hi: r.Hi,
+	}
+
+	if right.Valid() {
+		res = append(res, right)
+	}
+
+	return res
 }
