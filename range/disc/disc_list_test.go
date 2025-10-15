@@ -273,6 +273,32 @@ func TestRangeList_Equal(t *testing.T) {
 	}
 }
 
+func TestRangeList_Size(t *testing.T) {
+	tests := []struct {
+		name         string
+		l            *RangeList[int]
+		expectedSize int
+	}{
+		{
+			name: "OK",
+			l: &RangeList[int]{
+				ranges: []Range[int]{
+					{20, 40},
+					{100, 400},
+				},
+				format: defaultFormatList[int],
+			},
+			expectedSize: 2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedSize, tc.l.Size())
+		})
+	}
+}
+
 func TestRangeList_Get(t *testing.T) {
 	l := &RangeList[int]{
 		ranges: []Range[int]{

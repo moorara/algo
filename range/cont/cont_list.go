@@ -141,6 +141,11 @@ func (l *RangeList[T]) Equal(rhs *RangeList[T]) bool {
 	return true
 }
 
+// Size returns the number of ranges in the range list.
+func (l *RangeList[T]) Size() int {
+	return len(l.ranges)
+}
+
 // Get returns the range that includes the given value.
 // The second return value indicates if such a range exists.
 func (l *RangeList[T]) Get(v T) (Range[T], bool) {

@@ -397,6 +397,35 @@ func TestRangeMap_Equal(t *testing.T) {
 	}
 }
 
+func TestRangeMap_Size(t *testing.T) {
+	tests := []struct {
+		name         string
+		m            *RangeMap[float64, rune]
+		expectedSize int
+	}{
+		{
+			name: "OK",
+			m: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+			expectedSize: 4,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedSize, tc.m.Size())
+		})
+	}
+}
+
 func TestRangeMap_Get(t *testing.T) {
 	m := &RangeMap[float64, rune]{
 		pairs: []rangeValue[float64, rune]{

@@ -230,6 +230,11 @@ func (m *RangeMap[K, V]) Equal(rhs *RangeMap[K, V]) bool {
 	return true
 }
 
+// Size returns the number of ranges in the range map.
+func (m *RangeMap[K, V]) Size() int {
+	return len(m.pairs)
+}
+
 // Get returns the range and its associated value that includes the given key.
 // The third return value indicates if such a range exists.
 func (m *RangeMap[K, V]) Get(k K) (Range[K], V, bool) {
