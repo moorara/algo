@@ -21,13 +21,13 @@ func TestRange(t *testing.T) {
 
 	type intersectTest[T Continuous] struct {
 		rr             Range[T]
-		expectedOK     bool
-		expectedResult Range[T]
+		expectedResult RangeOrEmpty[T]
 	}
 
 	type subtractTest[T Continuous] struct {
-		rr             Range[T]
-		expectedResult []Range[T]
+		rr            Range[T]
+		expectedLeft  RangeOrEmpty[T]
+		expectedRight RangeOrEmpty[T]
 	}
 
 	tests := []struct {
@@ -179,26 +179,25 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{0, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, true},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{2, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
 					},
 				},
 				{
@@ -206,10 +205,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{2, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
 					},
 				},
 				{
@@ -217,10 +217,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{2, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
 					},
 				},
 				{
@@ -228,10 +229,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{2, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
 					},
 				},
 				{
@@ -239,16 +241,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 			},
 			subtractTests: []subtractTest[float64]{
@@ -257,8 +257,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{0, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
@@ -269,8 +270,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
@@ -281,45 +283,50 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 			},
 		},
@@ -447,26 +454,25 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{0, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, true},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{2, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
 					},
 				},
 				{
@@ -474,10 +480,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -485,10 +492,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -496,10 +504,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{4, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, false},
+						},
 					},
 				},
 				{
@@ -507,10 +516,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -518,10 +528,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -529,10 +540,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -540,10 +552,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, false},
+						},
 					},
 				},
 				{
@@ -551,10 +564,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, false},
+						},
 					},
 				},
 				{
@@ -562,10 +576,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{4, false},
-						Hi: Bound[float64]{4, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
 					},
 				},
 				{
@@ -573,16 +588,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{4, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 			},
 			subtractTests: []subtractTest[float64]{
@@ -591,8 +604,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{0, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -603,8 +617,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -615,8 +630,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -627,8 +643,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -639,8 +656,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -651,8 +669,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -663,8 +682,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{4, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -675,22 +695,25 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -701,8 +724,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -713,12 +737,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -729,8 +755,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -741,12 +768,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -757,8 +786,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{4, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -769,12 +799,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{4, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -785,50 +817,56 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, true},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -839,12 +877,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, true},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{4, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -855,12 +895,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, false},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{4, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -871,120 +913,130 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, true},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 			},
 		},
@@ -1112,26 +1164,25 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{0, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, true},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{2, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{2, false},
+						},
 					},
 				},
 				{
@@ -1139,10 +1190,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -1150,10 +1202,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -1161,10 +1214,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -1172,10 +1226,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, false},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, false},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -1183,10 +1238,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -1194,10 +1250,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -1205,10 +1262,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -1216,10 +1274,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -1227,24 +1286,21 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 			},
 			subtractTests: []subtractTest[float64]{
@@ -1253,8 +1309,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{0, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1265,8 +1322,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1277,8 +1335,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1289,8 +1348,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1301,8 +1361,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1313,8 +1374,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1325,29 +1387,33 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1358,8 +1424,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1370,12 +1437,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1386,8 +1455,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1398,12 +1468,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1414,69 +1486,77 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{2, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, true},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -1487,144 +1567,156 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{3, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, true},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, false},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 			},
 		},
@@ -1752,34 +1844,32 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{0, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, true},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -1787,10 +1877,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -1798,10 +1889,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{4, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, false},
+						},
 					},
 				},
 				{
@@ -1809,10 +1901,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -1820,10 +1913,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -1831,10 +1925,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -1842,10 +1937,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, false},
+						},
 					},
 				},
 				{
@@ -1853,10 +1949,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, false},
+						},
 					},
 				},
 				{
@@ -1864,10 +1961,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{4, false},
-						Hi: Bound[float64]{4, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{4, false},
+							Hi: Bound[float64]{4, false},
+						},
 					},
 				},
 				{
@@ -1875,16 +1973,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{4, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 			},
 			subtractTests: []subtractTest[float64]{
@@ -1893,8 +1989,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{0, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -1905,8 +2002,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -1917,8 +2015,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -1929,8 +2028,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -1941,8 +2041,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -1953,8 +2054,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -1965,8 +2067,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{4, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -1977,22 +2080,25 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -2003,8 +2109,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -2015,8 +2122,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -2027,8 +2135,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -2039,8 +2148,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -2051,8 +2161,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{4, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -2063,8 +2174,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{4, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -2075,40 +2187,46 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, true},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, false},
 						},
@@ -2119,12 +2237,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, true},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{4, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -2135,12 +2255,14 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, false},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{4, false},
 							Hi: Bound[float64]{4, false},
 						},
@@ -2151,120 +2273,130 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, true},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 			},
 		},
@@ -2392,34 +2524,32 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{0, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, true},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -2427,10 +2557,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -2438,10 +2569,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -2449,10 +2581,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -2460,10 +2593,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{2, true},
-						Hi: Bound[float64]{3, false},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{2, true},
+							Hi: Bound[float64]{3, false},
+						},
 					},
 				},
 				{
@@ -2471,10 +2605,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -2482,10 +2617,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -2493,10 +2629,11 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK: true,
-					expectedResult: Range[float64]{
-						Lo: Bound[float64]{3, false},
-						Hi: Bound[float64]{4, true},
+					expectedResult: RangeOrEmpty[float64]{
+						Range: Range[float64]{
+							Lo: Bound[float64]{3, false},
+							Hi: Bound[float64]{4, true},
+						},
 					},
 				},
 				{
@@ -2504,24 +2641,21 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedOK:     false,
-					expectedResult: Range[float64]{},
+					expectedResult: RangeOrEmpty[float64]{Empty: true},
 				},
 			},
 			subtractTests: []subtractTest[float64]{
@@ -2530,8 +2664,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{0, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2542,8 +2677,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{1, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2554,8 +2690,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2566,8 +2703,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2578,8 +2716,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2590,8 +2729,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2602,29 +2742,33 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{1, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{2, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2635,8 +2779,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2647,8 +2792,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, false},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2659,8 +2805,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2671,8 +2818,9 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2683,54 +2831,62 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{2, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: nil,
+					expectedLeft:  RangeOrEmpty[float64]{Empty: true},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{3, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, true},
 						},
-						{
+					},
+					expectedRight: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{3, true},
 							Hi: Bound[float64]{4, true},
 						},
@@ -2741,144 +2897,156 @@ func TestRange(t *testing.T) {
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{4, true},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{3, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{3, false},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{4, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{4, true},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{5, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, false},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 				{
 					rr: Range[float64]{
 						Lo: Bound[float64]{5, true},
 						Hi: Bound[float64]{6, false},
 					},
-					expectedResult: []Range[float64]{
-						{
+					expectedLeft: RangeOrEmpty[float64]{
+						Range: Range[float64]{
 							Lo: Bound[float64]{2, true},
 							Hi: Bound[float64]{4, true},
 						},
 					},
+					expectedRight: RangeOrEmpty[float64]{Empty: true},
 				},
 			},
 		},
@@ -2913,18 +3081,18 @@ func TestRange(t *testing.T) {
 
 			for i, tc := range tc.intersectTests {
 				t.Run(fmt.Sprintf("Intersect/%d", i), func(t *testing.T) {
-					res, ok := r.Intersect(tc.rr)
+					res := r.Intersect(tc.rr)
 
-					assert.Equal(t, tc.expectedOK, ok)
 					assert.Equal(t, tc.expectedResult, res)
 				})
 			}
 
 			for i, tc := range tc.subtractTests {
 				t.Run(fmt.Sprintf("Subtract/%d", i), func(t *testing.T) {
-					res := r.Subtract(tc.rr)
+					left, right := r.Subtract(tc.rr)
 
-					assert.Equal(t, tc.expectedResult, res)
+					assert.Equal(t, tc.expectedLeft, left)
+					assert.Equal(t, tc.expectedRight, right)
 				})
 			}
 		})

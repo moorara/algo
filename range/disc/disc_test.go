@@ -21,13 +21,13 @@ func TestRange(t *testing.T) {
 
 	type intersectTest[T Discrete] struct {
 		rr             Range[T]
-		expectedOK     bool
-		expectedResult Range[T]
+		expectedResult RangeOrEmpty[T]
 	}
 
 	type subtractTest[T Discrete] struct {
-		rr             Range[T]
-		expectedResult []Range[T]
+		rr            Range[T]
+		expectedLeft  RangeOrEmpty[T]
+		expectedRight RangeOrEmpty[T]
 	}
 
 	tests := []struct {
@@ -67,17 +67,17 @@ func TestRange(t *testing.T) {
 				{rr: Range[int]{4, 5}, expectedBefore: false, expectedAfter: false},
 			},
 			intersectTests: []intersectTest[int]{
-				{rr: Range[int]{0, 1}, expectedOK: false, expectedResult: Range[int]{}},
-				{rr: Range[int]{1, 3}, expectedOK: true, expectedResult: Range[int]{2, 2}},
-				{rr: Range[int]{2, 2}, expectedOK: true, expectedResult: Range[int]{2, 2}},
-				{rr: Range[int]{3, 4}, expectedOK: false, expectedResult: Range[int]{}},
+				{rr: Range[int]{0, 1}, expectedResult: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{1, 3}, expectedResult: RangeOrEmpty[int]{Range: Range[int]{2, 2}}},
+				{rr: Range[int]{2, 2}, expectedResult: RangeOrEmpty[int]{Range: Range[int]{2, 2}}},
+				{rr: Range[int]{3, 4}, expectedResult: RangeOrEmpty[int]{Empty: true}},
 			},
 			subtractTests: []subtractTest[int]{
-				{rr: Range[int]{0, 1}, expectedResult: []Range[int]{{2, 2}}},
-				{rr: Range[int]{1, 2}, expectedResult: nil},
-				{rr: Range[int]{2, 2}, expectedResult: nil},
-				{rr: Range[int]{2, 3}, expectedResult: nil},
-				{rr: Range[int]{3, 4}, expectedResult: []Range[int]{{2, 2}}},
+				{rr: Range[int]{0, 1}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Range: Range[int]{2, 2}}},
+				{rr: Range[int]{1, 2}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{2, 2}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{2, 3}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{3, 4}, expectedLeft: RangeOrEmpty[int]{Range: Range[int]{2, 2}}, expectedRight: RangeOrEmpty[int]{Empty: true}},
 			},
 		},
 		{
@@ -100,31 +100,31 @@ func TestRange(t *testing.T) {
 				{rr: Range[int]{6, 6}, expectedBefore: false, expectedAfter: false},
 			},
 			intersectTests: []intersectTest[int]{
-				{rr: Range[int]{0, 1}, expectedOK: false, expectedResult: Range[int]{}},
-				{rr: Range[int]{0, 2}, expectedOK: true, expectedResult: Range[int]{2, 2}},
-				{rr: Range[int]{1, 5}, expectedOK: true, expectedResult: Range[int]{2, 4}},
-				{rr: Range[int]{2, 4}, expectedOK: true, expectedResult: Range[int]{2, 4}},
-				{rr: Range[int]{3, 5}, expectedOK: true, expectedResult: Range[int]{3, 4}},
-				{rr: Range[int]{5, 6}, expectedOK: false, expectedResult: Range[int]{}},
+				{rr: Range[int]{0, 1}, expectedResult: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{0, 2}, expectedResult: RangeOrEmpty[int]{Range: Range[int]{2, 2}}},
+				{rr: Range[int]{1, 5}, expectedResult: RangeOrEmpty[int]{Range: Range[int]{2, 4}}},
+				{rr: Range[int]{2, 4}, expectedResult: RangeOrEmpty[int]{Range: Range[int]{2, 4}}},
+				{rr: Range[int]{3, 5}, expectedResult: RangeOrEmpty[int]{Range: Range[int]{3, 4}}},
+				{rr: Range[int]{5, 6}, expectedResult: RangeOrEmpty[int]{Empty: true}},
 			},
 			subtractTests: []subtractTest[int]{
-				{rr: Range[int]{0, 1}, expectedResult: []Range[int]{{2, 4}}},
-				{rr: Range[int]{1, 1}, expectedResult: []Range[int]{{2, 4}}},
-				{rr: Range[int]{1, 2}, expectedResult: []Range[int]{{3, 4}}},
-				{rr: Range[int]{1, 3}, expectedResult: []Range[int]{{4, 4}}},
-				{rr: Range[int]{1, 4}, expectedResult: nil},
-				{rr: Range[int]{1, 5}, expectedResult: nil},
-				{rr: Range[int]{2, 2}, expectedResult: []Range[int]{{3, 4}}},
-				{rr: Range[int]{2, 3}, expectedResult: []Range[int]{{4, 4}}},
-				{rr: Range[int]{2, 4}, expectedResult: nil},
-				{rr: Range[int]{2, 5}, expectedResult: nil},
-				{rr: Range[int]{3, 3}, expectedResult: []Range[int]{{2, 2}, {4, 4}}},
-				{rr: Range[int]{3, 4}, expectedResult: []Range[int]{{2, 2}}},
-				{rr: Range[int]{3, 5}, expectedResult: []Range[int]{{2, 2}}},
-				{rr: Range[int]{4, 4}, expectedResult: []Range[int]{{2, 3}}},
-				{rr: Range[int]{4, 5}, expectedResult: []Range[int]{{2, 3}}},
-				{rr: Range[int]{5, 5}, expectedResult: []Range[int]{{2, 4}}},
-				{rr: Range[int]{5, 6}, expectedResult: []Range[int]{{2, 4}}},
+				{rr: Range[int]{0, 1}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Range: Range[int]{2, 4}}},
+				{rr: Range[int]{1, 1}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Range: Range[int]{2, 4}}},
+				{rr: Range[int]{1, 2}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Range: Range[int]{3, 4}}},
+				{rr: Range[int]{1, 3}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Range: Range[int]{4, 4}}},
+				{rr: Range[int]{1, 4}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{1, 5}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{2, 2}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Range: Range[int]{3, 4}}},
+				{rr: Range[int]{2, 3}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Range: Range[int]{4, 4}}},
+				{rr: Range[int]{2, 4}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{2, 5}, expectedLeft: RangeOrEmpty[int]{Empty: true}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{3, 3}, expectedLeft: RangeOrEmpty[int]{Range: Range[int]{2, 2}}, expectedRight: RangeOrEmpty[int]{Range: Range[int]{4, 4}}},
+				{rr: Range[int]{3, 4}, expectedLeft: RangeOrEmpty[int]{Range: Range[int]{2, 2}}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{3, 5}, expectedLeft: RangeOrEmpty[int]{Range: Range[int]{2, 2}}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{4, 4}, expectedLeft: RangeOrEmpty[int]{Range: Range[int]{2, 3}}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{4, 5}, expectedLeft: RangeOrEmpty[int]{Range: Range[int]{2, 3}}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{5, 5}, expectedLeft: RangeOrEmpty[int]{Range: Range[int]{2, 4}}, expectedRight: RangeOrEmpty[int]{Empty: true}},
+				{rr: Range[int]{5, 6}, expectedLeft: RangeOrEmpty[int]{Range: Range[int]{2, 4}}, expectedRight: RangeOrEmpty[int]{Empty: true}},
 			},
 		},
 	}
@@ -158,18 +158,18 @@ func TestRange(t *testing.T) {
 
 			for i, tc := range tc.intersectTests {
 				t.Run(fmt.Sprintf("Intersect/%d", i), func(t *testing.T) {
-					res, ok := r.Intersect(tc.rr)
+					res := r.Intersect(tc.rr)
 
-					assert.Equal(t, tc.expectedOK, ok)
 					assert.Equal(t, tc.expectedResult, res)
 				})
 			}
 
 			for i, tc := range tc.subtractTests {
 				t.Run(fmt.Sprintf("Subtract/%d", i), func(t *testing.T) {
-					res := r.Subtract(tc.rr)
+					left, right := r.Subtract(tc.rr)
 
-					assert.Equal(t, tc.expectedResult, res)
+					assert.Equal(t, tc.expectedLeft, left)
+					assert.Equal(t, tc.expectedRight, right)
 				})
 			}
 		})

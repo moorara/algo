@@ -38,6 +38,15 @@ func NewRangeList[T Continuous](rs ...Range[T]) *RangeList[T] {
 	return l
 }
 
+// NewRangeListWithFormat creates a new range list with a custom format function from the given ranges.
+// It panics if any of the given ranges are invalid.
+func NewRangeListWithFormat[T Continuous](format FormatList[T], rs ...Range[T]) *RangeList[T] {
+	l := NewRangeList(rs...)
+	l.format = format
+
+	return l
+}
+
 // searchRanges performs a binary search to find the index of the range that contains the given value.
 // If found, it returns the index and true; otherwise, it returns the insertion point and false.
 func (l *RangeList[T]) searchRanges(v Bound[T]) (int, bool) {
@@ -174,8 +183,70 @@ func (l *RangeList[T]) Remove(rs ...Range[T]) {
 			panic(fmt.Sprintf("invalid range: %s", r))
 		}
 
-		for i, _ := l.searchRanges(r.Lo); i < len(l.ranges); i++ {
+		i, _ := l.searchRanges(r.Lo)
 
+		for i < len(l.ranges) {
+			left, right := l.ranges[i].Subtract(r)
+
+			if !left.Empty && !right.Empty {
+				// Case ranges[i].Lo <= r.Lo <= ranges[i].Hi
+				//
+				//   |______________|
+				//        |____|
+				//   |___|      |___|
+				//     l          r
+				//
+
+				l.ranges[i] = left.Range
+				l.ranges = append(l.ranges, Range[T]{})
+				copy(l.ranges[i+2:], l.ranges[i+1:])
+				l.ranges[i+1] = right.Range
+				break
+			} else if !left.Empty {
+				// Case ranges[i].Lo <= r.Lo <= ranges[i].Hi
+				//
+				//   |____________|        |____________|              |____________|
+				//          |_____|               |___________|                     |_____|
+				//   |_____|               |_____|                     |___________|
+				//      l                     l                              l
+				//
+
+				l.ranges[i] = left.Range
+				i++
+			} else if !right.Empty {
+				// Case ranges[i].Lo <= r.Lo <= ranges[i].Hi
+				//
+				//   |____________|
+				//   |_____|
+				//          |_____|
+				//             r
+				//
+				// Case r.Lo < ranges[i].Lo
+				//
+				//         |_________|             |_________|             |_________|
+				//   |___|                    |____|                  |_________|
+				//         |_________|              |________|                   |___|
+				//              r                        r                         r
+				//
+
+				l.ranges[i] = right.Range
+				break
+			} else {
+				// Case ranges[i].Lo <= r.Lo <= ranges[i].Hi
+				//
+				//   |_________|        |_________|
+				//   |_________|        |______________|
+				//        ∅                  ∅
+				//
+				// Case r.Lo < ranges[i].Lo
+				//
+				//        |_________|             |_________|
+				//   |______________|        |___________________|
+				//           ∅                         ∅
+				//
+
+				l.ranges = append(l.ranges[:i], l.ranges[i+1:]...)
+			}
 		}
 	}
 }

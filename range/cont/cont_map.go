@@ -18,16 +18,16 @@ type rangeValue[K Continuous, V any] struct {
 // The ranges are always non-overlapping and sorted.
 type RangeMap[K Continuous, V any] struct {
 	pairs  []rangeValue[K, V]
-	eqVal  generic.EqualFunc[V]
+	equal  generic.EqualFunc[V]
 	format FormatMap[K, V]
 }
 
 // NewRangeMap creates a new range map from the given ranges.
 // It panics if any of the given ranges are invalid.
-func NewRangeMap[K Continuous, V any](eqVal generic.EqualFunc[V], pairs map[Range[K]]V) *RangeMap[K, V] {
+func NewRangeMap[K Continuous, V any](equal generic.EqualFunc[V], pairs map[Range[K]]V) *RangeMap[K, V] {
 	m := &RangeMap[K, V]{
 		pairs:  make([]rangeValue[K, V], 0, len(pairs)),
-		eqVal:  eqVal,
+		equal:  equal,
 		format: defaultFormatMap[K, V],
 	}
 
@@ -49,6 +49,15 @@ func NewRangeMap[K Continuous, V any](eqVal generic.EqualFunc[V], pairs map[Rang
 
 	// Merge and/or split overlapping and adjacent ranges
 	m.mergeAndSplitRanges()
+
+	return m
+}
+
+// NewRangeMap creates a new range map with a custom format function from the given ranges.
+// It panics if any of the given ranges are invalid.
+func NewRangeMapWithFormat[K Continuous, V any](equal generic.EqualFunc[V], format FormatMap[K, V], pairs map[Range[K]]V) *RangeMap[K, V] {
+	m := NewRangeMap(equal, pairs)
+	m.format = format
 
 	return m
 }
@@ -87,7 +96,7 @@ func (m *RangeMap[K, V]) mergeAndSplitRanges() {
 
 		if compareLoHi(curr.Lo, last.Hi) <= 0 {
 			if compareHiHi(curr.Hi, last.Hi) < 0 {
-				if m.eqVal(last.Value, curr.Value) {
+				if m.equal(last.Value, curr.Value) {
 					// Case curr.Lo < last.Hi && curr.Hi < last.Hi && last.Value == curr.Value:
 					//
 					//   last:  |_____|_____|_____|  Value: A    ---->    |_________________|  Value: A
@@ -117,7 +126,7 @@ func (m *RangeMap[K, V]) mergeAndSplitRanges() {
 					})
 				}
 			} else if compareHiHi(curr.Hi, last.Hi) == 0 {
-				if m.eqVal(last.Value, curr.Value) {
+				if m.equal(last.Value, curr.Value) {
 					// Case curr.Lo < last.Hi && curr.Hi == last.Hi && last.Value == curr.Value:
 					//
 					//   last:  |_____|___________|  Value: A    ---->    |_________________|  Value: A
@@ -144,7 +153,7 @@ func (m *RangeMap[K, V]) mergeAndSplitRanges() {
 					merged = append(merged, curr)
 				}
 			} else /* if curr.Hi > last.Hi */ {
-				if m.eqVal(last.Value, curr.Value) {
+				if m.equal(last.Value, curr.Value) {
 					// Case curr.Lo < last.Hi && curr.Hi > last.Hi && last.Value == curr.Value:
 					//
 					//   last:  |_____|_____|     |  Value: A    ---->    |_________________|  Value: A
@@ -173,7 +182,7 @@ func (m *RangeMap[K, V]) mergeAndSplitRanges() {
 					merged = append(merged, curr)
 				}
 			}
-		} else if before, _ := last.Range.Adjacent(curr.Range); before && m.eqVal(last.Value, curr.Value) {
+		} else if before, _ := last.Range.Adjacent(curr.Range); before && m.equal(last.Value, curr.Value) {
 			// Case last.Hi is immediately before curr.Lo && last.Value == curr.Value:
 			//
 			//   last:  |__________||     |  Value: A    ---->    |_________________|  Value: A
@@ -198,7 +207,7 @@ func (m *RangeMap[K, V]) String() string {
 func (m *RangeMap[K, V]) Clone() *RangeMap[K, V] {
 	mm := &RangeMap[K, V]{
 		pairs: make([]rangeValue[K, V], len(m.pairs)),
-		eqVal: m.eqVal,
+		equal: m.equal,
 	}
 
 	copy(mm.pairs, m.pairs)
@@ -213,7 +222,7 @@ func (m *RangeMap[K, V]) Equal(rhs *RangeMap[K, V]) bool {
 	}
 
 	for i, p := range m.pairs {
-		if !p.Range.Equal(rhs.pairs[i].Range) || !m.eqVal(p.Value, rhs.pairs[i].Value) {
+		if !p.Range.Equal(rhs.pairs[i].Range) || !m.equal(p.Value, rhs.pairs[i].Value) {
 			return false
 		}
 	}
@@ -266,8 +275,71 @@ func (m *RangeMap[K, V]) Remove(k Range[K]) {
 		panic(fmt.Sprintf("invalid range: %s", k))
 	}
 
-	for i, _ := m.searchRanges(k.Lo); i < len(m.pairs); i++ {
+	i, _ := m.searchRanges(k.Lo)
 
+	for i < len(m.pairs) {
+		left, right := m.pairs[i].Range.Subtract(k)
+
+		if !left.Empty && !right.Empty {
+			// Case ranges[i].Lo <= r.Lo <= ranges[i].Hi
+			//
+			//   |______________|
+			//        |____|
+			//   |___|      |___|
+			//     l          r
+			//
+
+			m.pairs[i].Range = left.Range
+			m.pairs = append(m.pairs, rangeValue[K, V]{})
+			copy(m.pairs[i+2:], m.pairs[i+1:])
+			m.pairs[i+1].Range = right.Range
+			m.pairs[i+1].Value = m.pairs[i].Value
+			break
+		} else if !left.Empty {
+			// Case ranges[i].Lo <= r.Lo <= ranges[i].Hi
+			//
+			//   |____________|        |____________|              |____________|
+			//          |_____|               |___________|                     |_____|
+			//   |_____|               |_____|                     |___________|
+			//      l                     l                              l
+			//
+
+			m.pairs[i].Range = left.Range
+			i++
+		} else if !right.Empty {
+			// Case ranges[i].Lo <= r.Lo <= ranges[i].Hi
+			//
+			//   |____________|
+			//   |_____|
+			//          |_____|
+			//             r
+			//
+			// Case r.Lo < ranges[i].Lo
+			//
+			//         |_________|             |_________|             |_________|
+			//   |___|                    |____|                  |_________|
+			//         |_________|              |________|                   |___|
+			//              r                        r                         r
+			//
+
+			m.pairs[i].Range = right.Range
+			break
+		} else {
+			// Case ranges[i].Lo <= r.Lo <= ranges[i].Hi
+			//
+			//   |_________|        |_________|
+			//   |_________|        |______________|
+			//        ∅                  ∅
+			//
+			// Case r.Lo < ranges[i].Lo
+			//
+			//        |_________|             |_________|
+			//   |______________|        |___________________|
+			//           ∅                         ∅
+			//
+
+			m.pairs = append(m.pairs[:i], m.pairs[i+1:]...)
+		}
 	}
 }
 

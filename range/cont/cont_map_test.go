@@ -2,6 +2,8 @@ package cont
 
 import (
 	"fmt"
+	"iter"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,114 +11,34 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
-func TestRangeMap(t *testing.T) {
-	type addTest[K Continuous, V any] struct {
-		key Range[K]
-		val V
-	}
-
-	type equalTest[K Continuous, V any] struct {
-		rhs           *RangeMap[K, V]
-		expectedEqual bool
-	}
-
-	type getTest[K Continuous, V any] struct {
-		key           K
-		expectedOK    bool
-		expectedRange Range[K]
-		expectedValue V
-	}
+func TestNewRangeMap(t *testing.T) {
+	equal := generic.NewEqualFunc[rune]()
 
 	tests := []struct {
 		name           string
+		equal          generic.EqualFunc[rune]
 		pairs          map[Range[float64]]rune
-		addTests       []addTest[float64, rune]
-		equalTests     []equalTest[float64, rune]
-		getTests       []getTest[float64, rune]
-		expectedAll    []generic.KeyValue[Range[float64], rune]
+		expectedPairs  []rangeValue[float64, rune]
 		expectedString string
 	}{
 		{
-			name: "CurrentHiOnLastHi_Merging",
+			name:  "CurrentHiOnLastHi_Merging",
+			equal: equal,
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
 				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
 				{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}: 'a',
 			},
-			addTests: []addTest[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{6.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
 			},
-			equalTests: []equalTest[float64, rune]{
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{
-							{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-							{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-							{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, 'A'},
-							{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
-							{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '%'},
-						},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{
-							{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-							{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-							{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, 'A'},
-							{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
-							{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
-						},
-					},
-					expectedEqual: true,
-				},
-			},
-			getTests: []getTest[float64, rune]{
-				{key: -1, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 0.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 0.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 0.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 1.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 2.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 3.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 4.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 4.4, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 5.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, expectedValue: 'A'},
-				{key: 6.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, expectedValue: 'A'},
-				{key: 8.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, expectedValue: 'A'},
-				{key: 9.9, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 10.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, expectedValue: 'a'},
-				{key: 20.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, expectedValue: 'a'},
-				{key: 40.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, expectedValue: 'a'},
-				{key: 50.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 100.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 150.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 200.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 400.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-			},
-			expectedAll: []generic.KeyValue[Range[float64], rune]{
-				{Key: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, Val: '#'},
-				{Key: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, Val: '@'},
-				{Key: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, Val: 'A'},
-				{Key: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, Val: 'a'},
-				{Key: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, Val: '$'},
-			},
-			expectedString: "[0, 0.9]:35 [2, 4]:64 [5, 8]:65 [10, 40]:97 [100, 200]:36",
+			expectedString: "[2, 4]:64 [10, 40]:97",
 		},
 		{
-			name: "CurrentHiOnLastHi_Splitting",
+			name:  "CurrentHiOnLastHi_Splitting",
+			equal: equal,
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
@@ -124,104 +46,17 @@ func TestRangeMap(t *testing.T) {
 				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'b',
 				{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}: 'c',
 			},
-			addTests: []addTest[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{6.0, false}}, 'B'},
-				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, false}}, 'B'},
-				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, 'C'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
 			},
-			equalTests: []equalTest[float64, rune]{
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{
-							{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-							{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-							{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, true}}, 'A'},
-							{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, true}}, 'B'},
-							{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, 'C'},
-							{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
-							{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
-							{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
-							{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '%'},
-						},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{
-							{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-							{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-							{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, true}}, 'A'},
-							{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, true}}, 'B'},
-							{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, 'C'},
-							{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
-							{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
-							{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
-							{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
-						},
-					},
-					expectedEqual: true,
-				},
-			},
-			getTests: []getTest[float64, rune]{
-				{key: -1, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 0.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 0.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 0.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 1.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 2.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 3.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 4.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 4.4, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 5.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, true}}, expectedValue: 'A'},
-				{key: 5.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, true}}, expectedValue: 'A'},
-				{key: 5.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, true}}, expectedValue: 'A'},
-				{key: 6.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, true}}, expectedValue: 'B'},
-				{key: 6.6, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, true}}, expectedValue: 'B'},
-				{key: 6.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, true}}, expectedValue: 'B'},
-				{key: 7.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, expectedValue: 'C'},
-				{key: 7.7, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, expectedValue: 'C'},
-				{key: 8.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, expectedValue: 'C'},
-				{key: 9.9, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 10.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, expectedValue: 'a'},
-				{key: 15.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, expectedValue: 'a'},
-				{key: 19.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, expectedValue: 'a'},
-				{key: 20.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, expectedValue: 'b'},
-				{key: 25.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, expectedValue: 'b'},
-				{key: 29.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, expectedValue: 'b'},
-				{key: 30.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, expectedValue: 'c'},
-				{key: 35.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, expectedValue: 'c'},
-				{key: 40.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, expectedValue: 'c'},
-				{key: 50.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 100.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 150.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 200.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 400.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-			},
-			expectedAll: []generic.KeyValue[Range[float64], rune]{
-				{Key: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, Val: '#'},
-				{Key: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, Val: '@'},
-				{Key: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, true}}, Val: 'A'},
-				{Key: Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, true}}, Val: 'B'},
-				{Key: Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, Val: 'C'},
-				{Key: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, Val: 'a'},
-				{Key: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, Val: 'b'},
-				{Key: Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, Val: 'c'},
-				{Key: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, Val: '$'},
-			},
-			expectedString: "[0, 0.9]:35 [2, 4]:64 [5, 6):65 [6, 7):66 [7, 8]:67 [10, 20):97 [20, 30):98 [30, 40]:99 [100, 200]:36",
+			expectedString: "[2, 4]:64 [10, 20):97 [20, 30):98 [30, 40]:99",
 		},
 		{
-			name: "CurrentHiBeforeLastHi_Merging",
+			name:  "CurrentHiBeforeLastHi_Merging",
+			equal: equal,
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
@@ -229,80 +64,15 @@ func TestRangeMap(t *testing.T) {
 				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}}: 'a',
 				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}: 'a',
 			},
-			addTests: []addTest[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, 'A'},
-				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
 			},
-			equalTests: []equalTest[float64, rune]{
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{
-							{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-							{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-							{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{9.0, false}}, 'A'},
-							{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
-							{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '%'},
-						},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{
-							{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-							{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-							{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{9.0, false}}, 'A'},
-							{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
-							{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
-						},
-					},
-					expectedEqual: true,
-				},
-			},
-			getTests: []getTest[float64, rune]{
-				{key: -1, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 0.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 0.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 0.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 1.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 2.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 3.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 4.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 4.4, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 5.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{9.0, false}}, expectedValue: 'A'},
-				{key: 7.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{9.0, false}}, expectedValue: 'A'},
-				{key: 9.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{9.0, false}}, expectedValue: 'A'},
-				{key: 9.9, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 10.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, expectedValue: 'a'},
-				{key: 50.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, expectedValue: 'a'},
-				{key: 70.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, expectedValue: 'a'},
-				{key: 80.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 100.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 150.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 200.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 400.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-			},
-			expectedAll: []generic.KeyValue[Range[float64], rune]{
-				{Key: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, Val: '#'},
-				{Key: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, Val: '@'},
-				{Key: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{9.0, false}}, Val: 'A'},
-				{Key: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, Val: 'a'},
-				{Key: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, Val: '$'},
-			},
-			expectedString: "[0, 0.9]:35 [2, 4]:64 [5, 9]:65 [10, 70]:97 [100, 200]:36",
+			expectedString: "[2, 4]:64 [10, 70]:97",
 		},
 		{
-			name: "CurrentHiBeforeLastHi_Splitting",
+			name:  "CurrentHiBeforeLastHi_Splitting",
+			equal: equal,
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
@@ -310,7 +80,473 @@ func TestRangeMap(t *testing.T) {
 				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}}: 'b',
 				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}: 'c',
 			},
-			addTests: []addTest[float64, rune]{
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, 'b'},
+				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, 'b'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'c'},
+			},
+			expectedString: "[2, 4]:64 [10, 20):97 [20, 30]:98 (30, 40):97 [40, 50):98 [50, 70]:99",
+		},
+		{
+			name:  "CurrentHiAdjacentToLastHi_Merging",
+			equal: equal,
+			pairs: map[Range[float64]]rune{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}:  'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
+				{Bound[float64]{20, true}, Bound[float64]{30.0, false}}:    'a',
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
+			},
+			expectedString: "[2, 4]:64 [10, 30]:97",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			m := NewRangeMap(tc.equal, tc.pairs)
+
+			assert.Equal(t, tc.expectedPairs, m.pairs)
+			assert.Equal(t, tc.expectedString, m.String())
+		})
+	}
+}
+
+func TestNewRangeMapWithFormat(t *testing.T) {
+	equal := generic.NewEqualFunc[rune]()
+
+	format := func(ranges iter.Seq2[Range[float64], rune]) string {
+		strs := make([]string, 0)
+		for r, v := range ranges {
+			strs = append(strs, fmt.Sprintf("%s --> %c", r.String(), v))
+		}
+		return strings.Join(strs, "\n")
+	}
+
+	tests := []struct {
+		name           string
+		equal          generic.EqualFunc[rune]
+		format         FormatMap[float64, rune]
+		pairs          map[Range[float64]]rune
+		expectedPairs  []rangeValue[float64, rune]
+		expectedString string
+	}{
+		{
+			name:   "CurrentHiOnLastHi_Merging",
+			equal:  equal,
+			format: format,
+			pairs: map[Range[float64]]rune{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}: 'a',
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
+			},
+			expectedString: "[2, 4] --> @\n[10, 40] --> a",
+		},
+		{
+			name:   "CurrentHiOnLastHi_Splitting",
+			equal:  equal,
+			format: format,
+			pairs: map[Range[float64]]rune{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'b',
+				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'b',
+				{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}: 'c',
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+			},
+			expectedString: "[2, 4] --> @\n[10, 20) --> a\n[20, 30) --> b\n[30, 40] --> c",
+		},
+		{
+			name:   "CurrentHiBeforeLastHi_Merging",
+			equal:  equal,
+			format: format,
+			pairs: map[Range[float64]]rune{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
+				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'a',
+				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}}: 'a',
+				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}: 'a',
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
+			},
+			expectedString: "[2, 4] --> @\n[10, 70] --> a",
+		},
+		{
+			name:   "CurrentHiBeforeLastHi_Splitting",
+			equal:  equal,
+			format: format,
+			pairs: map[Range[float64]]rune{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
+				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'b',
+				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}}: 'b',
+				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}: 'c',
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, 'b'},
+				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, 'b'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'c'},
+			},
+			expectedString: "[2, 4] --> @\n[10, 20) --> a\n[20, 30] --> b\n(30, 40) --> a\n[40, 50) --> b\n[50, 70] --> c",
+		},
+		{
+			name:   "CurrentHiAdjacentToLastHi_Merging",
+			equal:  equal,
+			format: format,
+			pairs: map[Range[float64]]rune{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}:  'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
+				{Bound[float64]{20, true}, Bound[float64]{30.0, false}}:    'a',
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
+			},
+			expectedString: "[2, 4] --> @\n[10, 30] --> a",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			m := NewRangeMapWithFormat(tc.equal, tc.format, tc.pairs)
+
+			assert.Equal(t, tc.expectedPairs, m.pairs)
+			assert.Equal(t, tc.expectedString, m.String())
+		})
+	}
+}
+
+func TestRangeMap_String(t *testing.T) {
+	tests := []struct {
+		name           string
+		m              *RangeMap[float64, rune]
+		expectedString string
+	}{
+		{
+			name: "WithDefaultFormat",
+			m: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+			expectedString: "[2, 4]:64 [10, 20):97 [20, 30):98 [30, 40]:99",
+		},
+		{
+			name: "WithCustomFormat",
+			m: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+				},
+				equal: generic.NewEqualFunc[rune](),
+				format: func(ranges iter.Seq2[Range[float64], rune]) string {
+					strs := make([]string, 0)
+					for r, v := range ranges {
+						strs = append(strs, fmt.Sprintf("%s --> %c", r.String(), v))
+					}
+					return strings.Join(strs, "\n")
+				},
+			},
+			expectedString: "[2, 4] --> @\n[10, 20) --> a\n[20, 30) --> b\n[30, 40] --> c",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedString, tc.m.String())
+		})
+	}
+}
+
+func TestRangeMap_Clone(t *testing.T) {
+	tests := []struct {
+		name string
+		m    *RangeMap[float64, rune]
+	}{
+		{
+			name: "OK",
+			m: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			clone := tc.m.Clone()
+
+			assert.True(t, clone.Equal(tc.m))
+		})
+	}
+}
+
+func TestRangeMap_Equal(t *testing.T) {
+	m := &RangeMap[float64, rune]{
+		pairs: []rangeValue[float64, rune]{
+			{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+			{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+			{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+			{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+		},
+		equal:  generic.NewEqualFunc[rune](),
+		format: defaultFormatMap[float64, rune],
+	}
+
+	tests := []struct {
+		name          string
+		m             *RangeMap[float64, rune]
+		rhs           *RangeMap[float64, rune]
+		expectedEqual bool
+	}{
+		{
+			name: "NotEqual_DiffLens",
+			m:    m,
+			rhs: &RangeMap[float64, rune]{
+				pairs:  []rangeValue[float64, rune]{},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+			expectedEqual: false,
+		},
+		{
+			name: "NotEqual_DiffRanges",
+			m:    m,
+			rhs: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{4.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+			expectedEqual: false,
+		},
+		{
+			name: "NotEqual_DiffValues",
+			m:    m,
+			rhs: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '*'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+			expectedEqual: false,
+		},
+		{
+			name: "Equal",
+			m:    m,
+			rhs: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+			expectedEqual: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEqual, tc.m.Equal(tc.rhs))
+		})
+	}
+}
+
+func TestRangeMap_Get(t *testing.T) {
+	m := &RangeMap[float64, rune]{
+		pairs: []rangeValue[float64, rune]{
+			{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
+			{Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, '@'},
+			{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, 'a'},
+			{Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{80.0, true}}, 'b'},
+		},
+		equal:  generic.NewEqualFunc[rune](),
+		format: defaultFormatMap[float64, rune],
+	}
+
+	tests := []struct {
+		m             *RangeMap[float64, rune]
+		key           float64
+		expectedOK    bool
+		expectedRange Range[float64]
+		expectedValue rune
+	}{
+		{m: m, key: -1.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
+		{m: m, key: 0.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
+		{m: m, key: 0.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
+		{m: m, key: 0.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
+		{m: m, key: 1.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
+		{m: m, key: 1.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, expectedValue: '@'},
+		{m: m, key: 2.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, expectedValue: '@'},
+		{m: m, key: 10.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
+		{m: m, key: 20.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, expectedValue: 'a'},
+		{m: m, key: 30.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, expectedValue: 'a'},
+		{m: m, key: 40.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
+		{m: m, key: 60.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{80.0, true}}, expectedValue: 'b'},
+		{m: m, key: 80.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
+	}
+
+	for i, tc := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			r, v, ok := tc.m.Get(tc.key)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedRange, r)
+			assert.Equal(t, tc.expectedValue, v)
+		})
+	}
+}
+
+func TestRangeMap_Add(t *testing.T) {
+	tests := []struct {
+		name          string
+		m             *RangeMap[float64, rune]
+		pairs         []rangeValue[float64, rune]
+		expectedPairs []rangeValue[float64, rune]
+	}{
+		{
+			name: "CurrentHiOnLastHi_Merging",
+			m: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+			pairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{6.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi_Splitting",
+			m: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+			pairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{6.0, false}}, 'B'},
+				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, false}}, 'B'},
+				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, 'C'},
+				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, true}}, 'B'},
+				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, 'C'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi_Merging",
+			m: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+			pairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, 'A'},
+				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{9.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi_Splitting",
+			m: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, 'a'},
+					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, 'b'},
+					{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'a'},
+					{Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, 'b'},
+					{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+			pairs: []rangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
 				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, 'A'},
 				{Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, 'B'},
@@ -318,243 +554,262 @@ func TestRangeMap(t *testing.T) {
 				{Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, 'C'},
 				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
 			},
-			equalTests: []equalTest[float64, rune]{
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{
-							{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-							{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-							{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.5, true}}, 'A'},
-							{Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, 'B'},
-							{Range[float64]{Bound[float64]{6.5, true}, Bound[float64]{7.0, true}}, 'A'},
-							{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{7.5, true}}, 'B'},
-							{Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, 'C'},
-							{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, 'a'},
-							{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, 'b'},
-							{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'a'},
-							{Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, 'b'},
-							{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'c'},
-							{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '%'},
-						},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{
-							{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-							{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-							{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.5, true}}, 'A'},
-							{Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, 'B'},
-							{Range[float64]{Bound[float64]{6.5, true}, Bound[float64]{7.0, true}}, 'A'},
-							{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{7.5, true}}, 'B'},
-							{Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, 'C'},
-							{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, 'a'},
-							{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, 'b'},
-							{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'a'},
-							{Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, 'b'},
-							{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'c'},
-							{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
-						},
-					},
-					expectedEqual: true,
-				},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.5, true}}, 'A'},
+				{Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, 'B'},
+				{Range[float64]{Bound[float64]{6.5, true}, Bound[float64]{7.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{7.5, true}}, 'B'},
+				{Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, 'C'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, 'b'},
+				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, 'b'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'c'},
+				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
 			},
-			getTests: []getTest[float64, rune]{
-				{key: -1, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 0.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 0.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 0.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 1.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 2.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 3.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 4.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 4.4, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 5.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.5, true}}, expectedValue: 'A'},
-				{key: 5.2, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.5, true}}, expectedValue: 'A'},
-				{key: 5.4, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.5, true}}, expectedValue: 'A'},
-				{key: 5.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, expectedValue: 'B'},
-				{key: 6.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, expectedValue: 'B'},
-				{key: 6.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, expectedValue: 'B'},
-				{key: 6.6, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{6.5, true}, Bound[float64]{7.0, true}}, expectedValue: 'A'},
-				{key: 6.8, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{6.5, true}, Bound[float64]{7.0, true}}, expectedValue: 'A'},
-				{key: 6.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{6.5, true}, Bound[float64]{7.0, true}}, expectedValue: 'A'},
-				{key: 7.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{7.5, true}}, expectedValue: 'B'},
-				{key: 7.2, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{7.5, true}}, expectedValue: 'B'},
-				{key: 7.4, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{7.5, true}}, expectedValue: 'B'},
-				{key: 7.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, expectedValue: 'C'},
-				{key: 8.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, expectedValue: 'C'},
-				{key: 9.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, expectedValue: 'C'},
-				{key: 9.9, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 10.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, expectedValue: 'a'},
-				{key: 15.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, expectedValue: 'a'},
-				{key: 19.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, expectedValue: 'a'},
-				{key: 20.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, expectedValue: 'b'},
-				{key: 25.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, expectedValue: 'b'},
-				{key: 30.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, expectedValue: 'b'},
-				{key: 30.1, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, expectedValue: 'a'},
-				{key: 36.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, expectedValue: 'a'},
-				{key: 39.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, expectedValue: 'a'},
-				{key: 40.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, expectedValue: 'b'},
-				{key: 44.4, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, expectedValue: 'b'},
-				{key: 49.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, expectedValue: 'b'},
-				{key: 50.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, expectedValue: 'c'},
-				{key: 60.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, expectedValue: 'c'},
-				{key: 70.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, expectedValue: 'c'},
-				{key: 80.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 100.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 150.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 200.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 400.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-			},
-			expectedAll: []generic.KeyValue[Range[float64], rune]{
-				{Key: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, Val: '#'},
-				{Key: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, Val: '@'},
-				{Key: Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.5, true}}, Val: 'A'},
-				{Key: Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, Val: 'B'},
-				{Key: Range[float64]{Bound[float64]{6.5, true}, Bound[float64]{7.0, true}}, Val: 'A'},
-				{Key: Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{7.5, true}}, Val: 'B'},
-				{Key: Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, Val: 'C'},
-				{Key: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, Val: 'a'},
-				{Key: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, Val: 'b'},
-				{Key: Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, Val: 'a'},
-				{Key: Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, Val: 'b'},
-				{Key: Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, Val: 'c'},
-				{Key: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, Val: '$'},
-			},
-			expectedString: "[0, 0.9]:35 [2, 4]:64 [5, 5.5):65 [5.5, 6.5]:66 (6.5, 7):65 [7, 7.5):66 [7.5, 9]:67 [10, 20):97 [20, 30]:98 (30, 40):97 [40, 50):98 [50, 70]:99 [100, 200]:36",
 		},
 		{
 			name: "CurrentHiAdjacentToLastHi_Merging",
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}:  'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20, true}, Bound[float64]{30.0, false}}:    'a',
+			m: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
 			},
-			addTests: []addTest[float64, rune]{
+			pairs: []rangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
 				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, true}}, 'A'},
 				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{7.0, false}}, 'A'},
 				{Range[float64]{Bound[float64]{7.0, true}, Bound[float64]{8.0, false}}, 'A'},
 				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
 			},
-			equalTests: []equalTest[float64, rune]{
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{
-							{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-							{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-							{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}}, 'A'},
-							{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
-							{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '%'},
-						},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[float64, rune]{
-						pairs: []rangeValue[float64, rune]{
-							{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-							{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-							{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}}, 'A'},
-							{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
-							{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
-						},
-					},
-					expectedEqual: true,
-				},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
 			},
-			getTests: []getTest[float64, rune]{
-				{key: -1, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 0.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 0.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 0.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-				{key: 1.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 2.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 3.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 4.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, expectedValue: '@'},
-				{key: 5.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 6.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}}, expectedValue: 'A'},
-				{key: 7.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}}, expectedValue: 'A'},
-				{key: 8.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}}, expectedValue: 'A'},
-				{key: 9.9, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 10.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, expectedValue: 'a'},
-				{key: 20.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, expectedValue: 'a'},
-				{key: 30.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, expectedValue: 'a'},
-				{key: 50.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-				{key: 100.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 150.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 200.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, expectedValue: '$'},
-				{key: 400.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-			},
-			expectedAll: []generic.KeyValue[Range[float64], rune]{
-				{Key: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, Val: '#'},
-				{Key: Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, Val: '@'},
-				{Key: Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}}, Val: 'A'},
-				{Key: Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, Val: 'a'},
-				{Key: Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, Val: '$'},
-			},
-			expectedString: "[0, 0.9]:35 [2, 4]:64 [6, 8]:65 [10, 30]:97 [100, 200]:36",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			var m *RangeMap[float64, rune]
-
-			t.Run("NewRangeMap", func(t *testing.T) {
-				eq := generic.NewEqualFunc[rune]()
-				m = NewRangeMap(eq, tc.pairs)
-			})
-
-			t.Run("Clone", func(t *testing.T) {
-				clone := m.Clone()
-				assert.True(t, clone.Equal(m))
-			})
-
-			for i, tc := range tc.addTests {
-				t.Run(fmt.Sprintf("Add/%d", i), func(t *testing.T) {
-					m.Add(tc.key, tc.val)
-				})
+			for _, p := range tc.pairs {
+				tc.m.Add(p.Range, p.Value)
 			}
 
-			for i, tc := range tc.equalTests {
-				t.Run(fmt.Sprintf("Equal/%d", i), func(t *testing.T) {
-					assert.Equal(t, tc.expectedEqual, m.Equal(tc.rhs))
-				})
+			assert.Equal(t, tc.expectedPairs, tc.m.pairs)
+		})
+	}
+}
+
+func TestRangeMap_Remove(t *testing.T) {
+	equal := generic.NewEqualFunc[rune]()
+	pairs := map[Range[float64]]rune{
+		{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}:  'a',
+		{Bound[float64]{30.0, true}, Bound[float64]{40.0, false}}:   'b',
+		{Bound[float64]{50.0, false}, Bound[float64]{60.0, true}}:   'c',
+		{Bound[float64]{70.0, true}, Bound[float64]{80.0, true}}:    'd',
+		{Bound[float64]{90.0, false}, Bound[float64]{100.0, false}}: 'e',
+	}
+
+	tests := []struct {
+		name          string
+		m             *RangeMap[float64, rune]
+		keys          []Range[float64]
+		expectedPairs []rangeValue[float64, rune]
+	}{
+		{
+			name: "None",
+			m:    NewRangeMap(equal, pairs),
+			keys: nil,
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, false}}, 'b'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{60.0, true}}, 'c'},
+				{Range[float64]{Bound[float64]{70.0, true}, Bound[float64]{80.0, true}}, 'd'},
+				{Range[float64]{Bound[float64]{90.0, false}, Bound[float64]{100.0, false}}, 'e'},
+			},
+		},
+		{
+			// Case: No Overlapping
+			//
+			//        |________|        |________|        |________|        |________|        |________|
+			//  |__|              |__|              |__|              |__|              |__|              |__|
+			//
+			name: "NoOverlapping",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[float64]{
+				{Bound[float64]{4.0, false}, Bound[float64]{6.0, false}},
+				{Bound[float64]{24.0, false}, Bound[float64]{26.0, false}},
+				{Bound[float64]{44.0, false}, Bound[float64]{46.0, false}},
+				{Bound[float64]{64.0, false}, Bound[float64]{66.0, false}},
+				{Bound[float64]{84.0, false}, Bound[float64]{86.0, false}},
+				{Bound[float64]{104.0, false}, Bound[float64]{106.0, false}},
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, false}}, 'b'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{60.0, true}}, 'c'},
+				{Range[float64]{Bound[float64]{70.0, true}, Bound[float64]{80.0, true}}, 'd'},
+				{Range[float64]{Bound[float64]{90.0, false}, Bound[float64]{100.0, false}}, 'e'},
+			},
+		},
+		{
+			// Case: Overlapping Bounds
+			//
+			//        |________|        |________|        |________|        |________|        |________|
+			//     |__|        |________|        |________|        |________|        |________|        |__|
+			//
+			name: "OverlappingBounds",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[float64]{
+				{Bound[float64]{8.0, false}, Bound[float64]{10.0, false}},
+				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}},
+				{Bound[float64]{40.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{60.0, false}, Bound[float64]{70.0, false}},
+				{Bound[float64]{80.0, false}, Bound[float64]{90.0, false}},
+				{Bound[float64]{100.0, false}, Bound[float64]{102.0, false}},
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, true}, Bound[float64]{20.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'b'},
+				{Range[float64]{Bound[float64]{50.0, true}, Bound[float64]{60.0, true}}, 'c'},
+				{Range[float64]{Bound[float64]{70.0, true}, Bound[float64]{80.0, true}}, 'd'},
+				{Range[float64]{Bound[float64]{90.0, true}, Bound[float64]{100.0, true}}, 'e'},
+			},
+		},
+		{
+			// Case: Overlapping Ranges
+			//
+			//        |________|        |________|        |________|        |________|        |________|
+			//      |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|
+			//
+			name: "OverlappingRanges",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[float64]{
+				{Bound[float64]{8.0, false}, Bound[float64]{12.0, false}},
+				{Bound[float64]{18.0, false}, Bound[float64]{32.0, false}},
+				{Bound[float64]{38.0, false}, Bound[float64]{52.0, false}},
+				{Bound[float64]{58.0, false}, Bound[float64]{72.0, false}},
+				{Bound[float64]{78.0, false}, Bound[float64]{92.0, false}},
+				{Bound[float64]{98.0, false}, Bound[float64]{102.0, false}},
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{12.0, true}, Bound[float64]{18.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{32.0, true}, Bound[float64]{38.0, true}}, 'b'},
+				{Range[float64]{Bound[float64]{52.0, true}, Bound[float64]{58.0, true}}, 'c'},
+				{Range[float64]{Bound[float64]{72.0, true}, Bound[float64]{78.0, true}}, 'd'},
+				{Range[float64]{Bound[float64]{92.0, true}, Bound[float64]{98.0, true}}, 'e'},
+			},
+		},
+		{
+			// Case: Subsets
+			//
+			//        |________|        |________|        |________|        |________|        |________|
+			//           |__|              |__|              |__|              |__|              |__|
+			//
+			name: "Subsets",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[float64]{
+				{Bound[float64]{14.0, true}, Bound[float64]{16.0, true}},
+				{Bound[float64]{34.0, true}, Bound[float64]{36.0, true}},
+				{Bound[float64]{54.0, true}, Bound[float64]{56.0, true}},
+				{Bound[float64]{74.0, true}, Bound[float64]{76.0, true}},
+				{Bound[float64]{94.0, true}, Bound[float64]{96.0, true}},
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{14.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{16.0, false}, Bound[float64]{20.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{34, false}}, 'b'},
+				{Range[float64]{Bound[float64]{36.0, false}, Bound[float64]{40.0, false}}, 'b'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{54.0, false}}, 'c'},
+				{Range[float64]{Bound[float64]{56.0, false}, Bound[float64]{60.0, true}}, 'c'},
+				{Range[float64]{Bound[float64]{70.0, true}, Bound[float64]{74.0, false}}, 'd'},
+				{Range[float64]{Bound[float64]{76.0, false}, Bound[float64]{80.0, true}}, 'd'},
+				{Range[float64]{Bound[float64]{90.0, false}, Bound[float64]{94.0, false}}, 'e'},
+				{Range[float64]{Bound[float64]{96.0, false}, Bound[float64]{100.0, false}}, 'e'},
+			},
+		},
+		{
+			// Case: Supersets
+			//
+			//        |________|        |________|        |________|        |________|        |________|
+			//                      |________________||__________________________________|
+			//
+			name: "Supersets",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[float64]{
+				{Bound[float64]{25.0, false}, Bound[float64]{45.0, false}},
+				{Bound[float64]{45.0, true}, Bound[float64]{85.0, false}},
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{90.0, false}, Bound[float64]{100.0, false}}, 'e'},
+			},
+		},
+		{
+			name: "All",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}},
+				{Bound[float64]{30.0, true}, Bound[float64]{40.0, false}},
+				{Bound[float64]{50.0, false}, Bound[float64]{60.0, true}},
+				{Bound[float64]{70.0, true}, Bound[float64]{80.0, true}},
+				{Bound[float64]{90.0, false}, Bound[float64]{100.0, false}},
+			},
+			expectedPairs: []rangeValue[float64, rune]{},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, k := range tc.keys {
+				tc.m.Remove(k)
 			}
 
-			for i, tc := range tc.getTests {
-				t.Run(fmt.Sprintf("Get/%d", i), func(t *testing.T) {
-					r, v, ok := m.Get(tc.key)
+			assert.Equal(t, tc.expectedPairs, tc.m.pairs)
+		})
+	}
+}
 
-					assert.Equal(t, tc.expectedOK, ok)
-					assert.Equal(t, tc.expectedRange, r)
-					assert.Equal(t, tc.expectedValue, v)
-				})
-			}
+func TestRangeMap_All(t *testing.T) {
+	tests := []struct {
+		name        string
+		m           *RangeMap[float64, rune]
+		expectedAll []generic.KeyValue[Range[float64], rune]
+	}{
+		{
+			name: "OK",
+			m: &RangeMap[float64, rune]{
+				pairs: []rangeValue[float64, rune]{
+					{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
+					{Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, '@'},
+					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, 'a'},
+					{Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{80.0, true}}, 'b'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[float64, rune],
+			},
+			expectedAll: []generic.KeyValue[Range[float64], rune]{
+				{Key: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, Val: '#'},
+				{Key: Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, Val: '@'},
+				{Key: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, Val: 'a'},
+				{Key: Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{80.0, true}}, Val: 'b'},
+			},
+		},
+	}
 
-			t.Run("All", func(t *testing.T) {
-				all := generic.Collect2(m.All())
-				assert.Equal(t, tc.expectedAll, all)
-			})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			all := generic.Collect2(tc.m.All())
 
-			t.Run("String", func(t *testing.T) {
-				assert.Equal(t, tc.expectedString, m.String())
-			})
+			assert.Equal(t, tc.expectedAll, all)
 		})
 	}
 }

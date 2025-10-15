@@ -68,8 +68,7 @@ func (r Range[T]) Adjacent(rr Range[T]) (bool, bool) {
 }
 
 // Intersect returns the intersection of two continuous ranges.
-// The second return value indicates if the intersection is non-empty.
-func (r Range[T]) Intersect(rr Range[T]) (Range[T], bool) {
+func (r Range[T]) Intersect(rr Range[T]) RangeOrEmpty[T] {
 	if !rr.Valid() {
 		panic(fmt.Sprintf("invalid range: %s", rr))
 	}
@@ -101,20 +100,18 @@ func (r Range[T]) Intersect(rr Range[T]) (Range[T], bool) {
 	}
 
 	if res.Valid() {
-		return res, true
+		return RangeOrEmpty[T]{Range: res}
 	}
 
-	return Range[T]{}, false
+	return RangeOrEmpty[T]{Empty: true}
 }
 
-// Subtract returns the subtraction of two discrete ranges.
-// The second return value indicates if the subtraction is non-empty.
-func (r Range[T]) Subtract(rr Range[T]) []Range[T] {
+// Subtract returns the subtraction of two continuous ranges.
+// It returns two ranges representing the left and right parts of the subtraction.
+func (r Range[T]) Subtract(rr Range[T]) (RangeOrEmpty[T], RangeOrEmpty[T]) {
 	if !rr.Valid() {
 		panic(fmt.Sprintf("invalid range: %s", rr))
 	}
-
-	var res []Range[T]
 
 	left := Range[T]{
 		Lo: r.Lo,
@@ -128,10 +125,6 @@ func (r Range[T]) Subtract(rr Range[T]) []Range[T] {
 			Val:  rr.Lo.Val,
 			Open: !rr.Lo.Open,
 		}
-	}
-
-	if left.Valid() {
-		res = append(res, left)
 	}
 
 	right := Range[T]{
@@ -148,11 +141,21 @@ func (r Range[T]) Subtract(rr Range[T]) []Range[T] {
 		}
 	}
 
-	if right.Valid() {
-		res = append(res, right)
+	if left.Valid() && right.Valid() {
+		return RangeOrEmpty[T]{Range: left}, RangeOrEmpty[T]{Range: right}
+	} else if left.Valid() {
+		return RangeOrEmpty[T]{Range: left}, RangeOrEmpty[T]{Empty: true}
+	} else if right.Valid() {
+		return RangeOrEmpty[T]{Empty: true}, RangeOrEmpty[T]{Range: right}
 	}
 
-	return res
+	return RangeOrEmpty[T]{Empty: true}, RangeOrEmpty[T]{Empty: true}
+}
+
+// RangeOrEmpty represents a continuous range that can be empty.
+type RangeOrEmpty[T Continuous] struct {
+	Range[T]
+	Empty bool
 }
 
 // compareLoLo compares two low bounds.

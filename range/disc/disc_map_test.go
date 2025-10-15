@@ -2,6 +2,8 @@ package disc
 
 import (
 	"fmt"
+	"iter"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,114 +11,34 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
-func TestRangeMap(t *testing.T) {
-	type addTest[K Discrete, V any] struct {
-		key Range[K]
-		val V
-	}
-
-	type equalTest[K Discrete, V any] struct {
-		rhs           *RangeMap[K, V]
-		expectedEqual bool
-	}
-
-	type getTest[K Discrete, V any] struct {
-		key           K
-		expectedOK    bool
-		expectedRange Range[K]
-		expectedValue V
-	}
+func TestNewRangeMap(t *testing.T) {
+	equal := generic.NewEqualFunc[rune]()
 
 	tests := []struct {
 		name           string
+		equal          generic.EqualFunc[rune]
 		pairs          map[Range[int]]rune
-		addTests       []addTest[int, rune]
-		equalTests     []equalTest[int, rune]
-		getTests       []getTest[int, rune]
-		expectedAll    []generic.KeyValue[Range[int], rune]
+		expectedPairs  []rangeValue[int, rune]
 		expectedString string
 	}{
 		{
-			name: "CurrentHiOnLastHi_Merging",
+			name:  "CurrentHiOnLastHi_Merging",
+			equal: equal,
 			pairs: map[Range[int]]rune{
 				{20, 40}:   '@',
 				{100, 200}: 'a',
 				{200, 200}: 'a',
 				{200, 400}: 'a',
 			},
-			addTests: []addTest[int, rune]{
-				{Range[int]{0, 9}, '#'},
-				{Range[int]{50, 60}, 'A'},
-				{Range[int]{60, 60}, 'A'},
-				{Range[int]{60, 80}, 'A'},
-				{Range[int]{1000, 2000}, '$'},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 400}, 'a'},
 			},
-			equalTests: []equalTest[int, rune]{
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{
-							{Range[int]{0, 9}, '#'},
-							{Range[int]{20, 40}, '@'},
-							{Range[int]{50, 80}, 'A'},
-							{Range[int]{100, 400}, 'a'},
-							{Range[int]{1000, 2000}, '%'},
-						},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{
-							{Range[int]{0, 9}, '#'},
-							{Range[int]{20, 40}, '@'},
-							{Range[int]{50, 80}, 'A'},
-							{Range[int]{100, 400}, 'a'},
-							{Range[int]{1000, 2000}, '$'},
-						},
-					},
-					expectedEqual: true,
-				},
-			},
-			getTests: []getTest[int, rune]{
-				{key: -10, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 0, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 5, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 9, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 10, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 20, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 30, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 40, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 44, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 50, expectedOK: true, expectedRange: Range[int]{50, 80}, expectedValue: 'A'},
-				{key: 60, expectedOK: true, expectedRange: Range[int]{50, 80}, expectedValue: 'A'},
-				{key: 80, expectedOK: true, expectedRange: Range[int]{50, 80}, expectedValue: 'A'},
-				{key: 99, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 100, expectedOK: true, expectedRange: Range[int]{100, 400}, expectedValue: 'a'},
-				{key: 200, expectedOK: true, expectedRange: Range[int]{100, 400}, expectedValue: 'a'},
-				{key: 400, expectedOK: true, expectedRange: Range[int]{100, 400}, expectedValue: 'a'},
-				{key: 500, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 1000, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 1500, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 2000, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 4000, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-			},
-			expectedAll: []generic.KeyValue[Range[int], rune]{
-				{Key: Range[int]{0, 9}, Val: '#'},
-				{Key: Range[int]{20, 40}, Val: '@'},
-				{Key: Range[int]{50, 80}, Val: 'A'},
-				{Key: Range[int]{100, 400}, Val: 'a'},
-				{Key: Range[int]{1000, 2000}, Val: '$'},
-			},
-			expectedString: "[0, 9]:35 [20, 40]:64 [50, 80]:65 [100, 400]:97 [1000, 2000]:36",
+			expectedString: "[20, 40]:64 [100, 400]:97",
 		},
 		{
-			name: "CurrentHiOnLastHi_Splitting",
+			name:  "CurrentHiOnLastHi_Splitting",
+			equal: equal,
 			pairs: map[Range[int]]rune{
 				{20, 40}:   '@',
 				{100, 200}: 'a',
@@ -124,104 +46,17 @@ func TestRangeMap(t *testing.T) {
 				{200, 300}: 'b',
 				{300, 400}: 'c',
 			},
-			addTests: []addTest[int, rune]{
-				{Range[int]{0, 9}, '#'},
-				{Range[int]{50, 60}, 'A'},
-				{Range[int]{60, 60}, 'B'},
-				{Range[int]{60, 70}, 'B'},
-				{Range[int]{70, 80}, 'C'},
-				{Range[int]{1000, 2000}, '$'},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 199}, 'a'},
+				{Range[int]{200, 299}, 'b'},
+				{Range[int]{300, 400}, 'c'},
 			},
-			equalTests: []equalTest[int, rune]{
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{
-							{Range[int]{0, 9}, '#'},
-							{Range[int]{20, 40}, '@'},
-							{Range[int]{50, 59}, 'A'},
-							{Range[int]{60, 69}, 'B'},
-							{Range[int]{70, 80}, 'C'},
-							{Range[int]{100, 199}, 'a'},
-							{Range[int]{200, 299}, 'b'},
-							{Range[int]{300, 400}, 'c'},
-							{Range[int]{1000, 2000}, '%'},
-						},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{
-							{Range[int]{0, 9}, '#'},
-							{Range[int]{20, 40}, '@'},
-							{Range[int]{50, 59}, 'A'},
-							{Range[int]{60, 69}, 'B'},
-							{Range[int]{70, 80}, 'C'},
-							{Range[int]{100, 199}, 'a'},
-							{Range[int]{200, 299}, 'b'},
-							{Range[int]{300, 400}, 'c'},
-							{Range[int]{1000, 2000}, '$'},
-						},
-					},
-					expectedEqual: true,
-				},
-			},
-			getTests: []getTest[int, rune]{
-				{key: -10, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 0, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 5, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 9, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 10, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 20, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 30, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 40, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 44, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 50, expectedOK: true, expectedRange: Range[int]{50, 59}, expectedValue: 'A'},
-				{key: 55, expectedOK: true, expectedRange: Range[int]{50, 59}, expectedValue: 'A'},
-				{key: 59, expectedOK: true, expectedRange: Range[int]{50, 59}, expectedValue: 'A'},
-				{key: 60, expectedOK: true, expectedRange: Range[int]{60, 69}, expectedValue: 'B'},
-				{key: 66, expectedOK: true, expectedRange: Range[int]{60, 69}, expectedValue: 'B'},
-				{key: 69, expectedOK: true, expectedRange: Range[int]{60, 69}, expectedValue: 'B'},
-				{key: 70, expectedOK: true, expectedRange: Range[int]{70, 80}, expectedValue: 'C'},
-				{key: 77, expectedOK: true, expectedRange: Range[int]{70, 80}, expectedValue: 'C'},
-				{key: 80, expectedOK: true, expectedRange: Range[int]{70, 80}, expectedValue: 'C'},
-				{key: 99, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 100, expectedOK: true, expectedRange: Range[int]{100, 199}, expectedValue: 'a'},
-				{key: 150, expectedOK: true, expectedRange: Range[int]{100, 199}, expectedValue: 'a'},
-				{key: 199, expectedOK: true, expectedRange: Range[int]{100, 199}, expectedValue: 'a'},
-				{key: 200, expectedOK: true, expectedRange: Range[int]{200, 299}, expectedValue: 'b'},
-				{key: 250, expectedOK: true, expectedRange: Range[int]{200, 299}, expectedValue: 'b'},
-				{key: 299, expectedOK: true, expectedRange: Range[int]{200, 299}, expectedValue: 'b'},
-				{key: 300, expectedOK: true, expectedRange: Range[int]{300, 400}, expectedValue: 'c'},
-				{key: 350, expectedOK: true, expectedRange: Range[int]{300, 400}, expectedValue: 'c'},
-				{key: 400, expectedOK: true, expectedRange: Range[int]{300, 400}, expectedValue: 'c'},
-				{key: 500, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 1000, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 1500, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 2000, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 4000, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-			},
-			expectedAll: []generic.KeyValue[Range[int], rune]{
-				{Key: Range[int]{0, 9}, Val: '#'},
-				{Key: Range[int]{20, 40}, Val: '@'},
-				{Key: Range[int]{50, 59}, Val: 'A'},
-				{Key: Range[int]{60, 69}, Val: 'B'},
-				{Key: Range[int]{70, 80}, Val: 'C'},
-				{Key: Range[int]{100, 199}, Val: 'a'},
-				{Key: Range[int]{200, 299}, Val: 'b'},
-				{Key: Range[int]{300, 400}, Val: 'c'},
-				{Key: Range[int]{1000, 2000}, Val: '$'},
-			},
-			expectedString: "[0, 9]:35 [20, 40]:64 [50, 59]:65 [60, 69]:66 [70, 80]:67 [100, 199]:97 [200, 299]:98 [300, 400]:99 [1000, 2000]:36",
+			expectedString: "[20, 40]:64 [100, 199]:97 [200, 299]:98 [300, 400]:99",
 		},
 		{
-			name: "CurrentHiBeforeLastHi_Merging",
+			name:  "CurrentHiBeforeLastHi_Merging",
+			equal: equal,
 			pairs: map[Range[int]]rune{
 				{20, 40}:   '@',
 				{100, 600}: 'a',
@@ -229,80 +64,15 @@ func TestRangeMap(t *testing.T) {
 				{400, 600}: 'a',
 				{500, 700}: 'a',
 			},
-			addTests: []addTest[int, rune]{
-				{Range[int]{0, 9}, '#'},
-				{Range[int]{50, 80}, 'A'},
-				{Range[int]{55, 65}, 'A'},
-				{Range[int]{70, 80}, 'A'},
-				{Range[int]{75, 90}, 'A'},
-				{Range[int]{1000, 2000}, '$'},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 700}, 'a'},
 			},
-			equalTests: []equalTest[int, rune]{
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{
-							{Range[int]{0, 9}, '#'},
-							{Range[int]{20, 40}, '@'},
-							{Range[int]{50, 90}, 'A'},
-							{Range[int]{100, 700}, 'a'},
-							{Range[int]{1000, 2000}, '%'},
-						},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{
-							{Range[int]{0, 9}, '#'},
-							{Range[int]{20, 40}, '@'},
-							{Range[int]{50, 90}, 'A'},
-							{Range[int]{100, 700}, 'a'},
-							{Range[int]{1000, 2000}, '$'},
-						},
-					},
-					expectedEqual: true,
-				},
-			},
-			getTests: []getTest[int, rune]{
-				{key: -10, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 0, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 5, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 9, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 10, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 20, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 30, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 40, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 44, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 50, expectedOK: true, expectedRange: Range[int]{50, 90}, expectedValue: 'A'},
-				{key: 70, expectedOK: true, expectedRange: Range[int]{50, 90}, expectedValue: 'A'},
-				{key: 90, expectedOK: true, expectedRange: Range[int]{50, 90}, expectedValue: 'A'},
-				{key: 99, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 100, expectedOK: true, expectedRange: Range[int]{100, 700}, expectedValue: 'a'},
-				{key: 500, expectedOK: true, expectedRange: Range[int]{100, 700}, expectedValue: 'a'},
-				{key: 700, expectedOK: true, expectedRange: Range[int]{100, 700}, expectedValue: 'a'},
-				{key: 800, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 1000, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 1500, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 2000, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 4000, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-			},
-			expectedAll: []generic.KeyValue[Range[int], rune]{
-				{Key: Range[int]{0, 9}, Val: '#'},
-				{Key: Range[int]{20, 40}, Val: '@'},
-				{Key: Range[int]{50, 90}, Val: 'A'},
-				{Key: Range[int]{100, 700}, Val: 'a'},
-				{Key: Range[int]{1000, 2000}, Val: '$'},
-			},
-			expectedString: "[0, 9]:35 [20, 40]:64 [50, 90]:65 [100, 700]:97 [1000, 2000]:36",
+			expectedString: "[20, 40]:64 [100, 700]:97",
 		},
 		{
-			name: "CurrentHiBeforeLastHi_Splitting",
+			name:  "CurrentHiBeforeLastHi_Splitting",
+			equal: equal,
 			pairs: map[Range[int]]rune{
 				{20, 40}:   '@',
 				{100, 600}: 'a',
@@ -310,7 +80,471 @@ func TestRangeMap(t *testing.T) {
 				{400, 600}: 'b',
 				{500, 700}: 'c',
 			},
-			addTests: []addTest[int, rune]{
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 199}, 'a'},
+				{Range[int]{200, 300}, 'b'},
+				{Range[int]{301, 399}, 'a'},
+				{Range[int]{400, 499}, 'b'},
+				{Range[int]{500, 700}, 'c'},
+			},
+			expectedString: "[20, 40]:64 [100, 199]:97 [200, 300]:98 [301, 399]:97 [400, 499]:98 [500, 700]:99",
+		},
+		{
+			name:  "CurrentHiAdjacentToLastHi_Merging",
+			equal: equal,
+			pairs: map[Range[int]]rune{
+				{20, 40}:   '@',
+				{100, 199}: 'a',
+				{200, 200}: 'a',
+				{201, 300}: 'a',
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 300}, 'a'},
+			},
+			expectedString: "[20, 40]:64 [100, 300]:97",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			m := NewRangeMap(tc.equal, tc.pairs)
+
+			assert.Equal(t, tc.expectedPairs, m.pairs)
+			assert.Equal(t, tc.expectedString, m.String())
+		})
+	}
+}
+
+func TestNewRangeMapWithFormat(t *testing.T) {
+	equal := generic.NewEqualFunc[rune]()
+
+	format := func(ranges iter.Seq2[Range[int], rune]) string {
+		strs := make([]string, 0)
+		for r, v := range ranges {
+			strs = append(strs, fmt.Sprintf("[%d..%d] --> %c", r.Lo, r.Hi, v))
+		}
+		return strings.Join(strs, "\n")
+	}
+
+	tests := []struct {
+		name           string
+		equal          generic.EqualFunc[rune]
+		format         FormatMap[int, rune]
+		pairs          map[Range[int]]rune
+		expectedPairs  []rangeValue[int, rune]
+		expectedString string
+	}{
+		{
+			name:   "CurrentHiOnLastHi_Merging",
+			equal:  equal,
+			format: format,
+			pairs: map[Range[int]]rune{
+				{20, 40}:   '@',
+				{100, 200}: 'a',
+				{200, 200}: 'a',
+				{200, 400}: 'a',
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 400}, 'a'},
+			},
+			expectedString: "[20..40] --> @\n[100..400] --> a",
+		},
+		{
+			name:   "CurrentHiOnLastHi_Splitting",
+			equal:  equal,
+			format: format,
+			pairs: map[Range[int]]rune{
+				{20, 40}:   '@',
+				{100, 200}: 'a',
+				{200, 200}: 'b',
+				{200, 300}: 'b',
+				{300, 400}: 'c',
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 199}, 'a'},
+				{Range[int]{200, 299}, 'b'},
+				{Range[int]{300, 400}, 'c'},
+			},
+			expectedString: "[20..40] --> @\n[100..199] --> a\n[200..299] --> b\n[300..400] --> c",
+		},
+		{
+			name:   "CurrentHiBeforeLastHi_Merging",
+			equal:  equal,
+			format: format,
+			pairs: map[Range[int]]rune{
+				{20, 40}:   '@',
+				{100, 600}: 'a',
+				{200, 300}: 'a',
+				{400, 600}: 'a',
+				{500, 700}: 'a',
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 700}, 'a'},
+			},
+			expectedString: "[20..40] --> @\n[100..700] --> a",
+		},
+		{
+			name:   "CurrentHiBeforeLastHi_Splitting",
+			equal:  equal,
+			format: format,
+			pairs: map[Range[int]]rune{
+				{20, 40}:   '@',
+				{100, 600}: 'a',
+				{200, 300}: 'b',
+				{400, 600}: 'b',
+				{500, 700}: 'c',
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 199}, 'a'},
+				{Range[int]{200, 300}, 'b'},
+				{Range[int]{301, 399}, 'a'},
+				{Range[int]{400, 499}, 'b'},
+				{Range[int]{500, 700}, 'c'},
+			},
+			expectedString: "[20..40] --> @\n[100..199] --> a\n[200..300] --> b\n[301..399] --> a\n[400..499] --> b\n[500..700] --> c",
+		},
+		{
+			name:   "CurrentHiAdjacentToLastHi_Merging",
+			equal:  equal,
+			format: format,
+			pairs: map[Range[int]]rune{
+				{20, 40}:   '@',
+				{100, 199}: 'a',
+				{200, 200}: 'a',
+				{201, 300}: 'a',
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 300}, 'a'},
+			},
+			expectedString: "[20..40] --> @\n[100..300] --> a",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			m := NewRangeMapWithFormat(tc.equal, tc.format, tc.pairs)
+
+			assert.Equal(t, tc.expectedPairs, m.pairs)
+			assert.Equal(t, tc.expectedString, m.String())
+		})
+	}
+}
+
+func TestRangeMap_String(t *testing.T) {
+	tests := []struct {
+		name           string
+		m              *RangeMap[int, rune]
+		expectedString string
+	}{
+		{
+			name: "WithDefaultFormat",
+			m: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{20, 40}, '@'},
+					{Range[int]{100, 199}, 'a'},
+					{Range[int]{200, 299}, 'b'},
+					{Range[int]{300, 400}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
+			},
+			expectedString: "[20, 40]:64 [100, 199]:97 [200, 299]:98 [300, 400]:99",
+		},
+		{
+			name: "WithCustomFormat",
+			m: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{20, 40}, '@'},
+					{Range[int]{100, 199}, 'a'},
+					{Range[int]{200, 299}, 'b'},
+					{Range[int]{300, 400}, 'c'},
+				},
+				equal: generic.NewEqualFunc[rune](),
+				format: func(ranges iter.Seq2[Range[int], rune]) string {
+					strs := make([]string, 0)
+					for r, v := range ranges {
+						strs = append(strs, fmt.Sprintf("[%d..%d] --> %c", r.Lo, r.Hi, v))
+					}
+					return strings.Join(strs, "\n")
+				},
+			},
+			expectedString: "[20..40] --> @\n[100..199] --> a\n[200..299] --> b\n[300..400] --> c",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedString, tc.m.String())
+		})
+	}
+}
+
+func TestRangeMap_Clone(t *testing.T) {
+	tests := []struct {
+		name string
+		m    *RangeMap[int, rune]
+	}{
+		{
+			name: "OK",
+			m: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{20, 40}, '@'},
+					{Range[int]{100, 199}, 'a'},
+					{Range[int]{200, 299}, 'b'},
+					{Range[int]{300, 400}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			clone := tc.m.Clone()
+
+			assert.True(t, clone.Equal(tc.m))
+		})
+	}
+}
+
+func TestRangeMap_Equal(t *testing.T) {
+	m := &RangeMap[int, rune]{
+		pairs: []rangeValue[int, rune]{
+			{Range[int]{20, 40}, '@'},
+			{Range[int]{100, 199}, 'a'},
+			{Range[int]{200, 299}, 'b'},
+			{Range[int]{300, 400}, 'c'},
+		},
+		equal:  generic.NewEqualFunc[rune](),
+		format: defaultFormatMap[int, rune],
+	}
+
+	tests := []struct {
+		name          string
+		m             *RangeMap[int, rune]
+		rhs           *RangeMap[int, rune]
+		expectedEqual bool
+	}{
+		{
+			name: "NotEqual_DiffLens",
+			m:    m,
+			rhs: &RangeMap[int, rune]{
+				pairs:  []rangeValue[int, rune]{},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
+			},
+			expectedEqual: false,
+		},
+		{
+			name: "NotEqual_DiffRanges",
+			m:    m,
+			rhs: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{10, 40}, '@'},
+					{Range[int]{100, 199}, 'a'},
+					{Range[int]{200, 299}, 'b'},
+					{Range[int]{300, 400}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
+			},
+			expectedEqual: false,
+		},
+		{
+			name: "NotEqual_DiffValues",
+			m:    m,
+			rhs: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{20, 40}, '*'},
+					{Range[int]{100, 199}, 'a'},
+					{Range[int]{200, 299}, 'b'},
+					{Range[int]{300, 400}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
+			},
+			expectedEqual: false,
+		},
+		{
+			name: "Equal",
+			m:    m,
+			rhs: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{20, 40}, '@'},
+					{Range[int]{100, 199}, 'a'},
+					{Range[int]{200, 299}, 'b'},
+					{Range[int]{300, 400}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
+			},
+			expectedEqual: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEqual, tc.m.Equal(tc.rhs))
+		})
+	}
+}
+
+func TestRangeMap_Get(t *testing.T) {
+	m := &RangeMap[int, rune]{
+		pairs: []rangeValue[int, rune]{
+			{Range[int]{0, 9}, '#'},
+			{Range[int]{10, 20}, '@'},
+			{Range[int]{200, 400}, 'a'},
+		},
+		equal:  generic.NewEqualFunc[rune](),
+		format: defaultFormatMap[int, rune],
+	}
+
+	tests := []struct {
+		m             *RangeMap[int, rune]
+		key           int
+		expectedOK    bool
+		expectedRange Range[int]
+		expectedValue rune
+	}{
+		{m: m, key: -1, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
+		{m: m, key: 0, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
+		{m: m, key: 5, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
+		{m: m, key: 9, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
+		{m: m, key: 10, expectedOK: true, expectedRange: Range[int]{10, 20}, expectedValue: '@'},
+		{m: m, key: 15, expectedOK: true, expectedRange: Range[int]{10, 20}, expectedValue: '@'},
+		{m: m, key: 20, expectedOK: true, expectedRange: Range[int]{10, 20}, expectedValue: '@'},
+		{m: m, key: 100, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
+		{m: m, key: 200, expectedOK: true, expectedRange: Range[int]{200, 400}, expectedValue: 'a'},
+		{m: m, key: 300, expectedOK: true, expectedRange: Range[int]{200, 400}, expectedValue: 'a'},
+		{m: m, key: 400, expectedOK: true, expectedRange: Range[int]{200, 400}, expectedValue: 'a'},
+		{m: m, key: 500, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
+	}
+
+	for i, tc := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			r, v, ok := tc.m.Get(tc.key)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedRange, r)
+			assert.Equal(t, tc.expectedValue, v)
+		})
+	}
+}
+
+func TestRangeMap_Add(t *testing.T) {
+	tests := []struct {
+		name          string
+		m             *RangeMap[int, rune]
+		pairs         []rangeValue[int, rune]
+		expectedPairs []rangeValue[int, rune]
+	}{
+		{
+			name: "CurrentHiOnLastHi_Merging",
+			m: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{20, 40}, '@'},
+					{Range[int]{100, 400}, 'a'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
+			},
+			pairs: []rangeValue[int, rune]{
+				{Range[int]{0, 9}, '#'},
+				{Range[int]{50, 60}, 'A'},
+				{Range[int]{60, 60}, 'A'},
+				{Range[int]{60, 80}, 'A'},
+				{Range[int]{1000, 2000}, '$'},
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{0, 9}, '#'},
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{50, 80}, 'A'},
+				{Range[int]{100, 400}, 'a'},
+				{Range[int]{1000, 2000}, '$'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi_Splitting",
+			m: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{20, 40}, '@'},
+					{Range[int]{100, 199}, 'a'},
+					{Range[int]{200, 299}, 'b'},
+					{Range[int]{300, 400}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
+			},
+			pairs: []rangeValue[int, rune]{
+				{Range[int]{0, 9}, '#'},
+				{Range[int]{50, 60}, 'A'},
+				{Range[int]{60, 60}, 'B'},
+				{Range[int]{60, 70}, 'B'},
+				{Range[int]{70, 80}, 'C'},
+				{Range[int]{1000, 2000}, '$'},
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{0, 9}, '#'},
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{50, 59}, 'A'},
+				{Range[int]{60, 69}, 'B'},
+				{Range[int]{70, 80}, 'C'},
+				{Range[int]{100, 199}, 'a'},
+				{Range[int]{200, 299}, 'b'},
+				{Range[int]{300, 400}, 'c'},
+				{Range[int]{1000, 2000}, '$'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi_Merging",
+			m: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{20, 40}, '@'},
+					{Range[int]{100, 700}, 'a'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
+			},
+			pairs: []rangeValue[int, rune]{
+				{Range[int]{0, 9}, '#'},
+				{Range[int]{50, 80}, 'A'},
+				{Range[int]{55, 65}, 'A'},
+				{Range[int]{70, 80}, 'A'},
+				{Range[int]{75, 90}, 'A'},
+				{Range[int]{1000, 2000}, '$'},
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{0, 9}, '#'},
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{50, 90}, 'A'},
+				{Range[int]{100, 700}, 'a'},
+				{Range[int]{1000, 2000}, '$'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi_Splitting",
+			m: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{20, 40}, '@'},
+					{Range[int]{100, 199}, 'a'},
+					{Range[int]{200, 300}, 'b'},
+					{Range[int]{301, 399}, 'a'},
+					{Range[int]{400, 499}, 'b'},
+					{Range[int]{500, 700}, 'c'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
+			},
+			pairs: []rangeValue[int, rune]{
 				{Range[int]{0, 9}, '#'},
 				{Range[int]{50, 80}, 'A'},
 				{Range[int]{55, 65}, 'B'},
@@ -318,243 +552,260 @@ func TestRangeMap(t *testing.T) {
 				{Range[int]{75, 90}, 'C'},
 				{Range[int]{1000, 2000}, '$'},
 			},
-			equalTests: []equalTest[int, rune]{
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{
-							{Range[int]{0, 9}, '#'},
-							{Range[int]{20, 40}, '@'},
-							{Range[int]{50, 54}, 'A'},
-							{Range[int]{55, 65}, 'B'},
-							{Range[int]{66, 69}, 'A'},
-							{Range[int]{70, 74}, 'B'},
-							{Range[int]{75, 90}, 'C'},
-							{Range[int]{100, 199}, 'a'},
-							{Range[int]{200, 300}, 'b'},
-							{Range[int]{301, 399}, 'a'},
-							{Range[int]{400, 499}, 'b'},
-							{Range[int]{500, 700}, 'c'},
-							{Range[int]{1000, 2000}, '%'},
-						},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{
-							{Range[int]{0, 9}, '#'},
-							{Range[int]{20, 40}, '@'},
-							{Range[int]{50, 54}, 'A'},
-							{Range[int]{55, 65}, 'B'},
-							{Range[int]{66, 69}, 'A'},
-							{Range[int]{70, 74}, 'B'},
-							{Range[int]{75, 90}, 'C'},
-							{Range[int]{100, 199}, 'a'},
-							{Range[int]{200, 300}, 'b'},
-							{Range[int]{301, 399}, 'a'},
-							{Range[int]{400, 499}, 'b'},
-							{Range[int]{500, 700}, 'c'},
-							{Range[int]{1000, 2000}, '$'},
-						},
-					},
-					expectedEqual: true,
-				},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{0, 9}, '#'},
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{50, 54}, 'A'},
+				{Range[int]{55, 65}, 'B'},
+				{Range[int]{66, 69}, 'A'},
+				{Range[int]{70, 74}, 'B'},
+				{Range[int]{75, 90}, 'C'},
+				{Range[int]{100, 199}, 'a'},
+				{Range[int]{200, 300}, 'b'},
+				{Range[int]{301, 399}, 'a'},
+				{Range[int]{400, 499}, 'b'},
+				{Range[int]{500, 700}, 'c'},
+				{Range[int]{1000, 2000}, '$'},
 			},
-			getTests: []getTest[int, rune]{
-				{key: -10, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 0, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 5, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 9, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 10, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 20, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 30, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 40, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 44, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 50, expectedOK: true, expectedRange: Range[int]{50, 54}, expectedValue: 'A'},
-				{key: 52, expectedOK: true, expectedRange: Range[int]{50, 54}, expectedValue: 'A'},
-				{key: 54, expectedOK: true, expectedRange: Range[int]{50, 54}, expectedValue: 'A'},
-				{key: 55, expectedOK: true, expectedRange: Range[int]{55, 65}, expectedValue: 'B'},
-				{key: 60, expectedOK: true, expectedRange: Range[int]{55, 65}, expectedValue: 'B'},
-				{key: 65, expectedOK: true, expectedRange: Range[int]{55, 65}, expectedValue: 'B'},
-				{key: 66, expectedOK: true, expectedRange: Range[int]{66, 69}, expectedValue: 'A'},
-				{key: 68, expectedOK: true, expectedRange: Range[int]{66, 69}, expectedValue: 'A'},
-				{key: 69, expectedOK: true, expectedRange: Range[int]{66, 69}, expectedValue: 'A'},
-				{key: 70, expectedOK: true, expectedRange: Range[int]{70, 74}, expectedValue: 'B'},
-				{key: 72, expectedOK: true, expectedRange: Range[int]{70, 74}, expectedValue: 'B'},
-				{key: 74, expectedOK: true, expectedRange: Range[int]{70, 74}, expectedValue: 'B'},
-				{key: 75, expectedOK: true, expectedRange: Range[int]{75, 90}, expectedValue: 'C'},
-				{key: 80, expectedOK: true, expectedRange: Range[int]{75, 90}, expectedValue: 'C'},
-				{key: 90, expectedOK: true, expectedRange: Range[int]{75, 90}, expectedValue: 'C'},
-				{key: 99, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 100, expectedOK: true, expectedRange: Range[int]{100, 199}, expectedValue: 'a'},
-				{key: 150, expectedOK: true, expectedRange: Range[int]{100, 199}, expectedValue: 'a'},
-				{key: 199, expectedOK: true, expectedRange: Range[int]{100, 199}, expectedValue: 'a'},
-				{key: 200, expectedOK: true, expectedRange: Range[int]{200, 300}, expectedValue: 'b'},
-				{key: 250, expectedOK: true, expectedRange: Range[int]{200, 300}, expectedValue: 'b'},
-				{key: 300, expectedOK: true, expectedRange: Range[int]{200, 300}, expectedValue: 'b'},
-				{key: 301, expectedOK: true, expectedRange: Range[int]{301, 399}, expectedValue: 'a'},
-				{key: 360, expectedOK: true, expectedRange: Range[int]{301, 399}, expectedValue: 'a'},
-				{key: 399, expectedOK: true, expectedRange: Range[int]{301, 399}, expectedValue: 'a'},
-				{key: 400, expectedOK: true, expectedRange: Range[int]{400, 499}, expectedValue: 'b'},
-				{key: 444, expectedOK: true, expectedRange: Range[int]{400, 499}, expectedValue: 'b'},
-				{key: 499, expectedOK: true, expectedRange: Range[int]{400, 499}, expectedValue: 'b'},
-				{key: 500, expectedOK: true, expectedRange: Range[int]{500, 700}, expectedValue: 'c'},
-				{key: 600, expectedOK: true, expectedRange: Range[int]{500, 700}, expectedValue: 'c'},
-				{key: 700, expectedOK: true, expectedRange: Range[int]{500, 700}, expectedValue: 'c'},
-				{key: 800, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 1000, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 1500, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 2000, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 4000, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-			},
-			expectedAll: []generic.KeyValue[Range[int], rune]{
-				{Key: Range[int]{0, 9}, Val: '#'},
-				{Key: Range[int]{20, 40}, Val: '@'},
-				{Key: Range[int]{50, 54}, Val: 'A'},
-				{Key: Range[int]{55, 65}, Val: 'B'},
-				{Key: Range[int]{66, 69}, Val: 'A'},
-				{Key: Range[int]{70, 74}, Val: 'B'},
-				{Key: Range[int]{75, 90}, Val: 'C'},
-				{Key: Range[int]{100, 199}, Val: 'a'},
-				{Key: Range[int]{200, 300}, Val: 'b'},
-				{Key: Range[int]{301, 399}, Val: 'a'},
-				{Key: Range[int]{400, 499}, Val: 'b'},
-				{Key: Range[int]{500, 700}, Val: 'c'},
-				{Key: Range[int]{1000, 2000}, Val: '$'},
-			},
-			expectedString: "[0, 9]:35 [20, 40]:64 [50, 54]:65 [55, 65]:66 [66, 69]:65 [70, 74]:66 [75, 90]:67 [100, 199]:97 [200, 300]:98 [301, 399]:97 [400, 499]:98 [500, 700]:99 [1000, 2000]:36",
 		},
 		{
 			name: "CurrentHiAdjacentToLastHi_Merging",
-			pairs: map[Range[int]]rune{
-				{20, 40}:   '@',
-				{100, 199}: 'a',
-				{200, 200}: 'a',
-				{201, 300}: 'a',
+			m: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{20, 40}, '@'},
+					{Range[int]{100, 300}, 'a'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
 			},
-			addTests: []addTest[int, rune]{
+			pairs: []rangeValue[int, rune]{
 				{Range[int]{0, 9}, '#'},
 				{Range[int]{60, 69}, 'A'},
 				{Range[int]{70, 70}, 'A'},
 				{Range[int]{71, 80}, 'A'},
 				{Range[int]{1000, 2000}, '$'},
 			},
-			equalTests: []equalTest[int, rune]{
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{
-							{Range[int]{0, 9}, '#'},
-							{Range[int]{20, 40}, '@'},
-							{Range[int]{60, 80}, 'A'},
-							{Range[int]{100, 300}, 'a'},
-							{Range[int]{1000, 2000}, '%'},
-						},
-					},
-					expectedEqual: false,
-				},
-				{
-					rhs: &RangeMap[int, rune]{
-						pairs: []rangeValue[int, rune]{
-							{Range[int]{0, 9}, '#'},
-							{Range[int]{20, 40}, '@'},
-							{Range[int]{60, 80}, 'A'},
-							{Range[int]{100, 300}, 'a'},
-							{Range[int]{1000, 2000}, '$'},
-						},
-					},
-					expectedEqual: true,
-				},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{0, 9}, '#'},
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{60, 80}, 'A'},
+				{Range[int]{100, 300}, 'a'},
+				{Range[int]{1000, 2000}, '$'},
 			},
-			getTests: []getTest[int, rune]{
-				{key: -10, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 0, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 5, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 9, expectedOK: true, expectedRange: Range[int]{0, 9}, expectedValue: '#'},
-				{key: 10, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 20, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 30, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 40, expectedOK: true, expectedRange: Range[int]{20, 40}, expectedValue: '@'},
-				{key: 50, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 60, expectedOK: true, expectedRange: Range[int]{60, 80}, expectedValue: 'A'},
-				{key: 70, expectedOK: true, expectedRange: Range[int]{60, 80}, expectedValue: 'A'},
-				{key: 80, expectedOK: true, expectedRange: Range[int]{60, 80}, expectedValue: 'A'},
-				{key: 99, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 100, expectedOK: true, expectedRange: Range[int]{100, 300}, expectedValue: 'a'},
-				{key: 200, expectedOK: true, expectedRange: Range[int]{100, 300}, expectedValue: 'a'},
-				{key: 300, expectedOK: true, expectedRange: Range[int]{100, 300}, expectedValue: 'a'},
-				{key: 500, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-				{key: 1000, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 1500, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 2000, expectedOK: true, expectedRange: Range[int]{1000, 2000}, expectedValue: '$'},
-				{key: 4000, expectedOK: false, expectedRange: Range[int]{}, expectedValue: 0},
-			},
-			expectedAll: []generic.KeyValue[Range[int], rune]{
-				{Key: Range[int]{0, 9}, Val: '#'},
-				{Key: Range[int]{20, 40}, Val: '@'},
-				{Key: Range[int]{60, 80}, Val: 'A'},
-				{Key: Range[int]{100, 300}, Val: 'a'},
-				{Key: Range[int]{1000, 2000}, Val: '$'},
-			},
-			expectedString: "[0, 9]:35 [20, 40]:64 [60, 80]:65 [100, 300]:97 [1000, 2000]:36",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			var m *RangeMap[int, rune]
-
-			t.Run("NewRangeMap", func(t *testing.T) {
-				eq := generic.NewEqualFunc[rune]()
-				m = NewRangeMap(eq, tc.pairs)
-			})
-
-			t.Run("Clone", func(t *testing.T) {
-				clone := m.Clone()
-				assert.True(t, clone.Equal(m))
-			})
-
-			for i, tc := range tc.addTests {
-				t.Run(fmt.Sprintf("Add/%d", i), func(t *testing.T) {
-					m.Add(tc.key, tc.val)
-				})
+			for _, p := range tc.pairs {
+				tc.m.Add(p.Range, p.Value)
 			}
 
-			for i, tc := range tc.equalTests {
-				t.Run(fmt.Sprintf("Equal/%d", i), func(t *testing.T) {
-					assert.Equal(t, tc.expectedEqual, m.Equal(tc.rhs))
-				})
+			assert.Equal(t, tc.expectedPairs, tc.m.pairs)
+		})
+	}
+}
+
+func TestRangeMap_Remove(t *testing.T) {
+	equal := generic.NewEqualFunc[rune]()
+	pairs := map[Range[int]]rune{
+		{100, 200}:  'a',
+		{300, 400}:  'b',
+		{500, 600}:  'c',
+		{700, 800}:  'd',
+		{900, 1000}: 'e',
+	}
+
+	tests := []struct {
+		name          string
+		m             *RangeMap[int, rune]
+		keys          []Range[int]
+		expectedPairs []rangeValue[int, rune]
+	}{
+		{
+			name: "None",
+			m:    NewRangeMap(equal, pairs),
+			keys: nil,
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{100, 200}, 'a'},
+				{Range[int]{300, 400}, 'b'},
+				{Range[int]{500, 600}, 'c'},
+				{Range[int]{700, 800}, 'd'},
+				{Range[int]{900, 1000}, 'e'},
+			},
+		},
+		{
+			// Case: No Overlapping
+			//
+			//        |________|        |________|        |________|        |________|        |________|
+			//  |__|              |__|              |__|              |__|              |__|              |__|
+			//
+			name: "NoOverlapping",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[int]{
+				{40, 60},
+				{240, 260},
+				{440, 460},
+				{640, 660},
+				{840, 860},
+				{1040, 1060},
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{100, 200}, 'a'},
+				{Range[int]{300, 400}, 'b'},
+				{Range[int]{500, 600}, 'c'},
+				{Range[int]{700, 800}, 'd'},
+				{Range[int]{900, 1000}, 'e'},
+			},
+		},
+		{
+			// Case: Overlapping Bounds
+			//
+			//        |________|        |________|        |________|        |________|        |________|
+			//     |__|        |________|        |________|        |________|        |________|        |__|
+			//
+			name: "OverlappingBounds",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[int]{
+				{80, 100},
+				{200, 300},
+				{400, 500},
+				{600, 700},
+				{800, 900},
+				{1000, 1020},
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{101, 199}, 'a'},
+				{Range[int]{301, 399}, 'b'},
+				{Range[int]{501, 599}, 'c'},
+				{Range[int]{701, 799}, 'd'},
+				{Range[int]{901, 999}, 'e'},
+			},
+		},
+		{
+			// Case: Overlapping Ranges
+			//
+			//        |________|        |________|        |________|        |________|        |________|
+			//      |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|
+			//
+			name: "OverlappingRanges",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[int]{
+				{80, 120},
+				{180, 320},
+				{380, 520},
+				{580, 720},
+				{780, 920},
+				{980, 1020},
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{121, 179}, 'a'},
+				{Range[int]{321, 379}, 'b'},
+				{Range[int]{521, 579}, 'c'},
+				{Range[int]{721, 779}, 'd'},
+				{Range[int]{921, 979}, 'e'},
+			},
+		},
+		{
+			// Case: Subsets
+			//
+			//        |________|        |________|        |________|        |________|        |________|
+			//           |__|              |__|              |__|              |__|              |__|
+			//
+			name: "Subsets",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[int]{
+				{140, 160},
+				{340, 360},
+				{540, 560},
+				{740, 760},
+				{940, 960},
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{100, 139}, 'a'},
+				{Range[int]{161, 200}, 'a'},
+				{Range[int]{300, 339}, 'b'},
+				{Range[int]{361, 400}, 'b'},
+				{Range[int]{500, 539}, 'c'},
+				{Range[int]{561, 600}, 'c'},
+				{Range[int]{700, 739}, 'd'},
+				{Range[int]{761, 800}, 'd'},
+				{Range[int]{900, 939}, 'e'},
+				{Range[int]{961, 1000}, 'e'},
+			},
+		},
+		{
+			// Case: Supersets
+			//
+			//        |________|        |________|        |________|        |________|        |________|
+			//                      |________________||__________________________________|
+			//
+			name: "Supersets",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[int]{
+				{250, 450},
+				{450, 850},
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{100, 200}, 'a'},
+				{Range[int]{900, 1000}, 'e'},
+			},
+		},
+		{
+			name: "All",
+			m:    NewRangeMap(equal, pairs),
+			keys: []Range[int]{
+				{100, 200},
+				{300, 400},
+				{500, 600},
+				{700, 800},
+				{900, 1000},
+			},
+			expectedPairs: []rangeValue[int, rune]{},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, k := range tc.keys {
+				tc.m.Remove(k)
 			}
 
-			for i, tc := range tc.getTests {
-				t.Run(fmt.Sprintf("Get/%d", i), func(t *testing.T) {
-					r, v, ok := m.Get(tc.key)
+			assert.Equal(t, tc.expectedPairs, tc.m.pairs)
+		})
+	}
+}
 
-					assert.Equal(t, tc.expectedOK, ok)
-					assert.Equal(t, tc.expectedRange, r)
-					assert.Equal(t, tc.expectedValue, v)
-				})
-			}
+func TestRangeMap_All(t *testing.T) {
+	tests := []struct {
+		name        string
+		m           *RangeMap[int, rune]
+		expectedAll []generic.KeyValue[Range[int], rune]
+	}{
+		{
+			name: "OK",
+			m: &RangeMap[int, rune]{
+				pairs: []rangeValue[int, rune]{
+					{Range[int]{0, 9}, '#'},
+					{Range[int]{10, 20}, '@'},
+					{Range[int]{200, 400}, 'a'},
+				},
+				equal:  generic.NewEqualFunc[rune](),
+				format: defaultFormatMap[int, rune],
+			},
+			expectedAll: []generic.KeyValue[Range[int], rune]{
+				{Key: Range[int]{0, 9}, Val: '#'},
+				{Key: Range[int]{10, 20}, Val: '@'},
+				{Key: Range[int]{200, 400}, Val: 'a'},
+			},
+		},
+	}
 
-			t.Run("All", func(t *testing.T) {
-				all := generic.Collect2(m.All())
-				assert.Equal(t, tc.expectedAll, all)
-			})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			all := generic.Collect2(tc.m.All())
 
-			t.Run("String", func(t *testing.T) {
-				assert.Equal(t, tc.expectedString, m.String())
-			})
+			assert.Equal(t, tc.expectedAll, all)
 		})
 	}
 }
