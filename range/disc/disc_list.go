@@ -29,7 +29,7 @@ func NewRangeList[T Discrete](rs ...Range[T]) *RangeList[T] {
 
 	// Sort ranges by their low bound ascending
 	slices.SortFunc(l.ranges, func(lhs, rhs Range[T]) int {
-		return int(lhs.Lo) - int(rhs.Lo)
+		return int(lhs.Lo - rhs.Lo)
 	})
 
 	// Merge overlapping and adjacent ranges

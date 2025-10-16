@@ -44,7 +44,7 @@ func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], pairs map[Range[
 
 	// Sort ranges by their low bound ascending
 	slices.SortFunc(m.pairs, func(lhs, rhs rangeValue[K, V]) int {
-		return int(lhs.Lo) - int(rhs.Lo)
+		return int(lhs.Lo - rhs.Lo)
 	})
 
 	// Merge and/or split overlapping and adjacent ranges
