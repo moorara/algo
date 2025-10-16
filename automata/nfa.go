@@ -57,6 +57,15 @@ func (b *NFABuilder) Build() *NFA {
 }
 
 // NFA represents a non-deterministic finite automaton.
+//
+// A NFA is defined by a 5-tuple (Q, Σ, δ, q₀, F) where:
+//
+//   - Q is a finite set of states.
+//   - Σ is a finite set of input symbols (alphabet).
+//   - δ: Q × Σ → P(Q) is the transition function.
+//   - q₀ ∈ Q is the initial (start) state.
+//   - F ⊆ Q is the set of accepting (final) states.
+//
 // This NFA model is meant to be immutable once created.
 type NFA struct {
 	start State
