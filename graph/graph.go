@@ -2,10 +2,10 @@
 //
 // There are four different type of graphs implementd:
 //
-//	Undirected Graph
-//	Directed Graph
-//	Weighted Undirected Graph
-//	Weighted Directed Graph
+//   - Undirected Graph
+//   - Directed Graph
+//   - Weighted Undirected Graph
+//   - Weighted Directed Graph
 package graph
 
 import (
