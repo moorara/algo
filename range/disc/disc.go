@@ -97,3 +97,8 @@ type RangeOrEmpty[T Discrete] struct {
 	Range[T]
 	Empty bool
 }
+
+// EqRange compares two discrete ranges for equality.
+func EqRange[T Discrete](lhs, rhs Range[T]) bool {
+	return lhs.Equal(rhs)
+}

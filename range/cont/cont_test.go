@@ -3099,6 +3099,87 @@ func TestRange(t *testing.T) {
 	}
 }
 
+func TestEqRange(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs, rhs      Range[float64]
+		expectedEqual bool
+	}{
+		{
+			lhs: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{4, false},
+			},
+			rhs: Range[float64]{
+				Lo: Bound[float64]{1, false},
+				Hi: Bound[float64]{4, false},
+			},
+			expectedEqual: false,
+		},
+		{
+			lhs: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{4, false},
+			},
+			rhs: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{4, false},
+			},
+			expectedEqual: true,
+		},
+		{
+			lhs: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{4, false},
+			},
+			rhs: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{4, true},
+			},
+			expectedEqual: false,
+		},
+		{
+			lhs: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{4, false},
+			},
+			rhs: Range[float64]{
+				Lo: Bound[float64]{2, true},
+				Hi: Bound[float64]{4, false},
+			},
+			expectedEqual: false,
+		},
+		{
+			lhs: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{4, false},
+			},
+			rhs: Range[float64]{
+				Lo: Bound[float64]{2, true},
+				Hi: Bound[float64]{4, true},
+			},
+			expectedEqual: false,
+		},
+		{
+			lhs: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{4, false},
+			},
+			rhs: Range[float64]{
+				Lo: Bound[float64]{2, false},
+				Hi: Bound[float64]{5, false},
+			},
+			expectedEqual: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEqual, EqRange(tc.lhs, tc.rhs))
+		})
+	}
+}
+
 func TestCompareFuncs(t *testing.T) {
 	type compareTest[T Continuous] struct {
 		lhs, rhs        Bound[T]

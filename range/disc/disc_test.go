@@ -175,3 +175,21 @@ func TestRange(t *testing.T) {
 		})
 	}
 }
+
+func TestEqRange(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs, rhs      Range[int]
+		expectedEqual bool
+	}{
+		{lhs: Range[int]{2, 4}, rhs: Range[int]{1, 4}, expectedEqual: false},
+		{lhs: Range[int]{2, 4}, rhs: Range[int]{2, 4}, expectedEqual: true},
+		{lhs: Range[int]{2, 4}, rhs: Range[int]{2, 5}, expectedEqual: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedEqual, EqRange(tc.lhs, tc.rhs))
+		})
+	}
+}

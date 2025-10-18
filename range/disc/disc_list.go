@@ -4,25 +4,39 @@ import (
 	"fmt"
 	"iter"
 	"slices"
+
+	"github.com/moorara/algo/generic"
 )
 
 // RangeList represents a list of discrete ranges.
 // The ranges are always non-overlapping and sorted.
-type RangeList[T Discrete] struct {
+type RangeList[T Discrete] interface {
+	fmt.Stringer
+	generic.Equaler[RangeList[T]]
+	generic.Cloner[RangeList[T]]
+
+	Size() int
+	Find(T) (Range[T], bool)
+	Add(...Range[T])
+	Remove(...Range[T])
+	All() iter.Seq[Range[T]]
+}
+
+type rangeList[T Discrete] struct {
 	ranges []Range[T]
 	format FormatList[T]
 }
 
 // NewRangeList creates a new range list from the given ranges.
 // It panics if any of the given ranges are invalid.
-func NewRangeList[T Discrete](rs ...Range[T]) *RangeList[T] {
+func NewRangeList[T Discrete](rs ...Range[T]) RangeList[T] {
 	for _, r := range rs {
 		if !r.Valid() {
 			panic(fmt.Sprintf("invalid range: %s", r))
 		}
 	}
 
-	l := &RangeList[T]{
+	l := &rangeList[T]{
 		ranges: rs,
 		format: defaultFormatList[T],
 	}
@@ -40,8 +54,8 @@ func NewRangeList[T Discrete](rs ...Range[T]) *RangeList[T] {
 
 // NewRangeListWithFormat creates a new range list with a custom format function from the given ranges.
 // It panics if any of the given ranges are invalid.
-func NewRangeListWithFormat[T Discrete](format FormatList[T], rs ...Range[T]) *RangeList[T] {
-	l := NewRangeList(rs...)
+func NewRangeListWithFormat[T Discrete](format FormatList[T], rs ...Range[T]) RangeList[T] {
+	l := NewRangeList(rs...).(*rangeList[T])
 	l.format = format
 
 	return l
@@ -49,7 +63,7 @@ func NewRangeListWithFormat[T Discrete](format FormatList[T], rs ...Range[T]) *R
 
 // searchRanges performs a binary search to find the index of the range that contains the given value.
 // If found, it returns the index and true; otherwise, it returns the insertion point and false.
-func (l *RangeList[T]) searchRanges(v T) (int, bool) {
+func (l *rangeList[T]) searchRanges(v T) (int, bool) {
 	lo, hi := 0, len(l.ranges)-1
 
 	for lo <= hi {
@@ -68,7 +82,7 @@ func (l *RangeList[T]) searchRanges(v T) (int, bool) {
 }
 
 // mergeRanges merges overlapping or adjacent ranges in the sorted list of ranges.
-func (l *RangeList[T]) mergeRanges() {
+func (l *rangeList[T]) mergeRanges() {
 	merged := make([]Range[T], 0, len(l.ranges))
 
 	for _, curr := range l.ranges {
@@ -111,14 +125,15 @@ func (l *RangeList[T]) mergeRanges() {
 }
 
 // String implements the fmt.Stringer interface.
-func (l *RangeList[T]) String() string {
+func (l *rangeList[T]) String() string {
 	return l.format(l.All())
 }
 
 // Clone implements the generic.Cloner interface.
-func (l *RangeList[T]) Clone() *RangeList[T] {
-	ll := &RangeList[T]{
+func (l *rangeList[T]) Clone() RangeList[T] {
+	ll := &rangeList[T]{
 		ranges: make([]Range[T], len(l.ranges)),
+		format: l.format,
 	}
 
 	copy(ll.ranges, l.ranges)
@@ -127,13 +142,18 @@ func (l *RangeList[T]) Clone() *RangeList[T] {
 }
 
 // Equal implements the generic.Equaler interface.
-func (l *RangeList[T]) Equal(rhs *RangeList[T]) bool {
-	if len(l.ranges) != len(rhs.ranges) {
+func (l *rangeList[T]) Equal(rhs RangeList[T]) bool {
+	ll, ok := rhs.(*rangeList[T])
+	if !ok {
+		return false
+	}
+
+	if len(l.ranges) != len(ll.ranges) {
 		return false
 	}
 
 	for i, r := range l.ranges {
-		if !r.Equal(rhs.ranges[i]) {
+		if !r.Equal(ll.ranges[i]) {
 			return false
 		}
 	}
@@ -142,13 +162,13 @@ func (l *RangeList[T]) Equal(rhs *RangeList[T]) bool {
 }
 
 // Size returns the number of ranges in the range list.
-func (l *RangeList[T]) Size() int {
+func (l *rangeList[T]) Size() int {
 	return len(l.ranges)
 }
 
-// Get returns the range that includes the given value.
+// Find returns the range that includes the given value.
 // The second return value indicates if such a range exists.
-func (l *RangeList[T]) Get(v T) (Range[T], bool) {
+func (l *rangeList[T]) Find(v T) (Range[T], bool) {
 	if i, ok := l.searchRanges(v); ok {
 		return l.ranges[i], true
 	}
@@ -158,7 +178,7 @@ func (l *RangeList[T]) Get(v T) (Range[T], bool) {
 
 // Add inserts the given ranges to the range list.
 // It panics if any of the given ranges are invalid.
-func (l *RangeList[T]) Add(rs ...Range[T]) {
+func (l *rangeList[T]) Add(rs ...Range[T]) {
 	for _, r := range rs {
 		if !r.Valid() {
 			panic(fmt.Sprintf("invalid range: %s", r))
@@ -182,7 +202,7 @@ func (l *RangeList[T]) Add(rs ...Range[T]) {
 
 // Remove deletes the given ranges from the range list.
 // It panics if any of the given ranges are invalid.
-func (l *RangeList[T]) Remove(rs ...Range[T]) {
+func (l *rangeList[T]) Remove(rs ...Range[T]) {
 	for _, r := range rs {
 		if !r.Valid() {
 			panic(fmt.Sprintf("invalid range: %s", r))
@@ -257,7 +277,7 @@ func (l *RangeList[T]) Remove(rs ...Range[T]) {
 }
 
 // All returns an iterator over all ranges in the range list.
-func (l *RangeList[T]) All() iter.Seq[Range[T]] {
+func (l *rangeList[T]) All() iter.Seq[Range[T]] {
 	return func(yield func(Range[T]) bool) {
 		for _, r := range l.ranges {
 			if !yield(r) {

@@ -158,6 +158,11 @@ type RangeOrEmpty[T Continuous] struct {
 	Empty bool
 }
 
+// EqRange compares two continuous ranges for equality.
+func EqRange[T Continuous](lhs, rhs Range[T]) bool {
+	return lhs.Equal(rhs)
+}
+
 // compareLoLo compares two low bounds.
 func compareLoLo[T Continuous](lhs, rhs Bound[T]) int {
 	if lhs.Val < rhs.Val {

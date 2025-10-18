@@ -8,15 +8,27 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
+// RangeMap represents a map from continuous ranges to values.
+// The ranges are always non-overlapping and sorted.
+type RangeMap[K Continuous, V any] interface {
+	fmt.Stringer
+	generic.Equaler[RangeMap[K, V]]
+	generic.Cloner[RangeMap[K, V]]
+
+	Size() int
+	Find(K) (Range[K], V, bool)
+	Add(Range[K], V)
+	Remove(Range[K])
+	All() iter.Seq2[Range[K], V]
+}
+
 // rangeValue associates a continuous range with a value.
 type rangeValue[K Continuous, V any] struct {
 	Range[K]
 	Value V
 }
 
-// RangeMap represents a map from continuous ranges to values.
-// The ranges are always non-overlapping and sorted.
-type RangeMap[K Continuous, V any] struct {
+type rangeMap[K Continuous, V any] struct {
 	pairs  []rangeValue[K, V]
 	equal  generic.EqualFunc[V]
 	format FormatMap[K, V]
@@ -24,8 +36,8 @@ type RangeMap[K Continuous, V any] struct {
 
 // NewRangeMap creates a new range map from the given ranges.
 // It panics if any of the given ranges are invalid.
-func NewRangeMap[K Continuous, V any](equal generic.EqualFunc[V], pairs map[Range[K]]V) *RangeMap[K, V] {
-	m := &RangeMap[K, V]{
+func NewRangeMap[K Continuous, V any](equal generic.EqualFunc[V], pairs map[Range[K]]V) RangeMap[K, V] {
+	m := &rangeMap[K, V]{
 		pairs:  make([]rangeValue[K, V], 0, len(pairs)),
 		equal:  equal,
 		format: defaultFormatMap[K, V],
@@ -55,8 +67,8 @@ func NewRangeMap[K Continuous, V any](equal generic.EqualFunc[V], pairs map[Rang
 
 // NewRangeMap creates a new range map with a custom format function from the given ranges.
 // It panics if any of the given ranges are invalid.
-func NewRangeMapWithFormat[K Continuous, V any](equal generic.EqualFunc[V], format FormatMap[K, V], pairs map[Range[K]]V) *RangeMap[K, V] {
-	m := NewRangeMap(equal, pairs)
+func NewRangeMapWithFormat[K Continuous, V any](equal generic.EqualFunc[V], format FormatMap[K, V], pairs map[Range[K]]V) RangeMap[K, V] {
+	m := NewRangeMap(equal, pairs).(*rangeMap[K, V])
 	m.format = format
 
 	return m
@@ -64,7 +76,7 @@ func NewRangeMapWithFormat[K Continuous, V any](equal generic.EqualFunc[V], form
 
 // searchRanges performs a binary search to find the index of the range that contains the given key.
 // If found, it returns the index and true; otherwise, it returns the insertion point and false.
-func (m *RangeMap[K, V]) searchRanges(k Bound[K]) (int, bool) {
+func (m *rangeMap[K, V]) searchRanges(k Bound[K]) (int, bool) {
 	lo, hi := 0, len(m.pairs)-1
 
 	for lo <= hi {
@@ -83,7 +95,7 @@ func (m *RangeMap[K, V]) searchRanges(k Bound[K]) (int, bool) {
 }
 
 // mergeAndSplitRanges merges overlapping or adjacent ranges in the sorted list of ranges.
-func (m *RangeMap[K, V]) mergeAndSplitRanges() {
+func (m *rangeMap[K, V]) mergeAndSplitRanges() {
 	merged := make([]rangeValue[K, V], 0, len(m.pairs))
 
 	for _, curr := range m.pairs {
@@ -199,13 +211,13 @@ func (m *RangeMap[K, V]) mergeAndSplitRanges() {
 }
 
 // String implements the fmt.Stringer interface.
-func (m *RangeMap[K, V]) String() string {
+func (m *rangeMap[K, V]) String() string {
 	return m.format(m.All())
 }
 
 // Clone implements the generic.Cloner interface.
-func (m *RangeMap[K, V]) Clone() *RangeMap[K, V] {
-	mm := &RangeMap[K, V]{
+func (m *rangeMap[K, V]) Clone() RangeMap[K, V] {
+	mm := &rangeMap[K, V]{
 		pairs: make([]rangeValue[K, V], len(m.pairs)),
 		equal: m.equal,
 	}
@@ -216,13 +228,18 @@ func (m *RangeMap[K, V]) Clone() *RangeMap[K, V] {
 }
 
 // Equal implements the generic.Equaler interface.
-func (m *RangeMap[K, V]) Equal(rhs *RangeMap[K, V]) bool {
-	if len(m.pairs) != len(rhs.pairs) {
+func (m *rangeMap[K, V]) Equal(rhs RangeMap[K, V]) bool {
+	mm, ok := rhs.(*rangeMap[K, V])
+	if !ok {
+		return false
+	}
+
+	if len(m.pairs) != len(mm.pairs) {
 		return false
 	}
 
 	for i, p := range m.pairs {
-		if !p.Range.Equal(rhs.pairs[i].Range) || !m.equal(p.Value, rhs.pairs[i].Value) {
+		if !p.Range.Equal(mm.pairs[i].Range) || !m.equal(p.Value, mm.pairs[i].Value) {
 			return false
 		}
 	}
@@ -231,14 +248,14 @@ func (m *RangeMap[K, V]) Equal(rhs *RangeMap[K, V]) bool {
 }
 
 // Size returns the number of ranges in the range map.
-func (m *RangeMap[K, V]) Size() int {
+func (m *rangeMap[K, V]) Size() int {
 	return len(m.pairs)
 }
 
-// Get returns the range and its associated value that includes the given key.
+// Find returns the range and its associated value that includes the given key.
 // The third return value indicates if such a range exists.
-func (m *RangeMap[K, V]) Get(k K) (Range[K], V, bool) {
-	if i, ok := m.searchRanges(Bound[K]{k, false}); ok {
+func (m *rangeMap[K, V]) Find(v K) (Range[K], V, bool) {
+	if i, ok := m.searchRanges(Bound[K]{v, false}); ok {
 		return m.pairs[i].Range, m.pairs[i].Value, true
 	}
 
@@ -248,7 +265,7 @@ func (m *RangeMap[K, V]) Get(k K) (Range[K], V, bool) {
 
 // Add inserts the given range to the range map.
 // It panics if any of the given range are invalid.
-func (m *RangeMap[K, V]) Add(k Range[K], v V) {
+func (m *rangeMap[K, V]) Add(k Range[K], v V) {
 	p := rangeValue[K, V]{
 		Range: k,
 		Value: v,
@@ -275,7 +292,7 @@ func (m *RangeMap[K, V]) Add(k Range[K], v V) {
 
 // Remove deletes the given range from the range map.
 // It panics if any of the given range are invalid.
-func (m *RangeMap[K, V]) Remove(k Range[K]) {
+func (m *rangeMap[K, V]) Remove(k Range[K]) {
 	if !k.Valid() {
 		panic(fmt.Sprintf("invalid range: %s", k))
 	}
@@ -349,7 +366,7 @@ func (m *RangeMap[K, V]) Remove(k Range[K]) {
 }
 
 // All returns an iterator over all range-value pairs in the range map.
-func (m *RangeMap[K, V]) All() iter.Seq2[Range[K], V] {
+func (m *rangeMap[K, V]) All() iter.Seq2[Range[K], V] {
 	return func(yield func(Range[K], V) bool) {
 		for _, p := range m.pairs {
 			if !yield(p.Range, p.Value) {

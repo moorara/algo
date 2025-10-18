@@ -65,7 +65,7 @@ func TestNewRangeList(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			l := NewRangeList(tc.rs...)
+			l := NewRangeList(tc.rs...).(*rangeList[float64])
 
 			assert.Equal(t, tc.expectedRanges, l.ranges)
 			assert.Equal(t, tc.expectedString, l.String())
@@ -139,7 +139,7 @@ func TestNewRangeListWithFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			l := NewRangeListWithFormat(tc.format, tc.rs...)
+			l := NewRangeListWithFormat(tc.format, tc.rs...).(*rangeList[float64])
 
 			assert.Equal(t, tc.expectedRanges, l.ranges)
 			assert.Equal(t, tc.expectedString, l.String())
@@ -150,12 +150,12 @@ func TestNewRangeListWithFormat(t *testing.T) {
 func TestRangeList_String(t *testing.T) {
 	tests := []struct {
 		name           string
-		l              *RangeList[float64]
+		l              *rangeList[float64]
 		expectedString string
 	}{
 		{
 			name: "WithDefaultFormat",
-			l: &RangeList[float64]{
+			l: &rangeList[float64]{
 				ranges: []Range[float64]{
 					{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 					{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
@@ -166,7 +166,7 @@ func TestRangeList_String(t *testing.T) {
 		},
 		{
 			name: "WithCustomFormat",
-			l: &RangeList[float64]{
+			l: &rangeList[float64]{
 				ranges: []Range[float64]{
 					{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 					{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
@@ -193,11 +193,11 @@ func TestRangeList_String(t *testing.T) {
 func TestRangeList_Clone(t *testing.T) {
 	tests := []struct {
 		name string
-		l    *RangeList[float64]
+		l    *rangeList[float64]
 	}{
 		{
 			name: "OK",
-			l: &RangeList[float64]{
+			l: &rangeList[float64]{
 				ranges: []Range[float64]{
 					{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 					{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
@@ -217,7 +217,7 @@ func TestRangeList_Clone(t *testing.T) {
 }
 
 func TestRangeList_Equal(t *testing.T) {
-	l := &RangeList[float64]{
+	l := &rangeList[float64]{
 		ranges: []Range[float64]{
 			{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 			{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
@@ -227,14 +227,20 @@ func TestRangeList_Equal(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		l             *RangeList[float64]
-		rhs           *RangeList[float64]
+		l             *rangeList[float64]
+		rhs           RangeList[float64]
 		expectedEqual bool
 	}{
 		{
+			name:          "NotEqual_DiffTypes",
+			l:             l,
+			rhs:           nil,
+			expectedEqual: false,
+		},
+		{
 			name: "NotEqual_DiffLens",
 			l:    l,
-			rhs: &RangeList[float64]{
+			rhs: &rangeList[float64]{
 				ranges: []Range[float64]{},
 				format: defaultFormatList[float64],
 			},
@@ -243,7 +249,7 @@ func TestRangeList_Equal(t *testing.T) {
 		{
 			name: "NotEqual_DiffRanges",
 			l:    l,
-			rhs: &RangeList[float64]{
+			rhs: &rangeList[float64]{
 				ranges: []Range[float64]{
 					{Bound[float64]{1.0, false}, Bound[float64]{4.0, false}},
 					{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
@@ -255,7 +261,7 @@ func TestRangeList_Equal(t *testing.T) {
 		{
 			name: "Equal",
 			l:    l,
-			rhs: &RangeList[float64]{
+			rhs: &rangeList[float64]{
 				ranges: []Range[float64]{
 					{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 					{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
@@ -276,12 +282,12 @@ func TestRangeList_Equal(t *testing.T) {
 func TestRangeList_Size(t *testing.T) {
 	tests := []struct {
 		name         string
-		l            *RangeList[float64]
+		l            *rangeList[float64]
 		expectedSize int
 	}{
 		{
 			name: "OK",
-			l: &RangeList[float64]{
+			l: &rangeList[float64]{
 				ranges: []Range[float64]{
 					{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 					{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
@@ -299,8 +305,8 @@ func TestRangeList_Size(t *testing.T) {
 	}
 }
 
-func TestRangeList_Get(t *testing.T) {
-	l := &RangeList[float64]{
+func TestRangeList_Find(t *testing.T) {
+	l := &rangeList[float64]{
 		ranges: []Range[float64]{
 			{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}},
 			{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}},
@@ -311,7 +317,7 @@ func TestRangeList_Get(t *testing.T) {
 	}
 
 	tests := []struct {
-		l             *RangeList[float64]
+		l             *rangeList[float64]
 		val           float64
 		expectedOK    bool
 		expectedRange Range[float64]
@@ -333,7 +339,7 @@ func TestRangeList_Get(t *testing.T) {
 
 	for i, tc := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			r, ok := tc.l.Get(tc.val)
+			r, ok := tc.l.Find(tc.val)
 
 			assert.Equal(t, tc.expectedOK, ok)
 			assert.Equal(t, tc.expectedRange, r)
@@ -344,13 +350,13 @@ func TestRangeList_Get(t *testing.T) {
 func TestRangeList_Add(t *testing.T) {
 	tests := []struct {
 		name           string
-		l              *RangeList[float64]
+		l              *rangeList[float64]
 		rs             []Range[float64]
 		expectedRanges []Range[float64]
 	}{
 		{
 			name: "CurrentHiOnLastHi",
-			l: &RangeList[float64]{
+			l: &rangeList[float64]{
 				ranges: []Range[float64]{
 					{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 					{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
@@ -374,7 +380,7 @@ func TestRangeList_Add(t *testing.T) {
 		},
 		{
 			name: "CurrentHiBeforeLastHi",
-			l: &RangeList[float64]{
+			l: &rangeList[float64]{
 				ranges: []Range[float64]{
 					{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 					{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}},
@@ -399,7 +405,7 @@ func TestRangeList_Add(t *testing.T) {
 		},
 		{
 			name: "CurrentHiAdjacentToLastHi",
-			l: &RangeList[float64]{
+			l: &rangeList[float64]{
 				ranges: []Range[float64]{
 					{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 					{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}},
@@ -443,14 +449,17 @@ func TestRangeList_Remove(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		l              *RangeList[float64]
+		l              *rangeList[float64]
 		rs             []Range[float64]
 		expectedRanges []Range[float64]
 	}{
 		{
 			name: "None",
-			l:    NewRangeList(ranges...),
-			rs:   nil,
+			l: &rangeList[float64]{
+				ranges: append([]Range[float64]{}, ranges...),
+				format: defaultFormatList[float64],
+			},
+			rs: nil,
 			expectedRanges: []Range[float64]{
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}},
 				{Bound[float64]{30.0, true}, Bound[float64]{40.0, false}},
@@ -466,7 +475,10 @@ func TestRangeList_Remove(t *testing.T) {
 			//  |__|              |__|              |__|              |__|              |__|              |__|
 			//
 			name: "NoOverlapping",
-			l:    NewRangeList(ranges...),
+			l: &rangeList[float64]{
+				ranges: append([]Range[float64]{}, ranges...),
+				format: defaultFormatList[float64],
+			},
 			rs: []Range[float64]{
 				{Bound[float64]{4.0, false}, Bound[float64]{6.0, false}},
 				{Bound[float64]{24.0, false}, Bound[float64]{26.0, false}},
@@ -490,7 +502,10 @@ func TestRangeList_Remove(t *testing.T) {
 			//     |__|        |________|        |________|        |________|        |________|        |__|
 			//
 			name: "OverlappingBounds",
-			l:    NewRangeList(ranges...),
+			l: &rangeList[float64]{
+				ranges: append([]Range[float64]{}, ranges...),
+				format: defaultFormatList[float64],
+			},
 			rs: []Range[float64]{
 				{Bound[float64]{8.0, false}, Bound[float64]{10.0, false}},
 				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}},
@@ -514,7 +529,10 @@ func TestRangeList_Remove(t *testing.T) {
 			//      |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|
 			//
 			name: "OverlappingRanges",
-			l:    NewRangeList(ranges...),
+			l: &rangeList[float64]{
+				ranges: append([]Range[float64]{}, ranges...),
+				format: defaultFormatList[float64],
+			},
 			rs: []Range[float64]{
 				{Bound[float64]{8.0, false}, Bound[float64]{12.0, false}},
 				{Bound[float64]{18.0, false}, Bound[float64]{32.0, false}},
@@ -538,7 +556,10 @@ func TestRangeList_Remove(t *testing.T) {
 			//           |__|              |__|              |__|              |__|              |__|
 			//
 			name: "Subsets",
-			l:    NewRangeList(ranges...),
+			l: &rangeList[float64]{
+				ranges: append([]Range[float64]{}, ranges...),
+				format: defaultFormatList[float64],
+			},
 			rs: []Range[float64]{
 				{Bound[float64]{14.0, true}, Bound[float64]{16.0, true}},
 				{Bound[float64]{34.0, true}, Bound[float64]{36.0, true}},
@@ -566,7 +587,10 @@ func TestRangeList_Remove(t *testing.T) {
 			//                      |________________||__________________________________|
 			//
 			name: "Supersets",
-			l:    NewRangeList(ranges...),
+			l: &rangeList[float64]{
+				ranges: append([]Range[float64]{}, ranges...),
+				format: defaultFormatList[float64],
+			},
 			rs: []Range[float64]{
 				{Bound[float64]{25.0, false}, Bound[float64]{45.0, false}},
 				{Bound[float64]{45.0, true}, Bound[float64]{85.0, false}},
@@ -577,8 +601,11 @@ func TestRangeList_Remove(t *testing.T) {
 			},
 		},
 		{
-			name:           "All",
-			l:              NewRangeList(ranges...),
+			name: "All",
+			l: &rangeList[float64]{
+				ranges: append([]Range[float64]{}, ranges...),
+				format: defaultFormatList[float64],
+			},
 			rs:             ranges,
 			expectedRanges: []Range[float64]{},
 		},
@@ -596,12 +623,12 @@ func TestRangeList_Remove(t *testing.T) {
 func TestRangeList_All(t *testing.T) {
 	tests := []struct {
 		name        string
-		l           *RangeList[float64]
+		l           *rangeList[float64]
 		expectedAll []Range[float64]
 	}{
 		{
 			name: "OK",
-			l: &RangeList[float64]{
+			l: &rangeList[float64]{
 				ranges: []Range[float64]{
 					{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}},
 					{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}},

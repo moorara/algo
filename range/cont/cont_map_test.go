@@ -109,7 +109,7 @@ func TestNewRangeMap(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			m := NewRangeMap(tc.equal, tc.pairs)
+			m := NewRangeMap(tc.equal, tc.pairs).(*rangeMap[float64, rune])
 
 			assert.Equal(t, tc.expectedPairs, m.pairs)
 			assert.Equal(t, tc.expectedString, m.String())
@@ -229,7 +229,7 @@ func TestNewRangeMapWithFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			m := NewRangeMapWithFormat(tc.equal, tc.format, tc.pairs)
+			m := NewRangeMapWithFormat(tc.equal, tc.format, tc.pairs).(*rangeMap[float64, rune])
 
 			assert.Equal(t, tc.expectedPairs, m.pairs)
 			assert.Equal(t, tc.expectedString, m.String())
@@ -240,12 +240,12 @@ func TestNewRangeMapWithFormat(t *testing.T) {
 func TestRangeMap_String(t *testing.T) {
 	tests := []struct {
 		name           string
-		m              *RangeMap[float64, rune]
+		m              *rangeMap[float64, rune]
 		expectedString string
 	}{
 		{
 			name: "WithDefaultFormat",
-			m: &RangeMap[float64, rune]{
+			m: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
@@ -259,7 +259,7 @@ func TestRangeMap_String(t *testing.T) {
 		},
 		{
 			name: "WithCustomFormat",
-			m: &RangeMap[float64, rune]{
+			m: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
@@ -289,11 +289,11 @@ func TestRangeMap_String(t *testing.T) {
 func TestRangeMap_Clone(t *testing.T) {
 	tests := []struct {
 		name string
-		m    *RangeMap[float64, rune]
+		m    *rangeMap[float64, rune]
 	}{
 		{
 			name: "OK",
-			m: &RangeMap[float64, rune]{
+			m: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
@@ -316,7 +316,7 @@ func TestRangeMap_Clone(t *testing.T) {
 }
 
 func TestRangeMap_Equal(t *testing.T) {
-	m := &RangeMap[float64, rune]{
+	m := &rangeMap[float64, rune]{
 		pairs: []rangeValue[float64, rune]{
 			{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 			{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
@@ -329,14 +329,20 @@ func TestRangeMap_Equal(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		m             *RangeMap[float64, rune]
-		rhs           *RangeMap[float64, rune]
+		m             *rangeMap[float64, rune]
+		rhs           RangeMap[float64, rune]
 		expectedEqual bool
 	}{
 		{
+			name:          "NotEqual_DiffTypes",
+			m:             m,
+			rhs:           nil,
+			expectedEqual: false,
+		},
+		{
 			name: "NotEqual_DiffLens",
 			m:    m,
-			rhs: &RangeMap[float64, rune]{
+			rhs: &rangeMap[float64, rune]{
 				pairs:  []rangeValue[float64, rune]{},
 				equal:  generic.NewEqualFunc[rune](),
 				format: defaultFormatMap[float64, rune],
@@ -346,7 +352,7 @@ func TestRangeMap_Equal(t *testing.T) {
 		{
 			name: "NotEqual_DiffRanges",
 			m:    m,
-			rhs: &RangeMap[float64, rune]{
+			rhs: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
@@ -361,7 +367,7 @@ func TestRangeMap_Equal(t *testing.T) {
 		{
 			name: "NotEqual_DiffValues",
 			m:    m,
-			rhs: &RangeMap[float64, rune]{
+			rhs: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '*'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
@@ -376,7 +382,7 @@ func TestRangeMap_Equal(t *testing.T) {
 		{
 			name: "Equal",
 			m:    m,
-			rhs: &RangeMap[float64, rune]{
+			rhs: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
@@ -400,12 +406,12 @@ func TestRangeMap_Equal(t *testing.T) {
 func TestRangeMap_Size(t *testing.T) {
 	tests := []struct {
 		name         string
-		m            *RangeMap[float64, rune]
+		m            *rangeMap[float64, rune]
 		expectedSize int
 	}{
 		{
 			name: "OK",
-			m: &RangeMap[float64, rune]{
+			m: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
@@ -426,8 +432,8 @@ func TestRangeMap_Size(t *testing.T) {
 	}
 }
 
-func TestRangeMap_Get(t *testing.T) {
-	m := &RangeMap[float64, rune]{
+func TestRangeMap_Find(t *testing.T) {
+	m := &rangeMap[float64, rune]{
 		pairs: []rangeValue[float64, rune]{
 			{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
 			{Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, '@'},
@@ -439,30 +445,30 @@ func TestRangeMap_Get(t *testing.T) {
 	}
 
 	tests := []struct {
-		m             *RangeMap[float64, rune]
-		key           float64
+		m             *rangeMap[float64, rune]
+		val           float64
 		expectedOK    bool
 		expectedRange Range[float64]
 		expectedValue rune
 	}{
-		{m: m, key: -1.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-		{m: m, key: 0.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-		{m: m, key: 0.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-		{m: m, key: 0.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
-		{m: m, key: 1.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-		{m: m, key: 1.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, expectedValue: '@'},
-		{m: m, key: 2.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, expectedValue: '@'},
-		{m: m, key: 10.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-		{m: m, key: 20.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, expectedValue: 'a'},
-		{m: m, key: 30.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, expectedValue: 'a'},
-		{m: m, key: 40.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
-		{m: m, key: 60.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{80.0, true}}, expectedValue: 'b'},
-		{m: m, key: 80.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
+		{m: m, val: -1.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
+		{m: m, val: 0.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
+		{m: m, val: 0.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
+		{m: m, val: 0.9, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, expectedValue: '#'},
+		{m: m, val: 1.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
+		{m: m, val: 1.5, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, expectedValue: '@'},
+		{m: m, val: 2.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, expectedValue: '@'},
+		{m: m, val: 10.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
+		{m: m, val: 20.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, expectedValue: 'a'},
+		{m: m, val: 30.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, expectedValue: 'a'},
+		{m: m, val: 40.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
+		{m: m, val: 60.0, expectedOK: true, expectedRange: Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{80.0, true}}, expectedValue: 'b'},
+		{m: m, val: 80.0, expectedOK: false, expectedRange: Range[float64]{}, expectedValue: 0},
 	}
 
 	for i, tc := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			r, v, ok := tc.m.Get(tc.key)
+			r, v, ok := tc.m.Find(tc.val)
 
 			assert.Equal(t, tc.expectedOK, ok)
 			assert.Equal(t, tc.expectedRange, r)
@@ -474,13 +480,13 @@ func TestRangeMap_Get(t *testing.T) {
 func TestRangeMap_Add(t *testing.T) {
 	tests := []struct {
 		name          string
-		m             *RangeMap[float64, rune]
+		m             *rangeMap[float64, rune]
 		pairs         []rangeValue[float64, rune]
 		expectedPairs []rangeValue[float64, rune]
 	}{
 		{
 			name: "CurrentHiOnLastHi_Merging",
-			m: &RangeMap[float64, rune]{
+			m: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
@@ -505,7 +511,7 @@ func TestRangeMap_Add(t *testing.T) {
 		},
 		{
 			name: "CurrentHiOnLastHi_Splitting",
-			m: &RangeMap[float64, rune]{
+			m: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
@@ -537,7 +543,7 @@ func TestRangeMap_Add(t *testing.T) {
 		},
 		{
 			name: "CurrentHiBeforeLastHi_Merging",
-			m: &RangeMap[float64, rune]{
+			m: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
@@ -563,7 +569,7 @@ func TestRangeMap_Add(t *testing.T) {
 		},
 		{
 			name: "CurrentHiBeforeLastHi_Splitting",
-			m: &RangeMap[float64, rune]{
+			m: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, 'a'},
@@ -601,7 +607,7 @@ func TestRangeMap_Add(t *testing.T) {
 		},
 		{
 			name: "CurrentHiAdjacentToLastHi_Merging",
-			m: &RangeMap[float64, rune]{
+			m: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
@@ -639,23 +645,27 @@ func TestRangeMap_Add(t *testing.T) {
 
 func TestRangeMap_Remove(t *testing.T) {
 	equal := generic.NewEqualFunc[rune]()
-	pairs := map[Range[float64]]rune{
-		{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}:  'a',
-		{Bound[float64]{30.0, true}, Bound[float64]{40.0, false}}:   'b',
-		{Bound[float64]{50.0, false}, Bound[float64]{60.0, true}}:   'c',
-		{Bound[float64]{70.0, true}, Bound[float64]{80.0, true}}:    'd',
-		{Bound[float64]{90.0, false}, Bound[float64]{100.0, false}}: 'e',
+	pairs := []rangeValue[float64, rune]{
+		{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
+		{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, false}}, 'b'},
+		{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{60.0, true}}, 'c'},
+		{Range[float64]{Bound[float64]{70.0, true}, Bound[float64]{80.0, true}}, 'd'},
+		{Range[float64]{Bound[float64]{90.0, false}, Bound[float64]{100.0, false}}, 'e'},
 	}
 
 	tests := []struct {
 		name          string
-		m             *RangeMap[float64, rune]
+		m             *rangeMap[float64, rune]
 		keys          []Range[float64]
 		expectedPairs []rangeValue[float64, rune]
 	}{
 		{
 			name: "None",
-			m:    NewRangeMap(equal, pairs),
+			m: &rangeMap[float64, rune]{
+				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
+				equal:  equal,
+				format: defaultFormatMap[float64, rune],
+			},
 			keys: nil,
 			expectedPairs: []rangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
@@ -672,7 +682,11 @@ func TestRangeMap_Remove(t *testing.T) {
 			//  |__|              |__|              |__|              |__|              |__|              |__|
 			//
 			name: "NoOverlapping",
-			m:    NewRangeMap(equal, pairs),
+			m: &rangeMap[float64, rune]{
+				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
+				equal:  equal,
+				format: defaultFormatMap[float64, rune],
+			},
 			keys: []Range[float64]{
 				{Bound[float64]{4.0, false}, Bound[float64]{6.0, false}},
 				{Bound[float64]{24.0, false}, Bound[float64]{26.0, false}},
@@ -696,7 +710,11 @@ func TestRangeMap_Remove(t *testing.T) {
 			//     |__|        |________|        |________|        |________|        |________|        |__|
 			//
 			name: "OverlappingBounds",
-			m:    NewRangeMap(equal, pairs),
+			m: &rangeMap[float64, rune]{
+				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
+				equal:  equal,
+				format: defaultFormatMap[float64, rune],
+			},
 			keys: []Range[float64]{
 				{Bound[float64]{8.0, false}, Bound[float64]{10.0, false}},
 				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}},
@@ -720,7 +738,11 @@ func TestRangeMap_Remove(t *testing.T) {
 			//      |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|    |___|
 			//
 			name: "OverlappingRanges",
-			m:    NewRangeMap(equal, pairs),
+			m: &rangeMap[float64, rune]{
+				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
+				equal:  equal,
+				format: defaultFormatMap[float64, rune],
+			},
 			keys: []Range[float64]{
 				{Bound[float64]{8.0, false}, Bound[float64]{12.0, false}},
 				{Bound[float64]{18.0, false}, Bound[float64]{32.0, false}},
@@ -744,7 +766,11 @@ func TestRangeMap_Remove(t *testing.T) {
 			//           |__|              |__|              |__|              |__|              |__|
 			//
 			name: "Subsets",
-			m:    NewRangeMap(equal, pairs),
+			m: &rangeMap[float64, rune]{
+				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
+				equal:  equal,
+				format: defaultFormatMap[float64, rune],
+			},
 			keys: []Range[float64]{
 				{Bound[float64]{14.0, true}, Bound[float64]{16.0, true}},
 				{Bound[float64]{34.0, true}, Bound[float64]{36.0, true}},
@@ -772,7 +798,11 @@ func TestRangeMap_Remove(t *testing.T) {
 			//                      |________________||__________________________________|
 			//
 			name: "Supersets",
-			m:    NewRangeMap(equal, pairs),
+			m: &rangeMap[float64, rune]{
+				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
+				equal:  equal,
+				format: defaultFormatMap[float64, rune],
+			},
 			keys: []Range[float64]{
 				{Bound[float64]{25.0, false}, Bound[float64]{45.0, false}},
 				{Bound[float64]{45.0, true}, Bound[float64]{85.0, false}},
@@ -784,7 +814,11 @@ func TestRangeMap_Remove(t *testing.T) {
 		},
 		{
 			name: "All",
-			m:    NewRangeMap(equal, pairs),
+			m: &rangeMap[float64, rune]{
+				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
+				equal:  equal,
+				format: defaultFormatMap[float64, rune],
+			},
 			keys: []Range[float64]{
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}},
 				{Bound[float64]{30.0, true}, Bound[float64]{40.0, false}},
@@ -810,12 +844,12 @@ func TestRangeMap_Remove(t *testing.T) {
 func TestRangeMap_All(t *testing.T) {
 	tests := []struct {
 		name        string
-		m           *RangeMap[float64, rune]
+		m           *rangeMap[float64, rune]
 		expectedAll []generic.KeyValue[Range[float64], rune]
 	}{
 		{
 			name: "OK",
-			m: &RangeMap[float64, rune]{
+			m: &rangeMap[float64, rune]{
 				pairs: []rangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
 					{Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, '@'},
