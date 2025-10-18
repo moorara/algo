@@ -40,7 +40,7 @@ func TestNewStableWithFormat(t *testing.T) {
 	tests := []struct {
 		name            string
 		equal           generic.EqualFunc[string]
-		format          Format[string]
+		format          FormatFunc[string]
 		vals            []string
 		expectedMembers []string
 	}{

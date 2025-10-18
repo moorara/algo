@@ -40,7 +40,7 @@ func TestNewSortedWithFormat(t *testing.T) {
 	tests := []struct {
 		name            string
 		compare         generic.CompareFunc[string]
-		format          Format[string]
+		format          FormatFunc[string]
 		vals            []string
 		expectedMembers []string
 	}{

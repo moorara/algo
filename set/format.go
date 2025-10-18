@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// Format is a function type for formatting a set into a single string representation.
-type Format[T any] func([]T) string
+// FormatFunc is a function type for formatting a set into a single string representation.
+type FormatFunc[T any] func([]T) string
 
 func defaultFormat[T any](members []T) string {
 	vals := make([]string, len(members))
