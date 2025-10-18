@@ -77,11 +77,15 @@ type rangeMap[K Discrete, V any] struct {
 //
 //   - If the existing range's value equals the new range's value, the ranges are merged.
 //   - If the values differ, the new range's value takes precedence and the existing range is split.
-func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], opts RangeMapOpts[K, V], pairs map[Range[K]]V) RangeMap[K, V] {
+func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], opts *RangeMapOpts[K, V], pairs map[Range[K]]V) RangeMap[K, V] {
 	for r := range pairs {
 		if !r.Valid() {
 			panic(fmt.Sprintf("invalid range: %s", r))
 		}
+	}
+
+	if opts == nil {
+		opts = new(RangeMapOpts[K, V])
 	}
 
 	if opts.Format == nil {

@@ -74,14 +74,14 @@ func TestNewRangeList(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		opts           RangeListOpts[int]
+		opts           *RangeListOpts[int]
 		rs             []Range[int]
 		expectedRanges []Range[int]
 		expectedString string
 	}{
 		{
 			name: "CurrentHiOnLastHi",
-			opts: RangeListOpts[int]{},
+			opts: nil,
 			rs: []Range[int]{
 				{20, 40},
 				{100, 200},
@@ -96,7 +96,7 @@ func TestNewRangeList(t *testing.T) {
 		},
 		{
 			name: "CurrentHiOnLastHi_CustomFormat",
-			opts: RangeListOpts[int]{
+			opts: &RangeListOpts[int]{
 				Format: format,
 			},
 			rs: []Range[int]{
@@ -113,7 +113,7 @@ func TestNewRangeList(t *testing.T) {
 		},
 		{
 			name: "CurrentHiBeforeLastHi",
-			opts: RangeListOpts[int]{},
+			opts: nil,
 			rs: []Range[int]{
 				{20, 40},
 				{100, 600},
@@ -129,7 +129,7 @@ func TestNewRangeList(t *testing.T) {
 		},
 		{
 			name: "CurrentHiBeforeLastHi_CustomFormat",
-			opts: RangeListOpts[int]{
+			opts: &RangeListOpts[int]{
 				Format: format,
 			},
 			rs: []Range[int]{
@@ -147,7 +147,7 @@ func TestNewRangeList(t *testing.T) {
 		},
 		{
 			name: "CurrentHiAdjacentToLastHi",
-			opts: RangeListOpts[int]{},
+			opts: nil,
 			rs: []Range[int]{
 				{20, 40},
 				{100, 199},
@@ -162,7 +162,7 @@ func TestNewRangeList(t *testing.T) {
 		},
 		{
 			name: "CurrentHiAdjacentToLastHi_CustomFormat",
-			opts: RangeListOpts[int]{
+			opts: &RangeListOpts[int]{
 				Format: format,
 			},
 			rs: []Range[int]{

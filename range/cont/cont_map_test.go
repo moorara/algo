@@ -76,7 +76,7 @@ func TestNewRangeMap(t *testing.T) {
 	tests := []struct {
 		name           string
 		equal          generic.EqualFunc[rune]
-		opts           RangeMapOpts[float64, rune]
+		opts           *RangeMapOpts[float64, rune]
 		pairs          map[Range[float64]]rune
 		expectedPairs  []rangeValue[float64, rune]
 		expectedString string
@@ -84,7 +84,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiOnLastHi_Merging",
 			equal: equal,
-			opts:  RangeMapOpts[float64, rune]{},
+			opts:  nil,
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
@@ -100,7 +100,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiOnLastHi_Merging_CustomFormat",
 			equal: equal,
-			opts: RangeMapOpts[float64, rune]{
+			opts: &RangeMapOpts[float64, rune]{
 				Format: format,
 			},
 			pairs: map[Range[float64]]rune{
@@ -118,7 +118,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiOnLastHi_Splitting",
 			equal: equal,
-			opts:  RangeMapOpts[float64, rune]{},
+			opts:  nil,
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
@@ -137,7 +137,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiOnLastHi_Splitting_CustomFormat",
 			equal: equal,
-			opts: RangeMapOpts[float64, rune]{
+			opts: &RangeMapOpts[float64, rune]{
 				Format: format,
 			},
 			pairs: map[Range[float64]]rune{
@@ -158,7 +158,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiBeforeLastHi_Merging",
 			equal: equal,
-			opts:  RangeMapOpts[float64, rune]{},
+			opts:  nil,
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
@@ -175,7 +175,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiBeforeLastHi_Merging_CustomFormat",
 			equal: equal,
-			opts: RangeMapOpts[float64, rune]{
+			opts: &RangeMapOpts[float64, rune]{
 				Format: format,
 			},
 			pairs: map[Range[float64]]rune{
@@ -194,7 +194,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiBeforeLastHi_Splitting",
 			equal: equal,
-			opts:  RangeMapOpts[float64, rune]{},
+			opts:  nil,
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
@@ -215,7 +215,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiBeforeLastHi_Splitting_CustomFormat",
 			equal: equal,
-			opts: RangeMapOpts[float64, rune]{
+			opts: &RangeMapOpts[float64, rune]{
 				Format: format,
 			},
 			pairs: map[Range[float64]]rune{
@@ -238,7 +238,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiAdjacentToLastHi_Merging",
 			equal: equal,
-			opts:  RangeMapOpts[float64, rune]{},
+			opts:  nil,
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}:  'a',
@@ -254,7 +254,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiAdjacentToLastHi_Merging_CustomFormat",
 			equal: equal,
-			opts: RangeMapOpts[float64, rune]{
+			opts: &RangeMapOpts[float64, rune]{
 				Format: format,
 			},
 			pairs: map[Range[float64]]rune{

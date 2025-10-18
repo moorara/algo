@@ -58,11 +58,15 @@ type rangeList[T Discrete] struct {
 // Ranges stored in the list are always non-overlapping and sorted.
 //
 // When a new range overlaps existing ranges, the ranges are merged.
-func NewRangeList[T Discrete](opts RangeListOpts[T], rs ...Range[T]) RangeList[T] {
+func NewRangeList[T Discrete](opts *RangeListOpts[T], rs ...Range[T]) RangeList[T] {
 	for _, r := range rs {
 		if !r.Valid() {
 			panic(fmt.Sprintf("invalid range: %s", r))
 		}
+	}
+
+	if opts == nil {
+		opts = new(RangeListOpts[T])
 	}
 
 	if opts.Format == nil {
