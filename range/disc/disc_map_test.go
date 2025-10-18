@@ -11,12 +11,72 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
+func rangeValsToSeq2[T Discrete, V any](pairs []rangeValue[T, V]) iter.Seq2[Range[T], V] {
+	return func(yield func(Range[T], V) bool) {
+		for _, p := range pairs {
+			if !yield(p.Range, p.Value) {
+				return
+			}
+		}
+	}
+}
+
+func TestDefaultFormatMap(t *testing.T) {
+	tests := []struct {
+		name           string
+		all            iter.Seq2[Range[int], rune]
+		expectedString string
+	}{
+		{
+			name:           "Nil",
+			all:            rangeValsToSeq2[int, rune](nil),
+			expectedString: "",
+		},
+		{
+			name:           "Zero",
+			all:            rangeValsToSeq2([]rangeValue[int, rune]{}),
+			expectedString: "",
+		},
+		{
+			name: "One",
+			all: rangeValsToSeq2([]rangeValue[int, rune]{
+				{Range[int]{2, 4}, 'a'},
+			}),
+			expectedString: "[2, 4]:97",
+		},
+		{
+			name: "Many",
+			all: rangeValsToSeq2([]rangeValue[int, rune]{
+				{Range[int]{2, 4}, 'a'},
+				{Range[int]{6, 8}, 'b'},
+				{Range[int]{10, 10}, 'c'},
+				{Range[int]{16, 20}, 'd'},
+			}),
+			expectedString: "[2, 4]:97 [6, 8]:98 [10, 10]:99 [16, 20]:100",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedString, defaultFormatMap(tc.all))
+		})
+	}
+}
+
 func TestNewRangeMap(t *testing.T) {
 	equal := generic.NewEqualFunc[rune]()
+	format := func(ranges iter.Seq2[Range[int], rune]) string {
+		ss := make([]string, 0)
+		for r, v := range ranges {
+			ss = append(ss, fmt.Sprintf("[%d..%d] --> %c", r.Lo, r.Hi, v))
+		}
+		return strings.Join(ss, "\n")
+	}
 
 	tests := []struct {
 		name           string
 		equal          generic.EqualFunc[rune]
+		opts           RangeMapOpts[int, rune]
 		pairs          map[Range[int]]rune
 		expectedPairs  []rangeValue[int, rune]
 		expectedString string
@@ -24,6 +84,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiOnLastHi_Merging",
 			equal: equal,
+			opts:  RangeMapOpts[int, rune]{},
 			pairs: map[Range[int]]rune{
 				{20, 40}:   '@',
 				{100, 200}: 'a',
@@ -37,8 +98,27 @@ func TestNewRangeMap(t *testing.T) {
 			expectedString: "[20, 40]:64 [100, 400]:97",
 		},
 		{
+			name:  "CurrentHiOnLastHi_Merging_CustomFormat",
+			equal: equal,
+			opts: RangeMapOpts[int, rune]{
+				Format: format,
+			},
+			pairs: map[Range[int]]rune{
+				{20, 40}:   '@',
+				{100, 200}: 'a',
+				{200, 200}: 'a',
+				{200, 400}: 'a',
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 400}, 'a'},
+			},
+			expectedString: "[20..40] --> @\n[100..400] --> a",
+		},
+		{
 			name:  "CurrentHiOnLastHi_Splitting",
 			equal: equal,
+			opts:  RangeMapOpts[int, rune]{},
 			pairs: map[Range[int]]rune{
 				{20, 40}:   '@',
 				{100, 200}: 'a',
@@ -55,8 +135,30 @@ func TestNewRangeMap(t *testing.T) {
 			expectedString: "[20, 40]:64 [100, 199]:97 [200, 299]:98 [300, 400]:99",
 		},
 		{
+			name:  "CurrentHiOnLastHi_Splitting_CustomFormat",
+			equal: equal,
+			opts: RangeMapOpts[int, rune]{
+				Format: format,
+			},
+			pairs: map[Range[int]]rune{
+				{20, 40}:   '@',
+				{100, 200}: 'a',
+				{200, 200}: 'b',
+				{200, 300}: 'b',
+				{300, 400}: 'c',
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 199}, 'a'},
+				{Range[int]{200, 299}, 'b'},
+				{Range[int]{300, 400}, 'c'},
+			},
+			expectedString: "[20..40] --> @\n[100..199] --> a\n[200..299] --> b\n[300..400] --> c",
+		},
+		{
 			name:  "CurrentHiBeforeLastHi_Merging",
 			equal: equal,
+			opts:  RangeMapOpts[int, rune]{},
 			pairs: map[Range[int]]rune{
 				{20, 40}:   '@',
 				{100, 600}: 'a',
@@ -71,8 +173,28 @@ func TestNewRangeMap(t *testing.T) {
 			expectedString: "[20, 40]:64 [100, 700]:97",
 		},
 		{
+			name:  "CurrentHiBeforeLastHi_Merging_CustomFormat",
+			equal: equal,
+			opts: RangeMapOpts[int, rune]{
+				Format: format,
+			},
+			pairs: map[Range[int]]rune{
+				{20, 40}:   '@',
+				{100, 600}: 'a',
+				{200, 300}: 'a',
+				{400, 600}: 'a',
+				{500, 700}: 'a',
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 700}, 'a'},
+			},
+			expectedString: "[20..40] --> @\n[100..700] --> a",
+		},
+		{
 			name:  "CurrentHiBeforeLastHi_Splitting",
 			equal: equal,
+			opts:  RangeMapOpts[int, rune]{},
 			pairs: map[Range[int]]rune{
 				{20, 40}:   '@',
 				{100, 600}: 'a',
@@ -91,107 +213,11 @@ func TestNewRangeMap(t *testing.T) {
 			expectedString: "[20, 40]:64 [100, 199]:97 [200, 300]:98 [301, 399]:97 [400, 499]:98 [500, 700]:99",
 		},
 		{
-			name:  "CurrentHiAdjacentToLastHi_Merging",
+			name:  "CurrentHiBeforeLastHi_Splitting_CustomFormat",
 			equal: equal,
-			pairs: map[Range[int]]rune{
-				{20, 40}:   '@',
-				{100, 199}: 'a',
-				{200, 200}: 'a',
-				{201, 300}: 'a',
+			opts: RangeMapOpts[int, rune]{
+				Format: format,
 			},
-			expectedPairs: []rangeValue[int, rune]{
-				{Range[int]{20, 40}, '@'},
-				{Range[int]{100, 300}, 'a'},
-			},
-			expectedString: "[20, 40]:64 [100, 300]:97",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			m := NewRangeMap(tc.equal, tc.pairs).(*rangeMap[int, rune])
-
-			assert.Equal(t, tc.expectedPairs, m.pairs)
-			assert.Equal(t, tc.expectedString, m.String())
-		})
-	}
-}
-
-func TestNewRangeMapWithFormat(t *testing.T) {
-	equal := generic.NewEqualFunc[rune]()
-
-	format := func(ranges iter.Seq2[Range[int], rune]) string {
-		strs := make([]string, 0)
-		for r, v := range ranges {
-			strs = append(strs, fmt.Sprintf("[%d..%d] --> %c", r.Lo, r.Hi, v))
-		}
-		return strings.Join(strs, "\n")
-	}
-
-	tests := []struct {
-		name           string
-		equal          generic.EqualFunc[rune]
-		format         FormatMap[int, rune]
-		pairs          map[Range[int]]rune
-		expectedPairs  []rangeValue[int, rune]
-		expectedString string
-	}{
-		{
-			name:   "CurrentHiOnLastHi_Merging",
-			equal:  equal,
-			format: format,
-			pairs: map[Range[int]]rune{
-				{20, 40}:   '@',
-				{100, 200}: 'a',
-				{200, 200}: 'a',
-				{200, 400}: 'a',
-			},
-			expectedPairs: []rangeValue[int, rune]{
-				{Range[int]{20, 40}, '@'},
-				{Range[int]{100, 400}, 'a'},
-			},
-			expectedString: "[20..40] --> @\n[100..400] --> a",
-		},
-		{
-			name:   "CurrentHiOnLastHi_Splitting",
-			equal:  equal,
-			format: format,
-			pairs: map[Range[int]]rune{
-				{20, 40}:   '@',
-				{100, 200}: 'a',
-				{200, 200}: 'b',
-				{200, 300}: 'b',
-				{300, 400}: 'c',
-			},
-			expectedPairs: []rangeValue[int, rune]{
-				{Range[int]{20, 40}, '@'},
-				{Range[int]{100, 199}, 'a'},
-				{Range[int]{200, 299}, 'b'},
-				{Range[int]{300, 400}, 'c'},
-			},
-			expectedString: "[20..40] --> @\n[100..199] --> a\n[200..299] --> b\n[300..400] --> c",
-		},
-		{
-			name:   "CurrentHiBeforeLastHi_Merging",
-			equal:  equal,
-			format: format,
-			pairs: map[Range[int]]rune{
-				{20, 40}:   '@',
-				{100, 600}: 'a',
-				{200, 300}: 'a',
-				{400, 600}: 'a',
-				{500, 700}: 'a',
-			},
-			expectedPairs: []rangeValue[int, rune]{
-				{Range[int]{20, 40}, '@'},
-				{Range[int]{100, 700}, 'a'},
-			},
-			expectedString: "[20..40] --> @\n[100..700] --> a",
-		},
-		{
-			name:   "CurrentHiBeforeLastHi_Splitting",
-			equal:  equal,
-			format: format,
 			pairs: map[Range[int]]rune{
 				{20, 40}:   '@',
 				{100, 600}: 'a',
@@ -210,9 +236,27 @@ func TestNewRangeMapWithFormat(t *testing.T) {
 			expectedString: "[20..40] --> @\n[100..199] --> a\n[200..300] --> b\n[301..399] --> a\n[400..499] --> b\n[500..700] --> c",
 		},
 		{
-			name:   "CurrentHiAdjacentToLastHi_Merging",
-			equal:  equal,
-			format: format,
+			name:  "CurrentHiAdjacentToLastHi_Merging",
+			equal: equal,
+			opts:  RangeMapOpts[int, rune]{},
+			pairs: map[Range[int]]rune{
+				{20, 40}:   '@',
+				{100, 199}: 'a',
+				{200, 200}: 'a',
+				{201, 300}: 'a',
+			},
+			expectedPairs: []rangeValue[int, rune]{
+				{Range[int]{20, 40}, '@'},
+				{Range[int]{100, 300}, 'a'},
+			},
+			expectedString: "[20, 40]:64 [100, 300]:97",
+		},
+		{
+			name:  "CurrentHiAdjacentToLastHi_Merging_CustomFormat",
+			equal: equal,
+			opts: RangeMapOpts[int, rune]{
+				Format: format,
+			},
 			pairs: map[Range[int]]rune{
 				{20, 40}:   '@',
 				{100, 199}: 'a',
@@ -229,7 +273,7 @@ func TestNewRangeMapWithFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			m := NewRangeMapWithFormat(tc.equal, tc.format, tc.pairs).(*rangeMap[int, rune])
+			m := NewRangeMap(tc.equal, tc.opts, tc.pairs).(*rangeMap[int, rune])
 
 			assert.Equal(t, tc.expectedPairs, m.pairs)
 			assert.Equal(t, tc.expectedString, m.String())
@@ -252,8 +296,9 @@ func TestRangeMap_String(t *testing.T) {
 					{Range[int]{200, 299}, 'b'},
 					{Range[int]{300, 400}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedString: "[20, 40]:64 [100, 199]:97 [200, 299]:98 [300, 400]:99",
 		},
@@ -274,6 +319,7 @@ func TestRangeMap_String(t *testing.T) {
 					}
 					return strings.Join(strs, "\n")
 				},
+				resolve: defaultResolve[rune],
 			},
 			expectedString: "[20..40] --> @\n[100..199] --> a\n[200..299] --> b\n[300..400] --> c",
 		},
@@ -300,8 +346,9 @@ func TestRangeMap_Clone(t *testing.T) {
 					{Range[int]{200, 299}, 'b'},
 					{Range[int]{300, 400}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 		},
 	}
@@ -323,8 +370,9 @@ func TestRangeMap_Equal(t *testing.T) {
 			{Range[int]{200, 299}, 'b'},
 			{Range[int]{300, 400}, 'c'},
 		},
-		equal:  generic.NewEqualFunc[rune](),
-		format: defaultFormatMap[int, rune],
+		equal:   generic.NewEqualFunc[rune](),
+		format:  defaultFormatMap[int, rune],
+		resolve: defaultResolve[rune],
 	}
 
 	tests := []struct {
@@ -343,9 +391,10 @@ func TestRangeMap_Equal(t *testing.T) {
 			name: "NotEqual_DiffLens",
 			m:    m,
 			rhs: &rangeMap[int, rune]{
-				pairs:  []rangeValue[int, rune]{},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				pairs:   []rangeValue[int, rune]{},
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedEqual: false,
 		},
@@ -359,8 +408,9 @@ func TestRangeMap_Equal(t *testing.T) {
 					{Range[int]{200, 299}, 'b'},
 					{Range[int]{300, 400}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedEqual: false,
 		},
@@ -374,8 +424,9 @@ func TestRangeMap_Equal(t *testing.T) {
 					{Range[int]{200, 299}, 'b'},
 					{Range[int]{300, 400}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedEqual: false,
 		},
@@ -389,8 +440,9 @@ func TestRangeMap_Equal(t *testing.T) {
 					{Range[int]{200, 299}, 'b'},
 					{Range[int]{300, 400}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedEqual: true,
 		},
@@ -418,8 +470,9 @@ func TestRangeMap_Size(t *testing.T) {
 					{Range[int]{200, 299}, 'b'},
 					{Range[int]{300, 400}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedSize: 4,
 		},
@@ -439,8 +492,9 @@ func TestRangeMap_Find(t *testing.T) {
 			{Range[int]{10, 20}, '@'},
 			{Range[int]{200, 400}, 'a'},
 		},
-		equal:  generic.NewEqualFunc[rune](),
-		format: defaultFormatMap[int, rune],
+		equal:   generic.NewEqualFunc[rune](),
+		format:  defaultFormatMap[int, rune],
+		resolve: defaultResolve[rune],
 	}
 
 	tests := []struct {
@@ -489,8 +543,9 @@ func TestRangeMap_Add(t *testing.T) {
 					{Range[int]{20, 40}, '@'},
 					{Range[int]{100, 400}, 'a'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			pairs: []rangeValue[int, rune]{
 				{Range[int]{0, 9}, '#'},
@@ -516,8 +571,9 @@ func TestRangeMap_Add(t *testing.T) {
 					{Range[int]{200, 299}, 'b'},
 					{Range[int]{300, 400}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			pairs: []rangeValue[int, rune]{
 				{Range[int]{0, 9}, '#'},
@@ -546,8 +602,9 @@ func TestRangeMap_Add(t *testing.T) {
 					{Range[int]{20, 40}, '@'},
 					{Range[int]{100, 700}, 'a'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			pairs: []rangeValue[int, rune]{
 				{Range[int]{0, 9}, '#'},
@@ -576,8 +633,9 @@ func TestRangeMap_Add(t *testing.T) {
 					{Range[int]{400, 499}, 'b'},
 					{Range[int]{500, 700}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			pairs: []rangeValue[int, rune]{
 				{Range[int]{0, 9}, '#'},
@@ -610,8 +668,9 @@ func TestRangeMap_Add(t *testing.T) {
 					{Range[int]{20, 40}, '@'},
 					{Range[int]{100, 300}, 'a'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			pairs: []rangeValue[int, rune]{
 				{Range[int]{0, 9}, '#'},
@@ -660,9 +719,10 @@ func TestRangeMap_Remove(t *testing.T) {
 		{
 			name: "None",
 			m: &rangeMap[int, rune]{
-				pairs:  append([]rangeValue[int, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[int, rune],
+				pairs:   append([]rangeValue[int, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: nil,
 			expectedPairs: []rangeValue[int, rune]{
@@ -681,9 +741,10 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "NoOverlapping",
 			m: &rangeMap[int, rune]{
-				pairs:  append([]rangeValue[int, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[int, rune],
+				pairs:   append([]rangeValue[int, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[int]{
 				{40, 60},
@@ -709,9 +770,10 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "OverlappingBounds",
 			m: &rangeMap[int, rune]{
-				pairs:  append([]rangeValue[int, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[int, rune],
+				pairs:   append([]rangeValue[int, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[int]{
 				{80, 100},
@@ -737,9 +799,10 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "OverlappingRanges",
 			m: &rangeMap[int, rune]{
-				pairs:  append([]rangeValue[int, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[int, rune],
+				pairs:   append([]rangeValue[int, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[int]{
 				{80, 120},
@@ -765,9 +828,10 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "Subsets",
 			m: &rangeMap[int, rune]{
-				pairs:  append([]rangeValue[int, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[int, rune],
+				pairs:   append([]rangeValue[int, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[int]{
 				{140, 160},
@@ -797,9 +861,10 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "Supersets",
 			m: &rangeMap[int, rune]{
-				pairs:  append([]rangeValue[int, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[int, rune],
+				pairs:   append([]rangeValue[int, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[int]{
 				{250, 450},
@@ -813,9 +878,10 @@ func TestRangeMap_Remove(t *testing.T) {
 		{
 			name: "All",
 			m: &rangeMap[int, rune]{
-				pairs:  append([]rangeValue[int, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[int, rune],
+				pairs:   append([]rangeValue[int, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[int]{
 				{100, 200},
@@ -853,8 +919,9 @@ func TestRangeMap_All(t *testing.T) {
 					{Range[int]{10, 20}, '@'},
 					{Range[int]{200, 400}, 'a'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[int, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[int, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedAll: []generic.KeyValue[Range[int], rune]{
 				{Key: Range[int]{0, 9}, Val: '#'},

@@ -11,15 +11,77 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
-func TestNewRangeList(t *testing.T) {
+func rangesToSeq[T Discrete](ranges []Range[T]) iter.Seq[Range[T]] {
+	return func(yield func(Range[T]) bool) {
+		for _, v := range ranges {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
+
+func TestDefaultFormatList(t *testing.T) {
 	tests := []struct {
 		name           string
+		all            iter.Seq[Range[int]]
+		expectedString string
+	}{
+		{
+			name:           "Nil",
+			all:            rangesToSeq[int](nil),
+			expectedString: "",
+		},
+		{
+			name:           "Zero",
+			all:            rangesToSeq([]Range[int]{}),
+			expectedString: "",
+		},
+		{
+			name: "One",
+			all: rangesToSeq([]Range[int]{
+				{2, 4},
+			}),
+			expectedString: "[2, 4]",
+		},
+		{
+			name: "Many",
+			all: rangesToSeq([]Range[int]{
+				{2, 4},
+				{6, 8},
+				{10, 10},
+				{16, 20},
+			}),
+			expectedString: "[2, 4] [6, 8] [10, 10] [16, 20]",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedString, defaultFormatList(tc.all))
+		})
+	}
+}
+
+func TestNewRangeList(t *testing.T) {
+	format := func(ranges iter.Seq[Range[int]]) string {
+		ss := make([]string, 0)
+		for r := range ranges {
+			ss = append(ss, fmt.Sprintf("[%d..%d]", r.Lo, r.Hi))
+		}
+		return strings.Join(ss, "\n")
+	}
+
+	tests := []struct {
+		name           string
+		opts           RangeListOpts[int]
 		rs             []Range[int]
 		expectedRanges []Range[int]
 		expectedString string
 	}{
 		{
 			name: "CurrentHiOnLastHi",
+			opts: RangeListOpts[int]{},
 			rs: []Range[int]{
 				{20, 40},
 				{100, 200},
@@ -33,7 +95,25 @@ func TestNewRangeList(t *testing.T) {
 			expectedString: "[20, 40] [100, 400]",
 		},
 		{
+			name: "CurrentHiOnLastHi_CustomFormat",
+			opts: RangeListOpts[int]{
+				Format: format,
+			},
+			rs: []Range[int]{
+				{20, 40},
+				{100, 200},
+				{200, 200},
+				{200, 400},
+			},
+			expectedRanges: []Range[int]{
+				{20, 40},
+				{100, 400},
+			},
+			expectedString: "[20..40]\n[100..400]",
+		},
+		{
 			name: "CurrentHiBeforeLastHi",
+			opts: RangeListOpts[int]{},
 			rs: []Range[int]{
 				{20, 40},
 				{100, 600},
@@ -48,65 +128,10 @@ func TestNewRangeList(t *testing.T) {
 			expectedString: "[20, 40] [100, 700]",
 		},
 		{
-			name: "CurrentHiAdjacentToLastHi",
-			rs: []Range[int]{
-				{20, 40},
-				{100, 199},
-				{200, 200},
-				{201, 300},
+			name: "CurrentHiBeforeLastHi_CustomFormat",
+			opts: RangeListOpts[int]{
+				Format: format,
 			},
-			expectedRanges: []Range[int]{
-				{20, 40},
-				{100, 300},
-			},
-			expectedString: "[20, 40] [100, 300]",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			l := NewRangeList(tc.rs...).(*rangeList[int])
-
-			assert.Equal(t, tc.expectedRanges, l.ranges)
-			assert.Equal(t, tc.expectedString, l.String())
-		})
-	}
-}
-
-func TestNewRangeListWithFormat(t *testing.T) {
-	format := func(ranges iter.Seq[Range[int]]) string {
-		strs := make([]string, 0)
-		for r := range ranges {
-			strs = append(strs, fmt.Sprintf("[%d..%d]", r.Lo, r.Hi))
-		}
-		return strings.Join(strs, "\n")
-	}
-
-	tests := []struct {
-		name           string
-		format         FormatList[int]
-		rs             []Range[int]
-		expectedRanges []Range[int]
-		expectedString string
-	}{
-		{
-			name:   "CurrentHiOnLastHi",
-			format: format,
-			rs: []Range[int]{
-				{20, 40},
-				{100, 200},
-				{200, 200},
-				{200, 400},
-			},
-			expectedRanges: []Range[int]{
-				{20, 40},
-				{100, 400},
-			},
-			expectedString: "[20..40]\n[100..400]",
-		},
-		{
-			name:   "CurrentHiBeforeLastHi",
-			format: format,
 			rs: []Range[int]{
 				{20, 40},
 				{100, 600},
@@ -121,8 +146,25 @@ func TestNewRangeListWithFormat(t *testing.T) {
 			expectedString: "[20..40]\n[100..700]",
 		},
 		{
-			name:   "CurrentHiAdjacentToLastHi",
-			format: format,
+			name: "CurrentHiAdjacentToLastHi",
+			opts: RangeListOpts[int]{},
+			rs: []Range[int]{
+				{20, 40},
+				{100, 199},
+				{200, 200},
+				{201, 300},
+			},
+			expectedRanges: []Range[int]{
+				{20, 40},
+				{100, 300},
+			},
+			expectedString: "[20, 40] [100, 300]",
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi_CustomFormat",
+			opts: RangeListOpts[int]{
+				Format: format,
+			},
 			rs: []Range[int]{
 				{20, 40},
 				{100, 199},
@@ -139,7 +181,7 @@ func TestNewRangeListWithFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			l := NewRangeListWithFormat(tc.format, tc.rs...).(*rangeList[int])
+			l := NewRangeList(tc.opts, tc.rs...).(*rangeList[int])
 
 			assert.Equal(t, tc.expectedRanges, l.ranges)
 			assert.Equal(t, tc.expectedString, l.String())

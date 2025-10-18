@@ -11,15 +11,77 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
-func TestNewRangeList(t *testing.T) {
+func rangesToSeq[T Continuous](ranges []Range[T]) iter.Seq[Range[T]] {
+	return func(yield func(Range[T]) bool) {
+		for _, v := range ranges {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
+
+func TestDefaultFormatList(t *testing.T) {
 	tests := []struct {
 		name           string
+		all            iter.Seq[Range[float64]]
+		expectedString string
+	}{
+		{
+			name:           "Nil",
+			all:            rangesToSeq[float64](nil),
+			expectedString: "",
+		},
+		{
+			name:           "Zero",
+			all:            rangesToSeq([]Range[float64]{}),
+			expectedString: "",
+		},
+		{
+			name: "One",
+			all: rangesToSeq([]Range[float64]{
+				{Bound[float64]{2.2, false}, Bound[float64]{4.4, false}},
+			}),
+			expectedString: "[2.2, 4.4]",
+		},
+		{
+			name: "Many",
+			all: rangesToSeq([]Range[float64]{
+				{Bound[float64]{2.2, false}, Bound[float64]{4.4, false}},
+				{Bound[float64]{6.9, false}, Bound[float64]{7.0, true}},
+				{Bound[float64]{7.0, true}, Bound[float64]{9.9, false}},
+				{Bound[float64]{9.99, true}, Bound[float64]{9.999, true}},
+			}),
+			expectedString: "[2.2, 4.4] [6.9, 7) (7, 9.9] (9.99, 9.999)",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedString, defaultFormatList(tc.all))
+		})
+	}
+}
+
+func TestNewRangeList(t *testing.T) {
+	format := func(ranges iter.Seq[Range[float64]]) string {
+		ss := make([]string, 0)
+		for r := range ranges {
+			ss = append(ss, r.String())
+		}
+		return strings.Join(ss, "\n")
+	}
+
+	tests := []struct {
+		name           string
+		opts           RangeListOpts[float64]
 		rs             []Range[float64]
 		expectedRanges []Range[float64]
 		expectedString string
 	}{
 		{
 			name: "CurrentHiOnLastHi",
+			opts: RangeListOpts[float64]{},
 			rs: []Range[float64]{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}},
@@ -33,7 +95,25 @@ func TestNewRangeList(t *testing.T) {
 			expectedString: "[2, 4] [10, 40]",
 		},
 		{
+			name: "CurrentHiOnLastHi_CustomFormat",
+			opts: RangeListOpts[float64]{
+				Format: format,
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}},
+				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}},
+				{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
+			},
+			expectedString: "[2, 4]\n[10, 40]",
+		},
+		{
 			name: "CurrentHiBeforeLastHi",
+			opts: RangeListOpts[float64]{},
 			rs: []Range[float64]{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}},
@@ -48,65 +128,10 @@ func TestNewRangeList(t *testing.T) {
 			expectedString: "[2, 4] [10, 70]",
 		},
 		{
-			name: "CurrentHiAdjacentToLastHi",
-			rs: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}},
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}},
-				{Bound[float64]{20.0, true}, Bound[float64]{30.0, false}},
+			name: "CurrentHiBeforeLastHi_CustomFormat",
+			opts: RangeListOpts[float64]{
+				Format: format,
 			},
-			expectedRanges: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}},
-			},
-			expectedString: "[2, 4] [10, 30]",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			l := NewRangeList(tc.rs...).(*rangeList[float64])
-
-			assert.Equal(t, tc.expectedRanges, l.ranges)
-			assert.Equal(t, tc.expectedString, l.String())
-		})
-	}
-}
-
-func TestNewRangeListWithFormat(t *testing.T) {
-	format := func(ranges iter.Seq[Range[float64]]) string {
-		strs := make([]string, 0)
-		for r := range ranges {
-			strs = append(strs, r.String())
-		}
-		return strings.Join(strs, "\n")
-	}
-
-	tests := []struct {
-		name           string
-		format         FormatList[float64]
-		rs             []Range[float64]
-		expectedRanges []Range[float64]
-		expectedString string
-	}{
-		{
-			name:   "CurrentHiOnLastHi",
-			format: format,
-			rs: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}},
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}},
-				{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}},
-			},
-			expectedRanges: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
-			},
-			expectedString: "[2, 4]\n[10, 40]",
-		},
-		{
-			name:   "CurrentHiBeforeLastHi",
-			format: format,
 			rs: []Range[float64]{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}},
@@ -121,8 +146,25 @@ func TestNewRangeListWithFormat(t *testing.T) {
 			expectedString: "[2, 4]\n[10, 70]",
 		},
 		{
-			name:   "CurrentHiAdjacentToLastHi",
-			format: format,
+			name: "CurrentHiAdjacentToLastHi",
+			opts: RangeListOpts[float64]{},
+			rs: []Range[float64]{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}},
+				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}},
+				{Bound[float64]{20.0, true}, Bound[float64]{30.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}},
+			},
+			expectedString: "[2, 4] [10, 30]",
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi_CustomFormat",
+			opts: RangeListOpts[float64]{
+				Format: format,
+			},
 			rs: []Range[float64]{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}},
@@ -139,7 +181,7 @@ func TestNewRangeListWithFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			l := NewRangeListWithFormat(tc.format, tc.rs...).(*rangeList[float64])
+			l := NewRangeList(tc.opts, tc.rs...).(*rangeList[float64])
 
 			assert.Equal(t, tc.expectedRanges, l.ranges)
 			assert.Equal(t, tc.expectedString, l.String())

@@ -11,12 +11,72 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
+func rangeValsToSeq2[T Continuous, V any](pairs []rangeValue[T, V]) iter.Seq2[Range[T], V] {
+	return func(yield func(Range[T], V) bool) {
+		for _, p := range pairs {
+			if !yield(p.Range, p.Value) {
+				return
+			}
+		}
+	}
+}
+
+func TestDefaultFormatMap(t *testing.T) {
+	tests := []struct {
+		name           string
+		all            iter.Seq2[Range[float64], rune]
+		expectedString string
+	}{
+		{
+			name:           "Nil",
+			all:            rangeValsToSeq2[float64, rune](nil),
+			expectedString: "",
+		},
+		{
+			name:           "Zero",
+			all:            rangeValsToSeq2([]rangeValue[float64, rune]{}),
+			expectedString: "",
+		},
+		{
+			name: "One",
+			all: rangeValsToSeq2([]rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.2, false}, Bound[float64]{4.4, false}}, 'a'},
+			}),
+			expectedString: "[2.2, 4.4]:97",
+		},
+		{
+			name: "Many",
+			all: rangeValsToSeq2([]rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.2, false}, Bound[float64]{4.4, false}}, 'a'},
+				{Range[float64]{Bound[float64]{6.9, false}, Bound[float64]{7.0, true}}, 'b'},
+				{Range[float64]{Bound[float64]{7.0, true}, Bound[float64]{9.9, false}}, 'c'},
+				{Range[float64]{Bound[float64]{9.99, true}, Bound[float64]{9.999, true}}, 'd'},
+			}),
+			expectedString: "[2.2, 4.4]:97 [6.9, 7):98 (7, 9.9]:99 (9.99, 9.999):100",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedString, defaultFormatMap(tc.all))
+		})
+	}
+}
+
 func TestNewRangeMap(t *testing.T) {
 	equal := generic.NewEqualFunc[rune]()
+	format := func(ranges iter.Seq2[Range[float64], rune]) string {
+		ss := make([]string, 0)
+		for r, v := range ranges {
+			ss = append(ss, fmt.Sprintf("%s --> %c", r.String(), v))
+		}
+		return strings.Join(ss, "\n")
+	}
 
 	tests := []struct {
 		name           string
 		equal          generic.EqualFunc[rune]
+		opts           RangeMapOpts[float64, rune]
 		pairs          map[Range[float64]]rune
 		expectedPairs  []rangeValue[float64, rune]
 		expectedString string
@@ -24,6 +84,7 @@ func TestNewRangeMap(t *testing.T) {
 		{
 			name:  "CurrentHiOnLastHi_Merging",
 			equal: equal,
+			opts:  RangeMapOpts[float64, rune]{},
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
@@ -37,8 +98,27 @@ func TestNewRangeMap(t *testing.T) {
 			expectedString: "[2, 4]:64 [10, 40]:97",
 		},
 		{
+			name:  "CurrentHiOnLastHi_Merging_CustomFormat",
+			equal: equal,
+			opts: RangeMapOpts[float64, rune]{
+				Format: format,
+			},
+			pairs: map[Range[float64]]rune{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}: 'a',
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
+			},
+			expectedString: "[2, 4] --> @\n[10, 40] --> a",
+		},
+		{
 			name:  "CurrentHiOnLastHi_Splitting",
 			equal: equal,
+			opts:  RangeMapOpts[float64, rune]{},
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
@@ -55,8 +135,30 @@ func TestNewRangeMap(t *testing.T) {
 			expectedString: "[2, 4]:64 [10, 20):97 [20, 30):98 [30, 40]:99",
 		},
 		{
+			name:  "CurrentHiOnLastHi_Splitting_CustomFormat",
+			equal: equal,
+			opts: RangeMapOpts[float64, rune]{
+				Format: format,
+			},
+			pairs: map[Range[float64]]rune{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'b',
+				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'b',
+				{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}: 'c',
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+			},
+			expectedString: "[2, 4] --> @\n[10, 20) --> a\n[20, 30) --> b\n[30, 40] --> c",
+		},
+		{
 			name:  "CurrentHiBeforeLastHi_Merging",
 			equal: equal,
+			opts:  RangeMapOpts[float64, rune]{},
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
@@ -71,8 +173,28 @@ func TestNewRangeMap(t *testing.T) {
 			expectedString: "[2, 4]:64 [10, 70]:97",
 		},
 		{
+			name:  "CurrentHiBeforeLastHi_Merging_CustomFormat",
+			equal: equal,
+			opts: RangeMapOpts[float64, rune]{
+				Format: format,
+			},
+			pairs: map[Range[float64]]rune{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
+				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'a',
+				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}}: 'a',
+				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}: 'a',
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
+			},
+			expectedString: "[2, 4] --> @\n[10, 70] --> a",
+		},
+		{
 			name:  "CurrentHiBeforeLastHi_Splitting",
 			equal: equal,
+			opts:  RangeMapOpts[float64, rune]{},
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
@@ -91,107 +213,11 @@ func TestNewRangeMap(t *testing.T) {
 			expectedString: "[2, 4]:64 [10, 20):97 [20, 30]:98 (30, 40):97 [40, 50):98 [50, 70]:99",
 		},
 		{
-			name:  "CurrentHiAdjacentToLastHi_Merging",
+			name:  "CurrentHiBeforeLastHi_Splitting_CustomFormat",
 			equal: equal,
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}:  'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20, true}, Bound[float64]{30.0, false}}:    'a',
+			opts: RangeMapOpts[float64, rune]{
+				Format: format,
 			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
-			},
-			expectedString: "[2, 4]:64 [10, 30]:97",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			m := NewRangeMap(tc.equal, tc.pairs).(*rangeMap[float64, rune])
-
-			assert.Equal(t, tc.expectedPairs, m.pairs)
-			assert.Equal(t, tc.expectedString, m.String())
-		})
-	}
-}
-
-func TestNewRangeMapWithFormat(t *testing.T) {
-	equal := generic.NewEqualFunc[rune]()
-
-	format := func(ranges iter.Seq2[Range[float64], rune]) string {
-		strs := make([]string, 0)
-		for r, v := range ranges {
-			strs = append(strs, fmt.Sprintf("%s --> %c", r.String(), v))
-		}
-		return strings.Join(strs, "\n")
-	}
-
-	tests := []struct {
-		name           string
-		equal          generic.EqualFunc[rune]
-		format         FormatMap[float64, rune]
-		pairs          map[Range[float64]]rune
-		expectedPairs  []rangeValue[float64, rune]
-		expectedString string
-	}{
-		{
-			name:   "CurrentHiOnLastHi_Merging",
-			equal:  equal,
-			format: format,
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}: 'a',
-			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
-			},
-			expectedString: "[2, 4] --> @\n[10, 40] --> a",
-		},
-		{
-			name:   "CurrentHiOnLastHi_Splitting",
-			equal:  equal,
-			format: format,
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'b',
-				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'b',
-				{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}: 'c',
-			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
-				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
-				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
-			},
-			expectedString: "[2, 4] --> @\n[10, 20) --> a\n[20, 30) --> b\n[30, 40] --> c",
-		},
-		{
-			name:   "CurrentHiBeforeLastHi_Merging",
-			equal:  equal,
-			format: format,
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'a',
-				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}}: 'a',
-				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}: 'a',
-			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
-			},
-			expectedString: "[2, 4] --> @\n[10, 70] --> a",
-		},
-		{
-			name:   "CurrentHiBeforeLastHi_Splitting",
-			equal:  equal,
-			format: format,
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
@@ -210,9 +236,27 @@ func TestNewRangeMapWithFormat(t *testing.T) {
 			expectedString: "[2, 4] --> @\n[10, 20) --> a\n[20, 30] --> b\n(30, 40) --> a\n[40, 50) --> b\n[50, 70] --> c",
 		},
 		{
-			name:   "CurrentHiAdjacentToLastHi_Merging",
-			equal:  equal,
-			format: format,
+			name:  "CurrentHiAdjacentToLastHi_Merging",
+			equal: equal,
+			opts:  RangeMapOpts[float64, rune]{},
+			pairs: map[Range[float64]]rune{
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}:  'a',
+				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
+				{Bound[float64]{20, true}, Bound[float64]{30.0, false}}:    'a',
+			},
+			expectedPairs: []rangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
+			},
+			expectedString: "[2, 4]:64 [10, 30]:97",
+		},
+		{
+			name:  "CurrentHiAdjacentToLastHi_Merging_CustomFormat",
+			equal: equal,
+			opts: RangeMapOpts[float64, rune]{
+				Format: format,
+			},
 			pairs: map[Range[float64]]rune{
 				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}:  'a',
@@ -229,7 +273,7 @@ func TestNewRangeMapWithFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			m := NewRangeMapWithFormat(tc.equal, tc.format, tc.pairs).(*rangeMap[float64, rune])
+			m := NewRangeMap(tc.equal, tc.opts, tc.pairs).(*rangeMap[float64, rune])
 
 			assert.Equal(t, tc.expectedPairs, m.pairs)
 			assert.Equal(t, tc.expectedString, m.String())
@@ -252,8 +296,9 @@ func TestRangeMap_String(t *testing.T) {
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
 					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedString: "[2, 4]:64 [10, 20):97 [20, 30):98 [30, 40]:99",
 		},
@@ -274,6 +319,7 @@ func TestRangeMap_String(t *testing.T) {
 					}
 					return strings.Join(strs, "\n")
 				},
+				resolve: defaultResolve[rune],
 			},
 			expectedString: "[2, 4] --> @\n[10, 20) --> a\n[20, 30) --> b\n[30, 40] --> c",
 		},
@@ -300,8 +346,9 @@ func TestRangeMap_Clone(t *testing.T) {
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
 					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 		},
 	}
@@ -323,8 +370,9 @@ func TestRangeMap_Equal(t *testing.T) {
 			{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
 			{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
 		},
-		equal:  generic.NewEqualFunc[rune](),
-		format: defaultFormatMap[float64, rune],
+		equal:   generic.NewEqualFunc[rune](),
+		format:  defaultFormatMap[float64, rune],
+		resolve: defaultResolve[rune],
 	}
 
 	tests := []struct {
@@ -343,9 +391,10 @@ func TestRangeMap_Equal(t *testing.T) {
 			name: "NotEqual_DiffLens",
 			m:    m,
 			rhs: &rangeMap[float64, rune]{
-				pairs:  []rangeValue[float64, rune]{},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				pairs:   []rangeValue[float64, rune]{},
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedEqual: false,
 		},
@@ -359,8 +408,9 @@ func TestRangeMap_Equal(t *testing.T) {
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
 					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedEqual: false,
 		},
@@ -374,8 +424,9 @@ func TestRangeMap_Equal(t *testing.T) {
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
 					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedEqual: false,
 		},
@@ -389,8 +440,9 @@ func TestRangeMap_Equal(t *testing.T) {
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
 					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedEqual: true,
 		},
@@ -418,8 +470,9 @@ func TestRangeMap_Size(t *testing.T) {
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
 					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedSize: 4,
 		},
@@ -440,8 +493,9 @@ func TestRangeMap_Find(t *testing.T) {
 			{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, 'a'},
 			{Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{80.0, true}}, 'b'},
 		},
-		equal:  generic.NewEqualFunc[rune](),
-		format: defaultFormatMap[float64, rune],
+		equal:   generic.NewEqualFunc[rune](),
+		format:  defaultFormatMap[float64, rune],
+		resolve: defaultResolve[rune],
 	}
 
 	tests := []struct {
@@ -491,8 +545,9 @@ func TestRangeMap_Add(t *testing.T) {
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			pairs: []rangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
@@ -518,8 +573,9 @@ func TestRangeMap_Add(t *testing.T) {
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
 					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			pairs: []rangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
@@ -548,8 +604,9 @@ func TestRangeMap_Add(t *testing.T) {
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			pairs: []rangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
@@ -578,8 +635,9 @@ func TestRangeMap_Add(t *testing.T) {
 					{Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, 'b'},
 					{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'c'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			pairs: []rangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
@@ -612,8 +670,9 @@ func TestRangeMap_Add(t *testing.T) {
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			pairs: []rangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
@@ -662,9 +721,10 @@ func TestRangeMap_Remove(t *testing.T) {
 		{
 			name: "None",
 			m: &rangeMap[float64, rune]{
-				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[float64, rune],
+				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: nil,
 			expectedPairs: []rangeValue[float64, rune]{
@@ -683,9 +743,10 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "NoOverlapping",
 			m: &rangeMap[float64, rune]{
-				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[float64, rune],
+				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[float64]{
 				{Bound[float64]{4.0, false}, Bound[float64]{6.0, false}},
@@ -711,9 +772,10 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "OverlappingBounds",
 			m: &rangeMap[float64, rune]{
-				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[float64, rune],
+				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[float64]{
 				{Bound[float64]{8.0, false}, Bound[float64]{10.0, false}},
@@ -739,9 +801,10 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "OverlappingRanges",
 			m: &rangeMap[float64, rune]{
-				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[float64, rune],
+				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[float64]{
 				{Bound[float64]{8.0, false}, Bound[float64]{12.0, false}},
@@ -767,9 +830,10 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "Subsets",
 			m: &rangeMap[float64, rune]{
-				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[float64, rune],
+				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[float64]{
 				{Bound[float64]{14.0, true}, Bound[float64]{16.0, true}},
@@ -799,9 +863,10 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "Supersets",
 			m: &rangeMap[float64, rune]{
-				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[float64, rune],
+				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[float64]{
 				{Bound[float64]{25.0, false}, Bound[float64]{45.0, false}},
@@ -815,9 +880,10 @@ func TestRangeMap_Remove(t *testing.T) {
 		{
 			name: "All",
 			m: &rangeMap[float64, rune]{
-				pairs:  append([]rangeValue[float64, rune]{}, pairs...),
-				equal:  equal,
-				format: defaultFormatMap[float64, rune],
+				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			keys: []Range[float64]{
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}},
@@ -856,8 +922,9 @@ func TestRangeMap_All(t *testing.T) {
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, 'a'},
 					{Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{80.0, true}}, 'b'},
 				},
-				equal:  generic.NewEqualFunc[rune](),
-				format: defaultFormatMap[float64, rune],
+				equal:   generic.NewEqualFunc[rune](),
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
 			},
 			expectedAll: []generic.KeyValue[Range[float64], rune]{
 				{Key: Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, Val: '#'},

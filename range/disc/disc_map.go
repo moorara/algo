@@ -1,6 +1,7 @@
 package disc
 
 import (
+	"bytes"
 	"fmt"
 	"iter"
 	"slices"
@@ -22,6 +23,37 @@ type RangeMap[K Discrete, V any] interface {
 	All() iter.Seq2[Range[K], V]
 }
 
+// RangeMapOpts holds optional settings for creating a RangeMap.
+type RangeMapOpts[K Discrete, V any] struct {
+	Format  FormatMapFunc[K, V]
+	Resolve ResolverFunc[V]
+}
+
+// FormatMapFunc is a function type for formatting a range map into a single string representation.
+type FormatMapFunc[K Discrete, V any] func(iter.Seq2[Range[K], V]) string
+
+func defaultFormatMap[K Discrete, V any](all iter.Seq2[Range[K], V]) string {
+	var b bytes.Buffer
+
+	for r, v := range all {
+		fmt.Fprintf(&b, "%s:%v ", r, v)
+	}
+
+	// Remove the last space
+	if b.Len() > 0 {
+		b.Truncate(b.Len() - 1)
+	}
+
+	return b.String()
+}
+
+// ResolverFunc is a function type for resolving the conflicting values of overlapping ranges.
+type ResolverFunc[V any] func(V, V) V
+
+func defaultResolve[V any](existing, new V) V {
+	return new
+}
+
 // rangeValue associates a discrete range with a value.
 type rangeValue[K Discrete, V any] struct {
 	Range[K]
@@ -30,9 +62,10 @@ type rangeValue[K Discrete, V any] struct {
 
 // rangeMap is a concrete implementation of RangeMap interface.
 type rangeMap[K Discrete, V any] struct {
-	pairs  []rangeValue[K, V]
-	equal  generic.EqualFunc[V]
-	format FormatMap[K, V]
+	pairs   []rangeValue[K, V]
+	equal   generic.EqualFunc[V]
+	format  FormatMapFunc[K, V]
+	resolve ResolverFunc[V]
 }
 
 // NewRangeMap creates a new range map from the given ranges.
@@ -44,22 +77,30 @@ type rangeMap[K Discrete, V any] struct {
 //
 //   - If the existing range's value equals the new range's value, the ranges are merged.
 //   - If the values differ, the new range's value takes precedence and the existing range is split.
-func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], pairs map[Range[K]]V) RangeMap[K, V] {
-	m := &rangeMap[K, V]{
-		pairs:  make([]rangeValue[K, V], 0, len(pairs)),
-		equal:  equal,
-		format: defaultFormatMap[K, V],
-	}
-
-	for r, v := range pairs {
+func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], opts RangeMapOpts[K, V], pairs map[Range[K]]V) RangeMap[K, V] {
+	for r := range pairs {
 		if !r.Valid() {
 			panic(fmt.Sprintf("invalid range: %s", r))
 		}
+	}
 
-		m.pairs = append(m.pairs, rangeValue[K, V]{
-			Range: r,
-			Value: v,
-		})
+	if opts.Format == nil {
+		opts.Format = defaultFormatMap[K, V]
+	}
+
+	if opts.Resolve == nil {
+		opts.Resolve = defaultResolve[V]
+	}
+
+	m := &rangeMap[K, V]{
+		pairs:   make([]rangeValue[K, V], 0, len(pairs)),
+		equal:   equal,
+		format:  opts.Format,
+		resolve: opts.Resolve,
+	}
+
+	for r, v := range pairs {
+		m.pairs = append(m.pairs, rangeValue[K, V]{r, v})
 	}
 
 	// Sort ranges by their low bound ascending
@@ -69,22 +110,6 @@ func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], pairs map[Range[
 
 	// Merge and/or split overlapping and adjacent ranges
 	m.mergeAndSplitRanges()
-
-	return m
-}
-
-// NewRangeMap creates a new range map with a custom format function from the given ranges.
-// It panics if any of the provided ranges are invalid.
-//
-// Ranges stored in the map are always non-overlapping and sorted.
-//
-// When a new range overlaps existing ranges, overlapping portions are resolved as follows:
-//
-//   - If the existing range's value equals the new range's value, the ranges are merged.
-//   - If the values differ, the new range's value takes precedence and the existing range is split.
-func NewRangeMapWithFormat[K Discrete, V any](equal generic.EqualFunc[V], format FormatMap[K, V], pairs map[Range[K]]V) RangeMap[K, V] {
-	m := NewRangeMap(equal, pairs).(*rangeMap[K, V])
-	m.format = format
 
 	return m
 }
@@ -135,7 +160,7 @@ func (m *rangeMap[K, V]) mergeAndSplitRanges() {
 					// Case curr.Lo < last.Hi && curr.Hi < last.Hi && last.Value != curr.Value:
 					//
 					//   last:  |_____|_____|_____|  Value: A    ---->    |____||     ||    |  Value: A
-					//   curr:        |_____|        Value: B    ---->          |_____||    |  Value: B
+					//   curr:        |_____|        Value: B    ---->          |_____||    |  Value: resolve(A, B)
 					//                                           ---->                 |____|  Value: A
 					//
 					// Impossible case of curr.Lo == last.Hi && curr.Hi < last.Hi
@@ -143,9 +168,15 @@ func (m *rangeMap[K, V]) mergeAndSplitRanges() {
 
 					lastEnd := last.Hi
 					last.Hi = curr.Lo - 1
+
+					curr.Value = m.resolve(last.Value, curr.Value)
 					merged = append(merged, curr)
+
 					merged = append(merged, rangeValue[K, V]{
-						Range: Range[K]{Lo: curr.Hi + 1, Hi: lastEnd},
+						Range: Range[K]{
+							Lo: curr.Hi + 1,
+							Hi: lastEnd,
+						},
 						Value: last.Value,
 					})
 				}
@@ -165,15 +196,17 @@ func (m *rangeMap[K, V]) mergeAndSplitRanges() {
 					// Case curr.Lo < last.Hi && curr.Hi == last.Hi && last.Value != curr.Value:
 					//
 					//   last:  |_____|___________|  Value: A    ---->    |____||           |  Value: A
-					//   curr:        |___________|  Value: B    ---->          |___________|  Value: B
+					//   curr:        |___________|  Value: B    ---->          |___________|  Value: resolve(A, B)
 					//
 					// Case curr.Lo == last.Hi && curr.Hi == last.Hi && last.Value != curr.Value:
 					//
 					//   last:  |_________________|  Value: A    ---->    |________________||  Value: A
-					//   curr:                    |  Value: B    ---->                      |  Value: B
+					//   curr:                    |  Value: B    ---->                      |  Value: resolve(A, B)
 					//
 
 					last.Hi = curr.Lo - 1
+
+					curr.Value = m.resolve(last.Value, curr.Value)
 					merged = append(merged, curr)
 				}
 			} else /* if curr.Hi > last.Hi */ {
@@ -194,15 +227,17 @@ func (m *rangeMap[K, V]) mergeAndSplitRanges() {
 					// Case curr.Lo < last.Hi && curr.Hi > last.Hi && last.Value != curr.Value:
 					//
 					//   last:  |_____|_____|     |  Value: A    ---->    |____||           |  Value: A
-					//   curr:        |___________|  Value: B    ---->          |___________|  Value: B
+					//   curr:        |___________|  Value: B    ---->          |___________|  Value: resolve(A, B)
 					//
 					// Case curr.Lo == last.Hi && curr.Hi > last.Hi && last.Value != curr.Value:
 					//
 					//   last:  |___________|     |  Value: A    ---->    |__________||     |  Value: A
-					//   curr:              |_____|  Value: B    ---->                |_____|  Value: B
+					//   curr:              |_____|  Value: B    ---->                |_____|  Value: resolve(A, B)
 					//
 
 					last.Hi = curr.Lo - 1
+
+					curr.Value = m.resolve(last.Value, curr.Value)
 					merged = append(merged, curr)
 				}
 			}

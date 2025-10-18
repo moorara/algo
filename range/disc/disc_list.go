@@ -1,6 +1,7 @@
 package disc
 
 import (
+	"bytes"
 	"fmt"
 	"iter"
 	"slices"
@@ -22,10 +23,33 @@ type RangeList[T Discrete] interface {
 	All() iter.Seq[Range[T]]
 }
 
+// RangeListOpts holds optional settings for creating a RangeList.
+type RangeListOpts[T Discrete] struct {
+	Format FormatListFunc[T]
+}
+
+// FormatListFunc is a function type for formatting a range list into a single string representation.
+type FormatListFunc[T Discrete] func(iter.Seq[Range[T]]) string
+
+func defaultFormatList[T Discrete](all iter.Seq[Range[T]]) string {
+	var b bytes.Buffer
+
+	for r := range all {
+		fmt.Fprintf(&b, "%s ", r)
+	}
+
+	// Remove the last space
+	if b.Len() > 0 {
+		b.Truncate(b.Len() - 1)
+	}
+
+	return b.String()
+}
+
 // rangeList is a concrete implementation of RangeList interface.
 type rangeList[T Discrete] struct {
 	ranges []Range[T]
-	format FormatList[T]
+	format FormatListFunc[T]
 }
 
 // NewRangeList creates a new range list from the given ranges.
@@ -34,16 +58,20 @@ type rangeList[T Discrete] struct {
 // Ranges stored in the list are always non-overlapping and sorted.
 //
 // When a new range overlaps existing ranges, the ranges are merged.
-func NewRangeList[T Discrete](rs ...Range[T]) RangeList[T] {
+func NewRangeList[T Discrete](opts RangeListOpts[T], rs ...Range[T]) RangeList[T] {
 	for _, r := range rs {
 		if !r.Valid() {
 			panic(fmt.Sprintf("invalid range: %s", r))
 		}
 	}
 
+	if opts.Format == nil {
+		opts.Format = defaultFormatList[T]
+	}
+
 	l := &rangeList[T]{
 		ranges: rs,
-		format: defaultFormatList[T],
+		format: opts.Format,
 	}
 
 	// Sort ranges by their low bound ascending
@@ -53,19 +81,6 @@ func NewRangeList[T Discrete](rs ...Range[T]) RangeList[T] {
 
 	// Merge overlapping and adjacent ranges
 	l.mergeRanges()
-
-	return l
-}
-
-// NewRangeListWithFormat creates a new range list with a custom format function from the given ranges.
-// It panics if any of the provided ranges are invalid.
-//
-// Ranges stored in the list are always non-overlapping and sorted.
-//
-// When a new range overlaps existing ranges, the ranges are merged.
-func NewRangeListWithFormat[T Discrete](format FormatList[T], rs ...Range[T]) RangeList[T] {
-	l := NewRangeList(rs...).(*rangeList[T])
-	l.format = format
 
 	return l
 }
