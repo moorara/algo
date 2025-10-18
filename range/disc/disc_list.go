@@ -22,13 +22,18 @@ type RangeList[T Discrete] interface {
 	All() iter.Seq[Range[T]]
 }
 
+// rangeList is a concrete implementation of RangeList interface.
 type rangeList[T Discrete] struct {
 	ranges []Range[T]
 	format FormatList[T]
 }
 
 // NewRangeList creates a new range list from the given ranges.
-// It panics if any of the given ranges are invalid.
+// It panics if any of the provided ranges are invalid.
+//
+// Ranges stored in the list are always non-overlapping and sorted.
+//
+// When a new range overlaps existing ranges, the ranges are merged.
 func NewRangeList[T Discrete](rs ...Range[T]) RangeList[T] {
 	for _, r := range rs {
 		if !r.Valid() {
@@ -53,7 +58,11 @@ func NewRangeList[T Discrete](rs ...Range[T]) RangeList[T] {
 }
 
 // NewRangeListWithFormat creates a new range list with a custom format function from the given ranges.
-// It panics if any of the given ranges are invalid.
+// It panics if any of the provided ranges are invalid.
+//
+// Ranges stored in the list are always non-overlapping and sorted.
+//
+// When a new range overlaps existing ranges, the ranges are merged.
 func NewRangeListWithFormat[T Discrete](format FormatList[T], rs ...Range[T]) RangeList[T] {
 	l := NewRangeList(rs...).(*rangeList[T])
 	l.format = format

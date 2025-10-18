@@ -28,6 +28,7 @@ type rangeValue[K Discrete, V any] struct {
 	Value V
 }
 
+// rangeMap is a concrete implementation of RangeMap interface.
 type rangeMap[K Discrete, V any] struct {
 	pairs  []rangeValue[K, V]
 	equal  generic.EqualFunc[V]
@@ -35,7 +36,14 @@ type rangeMap[K Discrete, V any] struct {
 }
 
 // NewRangeMap creates a new range map from the given ranges.
-// It panics if any of the given ranges are invalid.
+// It panics if any of the provided ranges are invalid.
+//
+// Ranges stored in the map are always non-overlapping and sorted.
+//
+// When a new range overlaps existing ranges, overlapping portions are resolved as follows:
+//
+//   - If the existing range's value equals the new range's value, the ranges are merged.
+//   - If the values differ, the new range's value takes precedence and the existing range is split.
 func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], pairs map[Range[K]]V) RangeMap[K, V] {
 	m := &rangeMap[K, V]{
 		pairs:  make([]rangeValue[K, V], 0, len(pairs)),
@@ -66,7 +74,14 @@ func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], pairs map[Range[
 }
 
 // NewRangeMap creates a new range map with a custom format function from the given ranges.
-// It panics if any of the given ranges are invalid.
+// It panics if any of the provided ranges are invalid.
+//
+// Ranges stored in the map are always non-overlapping and sorted.
+//
+// When a new range overlaps existing ranges, overlapping portions are resolved as follows:
+//
+//   - If the existing range's value equals the new range's value, the ranges are merged.
+//   - If the values differ, the new range's value takes precedence and the existing range is split.
 func NewRangeMapWithFormat[K Discrete, V any](equal generic.EqualFunc[V], format FormatMap[K, V], pairs map[Range[K]]V) RangeMap[K, V] {
 	m := NewRangeMap(equal, pairs).(*rangeMap[K, V])
 	m.format = format
