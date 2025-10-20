@@ -113,8 +113,6 @@ func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], opts *RangeMapOp
 		return int(lhs.Lo - rhs.Lo)
 	})
 
-	fmt.Printf("\nm.pairs: %s\n\n", m.pairs)
-
 	// Merge and/or split overlapping and adjacent ranges.
 	m.consolidateRanges()
 
