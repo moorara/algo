@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"iter"
-	"slices"
 
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/sort"
 )
 
 // RangeList represents a list of continuous ranges.
@@ -38,8 +38,8 @@ func defaultFormatList[T Continuous](all iter.Seq[Range[T]]) string {
 		fmt.Fprintf(&b, "%s ", r)
 	}
 
-	// Remove the last space
-	if b.Len() > 0 {
+	// Remove trailing space
+	if b.Len() >= 1 {
 		b.Truncate(b.Len() - 1)
 	}
 
@@ -78,13 +78,13 @@ func NewRangeList[T Continuous](opts *RangeListOpts[T], rs ...Range[T]) RangeLis
 		format: opts.Format,
 	}
 
-	// Sort ranges by their low bound ascending
-	slices.SortFunc(l.ranges, func(lhs, rhs Range[T]) int {
+	// Sort ranges by their low bound ascending.
+	sort.Quick(l.ranges, func(lhs, rhs Range[T]) int {
 		return compareLoLo(lhs.Lo, rhs.Lo)
 	})
 
-	// Merge overlapping and adjacent ranges
-	l.mergeRanges()
+	// Merge overlapping and adjacent ranges.
+	l.consolidateRanges()
 
 	return l
 }
@@ -109,8 +109,8 @@ func (l *rangeList[T]) searchRanges(v Bound[T]) (int, bool) {
 	return lo, false
 }
 
-// mergeRanges merges overlapping or adjacent ranges in the sorted list of ranges.
-func (l *rangeList[T]) mergeRanges() {
+// consolidateRanges merges overlapping or adjacent ranges in the sorted list of ranges.
+func (l *rangeList[T]) consolidateRanges() {
 	merged := make([]Range[T], 0, len(l.ranges))
 
 	for _, curr := range l.ranges {
@@ -126,12 +126,18 @@ func (l *rangeList[T]) mergeRanges() {
 				// Case curr.Lo < last.Hi && curr.Hi > last.Hi
 				//
 				//   last:  |_____|_____|     |    ---->    |_________________|
-				//   curr:        |___________|    ---->
+				//   curr:        |___________|
+				//
+				//   last:  |___________|     |    ---->    |_________________|
+				//   curr:  |_________________|
 				//
 				// Case curr.Lo == last.Hi && curr.Hi > last.Hi
 				//
 				//   last:  |___________|     |    ---->    |_________________|
-				//   curr:              |_____|    ---->
+				//   curr:              |_____|
+				//
+				//   last:              |     |    ---->                |_____|
+				//   curr:              |_____|
 				//
 
 				last.Hi = curr.Hi
@@ -139,8 +145,17 @@ func (l *rangeList[T]) mergeRanges() {
 		} else if before, _ := last.Adjacent(curr); before {
 			// Case last.Hi is immediately before curr.Lo
 			//
-			//   last:  |__________||     |    ---->    |_________________|
-			//   curr:              |_____|    ---->
+			//   last:  |__________||     |      ---->    |_________________|
+			//   curr:              |_____|
+			//
+			//   last:  ||                |      ---->    |_________________|
+			//   curr:   |________________|
+			//
+			//   last:  |________________||      ---->    |_________________|
+			//   curr:                    |
+			//
+			//   last:                   ||      ---->                     ||
+			//   curr:                    |
 			//
 
 			last.Hi = curr.Hi
@@ -224,7 +239,7 @@ func (l *rangeList[T]) Add(rs ...Range[T]) {
 		l.ranges[i] = r
 
 		// Merge overlapping and adjacent ranges
-		l.mergeRanges()
+		l.consolidateRanges()
 	}
 }
 

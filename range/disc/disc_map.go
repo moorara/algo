@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"iter"
-	"slices"
 
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/sort"
 )
 
 // RangeMap represents a map from discrete ranges to values.
@@ -39,8 +39,8 @@ func defaultFormatMap[K Discrete, V any](all iter.Seq2[Range[K], V]) string {
 		fmt.Fprintf(&b, "%s:%v ", r, v)
 	}
 
-	// Remove the last space
-	if b.Len() > 0 {
+	// Remove trailing space
+	if b.Len() >= 1 {
 		b.Truncate(b.Len() - 1)
 	}
 
@@ -54,15 +54,15 @@ func defaultResolve[V any](existing, new V) V {
 	return new
 }
 
-// rangeValue associates a discrete range with a value.
-type rangeValue[K Discrete, V any] struct {
+// RangeValue associates a discrete range with a value.
+type RangeValue[K Discrete, V any] struct {
 	Range[K]
 	Value V
 }
 
 // rangeMap is a concrete implementation of RangeMap interface.
 type rangeMap[K Discrete, V any] struct {
-	pairs   []rangeValue[K, V]
+	pairs   []RangeValue[K, V]
 	equal   generic.EqualFunc[V]
 	format  FormatMapFunc[K, V]
 	resolve ResolverFunc[V]
@@ -76,9 +76,12 @@ type rangeMap[K Discrete, V any] struct {
 // When a new range overlaps existing ranges, overlapping portions are resolved as follows:
 //
 //   - If the existing range's value equals the new range's value, the ranges are merged.
-//   - If the values differ, the new range's value takes precedence and the existing range is split.
-func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], opts *RangeMapOpts[K, V], pairs map[Range[K]]V) RangeMap[K, V] {
-	for r := range pairs {
+//   - If the values differ, the resolver function determines the value for the overlapping part.
+//     The default behavior is to use the new range's value (when no resolver is provided).
+//     When a custom resolver is provided, the overlapping part will either be merged into the existing range,
+//     remain with the new range, or be split out as a separate range with the resolver's returned value.
+func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], opts *RangeMapOpts[K, V], pairs []RangeValue[K, V]) RangeMap[K, V] {
+	for _, r := range pairs {
 		if !r.Valid() {
 			panic(fmt.Sprintf("invalid range: %s", r))
 		}
@@ -97,23 +100,23 @@ func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], opts *RangeMapOp
 	}
 
 	m := &rangeMap[K, V]{
-		pairs:   make([]rangeValue[K, V], 0, len(pairs)),
+		pairs:   pairs,
 		equal:   equal,
 		format:  opts.Format,
 		resolve: opts.Resolve,
 	}
 
-	for r, v := range pairs {
-		m.pairs = append(m.pairs, rangeValue[K, V]{r, v})
-	}
-
-	// Sort ranges by their low bound ascending
-	slices.SortFunc(m.pairs, func(lhs, rhs rangeValue[K, V]) int {
+	// Sort ranges by their low bound ascending.
+	// The sorting algorithm must be stable, so the original order of ranges with the same low bound is retained.
+	// This preserves determinism when ranges share identical lower bounds but different values.
+	sort.Merge(m.pairs, func(lhs, rhs RangeValue[K, V]) int {
 		return int(lhs.Lo - rhs.Lo)
 	})
 
-	// Merge and/or split overlapping and adjacent ranges
-	m.mergeAndSplitRanges()
+	fmt.Printf("\nm.pairs: %s\n\n", m.pairs)
+
+	// Merge and/or split overlapping and adjacent ranges.
+	m.consolidateRanges()
 
 	return m
 }
@@ -138,9 +141,9 @@ func (m *rangeMap[K, V]) searchRanges(k K) (int, bool) {
 	return lo, false
 }
 
-// mergeAndSplitRanges merges overlapping or adjacent ranges in the sorted list of ranges.
-func (m *rangeMap[K, V]) mergeAndSplitRanges() {
-	merged := make([]rangeValue[K, V], 0, len(m.pairs))
+// consolidateRanges merges overlapping or adjacent ranges in the sorted list of ranges.
+func (m *rangeMap[K, V]) consolidateRanges() {
+	merged := make([]RangeValue[K, V], 0, len(m.pairs))
 
 	for _, curr := range m.pairs {
 		if len(merged) == 0 {
@@ -156,100 +159,246 @@ func (m *rangeMap[K, V]) mergeAndSplitRanges() {
 					// Case curr.Lo < last.Hi && curr.Hi < last.Hi && last.Value == curr.Value:
 					//
 					//   last:  |_____|_____|_____|  Value: A    ---->    |_________________|  Value: A
-					//   curr:        |_____|        Value: A    ---->
+					//   curr:        |_____|        Value: A
+					//
+					//   last:  |___________|_____|  Value: A    ---->    |_________________|  Value: A
+					//   curr:  |___________|        Value: A
+					//
+					//   last:  |________|________|  Value: A    ---->    |_________________|  Value: A
+					//   curr:           |           Value: A
+					//
+					//   last:  |_________________|  Value: A    ---->    |_________________|  Value: A
+					//   curr:  |                    Value: A
 					//
 					// Impossible case of curr.Lo == last.Hi && curr.Hi < last.Hi
 					//
 				} else {
-					// Case curr.Lo < last.Hi && curr.Hi < last.Hi && last.Value != curr.Value:
-					//
-					//   last:  |_____|_____|_____|  Value: A    ---->    |____||     ||    |  Value: A
-					//   curr:        |_____|        Value: B    ---->          |_____||    |  Value: resolve(A, B)
-					//                                           ---->                 |____|  Value: A
-					//
-					// Impossible case of curr.Lo == last.Hi && curr.Hi < last.Hi
-					//
+					// Resolve conflicting values.
+					if res := m.resolve(last.Value, curr.Value); m.equal(res, last.Value) {
+						// Same cases as above where values are the same.
+					} else {
+						// Case curr.Lo < last.Hi && curr.Hi < last.Hi && last.Value != curr.Value &&
+						//   RESOLVE(last.Value, curr.Value) != last.Value:
+						//
+						//   last:  |_____|_____|_____|  Value: A    ---->    |____||     ||    |  Value: A
+						//   curr:        |_____|        Value: B                   |_____||    |  Value: resolve(A, B)
+						//                                                                 |____|  Value: A
+						//
+						//   last:  |___________|_____|  Value: A    ---->    |___________||    |  Value: resolve(A, B)
+						//   curr:  |___________|        Value: B                          |____|  Value: A
+						//
+						//   last:  |________|________|  Value: A    ---->    |_______|||       |  Value: A
+						//   curr:           |           Value: B                      ||       |  Value: resolve(A, B)
+						//                                                              |_______|  Value: A
+						//
+						//   last:  |_________________|  Value: A    ---->    ||                |  Value: resolve(A, B)
+						//   curr:  |                    Value: B              |________________|  Value: A
+						//
+						// Impossible case of curr.Lo == last.Hi && curr.Hi < last.Hi
+						//
 
-					lastEnd := last.Hi
-					last.Hi = curr.Lo - 1
+						next := RangeValue[K, V]{
+							Range: Range[K]{
+								Lo: curr.Hi + 1,
+								Hi: last.Hi,
+							},
+							Value: last.Value,
+						}
 
-					curr.Value = m.resolve(last.Value, curr.Value)
-					merged = append(merged, curr)
+						curr.Value = res
+						last.Hi = curr.Lo - 1
 
-					merged = append(merged, rangeValue[K, V]{
-						Range: Range[K]{
-							Lo: curr.Hi + 1,
-							Hi: lastEnd,
-						},
-						Value: last.Value,
-					})
+						if last.Valid() {
+							merged = append(merged, curr, next)
+						} else {
+							// Replace last with curr and append next
+							merged[len(merged)-1] = curr
+							merged = append(merged, next)
+						}
+					}
 				}
 			} else if curr.Hi == last.Hi {
 				if m.equal(last.Value, curr.Value) {
 					// Case curr.Lo < last.Hi && curr.Hi == last.Hi && last.Value == curr.Value:
 					//
 					//   last:  |_____|___________|  Value: A    ---->    |_________________|  Value: A
-					//   curr:        |___________|  Value: A    ---->
+					//   curr:        |___________|  Value: A
+					//
+					//   last:  |_________________|  Value: A    ---->    |_________________|  Value: A
+					//   curr:  |_________________|  Value: A
 					//
 					// Case curr.Lo == last.Hi && curr.Hi == last.Hi && last.Value == curr.Value:
 					//
 					//   last:  |_________________|  Value: A    ---->    |_________________|  Value: A
-					//   curr:                    |  Value: A    ---->
+					//   curr:                    |  Value: A
+					//
+					//   last:                    |  Value: A    ---->                      |  Value: A
+					//   curr:                    |  Value: A
 					//
 				} else {
-					// Case curr.Lo < last.Hi && curr.Hi == last.Hi && last.Value != curr.Value:
-					//
-					//   last:  |_____|___________|  Value: A    ---->    |____||           |  Value: A
-					//   curr:        |___________|  Value: B    ---->          |___________|  Value: resolve(A, B)
-					//
-					// Case curr.Lo == last.Hi && curr.Hi == last.Hi && last.Value != curr.Value:
-					//
-					//   last:  |_________________|  Value: A    ---->    |________________||  Value: A
-					//   curr:                    |  Value: B    ---->                      |  Value: resolve(A, B)
-					//
+					// Resolve conflicting values.
+					if res := m.resolve(last.Value, curr.Value); m.equal(res, last.Value) {
+						// Same cases as above where values are the same.
+					} else {
+						// Case curr.Lo < last.Hi && curr.Hi == last.Hi && last.Value != curr.Value &&
+						//   RESOLVE(last.Value, curr.Value) != last.Value:
+						//
+						//   last:  |_____|___________|  Value: A    ---->    |____||           |  Value: A
+						//   curr:        |___________|  Value: B                   |___________|  Value: resolve(A, B)
+						//
+						//   last:  |_________________|  Value: A    ---->    |_________________|  Value: resolve(A, B)
+						//   curr:  |_________________|  Value: B
+						//
+						// Case curr.Lo == last.Hi && curr.Hi == last.Hi && last.Value != curr.Value &&
+						//   RESOLVE(last.Value, curr.Value) != last.Value:
+						//
+						//   last:  |_________________|  Value: A    ---->    |________________||  Value: A
+						//   curr:                    |  Value: B                               |  Value: resolve(A, B)
+						//
+						//   last:                    |  Value: A    ---->                      |  Value: resolve(A, B)
+						//   curr:                    |  Value: B
+						//
 
-					last.Hi = curr.Lo - 1
+						curr.Value = res
+						last.Hi = curr.Lo - 1
 
-					curr.Value = m.resolve(last.Value, curr.Value)
-					merged = append(merged, curr)
+						if last.Valid() {
+							merged = append(merged, curr)
+						} else {
+							// Replace last with curr
+							merged[len(merged)-1] = curr
+						}
+					}
 				}
-			} else /* if curr.Hi > last.Hi */ {
+			} else /* curr.Hi > last.Hi */ {
 				if m.equal(last.Value, curr.Value) {
 					// Case curr.Lo < last.Hi && curr.Hi > last.Hi && last.Value == curr.Value:
 					//
 					//   last:  |_____|_____|     |  Value: A    ---->    |_________________|  Value: A
-					//   curr:        |___________|  Value: A    ---->
+					//   curr:        |___________|  Value: A
+					//
+					//   last:  |___________|     |  Value: A    ---->    |_________________|  Value: A
+					//   curr:  |_________________|  Value: A
 					//
 					// Case curr.Lo == last.Hi && curr.Hi > last.Hi && last.Value == curr.Value:
 					//
 					//   last:  |___________|     |  Value: A    ---->    |_________________|  Value: A
-					//   curr:              |_____|  Value: A    ---->
+					//   curr:              |_____|  Value: A
+					//
+					//   last:              |     |  Value: A    ---->                |_____|  Value: A
+					//   curr:              |_____|  Value: A
 					//
 
 					last.Hi = curr.Hi
 				} else {
-					// Case curr.Lo < last.Hi && curr.Hi > last.Hi && last.Value != curr.Value:
-					//
-					//   last:  |_____|_____|     |  Value: A    ---->    |____||           |  Value: A
-					//   curr:        |___________|  Value: B    ---->          |___________|  Value: resolve(A, B)
-					//
-					// Case curr.Lo == last.Hi && curr.Hi > last.Hi && last.Value != curr.Value:
-					//
-					//   last:  |___________|     |  Value: A    ---->    |__________||     |  Value: A
-					//   curr:              |_____|  Value: B    ---->                |_____|  Value: resolve(A, B)
-					//
+					// Resolve conflicting values.
+					if res := m.resolve(last.Value, curr.Value); m.equal(res, last.Value) {
+						// Case curr.Lo < last.Hi && curr.Hi > last.Hi && last.Value != curr.Value &&
+						//   RESOLVE(last.Value, curr.Value) == last.Value:
+						//
+						//   last:  |_____|_____|     |  Value: A    ---->    |___________||    |  Value: A
+						//   curr:        |___________|  Value: B                          |____|  Value: B
+						//
+						//   last:  |___________|     |  Value: A    ---->    |___________||    |  Value: A
+						//   curr:  |_________________|  Value: B                          |____|  Value: B
+						//
+						// Case curr.Lo == last.Hi && curr.Hi > last.Hi && last.Value != curr.Value &&
+						//   RESOLVE(last.Value, curr.Value) == last.Value:
+						//
+						//   last:  |___________|     |  Value: A    ---->    |___________||    |  Value: A
+						//   curr:              |_____|  Value: B                          |____|  Value: B
+						//
+						//   last:              |     |  Value: A    ---->                ||    |  Value: A
+						//   curr:              |_____|  Value: B                         ||____|  Value: B
+						//
 
-					last.Hi = curr.Lo - 1
+						curr.Lo = last.Hi + 1
+						merged = append(merged, curr)
+					} else if m.equal(res, curr.Value) {
+						// Case curr.Lo < last.Hi && curr.Hi > last.Hi && last.Value != curr.Value &&
+						//   RESOLVE(last.Value, curr.Value) == curr.Value:
+						//
+						//   last:  |_____|_____|     |  Value: A    ---->    |____||           |  Value: A
+						//   curr:        |___________|  Value: B                   |___________|  Value: B
+						//
+						//   last:  |___________|     |  Value: A    ---->    |_________________|  Value: B
+						//   curr:  |_________________|  Value: B
+						//
+						// Case curr.Lo == last.Hi && curr.Hi > last.Hi && last.Value != curr.Value &&
+						//   RESOLVE(last.Value, curr.Value) == curr.Value:
+						//
+						//   last:  |___________|     |  Value: A    ---->    |__________||     |  Value: A
+						//   curr:              |_____|  Value: B                         |_____|  Value: B
+						//
+						//   last:              |     |  Value: A    ---->                |_____|  Value: B
+						//   curr:              |_____|  Value: B
+						//
 
-					curr.Value = m.resolve(last.Value, curr.Value)
-					merged = append(merged, curr)
+						last.Hi = curr.Lo - 1
+
+						if last.Valid() {
+							merged = append(merged, curr)
+						} else {
+							// Replace last with curr
+							merged[len(merged)-1] = curr
+						}
+					} else {
+						// Case curr.Lo < last.Hi && curr.Hi > last.Hi && last.Value != curr.Value &&
+						//   RESOLVE(last.Value, curr.Value) != last.Value && RESOLVE(last.Value, curr.Value) != curr.Value:
+						//
+						//   last:  |_____|_____|     |  Value: A    ---->    |____||     ||    |  Value: A
+						//   curr:        |___________|  Value: B                   |_____||    |  Value: resolve(A, B)
+						//                                                                 |____|  Value: B
+						//
+						//   last:  |___________|     |  Value: A    ---->    |___________||    |  Value: resolve(A, B)
+						//   curr:  |_________________|  Value: B                          |____|  Value: B
+						//
+						// Case curr.Lo == last.Hi && curr.Hi > last.Hi && last.Value != curr.Value &&
+						//   RESOLVE(last.Value, curr.Value) != last.Value && RESOLVE(last.Value, curr.Value) != curr.Value:
+						//
+						//   last:  |___________|     |  Value: A    ---->    |__________|||    |  Value: A
+						//   curr:              |_____|  Value: B                         ||    |  Value: resolve(A, B)
+						//                                                                ||____|  Value: B
+						//
+						//   last:              |     |  Value: A    ---->                ||    |  Value: resolve(A, B)
+						//   curr:              |_____|  Value: B                         ||____|  Value: B
+						//
+
+						mid := RangeValue[K, V]{
+							Range: Range[K]{
+								Lo: curr.Lo,
+								Hi: last.Hi,
+							},
+							Value: res,
+						}
+
+						last.Hi = mid.Lo - 1
+						curr.Lo = mid.Hi + 1
+
+						if last.Valid() {
+							merged = append(merged, mid, curr)
+						} else {
+							// Replace last with mid and append curr
+							merged[len(merged)-1] = mid
+							merged = append(merged, curr)
+						}
+					}
 				}
 			}
 		} else if before, _ := last.Range.Adjacent(curr.Range); before && m.equal(last.Value, curr.Value) {
 			// Case last.Hi is immediately before curr.Lo && last.Value == curr.Value:
 			//
 			//   last:  |__________||     |  Value: A    ---->    |_________________|  Value: A
-			//   curr:              |_____|  Value: A    ---->
+			//   curr:              |_____|  Value: A
+			//
+			//   last:  ||                |  Value: A    ---->    |_________________|  Value: A
+			//   curr:   |________________|  Value: A
+			//
+			//   last:  |________________||  Value: A    ---->    |_________________|  Value: A
+			//   curr:                    |  Value: A
+			//
+			//   last:                   ||  Value: A    ---->                     ||  Value: A
+			//   curr:                    |  Value: A
 			//
 
 			last.Hi = curr.Hi
@@ -269,7 +418,7 @@ func (m *rangeMap[K, V]) String() string {
 // Clone implements the generic.Cloner interface.
 func (m *rangeMap[K, V]) Clone() RangeMap[K, V] {
 	mm := &rangeMap[K, V]{
-		pairs:  make([]rangeValue[K, V], len(m.pairs)),
+		pairs:  make([]RangeValue[K, V], len(m.pairs)),
 		equal:  m.equal,
 		format: m.format,
 	}
@@ -318,7 +467,7 @@ func (m *rangeMap[K, V]) Find(v K) (Range[K], V, bool) {
 // Add inserts the given range to the range map.
 // It panics if any of the given range are invalid.
 func (m *rangeMap[K, V]) Add(k Range[K], v V) {
-	p := rangeValue[K, V]{
+	p := RangeValue[K, V]{
 		Range: k,
 		Value: v,
 	}
@@ -334,12 +483,12 @@ func (m *rangeMap[K, V]) Add(k Range[K], v V) {
 	}
 
 	// Insert the new entry at position i
-	m.pairs = append(m.pairs, rangeValue[K, V]{})
+	m.pairs = append(m.pairs, RangeValue[K, V]{})
 	copy(m.pairs[i+1:], m.pairs[i:])
 	m.pairs[i] = p
 
 	// Merge and/or split overlapping and adjacent ranges
-	m.mergeAndSplitRanges()
+	m.consolidateRanges()
 }
 
 // Remove deletes the given range from the range map.
@@ -364,7 +513,7 @@ func (m *rangeMap[K, V]) Remove(k Range[K]) {
 			//
 
 			m.pairs[i].Range = left.Range
-			m.pairs = append(m.pairs, rangeValue[K, V]{})
+			m.pairs = append(m.pairs, RangeValue[K, V]{})
 			copy(m.pairs[i+2:], m.pairs[i+1:])
 			m.pairs[i+1].Range = right.Range
 			m.pairs[i+1].Value = m.pairs[i].Value

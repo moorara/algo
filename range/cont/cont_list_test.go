@@ -11,171 +11,189 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
-func rangesToSeq[T Continuous](ranges []Range[T]) iter.Seq[Range[T]] {
-	return func(yield func(Range[T]) bool) {
-		for _, v := range ranges {
-			if !yield(v) {
-				return
-			}
-		}
-	}
-}
-
-func TestDefaultFormatList(t *testing.T) {
-	tests := []struct {
-		name           string
-		all            iter.Seq[Range[float64]]
-		expectedString string
-	}{
-		{
-			name:           "Nil",
-			all:            rangesToSeq[float64](nil),
-			expectedString: "",
-		},
-		{
-			name:           "Zero",
-			all:            rangesToSeq([]Range[float64]{}),
-			expectedString: "",
-		},
-		{
-			name: "One",
-			all: rangesToSeq([]Range[float64]{
-				{Bound[float64]{2.2, false}, Bound[float64]{4.4, false}},
-			}),
-			expectedString: "[2.2, 4.4]",
-		},
-		{
-			name: "Many",
-			all: rangesToSeq([]Range[float64]{
-				{Bound[float64]{2.2, false}, Bound[float64]{4.4, false}},
-				{Bound[float64]{6.9, false}, Bound[float64]{7.0, true}},
-				{Bound[float64]{7.0, true}, Bound[float64]{9.9, false}},
-				{Bound[float64]{9.99, true}, Bound[float64]{9.999, true}},
-			}),
-			expectedString: "[2.2, 4.4] [6.9, 7) (7, 9.9] (9.99, 9.999)",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedString, defaultFormatList(tc.all))
-		})
-	}
-}
-
 func TestNewRangeList(t *testing.T) {
-	format := func(ranges iter.Seq[Range[float64]]) string {
-		ss := make([]string, 0)
-		for r := range ranges {
-			ss = append(ss, r.String())
-		}
-		return strings.Join(ss, "\n")
-	}
-
 	tests := []struct {
 		name           string
 		opts           *RangeListOpts[float64]
 		rs             []Range[float64]
 		expectedRanges []Range[float64]
-		expectedString string
 	}{
 		{
-			name: "CurrentHiOnLastHi",
+			name: "CurrentHiBeforeLastHi/Case01",
 			opts: nil,
 			rs: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}},
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case02",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
 				{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}},
 			},
 			expectedRanges: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
 			},
-			expectedString: "[2, 4] [10, 40]",
 		},
 		{
-			name: "CurrentHiOnLastHi_CustomFormat",
-			opts: &RangeListOpts[float64]{
-				Format: format,
-			},
+			name: "CurrentHiBeforeLastHi/Case03",
+			opts: nil,
 			rs: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{10.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case04",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{30.0, false}, Bound[float64]{30.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case01",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{30.0, false}, Bound[float64]{50.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case02",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case03",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case04",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case01",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case02",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{30.0, false}, Bound[float64]{70.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case03",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case04",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}},
+				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case01",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{10.0, false}},
+				{Bound[float64]{10.0, true}, Bound[float64]{30.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case02",
+			opts: nil,
+			rs: []Range[float64]{
 				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}},
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}},
-				{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}},
-			},
-			expectedRanges: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
-			},
-			expectedString: "[2, 4]\n[10, 40]",
-		},
-		{
-			name: "CurrentHiBeforeLastHi",
-			opts: nil,
-			rs: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}},
-				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}},
-				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}},
-				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}},
-			},
-			expectedRanges: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}},
-			},
-			expectedString: "[2, 4] [10, 70]",
-		},
-		{
-			name: "CurrentHiBeforeLastHi_CustomFormat",
-			opts: &RangeListOpts[float64]{
-				Format: format,
-			},
-			rs: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}},
-				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}},
-				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}},
-				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}},
-			},
-			expectedRanges: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}},
-			},
-			expectedString: "[2, 4]\n[10, 70]",
-		},
-		{
-			name: "CurrentHiAdjacentToLastHi",
-			opts: nil,
-			rs: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}},
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}},
 				{Bound[float64]{20.0, true}, Bound[float64]{30.0, false}},
 			},
 			expectedRanges: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 				{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}},
 			},
-			expectedString: "[2, 4] [10, 30]",
 		},
 		{
-			name: "CurrentHiAdjacentToLastHi_CustomFormat",
-			opts: &RangeListOpts[float64]{
-				Format: format,
-			},
+			name: "CurrentHiAdjacentToLastHi/Case03",
+			opts: nil,
 			rs: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}},
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}},
-				{Bound[float64]{20.0, true}, Bound[float64]{30.0, false}},
+				{Bound[float64]{10.0, false}, Bound[float64]{30.0, true}},
+				{Bound[float64]{30.0, false}, Bound[float64]{30.0, false}},
 			},
 			expectedRanges: []Range[float64]{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 				{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}},
 			},
-			expectedString: "[2, 4]\n[10, 30]",
+		},
+		{
+			name: "DisjointRanges",
+			opts: nil,
+			rs: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}},
+				{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}},
+				{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}},
+			},
 		},
 	}
 
@@ -184,7 +202,6 @@ func TestNewRangeList(t *testing.T) {
 			l := NewRangeList(tc.opts, tc.rs...).(*rangeList[float64])
 
 			assert.Equal(t, tc.expectedRanges, l.ranges)
-			assert.Equal(t, tc.expectedString, l.String())
 		})
 	}
 }
@@ -397,76 +414,228 @@ func TestRangeList_Add(t *testing.T) {
 		expectedRanges []Range[float64]
 	}{
 		{
-			name: "CurrentHiOnLastHi",
+			name: "CurrentHiBeforeLastHi/Case01",
 			l: &rangeList[float64]{
-				ranges: []Range[float64]{
-					{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-					{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
-				},
+				ranges: []Range[float64]{},
 				format: defaultFormatList[float64],
 			},
 			rs: []Range[float64]{
-				{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}},
-				{Bound[float64]{5.0, false}, Bound[float64]{6.0, false}},
-				{Bound[float64]{6.0, false}, Bound[float64]{6.0, false}},
-				{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}},
-				{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}},
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{1.0, false}, Bound[float64]{4.0, false}},
 			},
 			expectedRanges: []Range[float64]{
-				{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}},
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}},
-				{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}},
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
 			},
 		},
 		{
-			name: "CurrentHiBeforeLastHi",
+			name: "CurrentHiBeforeLastHi/Case02",
 			l: &rangeList[float64]{
-				ranges: []Range[float64]{
-					{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-					{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}},
-				},
+				ranges: []Range[float64]{},
 				format: defaultFormatList[float64],
 			},
 			rs: []Range[float64]{
-				{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}},
-				{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}},
-				{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}},
-				{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}},
-				{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}},
-				{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}},
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
 			},
 			expectedRanges: []Range[float64]{
-				{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}},
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{5.0, false}, Bound[float64]{9.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}},
-				{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}},
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
 			},
 		},
 		{
-			name: "CurrentHiAdjacentToLastHi",
+			name: "CurrentHiBeforeLastHi/Case03",
 			l: &rangeList[float64]{
-				ranges: []Range[float64]{
-					{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-					{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}},
-				},
+				ranges: []Range[float64]{},
 				format: defaultFormatList[float64],
 			},
 			rs: []Range[float64]{
-				{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}},
-				{Bound[float64]{6.0, false}, Bound[float64]{7.0, true}},
-				{Bound[float64]{7.0, false}, Bound[float64]{7.0, false}},
-				{Bound[float64]{7.0, true}, Bound[float64]{8.0, false}},
-				{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}},
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{1.0, false}, Bound[float64]{1.0, false}},
 			},
 			expectedRanges: []Range[float64]{
-				{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}},
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}},
-				{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}},
-				{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}},
-				{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}},
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case04",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{3.0, false}, Bound[float64]{3.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case01",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{3.0, false}, Bound[float64]{5.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case02",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case03",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case04",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case01",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case02",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{3.0, false}, Bound[float64]{7.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case03",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case04",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}},
+				{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case01",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{1.0, false}},
+				{Bound[float64]{1.0, true}, Bound[float64]{3.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{3.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case02",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{2.0, false}},
+				{Bound[float64]{2.0, true}, Bound[float64]{3.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{3.0, false}},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case03",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{3.0, true}},
+				{Bound[float64]{3.0, false}, Bound[float64]{3.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{3.0, false}},
+			},
+		},
+		{
+			name: "DisjointRanges",
+			l: &rangeList[float64]{
+				ranges: []Range[float64]{},
+				format: defaultFormatList[float64],
+			},
+			rs: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{2.0, false}},
+				{Bound[float64]{3.0, false}, Bound[float64]{4.0, false}},
+			},
+			expectedRanges: []Range[float64]{
+				{Bound[float64]{1.0, false}, Bound[float64]{2.0, false}},
+				{Bound[float64]{3.0, false}, Bound[float64]{4.0, false}},
 			},
 		},
 	}

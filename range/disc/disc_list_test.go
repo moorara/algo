@@ -11,171 +11,200 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
-func rangesToSeq[T Discrete](ranges []Range[T]) iter.Seq[Range[T]] {
-	return func(yield func(Range[T]) bool) {
-		for _, v := range ranges {
-			if !yield(v) {
-				return
-			}
-		}
-	}
-}
-
-func TestDefaultFormatList(t *testing.T) {
-	tests := []struct {
-		name           string
-		all            iter.Seq[Range[int]]
-		expectedString string
-	}{
-		{
-			name:           "Nil",
-			all:            rangesToSeq[int](nil),
-			expectedString: "",
-		},
-		{
-			name:           "Zero",
-			all:            rangesToSeq([]Range[int]{}),
-			expectedString: "",
-		},
-		{
-			name: "One",
-			all: rangesToSeq([]Range[int]{
-				{2, 4},
-			}),
-			expectedString: "[2, 4]",
-		},
-		{
-			name: "Many",
-			all: rangesToSeq([]Range[int]{
-				{2, 4},
-				{6, 8},
-				{10, 10},
-				{16, 20},
-			}),
-			expectedString: "[2, 4] [6, 8] [10, 10] [16, 20]",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedString, defaultFormatList(tc.all))
-		})
-	}
-}
-
 func TestNewRangeList(t *testing.T) {
-	format := func(ranges iter.Seq[Range[int]]) string {
-		ss := make([]string, 0)
-		for r := range ranges {
-			ss = append(ss, fmt.Sprintf("[%d..%d]", r.Lo, r.Hi))
-		}
-		return strings.Join(ss, "\n")
-	}
-
 	tests := []struct {
 		name           string
 		opts           *RangeListOpts[int]
 		rs             []Range[int]
 		expectedRanges []Range[int]
-		expectedString string
 	}{
 		{
-			name: "CurrentHiOnLastHi",
+			name: "CurrentHiBeforeLastHi/Case01",
 			opts: nil,
 			rs: []Range[int]{
-				{20, 40},
-				{100, 200},
-				{200, 200},
+				{100, 500},
+				{100, 400},
+			},
+			expectedRanges: []Range[int]{
+				{100, 500},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case02",
+			opts: nil,
+			rs: []Range[int]{
+				{100, 500},
 				{200, 400},
 			},
 			expectedRanges: []Range[int]{
-				{20, 40},
-				{100, 400},
+				{100, 500},
 			},
-			expectedString: "[20, 40] [100, 400]",
 		},
 		{
-			name: "CurrentHiOnLastHi_CustomFormat",
-			opts: &RangeListOpts[int]{
-				Format: format,
-			},
+			name: "CurrentHiBeforeLastHi/Case03",
+			opts: nil,
 			rs: []Range[int]{
-				{20, 40},
+				{100, 500},
+				{100, 100},
+			},
+			expectedRanges: []Range[int]{
+				{100, 500},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case04",
+			opts: nil,
+			rs: []Range[int]{
+				{100, 500},
+				{300, 300},
+			},
+			expectedRanges: []Range[int]{
+				{100, 500},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case01",
+			opts: nil,
+			rs: []Range[int]{
+				{100, 500},
+				{300, 500},
+			},
+			expectedRanges: []Range[int]{
+				{100, 500},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case02",
+			opts: nil,
+			rs: []Range[int]{
+				{100, 500},
+				{100, 500},
+			},
+			expectedRanges: []Range[int]{
+				{100, 500},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case03",
+			opts: nil,
+			rs: []Range[int]{
+				{100, 500},
+				{500, 500},
+			},
+			expectedRanges: []Range[int]{
+				{100, 500},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case04",
+			opts: nil,
+			rs: []Range[int]{
+				{500, 500},
+				{500, 500},
+			},
+			expectedRanges: []Range[int]{
+				{500, 500},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case01",
+			opts: nil,
+			rs: []Range[int]{
+				{100, 500},
+				{100, 700},
+			},
+			expectedRanges: []Range[int]{
+				{100, 700},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case02",
+			opts: nil,
+			rs: []Range[int]{
+				{100, 500},
+				{300, 700},
+			},
+			expectedRanges: []Range[int]{
+				{100, 700},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case03",
+			opts: nil,
+			rs: []Range[int]{
+				{100, 500},
+				{500, 700},
+			},
+			expectedRanges: []Range[int]{
+				{100, 700},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case04",
+			opts: nil,
+			rs: []Range[int]{
+				{500, 500},
+				{500, 700},
+			},
+			expectedRanges: []Range[int]{
+				{500, 700},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case01",
+			opts: nil,
+			rs: []Range[int]{
+				{100, 100},
+				{101, 300},
+			},
+			expectedRanges: []Range[int]{
+				{100, 300},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case02",
+			opts: nil,
+			rs: []Range[int]{
 				{100, 200},
-				{200, 200},
-				{200, 400},
-			},
-			expectedRanges: []Range[int]{
-				{20, 40},
-				{100, 400},
-			},
-			expectedString: "[20..40]\n[100..400]",
-		},
-		{
-			name: "CurrentHiBeforeLastHi",
-			opts: nil,
-			rs: []Range[int]{
-				{20, 40},
-				{100, 600},
-				{200, 300},
-				{400, 600},
-				{500, 700},
-			},
-			expectedRanges: []Range[int]{
-				{20, 40},
-				{100, 700},
-			},
-			expectedString: "[20, 40] [100, 700]",
-		},
-		{
-			name: "CurrentHiBeforeLastHi_CustomFormat",
-			opts: &RangeListOpts[int]{
-				Format: format,
-			},
-			rs: []Range[int]{
-				{20, 40},
-				{100, 600},
-				{200, 300},
-				{400, 600},
-				{500, 700},
-			},
-			expectedRanges: []Range[int]{
-				{20, 40},
-				{100, 700},
-			},
-			expectedString: "[20..40]\n[100..700]",
-		},
-		{
-			name: "CurrentHiAdjacentToLastHi",
-			opts: nil,
-			rs: []Range[int]{
-				{20, 40},
-				{100, 199},
-				{200, 200},
 				{201, 300},
 			},
 			expectedRanges: []Range[int]{
-				{20, 40},
 				{100, 300},
 			},
-			expectedString: "[20, 40] [100, 300]",
 		},
 		{
-			name: "CurrentHiAdjacentToLastHi_CustomFormat",
-			opts: &RangeListOpts[int]{
-				Format: format,
-			},
+			name: "CurrentHiAdjacentToLastHi/Case03",
+			opts: nil,
 			rs: []Range[int]{
-				{20, 40},
-				{100, 199},
-				{200, 200},
-				{201, 300},
+				{100, 299},
+				{300, 300},
 			},
 			expectedRanges: []Range[int]{
-				{20, 40},
 				{100, 300},
 			},
-			expectedString: "[20..40]\n[100..300]",
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case04",
+			opts: nil,
+			rs: []Range[int]{
+				{299, 299},
+				{300, 300},
+			},
+			expectedRanges: []Range[int]{
+				{299, 300},
+			},
+		},
+		{
+			name: "DisjointRanges",
+			opts: nil,
+			rs: []Range[int]{
+				{100, 200},
+				{300, 400},
+			},
+			expectedRanges: []Range[int]{
+				{100, 200},
+				{300, 400},
+			},
 		},
 	}
 
@@ -184,7 +213,6 @@ func TestNewRangeList(t *testing.T) {
 			l := NewRangeList(tc.opts, tc.rs...).(*rangeList[int])
 
 			assert.Equal(t, tc.expectedRanges, l.ranges)
-			assert.Equal(t, tc.expectedString, l.String())
 		})
 	}
 }
@@ -395,76 +423,242 @@ func TestRangeList_Add(t *testing.T) {
 		expectedRanges []Range[int]
 	}{
 		{
-			name: "CurrentHiOnLastHi",
+			name: "CurrentHiBeforeLastHi/Case01",
 			l: &rangeList[int]{
-				ranges: []Range[int]{
-					{20, 40},
-					{100, 400},
-				},
+				ranges: []Range[int]{},
 				format: defaultFormatList[int],
 			},
 			rs: []Range[int]{
-				{0, 9},
-				{50, 60},
-				{60, 60},
-				{60, 80},
-				{1000, 2000},
+				{10, 50},
+				{10, 40},
 			},
 			expectedRanges: []Range[int]{
-				{0, 9},
-				{20, 40},
-				{50, 80},
-				{100, 400},
-				{1000, 2000},
+				{10, 50},
 			},
 		},
 		{
-			name: "CurrentHiBeforeLastHi",
+			name: "CurrentHiBeforeLastHi/Case02",
 			l: &rangeList[int]{
-				ranges: []Range[int]{
-					{20, 40},
-					{100, 700},
-				},
+				ranges: []Range[int]{},
 				format: defaultFormatList[int],
 			},
 			rs: []Range[int]{
-				{0, 9},
-				{50, 80},
-				{55, 65},
-				{70, 80},
-				{75, 90},
-				{1000, 2000},
+				{10, 50},
+				{20, 40},
 			},
 			expectedRanges: []Range[int]{
-				{0, 9},
-				{20, 40},
-				{50, 90},
-				{100, 700},
-				{1000, 2000},
+				{10, 50},
 			},
 		},
 		{
-			name: "CurrentHiAdjacentToLastHi",
+			name: "CurrentHiBeforeLastHi/Case03",
 			l: &rangeList[int]{
-				ranges: []Range[int]{
-					{20, 40},
-					{100, 300},
-				},
+				ranges: []Range[int]{},
 				format: defaultFormatList[int],
 			},
 			rs: []Range[int]{
-				{0, 9},
-				{60, 69},
-				{70, 70},
-				{71, 80},
-				{1000, 2000},
+				{10, 50},
+				{10, 10},
 			},
 			expectedRanges: []Range[int]{
-				{0, 9},
-				{20, 40},
-				{60, 80},
-				{100, 300},
-				{1000, 2000},
+				{10, 50},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case04",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{10, 50},
+				{30, 30},
+			},
+			expectedRanges: []Range[int]{
+				{10, 50},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case01",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{10, 50},
+				{30, 50},
+			},
+			expectedRanges: []Range[int]{
+				{10, 50},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case02",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{10, 50},
+				{10, 50},
+			},
+			expectedRanges: []Range[int]{
+				{10, 50},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case03",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{10, 50},
+				{50, 50},
+			},
+			expectedRanges: []Range[int]{
+				{10, 50},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case04",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{50, 50},
+				{50, 50},
+			},
+			expectedRanges: []Range[int]{
+				{50, 50},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case01",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{10, 50},
+				{10, 70},
+			},
+			expectedRanges: []Range[int]{
+				{10, 70},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case02",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{10, 50},
+				{30, 70},
+			},
+			expectedRanges: []Range[int]{
+				{10, 70},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case03",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{10, 50},
+				{50, 70},
+			},
+			expectedRanges: []Range[int]{
+				{10, 70},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case04",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{50, 50},
+				{50, 70},
+			},
+			expectedRanges: []Range[int]{
+				{50, 70},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case01",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{10, 10},
+				{11, 30},
+			},
+			expectedRanges: []Range[int]{
+				{10, 30},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case02",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{10, 20},
+				{21, 30},
+			},
+			expectedRanges: []Range[int]{
+				{10, 30},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case03",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{10, 29},
+				{30, 30},
+			},
+			expectedRanges: []Range[int]{
+				{10, 30},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case04",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{29, 29},
+				{30, 30},
+			},
+			expectedRanges: []Range[int]{
+				{29, 30},
+			},
+		},
+		{
+			name: "DisjointRanges",
+			l: &rangeList[int]{
+				ranges: []Range[int]{},
+				format: defaultFormatList[int],
+			},
+			rs: []Range[int]{
+				{10, 20},
+				{30, 40},
+			},
+			expectedRanges: []Range[int]{
+				{10, 20},
+				{30, 40},
 			},
 		},
 	}

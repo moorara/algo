@@ -11,263 +11,674 @@ import (
 	"github.com/moorara/algo/generic"
 )
 
-func rangeValsToSeq2[T Continuous, V any](pairs []rangeValue[T, V]) iter.Seq2[Range[T], V] {
-	return func(yield func(Range[T], V) bool) {
-		for _, p := range pairs {
-			if !yield(p.Range, p.Value) {
-				return
-			}
-		}
-	}
-}
-
-func TestDefaultFormatMap(t *testing.T) {
-	tests := []struct {
-		name           string
-		all            iter.Seq2[Range[float64], rune]
-		expectedString string
-	}{
-		{
-			name:           "Nil",
-			all:            rangeValsToSeq2[float64, rune](nil),
-			expectedString: "",
-		},
-		{
-			name:           "Zero",
-			all:            rangeValsToSeq2([]rangeValue[float64, rune]{}),
-			expectedString: "",
-		},
-		{
-			name: "One",
-			all: rangeValsToSeq2([]rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.2, false}, Bound[float64]{4.4, false}}, 'a'},
-			}),
-			expectedString: "[2.2, 4.4]:97",
-		},
-		{
-			name: "Many",
-			all: rangeValsToSeq2([]rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.2, false}, Bound[float64]{4.4, false}}, 'a'},
-				{Range[float64]{Bound[float64]{6.9, false}, Bound[float64]{7.0, true}}, 'b'},
-				{Range[float64]{Bound[float64]{7.0, true}, Bound[float64]{9.9, false}}, 'c'},
-				{Range[float64]{Bound[float64]{9.99, true}, Bound[float64]{9.999, true}}, 'd'},
-			}),
-			expectedString: "[2.2, 4.4]:97 [6.9, 7):98 (7, 9.9]:99 (9.99, 9.999):100",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedString, defaultFormatMap(tc.all))
-		})
-	}
-}
-
 func TestNewRangeMap(t *testing.T) {
 	equal := generic.NewEqualFunc[rune]()
-	format := func(ranges iter.Seq2[Range[float64], rune]) string {
-		ss := make([]string, 0)
-		for r, v := range ranges {
-			ss = append(ss, fmt.Sprintf("%s --> %c", r.String(), v))
-		}
-		return strings.Join(ss, "\n")
+	keep := func(a, b rune) rune {
+		return a
+	}
+	combine := func(a, b rune) rune {
+		return a + b
 	}
 
 	tests := []struct {
-		name           string
-		equal          generic.EqualFunc[rune]
-		opts           *RangeMapOpts[float64, rune]
-		pairs          map[Range[float64]]rune
-		expectedPairs  []rangeValue[float64, rune]
-		expectedString string
+		name          string
+		equal         generic.EqualFunc[rune]
+		opts          *RangeMapOpts[float64, rune]
+		pairs         []RangeValue[float64, rune]
+		expectedPairs []RangeValue[float64, rune]
 	}{
 		{
-			name:  "CurrentHiOnLastHi_Merging",
+			name:  "CurrentHiBeforeLastHi/Case01/EqualValues",
 			equal: equal,
 			opts:  nil,
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}: 'a',
-			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
 				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
 			},
-			expectedString: "[2, 4]:64 [10, 40]:97",
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
 		},
 		{
-			name:  "CurrentHiOnLastHi_Merging_CustomFormat",
-			equal: equal,
-			opts: &RangeMapOpts[float64, rune]{
-				Format: format,
-			},
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}: 'a',
-			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
-			},
-			expectedString: "[2, 4] --> @\n[10, 40] --> a",
-		},
-		{
-			name:  "CurrentHiOnLastHi_Splitting",
+			name:  "CurrentHiBeforeLastHi/Case02/EqualValues",
 			equal: equal,
 			opts:  nil,
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'b',
-				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'b',
-				{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}: 'c',
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}, 'a'},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
-				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
-				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
 			},
-			expectedString: "[2, 4]:64 [10, 20):97 [20, 30):98 [30, 40]:99",
 		},
 		{
-			name:  "CurrentHiOnLastHi_Splitting_CustomFormat",
-			equal: equal,
-			opts: &RangeMapOpts[float64, rune]{
-				Format: format,
-			},
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'b',
-				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'b',
-				{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}: 'c',
-			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
-				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
-				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
-			},
-			expectedString: "[2, 4] --> @\n[10, 20) --> a\n[20, 30) --> b\n[30, 40] --> c",
-		},
-		{
-			name:  "CurrentHiBeforeLastHi_Merging",
+			name:  "CurrentHiBeforeLastHi/Case03/EqualValues",
 			equal: equal,
 			opts:  nil,
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'a',
-				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}}: 'a',
-				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}: 'a',
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{10.0, false}}, 'a'},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case04/EqualValues",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{30.0, false}}, 'a'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case01/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'b'},
+				{Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case02/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}, 'b'},
+				{Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case03/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{10.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{10.0, false}}, 'b'},
+				{Range[float64]{Bound[float64]{10.0, true}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case04/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{30.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{30.0, false}}, 'b'},
+				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case01/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case02/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case03/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{10.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case04/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{30.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case01/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a' + 'b'},
+				{Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case02/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, false}}, 'a' + 'b'},
+				{Range[float64]{Bound[float64]{40.0, true}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case03/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{10.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{10.0, false}}, 'a' + 'b'},
+				{Range[float64]{Bound[float64]{10.0, true}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiBeforeLastHi/Case04/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{30.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{30.0, false}}, 'a' + 'b'},
+				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case01/EqualValues",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case02/EqualValues",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case03/EqualValues",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case04/EqualValues",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case01/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case02/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case03/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case04/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case01/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case02/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case03/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case04/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case01/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{50.0, false}}, 'a' + 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case02/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a' + 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case03/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a' + 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiOnLastHi/Case04/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a' + 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case01/EqualValues",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
 				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
 			},
-			expectedString: "[2, 4]:64 [10, 70]:97",
-		},
-		{
-			name:  "CurrentHiBeforeLastHi_Merging_CustomFormat",
-			equal: equal,
-			opts: &RangeMapOpts[float64, rune]{
-				Format: format,
-			},
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'a',
-				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}}: 'a',
-				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}: 'a',
-			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+			expectedPairs: []RangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
 			},
-			expectedString: "[2, 4] --> @\n[10, 70] --> a",
 		},
 		{
-			name:  "CurrentHiBeforeLastHi_Splitting",
+			name:  "CurrentHiAfterLastHi/Case02/EqualValues",
 			equal: equal,
 			opts:  nil,
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'b',
-				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}}: 'b',
-				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}: 'c',
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{70.0, false}}, 'a'},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, 'a'},
-				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, 'b'},
-				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'a'},
-				{Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, 'b'},
-				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'c'},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
 			},
-			expectedString: "[2, 4]:64 [10, 20):97 [20, 30]:98 (30, 40):97 [40, 50):98 [50, 70]:99",
 		},
 		{
-			name:  "CurrentHiBeforeLastHi_Splitting_CustomFormat",
-			equal: equal,
-			opts: &RangeMapOpts[float64, rune]{
-				Format: format,
-			},
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{60.0, false}}: 'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}: 'b',
-				{Bound[float64]{40.0, false}, Bound[float64]{60.0, false}}: 'b',
-				{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}: 'c',
-			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, 'a'},
-				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, 'b'},
-				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'a'},
-				{Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, 'b'},
-				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'c'},
-			},
-			expectedString: "[2, 4] --> @\n[10, 20) --> a\n[20, 30] --> b\n(30, 40) --> a\n[40, 50) --> b\n[50, 70] --> c",
-		},
-		{
-			name:  "CurrentHiAdjacentToLastHi_Merging",
+			name:  "CurrentHiAfterLastHi/Case03/EqualValues",
 			equal: equal,
 			opts:  nil,
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}:  'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20, true}, Bound[float64]{30.0, false}}:    'a',
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'a'},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
 			},
-			expectedString: "[2, 4]:64 [10, 30]:97",
 		},
 		{
-			name:  "CurrentHiAdjacentToLastHi_Merging_CustomFormat",
+			name:  "CurrentHiAfterLastHi/Case04/EqualValues",
 			equal: equal,
-			opts: &RangeMapOpts[float64, rune]{
-				Format: format,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'a'},
 			},
-			pairs: map[Range[float64]]rune{
-				{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}:   '@',
-				{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}:  'a',
-				{Bound[float64]{20.0, false}, Bound[float64]{20.0, false}}: 'a',
-				{Bound[float64]{20, true}, Bound[float64]{30.0, false}}:    'a',
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'a'},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case01/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case02/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case03/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case04/DiffValues/DefaultResolver",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case01/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, true}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case02/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, true}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case03/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, true}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case04/DiffValues/CustomResolver/ResolveExistingValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: keep},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, true}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case01/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a' + 'b'},
+				{Range[float64]{Bound[float64]{50.0, true}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case02/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{50.0, false}}, 'a' + 'b'},
+				{Range[float64]{Bound[float64]{50.0, true}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case03/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{50.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a' + 'b'},
+				{Range[float64]{Bound[float64]{50.0, true}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAfterLastHi/Case04/DiffValues/CustomResolver/ResolveCombinedValue",
+			equal: equal,
+			opts:  &RangeMapOpts[float64, rune]{Resolve: combine},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'b'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{50.0, false}}, 'a' + 'b'},
+				{Range[float64]{Bound[float64]{50.0, true}, Bound[float64]{70.0, false}}, 'b'},
+			},
+		},
+		{
+			name:  "CurrentHiAdjacentToLastHi/Case01/EqualValues",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{10.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{10.0, true}, Bound[float64]{30.0, false}}, 'a'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
 			},
-			expectedString: "[2, 4] --> @\n[10, 30] --> a",
+		},
+		{
+			name:  "CurrentHiAdjacentToLastHi/Case02/EqualValues",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{20.0, true}, Bound[float64]{30.0, false}}, 'a'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "CurrentHiAdjacentToLastHi/Case03/EqualValues",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, true}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{30.0, false}}, 'a'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
+			},
+		},
+		{
+			name:  "DisjointRanges",
+			equal: equal,
+			opts:  nil,
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'a'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
+				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'a'},
+			},
 		},
 	}
 
@@ -276,7 +687,6 @@ func TestNewRangeMap(t *testing.T) {
 			m := NewRangeMap(tc.equal, tc.opts, tc.pairs).(*rangeMap[float64, rune])
 
 			assert.Equal(t, tc.expectedPairs, m.pairs)
-			assert.Equal(t, tc.expectedString, m.String())
 		})
 	}
 }
@@ -290,7 +700,7 @@ func TestRangeMap_String(t *testing.T) {
 		{
 			name: "WithDefaultFormat",
 			m: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
+				pairs: []RangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
@@ -305,7 +715,7 @@ func TestRangeMap_String(t *testing.T) {
 		{
 			name: "WithCustomFormat",
 			m: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
+				pairs: []RangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
@@ -340,7 +750,7 @@ func TestRangeMap_Clone(t *testing.T) {
 		{
 			name: "OK",
 			m: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
+				pairs: []RangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
@@ -364,7 +774,7 @@ func TestRangeMap_Clone(t *testing.T) {
 
 func TestRangeMap_Equal(t *testing.T) {
 	m := &rangeMap[float64, rune]{
-		pairs: []rangeValue[float64, rune]{
+		pairs: []RangeValue[float64, rune]{
 			{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 			{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
 			{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
@@ -391,7 +801,7 @@ func TestRangeMap_Equal(t *testing.T) {
 			name: "NotEqual_DiffLens",
 			m:    m,
 			rhs: &rangeMap[float64, rune]{
-				pairs:   []rangeValue[float64, rune]{},
+				pairs:   []RangeValue[float64, rune]{},
 				equal:   generic.NewEqualFunc[rune](),
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
@@ -402,7 +812,7 @@ func TestRangeMap_Equal(t *testing.T) {
 			name: "NotEqual_DiffRanges",
 			m:    m,
 			rhs: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
+				pairs: []RangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
@@ -418,7 +828,7 @@ func TestRangeMap_Equal(t *testing.T) {
 			name: "NotEqual_DiffValues",
 			m:    m,
 			rhs: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
+				pairs: []RangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '*'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
@@ -434,7 +844,7 @@ func TestRangeMap_Equal(t *testing.T) {
 			name: "Equal",
 			m:    m,
 			rhs: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
+				pairs: []RangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
@@ -464,7 +874,7 @@ func TestRangeMap_Size(t *testing.T) {
 		{
 			name: "OK",
 			m: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
+				pairs: []RangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
@@ -487,7 +897,7 @@ func TestRangeMap_Size(t *testing.T) {
 
 func TestRangeMap_Find(t *testing.T) {
 	m := &rangeMap[float64, rune]{
-		pairs: []rangeValue[float64, rune]{
+		pairs: []RangeValue[float64, rune]{
 			{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
 			{Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, '@'},
 			{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, 'a'},
@@ -532,161 +942,879 @@ func TestRangeMap_Find(t *testing.T) {
 }
 
 func TestRangeMap_Add(t *testing.T) {
+	equal := generic.NewEqualFunc[rune]()
+	keep := func(a, b rune) rune {
+		return a
+	}
+	combine := func(a, b rune) rune {
+		return a + b
+	}
+
 	tests := []struct {
 		name          string
 		m             *rangeMap[float64, rune]
-		pairs         []rangeValue[float64, rune]
-		expectedPairs []rangeValue[float64, rune]
+		pairs         []RangeValue[float64, rune]
+		expectedPairs []RangeValue[float64, rune]
 	}{
 		{
-			name: "CurrentHiOnLastHi_Merging",
+			name: "CurrentHiBeforeLastHi/Case01/EqualValues",
 			m: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
-					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
-				},
-				equal:   generic.NewEqualFunc[rune](),
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
 			},
-			pairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{6.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{4.0, false}}, 'A'},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{40.0, false}}, 'a'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
 			},
 		},
 		{
-			name: "CurrentHiOnLastHi_Splitting",
+			name: "CurrentHiBeforeLastHi/Case02/EqualValues",
 			m: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
-					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
-					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
-					{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
-				},
-				equal:   generic.NewEqualFunc[rune](),
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
 			},
-			pairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{6.0, false}}, 'B'},
-				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, false}}, 'B'},
-				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, 'C'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, 'A'},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{6.0, true}}, 'A'},
-				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, true}}, 'B'},
-				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, 'C'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, true}}, 'a'},
-				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, true}}, 'b'},
-				{Range[float64]{Bound[float64]{30.0, false}, Bound[float64]{40.0, false}}, 'c'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
 			},
 		},
 		{
-			name: "CurrentHiBeforeLastHi_Merging",
+			name: "CurrentHiBeforeLastHi/Case03/EqualValues",
 			m: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
-					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
-				},
-				equal:   generic.NewEqualFunc[rune](),
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
 			},
-			pairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, 'A'},
-				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{1.0, false}}, 'A'},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{9.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{70.0, false}}, 'a'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
 			},
 		},
 		{
-			name: "CurrentHiBeforeLastHi_Splitting",
+			name: "CurrentHiBeforeLastHi/Case04/EqualValues",
 			m: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
-					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, 'a'},
-					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, 'b'},
-					{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'a'},
-					{Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, 'b'},
-					{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'c'},
-				},
-				equal:   generic.NewEqualFunc[rune](),
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
 			},
-			pairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{8.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, 'B'},
-				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{8.0, false}}, 'B'},
-				{Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, 'C'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{3.0, false}}, 'A'},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.5, true}}, 'A'},
-				{Range[float64]{Bound[float64]{5.5, false}, Bound[float64]{6.5, false}}, 'B'},
-				{Range[float64]{Bound[float64]{6.5, true}, Bound[float64]{7.0, true}}, 'A'},
-				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{7.5, true}}, 'B'},
-				{Range[float64]{Bound[float64]{7.5, false}, Bound[float64]{9.0, false}}, 'C'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20, true}}, 'a'},
-				{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{30.0, false}}, 'b'},
-				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'a'},
-				{Range[float64]{Bound[float64]{40.0, false}, Bound[float64]{50.0, true}}, 'b'},
-				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{70.0, false}}, 'c'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
 			},
 		},
 		{
-			name: "CurrentHiAdjacentToLastHi_Merging",
+			name: "CurrentHiBeforeLastHi/Case01/DiffValues/DefaultResolver",
 			m: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
-					{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-					{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
-				},
-				equal:   generic.NewEqualFunc[rune](),
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
 			},
-			pairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{7.0, true}}, 'A'},
-				{Range[float64]{Bound[float64]{7.0, false}, Bound[float64]{7.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{7.0, true}, Bound[float64]{8.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{4.0, false}}, 'B'},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
-				{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
-				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, '@'},
-				{Range[float64]{Bound[float64]{6.0, false}, Bound[float64]{8.0, false}}, 'A'},
-				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{30.0, false}}, 'a'},
-				{Range[float64]{Bound[float64]{100.0, false}, Bound[float64]{200.0, false}}, '$'},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{4.0, false}}, 'B'},
+				{Range[float64]{Bound[float64]{4.0, true}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case02/DiffValues/DefaultResolver",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{2.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, 'B'},
+				{Range[float64]{Bound[float64]{4.0, true}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case03/DiffValues/DefaultResolver",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{1.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{1.0, false}}, 'B'},
+				{Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case04/DiffValues/DefaultResolver",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{3.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{3.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{3.0, false}}, 'B'},
+				{Range[float64]{Bound[float64]{3.0, true}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case01/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{4.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case02/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case03/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{1.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case04/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{3.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case01/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{4.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{4.0, false}}, 'A' + 'B'},
+				{Range[float64]{Bound[float64]{4.0, true}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case02/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{2.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{2.0, false}, Bound[float64]{4.0, false}}, 'A' + 'B'},
+				{Range[float64]{Bound[float64]{4.0, true}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case03/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{1.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{1.0, false}}, 'A' + 'B'},
+				{Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiBeforeLastHi/Case04/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{3.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{3.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{3.0, false}}, 'A' + 'B'},
+				{Range[float64]{Bound[float64]{3.0, true}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case01/EqualValues",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case02/EqualValues",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case03/EqualValues",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case04/EqualValues",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case01/DiffValues/DefaultResolver",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{3.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case02/DiffValues/DefaultResolver",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case03/DiffValues/DefaultResolver",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case04/DiffValues/DefaultResolver",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case01/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case02/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case03/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case04/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case01/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{3.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{5.0, false}}, 'A' + 'B'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case02/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A' + 'B'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case03/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A' + 'B'},
+			},
+		},
+		{
+			name: "CurrentHiOnLastHi/Case04/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A' + 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case01/EqualValues",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case02/EqualValues",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{7.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case03/EqualValues",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case04/EqualValues",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case01/DiffValues/DefaultResolver",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case02/DiffValues/DefaultResolver",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{3.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case03/DiffValues/DefaultResolver",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case04/DiffValues/DefaultResolver",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case01/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, true}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case02/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, true}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case03/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, true}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case04/DiffValues/CustomResolver/ResolveExistingValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: keep,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, true}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case01/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A' + 'B'},
+				{Range[float64]{Bound[float64]{5.0, true}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case02/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{3.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{5.0, false}}, 'A' + 'B'},
+				{Range[float64]{Bound[float64]{5.0, true}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case03/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{5.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A' + 'B'},
+				{Range[float64]{Bound[float64]{5.0, true}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAfterLastHi/Case04/DiffValues/CustomResolver/ResolveCombinedValue",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: combine,
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{7.0, false}}, 'B'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{5.0, false}, Bound[float64]{5.0, false}}, 'A' + 'B'},
+				{Range[float64]{Bound[float64]{5.0, true}, Bound[float64]{7.0, false}}, 'B'},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case01/EqualValues",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{1.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{3.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{3.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case02/EqualValues",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{2.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{2.0, true}, Bound[float64]{3.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{3.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "CurrentHiAdjacentToLastHi/Case03/EqualValues",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{3.0, true}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{3.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{3.0, false}}, 'A'},
+			},
+		},
+		{
+			name: "DisjointRanges",
+			m: &rangeMap[float64, rune]{
+				pairs:   []RangeValue[float64, rune]{},
+				equal:   equal,
+				format:  defaultFormatMap[float64, rune],
+				resolve: defaultResolve[rune],
+			},
+			pairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{2.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{4.0, false}}, 'A'},
+			},
+			expectedPairs: []RangeValue[float64, rune]{
+				{Range[float64]{Bound[float64]{1.0, false}, Bound[float64]{2.0, false}}, 'A'},
+				{Range[float64]{Bound[float64]{3.0, false}, Bound[float64]{4.0, false}}, 'A'},
 			},
 		},
 	}
@@ -704,7 +1832,7 @@ func TestRangeMap_Add(t *testing.T) {
 
 func TestRangeMap_Remove(t *testing.T) {
 	equal := generic.NewEqualFunc[rune]()
-	pairs := []rangeValue[float64, rune]{
+	pairs := []RangeValue[float64, rune]{
 		{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
 		{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, false}}, 'b'},
 		{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{60.0, true}}, 'c'},
@@ -716,18 +1844,18 @@ func TestRangeMap_Remove(t *testing.T) {
 		name          string
 		m             *rangeMap[float64, rune]
 		keys          []Range[float64]
-		expectedPairs []rangeValue[float64, rune]
+		expectedPairs []RangeValue[float64, rune]
 	}{
 		{
 			name: "None",
 			m: &rangeMap[float64, rune]{
-				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				pairs:   append([]RangeValue[float64, rune]{}, pairs...),
 				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
 			},
 			keys: nil,
-			expectedPairs: []rangeValue[float64, rune]{
+			expectedPairs: []RangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
 				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, false}}, 'b'},
 				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{60.0, true}}, 'c'},
@@ -743,7 +1871,7 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "NoOverlapping",
 			m: &rangeMap[float64, rune]{
-				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				pairs:   append([]RangeValue[float64, rune]{}, pairs...),
 				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
@@ -756,7 +1884,7 @@ func TestRangeMap_Remove(t *testing.T) {
 				{Bound[float64]{84.0, false}, Bound[float64]{86.0, false}},
 				{Bound[float64]{104.0, false}, Bound[float64]{106.0, false}},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
+			expectedPairs: []RangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
 				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, false}}, 'b'},
 				{Range[float64]{Bound[float64]{50.0, false}, Bound[float64]{60.0, true}}, 'c'},
@@ -772,7 +1900,7 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "OverlappingBounds",
 			m: &rangeMap[float64, rune]{
-				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				pairs:   append([]RangeValue[float64, rune]{}, pairs...),
 				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
@@ -785,7 +1913,7 @@ func TestRangeMap_Remove(t *testing.T) {
 				{Bound[float64]{80.0, false}, Bound[float64]{90.0, false}},
 				{Bound[float64]{100.0, false}, Bound[float64]{102.0, false}},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
+			expectedPairs: []RangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{10.0, true}, Bound[float64]{20.0, true}}, 'a'},
 				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{40.0, true}}, 'b'},
 				{Range[float64]{Bound[float64]{50.0, true}, Bound[float64]{60.0, true}}, 'c'},
@@ -801,7 +1929,7 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "OverlappingRanges",
 			m: &rangeMap[float64, rune]{
-				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				pairs:   append([]RangeValue[float64, rune]{}, pairs...),
 				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
@@ -814,7 +1942,7 @@ func TestRangeMap_Remove(t *testing.T) {
 				{Bound[float64]{78.0, false}, Bound[float64]{92.0, false}},
 				{Bound[float64]{98.0, false}, Bound[float64]{102.0, false}},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
+			expectedPairs: []RangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{12.0, true}, Bound[float64]{18.0, true}}, 'a'},
 				{Range[float64]{Bound[float64]{32.0, true}, Bound[float64]{38.0, true}}, 'b'},
 				{Range[float64]{Bound[float64]{52.0, true}, Bound[float64]{58.0, true}}, 'c'},
@@ -830,7 +1958,7 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "Subsets",
 			m: &rangeMap[float64, rune]{
-				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				pairs:   append([]RangeValue[float64, rune]{}, pairs...),
 				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
@@ -842,7 +1970,7 @@ func TestRangeMap_Remove(t *testing.T) {
 				{Bound[float64]{74.0, true}, Bound[float64]{76.0, true}},
 				{Bound[float64]{94.0, true}, Bound[float64]{96.0, true}},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
+			expectedPairs: []RangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{14.0, false}}, 'a'},
 				{Range[float64]{Bound[float64]{16.0, false}, Bound[float64]{20.0, false}}, 'a'},
 				{Range[float64]{Bound[float64]{30.0, true}, Bound[float64]{34, false}}, 'b'},
@@ -863,7 +1991,7 @@ func TestRangeMap_Remove(t *testing.T) {
 			//
 			name: "Supersets",
 			m: &rangeMap[float64, rune]{
-				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				pairs:   append([]RangeValue[float64, rune]{}, pairs...),
 				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
@@ -872,7 +2000,7 @@ func TestRangeMap_Remove(t *testing.T) {
 				{Bound[float64]{25.0, false}, Bound[float64]{45.0, false}},
 				{Bound[float64]{45.0, true}, Bound[float64]{85.0, false}},
 			},
-			expectedPairs: []rangeValue[float64, rune]{
+			expectedPairs: []RangeValue[float64, rune]{
 				{Range[float64]{Bound[float64]{10.0, false}, Bound[float64]{20.0, false}}, 'a'},
 				{Range[float64]{Bound[float64]{90.0, false}, Bound[float64]{100.0, false}}, 'e'},
 			},
@@ -880,7 +2008,7 @@ func TestRangeMap_Remove(t *testing.T) {
 		{
 			name: "All",
 			m: &rangeMap[float64, rune]{
-				pairs:   append([]rangeValue[float64, rune]{}, pairs...),
+				pairs:   append([]RangeValue[float64, rune]{}, pairs...),
 				equal:   equal,
 				format:  defaultFormatMap[float64, rune],
 				resolve: defaultResolve[rune],
@@ -892,7 +2020,7 @@ func TestRangeMap_Remove(t *testing.T) {
 				{Bound[float64]{70.0, true}, Bound[float64]{80.0, true}},
 				{Bound[float64]{90.0, false}, Bound[float64]{100.0, false}},
 			},
-			expectedPairs: []rangeValue[float64, rune]{},
+			expectedPairs: []RangeValue[float64, rune]{},
 		},
 	}
 
@@ -916,7 +2044,7 @@ func TestRangeMap_All(t *testing.T) {
 		{
 			name: "OK",
 			m: &rangeMap[float64, rune]{
-				pairs: []rangeValue[float64, rune]{
+				pairs: []RangeValue[float64, rune]{
 					{Range[float64]{Bound[float64]{0.0, false}, Bound[float64]{0.9, false}}, '#'},
 					{Range[float64]{Bound[float64]{1.0, true}, Bound[float64]{2.0, false}}, '@'},
 					{Range[float64]{Bound[float64]{20.0, false}, Bound[float64]{40.0, true}}, 'a'},
