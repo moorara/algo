@@ -1,11 +1,15 @@
 package automata
 
 import (
+	"bytes"
+	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/range/disc"
 	"github.com/moorara/algo/set"
+	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
 
@@ -67,6 +71,81 @@ var cmpNFATransitionVector = func(lhs, rhs nfaTransitionVector) int {
 	}
 
 	return len(v1) - len(v2)
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+var eqClassIDStatesTable = func(a, b symboltable.SymbolTable[classID, States]) bool {
+	if a == nil && b == nil {
+		return true
+	}
+
+	if a == nil || b == nil {
+		return false
+	}
+
+	return a.Equal(b)
+}
+
+// nfaTransitionTable represents the transition table of a NFA.
+type nfaTransitionTable struct {
+	symboltable.SymbolTable[State, symboltable.SymbolTable[classID, States]]
+}
+
+// newNFATransitionTable creates a new instance of nfaTransitionTable.
+func newNFATransitionTable() *nfaTransitionTable {
+	return &nfaTransitionTable{
+		symboltable.NewQuadraticHashTable(HashState, EqState, eqClassIDStatesTable, symboltable.HashOpts{}),
+	}
+}
+
+// String implements the fmt.Stringer interface.
+func (t *nfaTransitionTable) String() string {
+	lines := make([]string, 0, t.Size()*2) // Approximation
+
+	for s, stab := range t.All() {
+		for cid, next := range stab.All() {
+			lines = append(lines, fmt.Sprintf("  %d --%d--> %s", s, cid, next))
+		}
+	}
+
+	// Sort lines for consistent output.
+	sort.Quick(lines, generic.NewCompareFunc[string]())
+
+	return fmt.Sprintf("Transitions:\n%s\n", strings.Join(lines, "\n"))
+}
+
+// Clone implements the generic.Cloner interface.
+func (t *nfaTransitionTable) Clone() *nfaTransitionTable {
+	clone := newNFATransitionTable()
+
+	for s, stab := range t.All() {
+		stabClone := symboltable.NewQuadraticHashTable(hashClassID, eqClassID, EqStates, symboltable.HashOpts{})
+		for cid, next := range stab.All() {
+			stabClone.Put(cid, next)
+		}
+		clone.Put(s, stabClone)
+	}
+
+	return clone
+}
+
+// Equal implements the generic.Equaler interface.
+func (t *nfaTransitionTable) Equal(rhs *nfaTransitionTable) bool {
+	return t.SymbolTable.Equal(rhs.SymbolTable)
+}
+
+// Add inserts a new transition into the NFA transition table.
+func (t *nfaTransitionTable) Add(s State, cid classID, next States) *nfaTransitionTable {
+	stab, ok := t.Get(s)
+	if !ok {
+		stab = symboltable.NewQuadraticHashTable(hashClassID, eqClassID, EqStates, symboltable.HashOpts{})
+		t.Put(s, stab)
+	}
+
+	stab.Put(cid, next)
+
+	return t
 }
 
 /* ------------------------------------------------------------------------------------------------------------------------ */
@@ -176,7 +255,8 @@ func (b *NFABuilder) Build() *NFA {
 
 	nextCID := classID(0)
 	transitionVectors := symboltable.NewRedBlack(cmpNFATransitionVector, eqClassID)
-	equivalenceClasses := disc.NewRangeMap[Symbol, classID](eqClassID, nil, nil)
+	equivalenceClasses := disc.NewRangeMap(eqClassID, classesOpts, nil)
+	transitions := newNFATransitionTable()
 
 	// Group ranges by their transition vectors to form equivalence classes.
 	for _, sub := range partition {
@@ -188,12 +268,18 @@ func (b *NFABuilder) Build() *NFA {
 		}
 
 		equivalenceClasses.Add(sub.Key, cid)
+
+		// Build class-based transitions for the current range and its transitions.
+		for ends := range sub.Val.All() {
+			transitions.Add(ends.State, cid, ends.Next)
+		}
 	}
 
 	return &NFA{
 		start:   b.start,
 		final:   b.final,
 		classes: equivalenceClasses,
+		trans:   transitions,
 	}
 }
 
@@ -214,15 +300,59 @@ type NFA struct {
 	start   State
 	final   States
 	classes disc.RangeMap[Symbol, classID]
-	trans   symboltable.SymbolTable[State, symboltable.SymbolTable[classID, States]]
+	trans   *nfaTransitionTable
+
+	// Derived values calculated lazily
+	states []State
+}
+
+// String implements the fmt.Stringer interface.
+func (n *NFA) String() string {
+	var b bytes.Buffer
+
+	fmt.Fprintf(&b, "Start state: %d\n", n.start)
+	fmt.Fprintf(&b, "Final states: ")
+
+	for s := range n.final.All() {
+		fmt.Fprintf(&b, "%d, ", s)
+	}
+
+	if b.Len() >= 2 {
+		b.Truncate(b.Len() - 2)
+	}
+
+	fmt.Fprintf(&b, "\n%s%s", n.classes, n.trans)
+
+	return b.String()
+}
+
+// Clone implements the generic.Cloner interface.
+func (n *NFA) Clone() *NFA {
+	nn := &NFA{
+		start:   n.start,
+		final:   n.final.Clone(),
+		classes: n.classes.Clone(),
+		trans:   n.trans.Clone(),
+	}
+
+	if n.states != nil {
+		nn.states = make([]State, len(n.states))
+		copy(nn.states, n.states)
+	}
+
+	return nn
 }
 
 // Equal implements the generic.Equaler interface.
 func (n *NFA) Equal(rhs *NFA) bool {
+	if rhs == nil {
+		return false
+	}
+
 	return n.start == rhs.start &&
 		n.final.Equal(rhs.final) &&
-		n.classes.Equal(rhs.classes) /* &&
-		n.trans.Equal(rhs.trans) */
+		n.classes.Equal(rhs.classes) &&
+		n.trans.Equal(rhs.trans)
 }
 
 // Start returns the start state of the NFA.
@@ -233,4 +363,22 @@ func (n *NFA) Start() State {
 // Final returns the final (accepting) states of the NFA.
 func (n *NFA) Final() []State {
 	return generic.Collect1(n.final.All())
+}
+
+// States returns all states in the NFA.
+func (n *NFA) States() []State {
+	// Lazy initialization
+	if n.states == nil {
+		states := NewStates(n.start).Union(n.final)
+		for s, stab := range n.trans.All() {
+			states.Add(s)
+			for _, next := range stab.All() {
+				states.Union(next)
+			}
+		}
+
+		n.states = generic.Collect1(states.All())
+	}
+
+	return n.states
 }
