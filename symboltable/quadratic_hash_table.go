@@ -130,7 +130,7 @@ func (ht *quadraticHashTable[K, V]) resize(m int) {
 	// Ensure the table size remains prime
 	m = smallestPrimeLargerThan(m)
 
-	newHT := NewQuadraticHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	newHT := NewQuadraticHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		InitialCap:    m,
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
@@ -318,7 +318,7 @@ func (ht *quadraticHashTable[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V
 // SelectMatch selects a subset of key-values from the hash table that satisfy the given predicate.
 // It returns a new hash table containing the matching key-values, of the same type as the original hash table.
 func (ht *quadraticHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic.Collection2[K, V] {
-	newHT := NewQuadraticHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	newHT := NewQuadraticHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
 	})
@@ -338,12 +338,12 @@ func (ht *quadraticHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) gene
 // while the second hash table contains those that do not satisfy the predicate (unmatched key-values).
 // Both hash tables are of the same type as the original hash table.
 func (ht *quadraticHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (generic.Collection2[K, V], generic.Collection2[K, V]) {
-	matched := NewQuadraticHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	matched := NewQuadraticHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
 	})
 
-	unmatched := NewQuadraticHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	unmatched := NewQuadraticHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
 	})
