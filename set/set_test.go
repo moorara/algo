@@ -26,12 +26,12 @@ func TestNew(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s := New(tc.equal, tc.vals...)
+			s := New(tc.equal, tc.vals...).(*set[string])
 
 			assert.NotNil(t, s)
-			assert.Equal(t, tc.expectedMembers, s.(*set[string]).members)
-			assert.NotNil(t, s.(*set[string]).equal)
-			assert.NotNil(t, s.(*set[string]).format)
+			assert.Equal(t, tc.expectedMembers, s.members)
+			assert.NotNil(t, s.equal)
+			assert.NotNil(t, s.format)
 		})
 	}
 }
@@ -55,12 +55,12 @@ func TestNewWithFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewWithFormat(tc.equal, tc.format, tc.vals...)
+			s := NewWithFormat(tc.equal, tc.format, tc.vals...).(*set[string])
 
 			assert.NotNil(t, s)
-			assert.Equal(t, tc.expectedMembers, s.(*set[string]).members)
-			assert.NotNil(t, s.(*set[string]).equal)
-			assert.NotNil(t, s.(*set[string]).format)
+			assert.Equal(t, tc.expectedMembers, s.members)
+			assert.NotNil(t, s.equal)
+			assert.NotNil(t, s.format)
 		})
 	}
 }
@@ -106,7 +106,7 @@ func TestSet_Equal(t *testing.T) {
 	tests := []struct {
 		name     string
 		s        *set[string]
-		t        Set[string]
+		rhs      Set[string]
 		expected bool
 	}{
 		{
@@ -115,7 +115,7 @@ func TestSet_Equal(t *testing.T) {
 				members: []string{},
 				equal:   eqFunc,
 			},
-			t: &set[string]{
+			rhs: &set[string]{
 				members: []string{},
 				equal:   eqFunc,
 			},
@@ -127,7 +127,7 @@ func TestSet_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
-			t: &set[string]{
+			rhs: &set[string]{
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
@@ -139,7 +139,7 @@ func TestSet_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
-			t: &set[string]{
+			rhs: &set[string]{
 				members: []string{"c", "d", "e", "f"},
 				equal:   eqFunc,
 			},
@@ -151,7 +151,7 @@ func TestSet_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
-			t: &set[string]{
+			rhs: &set[string]{
 				members: []string{"a", "b", "c", "d", "e", "f"},
 				equal:   eqFunc,
 			},
@@ -163,7 +163,7 @@ func TestSet_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d", "e", "f"},
 				equal:   eqFunc,
 			},
-			t: &set[string]{
+			rhs: &set[string]{
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
@@ -173,7 +173,7 @@ func TestSet_Equal(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b := tc.s.Equal(tc.t)
+			b := tc.s.Equal(tc.rhs)
 			assert.Equal(t, tc.expected, b)
 		})
 	}

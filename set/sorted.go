@@ -81,6 +81,16 @@ func (s *sorted[T]) Equal(rhs Set[T]) bool {
 	return true
 }
 
+func (s *sorted[T]) Compare(rhs *sorted[T]) int {
+	for i := 0; i < len(s.members) && i < len(rhs.members); i++ {
+		if c := s.compare(s.members[i], rhs.members[i]); c != 0 {
+			return c
+		}
+	}
+
+	return len(s.members) - len(rhs.members)
+}
+
 func (s *sorted[T]) Clone() Set[T] {
 	t := &sorted[T]{
 		members: make([]T, len(s.members)),

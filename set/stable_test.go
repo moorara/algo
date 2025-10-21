@@ -26,12 +26,12 @@ func TestNewStable(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewStable(tc.equal, tc.vals...)
+			s := NewStable(tc.equal, tc.vals...).(*stable[string])
 
 			assert.NotNil(t, s)
-			assert.Equal(t, tc.expectedMembers, s.(*stable[string]).members)
-			assert.NotNil(t, s.(*stable[string]).equal)
-			assert.NotNil(t, s.(*stable[string]).format)
+			assert.Equal(t, tc.expectedMembers, s.members)
+			assert.NotNil(t, s.equal)
+			assert.NotNil(t, s.format)
 		})
 	}
 }
@@ -55,12 +55,12 @@ func TestNewStableWithFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewStableWithFormat(tc.equal, tc.format, tc.vals...)
+			s := NewStableWithFormat(tc.equal, tc.format, tc.vals...).(*stable[string])
 
 			assert.NotNil(t, s)
-			assert.Equal(t, tc.expectedMembers, s.(*stable[string]).members)
-			assert.NotNil(t, s.(*stable[string]).equal)
-			assert.NotNil(t, s.(*stable[string]).format)
+			assert.Equal(t, tc.expectedMembers, s.members)
+			assert.NotNil(t, s.equal)
+			assert.NotNil(t, s.format)
 		})
 	}
 }
@@ -106,7 +106,7 @@ func TestStable_Equal(t *testing.T) {
 	tests := []struct {
 		name     string
 		s        *stable[string]
-		t        Set[string]
+		rhs      Set[string]
 		expected bool
 	}{
 		{
@@ -115,7 +115,7 @@ func TestStable_Equal(t *testing.T) {
 				members: []string{},
 				equal:   eqFunc,
 			},
-			t: &stable[string]{
+			rhs: &stable[string]{
 				members: []string{},
 				equal:   eqFunc,
 			},
@@ -127,7 +127,7 @@ func TestStable_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
-			t: &stable[string]{
+			rhs: &stable[string]{
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
@@ -139,7 +139,7 @@ func TestStable_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
-			t: &stable[string]{
+			rhs: &stable[string]{
 				members: []string{"c", "d", "e", "f"},
 				equal:   eqFunc,
 			},
@@ -151,7 +151,7 @@ func TestStable_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
-			t: &stable[string]{
+			rhs: &stable[string]{
 				members: []string{"a", "b", "c", "d", "e", "f"},
 				equal:   eqFunc,
 			},
@@ -163,7 +163,7 @@ func TestStable_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d", "e", "f"},
 				equal:   eqFunc,
 			},
-			t: &stable[string]{
+			rhs: &stable[string]{
 				members: []string{"a", "b", "c", "d"},
 				equal:   eqFunc,
 			},
@@ -173,7 +173,7 @@ func TestStable_Equal(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b := tc.s.Equal(tc.t)
+			b := tc.s.Equal(tc.rhs)
 			assert.Equal(t, tc.expected, b)
 		})
 	}
