@@ -96,6 +96,51 @@ func TestFuncs(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("unionStates", func(t *testing.T) {
+		tests := []struct {
+			name          string
+			a, b          States
+			expectedUnion States
+		}{
+			{
+				name:          "BothNil",
+				a:             nil,
+				b:             nil,
+				expectedUnion: nil,
+			},
+			{
+				name:          "FirstNotNilSecondNil",
+				a:             NewStates(1, 2),
+				b:             nil,
+				expectedUnion: NewStates(1, 2),
+			},
+			{
+				name:          "FirstNilSecondNotNil",
+				a:             nil,
+				b:             NewStates(2, 3),
+				expectedUnion: NewStates(2, 3),
+			},
+			{
+				name:          "BothNotNil",
+				a:             NewStates(1, 2),
+				b:             NewStates(2, 3),
+				expectedUnion: NewStates(1, 2, 3),
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				union := unionStates(tc.a, tc.b)
+
+				if tc.expectedUnion == nil {
+					assert.Nil(t, union)
+				} else {
+					assert.True(t, union.Equal(tc.expectedUnion), "expected: %s\ngot: %s\n", tc.expectedUnion, union)
+				}
+			})
+		}
+	})
 }
 
 func TestNewStates(t *testing.T) {

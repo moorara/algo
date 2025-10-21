@@ -19,6 +19,8 @@ var (
 	CmpSymbol  = generic.NewCompareFunc[Symbol]()
 	HashSymbol = hash.HashFuncForInt32[Symbol](nil)
 
+	eqClassID = generic.NewEqualFunc[classID]()
+
 	EqStates = func(a, b States) bool {
 		if a == nil && b == nil {
 			return true
@@ -41,6 +43,18 @@ var (
 		}
 
 		return a.Equal(b)
+	}
+
+	unionStates = func(a, b States) States {
+		if a == nil && b == nil {
+			return nil
+		} else if a == nil {
+			return b
+		} else if b == nil {
+			return a
+		}
+
+		return a.Union(b)
 	}
 )
 
@@ -71,3 +85,6 @@ func NewSymbols(a ...Symbol) set.Set[Symbol] {
 
 // String represents a sequence of symbols in an automaton.
 type String []Symbol
+
+// classID is used to identify equivalence classes of input symbols.
+type classID int

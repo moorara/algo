@@ -4,98 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-)
 
-var testNFA = []*NFA{
-	// (a+|b+)
-	{
-		start: 0,
-		final: NewStates(2, 4),
-		/* trans: newNFATransitionTable(
-			map[State][]rangeStates{
-				0: {
-					{SymbolRange{Start: E, End: E}, NewStates(1, 3)},
-				},
-				1: {
-					{SymbolRange{Start: 'a', End: 'a'}, NewStates(2)},
-				},
-				2: {
-					{SymbolRange{Start: 'a', End: 'a'}, NewStates(2)},
-				},
-				3: {
-					{SymbolRange{Start: 'b', End: 'b'}, NewStates(4)},
-				},
-				4: {
-					{SymbolRange{Start: 'b', End: 'b'}, NewStates(4)},
-				},
-			},
-		), */
-	},
-	// ab+|ba+
-	{
-		start: 0,
-		final: NewStates(2, 4),
-		/* trans: newNFATransitionTable(
-			map[State][]rangeStates{
-				0: {
-					{SymbolRange{Start: 'a', End: 'a'}, NewStates(1)},
-					{SymbolRange{Start: 'b', End: 'b'}, NewStates(3)},
-				},
-				1: {
-					{SymbolRange{Start: 'b', End: 'b'}, NewStates(2)},
-				},
-				2: {
-					{SymbolRange{Start: 'b', End: 'b'}, NewStates(2)},
-				},
-				3: {
-					{SymbolRange{Start: 'a', End: 'a'}, NewStates(4)},
-				},
-				4: {
-					{SymbolRange{Start: 'a', End: 'a'}, NewStates(4)},
-				},
-			},
-		), */
-	},
-	// (a|b)*abb
-	{
-		start: 0,
-		final: NewStates(10),
-		/* trans: newNFATransitionTable(
-			map[State][]rangeStates{
-				0: {
-					{SymbolRange{Start: E, End: E}, NewStates(1, 7)},
-				},
-				1: {
-					{SymbolRange{Start: E, End: E}, NewStates(2, 4)},
-				},
-				2: {
-					{SymbolRange{Start: 'a', End: 'a'}, NewStates(3)},
-				},
-				3: {
-					{SymbolRange{Start: E, End: E}, NewStates(6)},
-				},
-				4: {
-					{SymbolRange{Start: 'b', End: 'b'}, NewStates(5)},
-				},
-				5: {
-					{SymbolRange{Start: E, End: E}, NewStates(6)},
-				},
-				6: {
-					{SymbolRange{Start: E, End: E}, NewStates(1, 7)},
-				},
-				7: {
-					{SymbolRange{Start: 'a', End: 'a'}, NewStates(8)},
-				},
-				8: {
-					{SymbolRange{Start: 'b', End: 'b'}, NewStates(9)},
-				},
-				9: {
-					{SymbolRange{Start: 'b', End: 'b'}, NewStates(10)},
-				},
-			},
-		), */
-	},
-}
+	"github.com/moorara/algo/range/disc"
+)
 
 func TestNFABuilder(t *testing.T) {
 	type transition struct {
@@ -111,8 +22,8 @@ func TestNFABuilder(t *testing.T) {
 		trans       []transition
 		expectedNFA *NFA
 	}{
-		{
-			name:  "OK",
+		{ // (a+|b+)
+			name:  "Simple",
 			start: 0,
 			final: []State{2, 4},
 			trans: []transition{
@@ -122,7 +33,63 @@ func TestNFABuilder(t *testing.T) {
 				{s: 3, start: 'b', end: 'b', next: []State{4}},
 				{s: 4, start: 'b', end: 'b', next: []State{4}},
 			},
-			expectedNFA: testNFA[0],
+			expectedNFA: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				classes: disc.NewRangeMap(eqClassID, nil, []disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+				}),
+			},
+		},
+		{ // ([A-Za-z_][0-9A-Za-z_]*)|[0-9]+|(0x[0-9A-Fa-f]+)|[ \t\n]+|[+\-*/=]
+			name:  "ID_NUM_WS_OP",
+			start: 0,
+			final: []State{1, 2, 5},
+			trans: []transition{
+				{s: 0, start: '0', end: '0', next: []State{3}},
+				{s: 0, start: '0', end: '9', next: []State{2}},
+				{s: 0, start: 'A', end: 'Z', next: []State{1}},
+				{s: 0, start: 'a', end: 'z', next: []State{1}},
+				{s: 0, start: '_', end: '_', next: []State{1}},
+
+				{s: 1, start: '0', end: '9', next: []State{1}},
+				{s: 1, start: 'A', end: 'Z', next: []State{1}},
+				{s: 1, start: 'a', end: 'z', next: []State{1}},
+				{s: 1, start: '_', end: '_', next: []State{1}},
+
+				{s: 2, start: '0', end: '9', next: []State{2}},
+
+				{s: 3, start: '0', end: '9', next: []State{2}},
+				{s: 3, start: 'X', end: 'X', next: []State{4}},
+				{s: 3, start: 'x', end: 'x', next: []State{4}},
+
+				{s: 4, start: '0', end: '9', next: []State{5}},
+				{s: 4, start: 'A', end: 'F', next: []State{5}},
+				{s: 4, start: 'a', end: 'f', next: []State{5}},
+
+				{s: 5, start: '0', end: '9', next: []State{5}},
+				{s: 5, start: 'A', end: 'F', next: []State{5}},
+				{s: 5, start: 'a', end: 'f', next: []State{5}},
+			},
+			expectedNFA: &NFA{
+				start: 0,
+				final: NewStates(1, 2, 5),
+				classes: disc.NewRangeMap(eqClassID, nil, []disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, Value: 2},
+					{Range: disc.Range[Symbol]{Lo: 'G', Hi: 'W'}, Value: 3},
+					{Range: disc.Range[Symbol]{Lo: 'X', Hi: 'X'}, Value: 4},
+					{Range: disc.Range[Symbol]{Lo: 'Y', Hi: 'Z'}, Value: 3},
+					{Range: disc.Range[Symbol]{Lo: '_', Hi: '_'}, Value: 3},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'f'}, Value: 2},
+					{Range: disc.Range[Symbol]{Lo: 'g', Hi: 'w'}, Value: 3},
+					{Range: disc.Range[Symbol]{Lo: 'x', Hi: 'x'}, Value: 4},
+					{Range: disc.Range[Symbol]{Lo: 'y', Hi: 'z'}, Value: 3},
+				}),
+			},
 		},
 	}
 

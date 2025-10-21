@@ -39,6 +39,13 @@ A collection of common data structures and algorithms for Go applications.
       - Difference
       - Powerset
       - Partitions
+    - Range
+      - Discrete
+        - RangeList
+        - RangeMap
+      - Continuous
+        - RangeList
+        - RangeMap
     - Symbol Tables
       - Unordered
         - Separate Chaining Hash Table
