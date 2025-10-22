@@ -55,6 +55,13 @@ func (r Range[T]) Equal(rhs Range[T]) bool {
 		r.Hi.Val == rhs.Hi.Val && r.Hi.Open == rhs.Hi.Open
 }
 
+// Includes checks if the discrete range includes the given value.
+func (r Range[T]) Includes(v T) bool {
+	b := Bound[T]{Val: v, Open: false}
+
+	return compareLoLo(r.Lo, b) <= 0 && compareHiHi(r.Hi, b) >= 0
+}
+
 // Adjacent checks if two continuous ranges are adjacent.
 // The first return value indicates if r is immediately before rr.
 // The second return value indicates if r is immediately after rr.

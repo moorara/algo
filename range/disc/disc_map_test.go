@@ -696,7 +696,7 @@ func TestNewRangeMap(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			m := NewRangeMap(tc.equal, tc.opts, tc.pairs).(*rangeMap[int, rune])
+			m := NewRangeMap(tc.equal, tc.opts, tc.pairs...).(*rangeMap[int, rune])
 
 			assert.Equal(t, tc.expectedPairs, m.pairs)
 		})

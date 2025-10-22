@@ -13,6 +13,11 @@ func TestRange(t *testing.T) {
 		expectedEqual bool
 	}
 
+	type includesTest[T Discrete] struct {
+		val              T
+		expectedIncludes bool
+	}
+
 	type adjacentTest[T Discrete] struct {
 		rr             Range[T]
 		expectedBefore bool
@@ -36,6 +41,7 @@ func TestRange(t *testing.T) {
 		expectedValid  bool
 		expectedString string
 		equalTests     []equalTest[int]
+		includesTests  []includesTest[int]
 		adjacentTests  []adjacentTest[int]
 		intersectTests []intersectTest[int]
 		subtractTests  []subtractTest[int]
@@ -46,6 +52,7 @@ func TestRange(t *testing.T) {
 			expectedValid:  false,
 			expectedString: "[4, 2]",
 			equalTests:     nil,
+			includesTests:  nil,
 			adjacentTests:  nil,
 			intersectTests: nil,
 			subtractTests:  nil,
@@ -59,6 +66,11 @@ func TestRange(t *testing.T) {
 				{rhs: Range[int]{1, 2}, expectedEqual: false},
 				{rhs: Range[int]{2, 2}, expectedEqual: true},
 				{rhs: Range[int]{2, 3}, expectedEqual: false},
+			},
+			includesTests: []includesTest[int]{
+				{val: 1, expectedIncludes: false},
+				{val: 2, expectedIncludes: true},
+				{val: 3, expectedIncludes: false},
 			},
 			adjacentTests: []adjacentTest[int]{
 				{rr: Range[int]{0, 0}, expectedBefore: false, expectedAfter: false},
@@ -89,6 +101,13 @@ func TestRange(t *testing.T) {
 				{rhs: Range[int]{1, 4}, expectedEqual: false},
 				{rhs: Range[int]{2, 4}, expectedEqual: true},
 				{rhs: Range[int]{2, 5}, expectedEqual: false},
+			},
+			includesTests: []includesTest[int]{
+				{val: 1, expectedIncludes: false},
+				{val: 2, expectedIncludes: true},
+				{val: 3, expectedIncludes: true},
+				{val: 4, expectedIncludes: true},
+				{val: 5, expectedIncludes: false},
 			},
 			adjacentTests: []adjacentTest[int]{
 				{rr: Range[int]{0, 0}, expectedBefore: false, expectedAfter: false},
@@ -141,18 +160,24 @@ func TestRange(t *testing.T) {
 				assert.Equal(t, tc.expectedString, r.String())
 			})
 
+			for i, tc := range tc.equalTests {
+				t.Run(fmt.Sprintf("Equal/%d", i), func(t *testing.T) {
+					assert.Equal(t, tc.expectedEqual, r.Equal(tc.rhs))
+				})
+			}
+
+			for i, tc := range tc.includesTests {
+				t.Run(fmt.Sprintf("Includes/%d", i), func(t *testing.T) {
+					assert.Equal(t, tc.expectedIncludes, r.Includes(tc.val))
+				})
+			}
+
 			for i, tc := range tc.adjacentTests {
 				t.Run(fmt.Sprintf("Adjacent/%d", i), func(t *testing.T) {
 					before, after := r.Adjacent(tc.rr)
 
 					assert.Equal(t, tc.expectedBefore, before)
 					assert.Equal(t, tc.expectedAfter, after)
-				})
-			}
-
-			for i, tc := range tc.equalTests {
-				t.Run(fmt.Sprintf("Equal/%d", i), func(t *testing.T) {
-					assert.Equal(t, tc.expectedEqual, r.Equal(tc.rhs))
 				})
 			}
 

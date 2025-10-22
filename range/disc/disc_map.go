@@ -80,7 +80,7 @@ type rangeMap[K Discrete, V any] struct {
 //     The default behavior is to use the new range's value (when no resolver is provided).
 //     When a custom resolver is provided, the overlapping part will either be merged into the existing range,
 //     remain with the new range, or be split out as a separate range with the resolver's returned value.
-func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], opts *RangeMapOpts[K, V], pairs []RangeValue[K, V]) RangeMap[K, V] {
+func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], opts *RangeMapOpts[K, V], pairs ...RangeValue[K, V]) RangeMap[K, V] {
 	for _, r := range pairs {
 		if !r.Valid() {
 			panic(fmt.Sprintf("invalid range: %s", r))

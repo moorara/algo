@@ -35,6 +35,11 @@ func (r Range[T]) Equal(rhs Range[T]) bool {
 	return r.Lo == rhs.Lo && r.Hi == rhs.Hi
 }
 
+// Includes checks if the discrete range includes the given value.
+func (r Range[T]) Includes(v T) bool {
+	return r.Lo <= v && v <= r.Hi
+}
+
 // Adjacent checks if two discrete ranges are adjacent.
 // The first return value indicates if r is immediately before rr.
 // The second return value indicates if r is immediately after rr.
