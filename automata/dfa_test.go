@@ -8,7 +8,6 @@ import (
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/range/disc"
-	"github.com/moorara/algo/set"
 )
 
 var testDFA = []*DFA{
@@ -122,7 +121,7 @@ func TestDFABuilder(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b := new(DFABuilder).SetStart(tc.start).SetFinal(tc.final...)
+			b := NewDFABuilder().SetStart(tc.start).SetFinal(tc.final...)
 
 			for _, tr := range tc.trans {
 				b.AddTransition(tr.s, tr.start, tr.end, tr.next)
@@ -383,36 +382,32 @@ func TestDFA_Transitions(t *testing.T) {
 		next   State
 	}
 
-	eqTransition := func(a, b transition) bool {
-		return a.s == b.s && reflect.DeepEqual(a.ranges, b.ranges) && a.next == b.next
-	}
-
 	tests := []struct {
 		name          string
 		d             *DFA
-		expectedTrans set.Set[transition]
+		expectedTrans []transition
 	}{
 		{
 			name: "OK",
 			d:    testDFA[0],
-			expectedTrans: set.New(eqTransition,
-				transition{0, []disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
-				transition{1, []disc.Range[Symbol]{{Lo: '0', Hi: '0'}}, 1},
-				transition{1, []disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
-			),
+			expectedTrans: []transition{
+				{0, []disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
+				{1, []disc.Range[Symbol]{{Lo: '0', Hi: '0'}}, 1},
+				{1, []disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			trans := set.New(eqTransition)
+			trans := []transition{}
 			for s, seq := range tc.d.Transitions() {
 				for ranges, next := range seq {
-					trans.Add(transition{s, ranges, next})
+					trans = append(trans, transition{s, ranges, next})
 				}
 			}
 
-			assert.True(t, trans.Equal(tc.expectedTrans))
+			assert.True(t, reflect.DeepEqual(trans, tc.expectedTrans))
 		})
 	}
 }
@@ -423,53 +418,65 @@ func TestDFA_TransitionsFrom(t *testing.T) {
 		next   State
 	}
 
-	eqTransition := func(a, b transition) bool {
-		return reflect.DeepEqual(a.ranges, b.ranges) && a.next == b.next
-	}
-
 	tests := []struct {
 		name          string
 		d             *DFA
 		s             State
-		expectedTrans set.Set[transition]
+		expectedTrans []transition
 	}{
 		{
 			name: "OK",
 			d:    testDFA[0],
 			s:    1,
-			expectedTrans: set.New(eqTransition,
-				transition{[]disc.Range[Symbol]{{Lo: '0', Hi: '0'}}, 1},
-				transition{[]disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
-			),
+			expectedTrans: []transition{
+				{[]disc.Range[Symbol]{{Lo: '0', Hi: '0'}}, 1},
+				{[]disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			trans := set.New(eqTransition)
+			trans := []transition{}
 			for ranges, next := range tc.d.TransitionsFrom(tc.s) {
-				trans.Add(transition{ranges, next})
+				trans = append(trans, transition{ranges, next})
 			}
 
-			assert.True(t, trans.Equal(tc.expectedTrans))
+			assert.True(t, reflect.DeepEqual(trans, tc.expectedTrans))
 		})
 	}
 }
 
 func TestDFA_DOT(t *testing.T) {
 	tests := []struct {
-		name string
-		d    *DFA
+		name        string
+		d           *DFA
+		expectedDOT string
 	}{
 		{
 			name: "OK",
 			d:    testDFA[0],
+			expectedDOT: `digraph "DFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1", shape=doublecircle];
+
+  start -> 0 [];
+  0 -> 1 [label="[1..1]"];
+  1 -> 1 [label="[0..0]"];
+  1 -> 1 [label="[1..1]"];
+}
+`,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.NotEmpty(t, tc.d.DOT())
+			assert.Equal(t, tc.expectedDOT, tc.d.DOT())
 		})
 	}
 }

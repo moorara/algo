@@ -11,7 +11,6 @@ import (
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/range/disc"
 	"github.com/moorara/algo/set"
-	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
 
@@ -80,13 +79,15 @@ var eqClassIDStateTable = func(a, b symboltable.SymbolTable[classID, State]) boo
 
 // dfaTransitionTable represents the transition table of a DFA.
 type dfaTransitionTable struct {
+	// Use an ordered symbol table so iterations over states and classes are deterministic and
+	// the resulting computation and textual output are reproducible.
 	symboltable.SymbolTable[State, symboltable.SymbolTable[classID, State]]
 }
 
 // newDFATransitionTable creates a new instance of dfaTransitionTable.
 func newDFATransitionTable() *dfaTransitionTable {
 	return &dfaTransitionTable{
-		symboltable.NewQuadraticHashTable(HashState, EqState, eqClassIDStateTable, symboltable.HashOpts{}),
+		symboltable.NewRedBlack(CmpState, eqClassIDStateTable),
 	}
 }
 
@@ -95,7 +96,7 @@ func (t *dfaTransitionTable) Clone() *dfaTransitionTable {
 	clone := newDFATransitionTable()
 
 	for s, stab := range t.All() {
-		stabClone := symboltable.NewQuadraticHashTable(hashClassID, eqClassID, EqState, symboltable.HashOpts{})
+		stabClone := symboltable.NewRedBlack(cmpClassID, EqState)
 		for cid, next := range stab.All() {
 			stabClone.Put(cid, next)
 		}
@@ -114,7 +115,7 @@ func (t *dfaTransitionTable) Equal(rhs *dfaTransitionTable) bool {
 func (t *dfaTransitionTable) Add(s State, cid classID, next State) *dfaTransitionTable {
 	stab, ok := t.Get(s)
 	if !ok {
-		stab = symboltable.NewQuadraticHashTable(hashClassID, eqClassID, EqState, symboltable.HashOpts{})
+		stab = symboltable.NewRedBlack(cmpClassID, EqState)
 		t.Put(s, stab)
 	}
 
@@ -135,6 +136,13 @@ type DFABuilder struct {
 	trans symboltable.SymbolTable[State, disc.RangeMap[Symbol, State]]
 }
 
+// NewDFABuilder creates a new DFA builder instance.
+func NewDFABuilder() *DFABuilder {
+	return &DFABuilder{
+		trans: symboltable.NewRedBlack[State, disc.RangeMap[Symbol, State]](CmpState, nil),
+	}
+}
+
 // SetStart sets the start state of the DFA.
 func (b *DFABuilder) SetStart(s State) *DFABuilder {
 	b.start = s
@@ -149,13 +157,10 @@ func (b *DFABuilder) SetFinal(ss ...State) *DFABuilder {
 
 // AddTransition adds transitions from state s to state next on all input symbols in the range [start, end].
 func (b *DFABuilder) AddTransition(s State, start, end Symbol, next State) *DFABuilder {
-	if b.trans == nil {
-		b.trans = symboltable.NewRedBlack[State, disc.RangeMap[Symbol, State]](CmpState, nil)
-	}
-
 	ranges, ok := b.trans.Get(s)
 	if !ok {
-		ranges = disc.NewRangeMap[Symbol, State](EqState, nil)
+		opts := &disc.RangeMapOpts[Symbol, State]{}
+		ranges = disc.NewRangeMap(EqState, opts)
 		b.trans.Put(s, ranges)
 	}
 
@@ -308,9 +313,6 @@ func (d *DFA) String() string {
 			}
 		}
 	}
-
-	// Sort transitions for consistent output.
-	sort.Quick(trans, generic.NewCompareFunc[string]())
 
 	fmt.Fprintf(&b, "\nTransitions:\n%s\n", strings.Join(trans, "\n"))
 

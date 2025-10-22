@@ -8,7 +8,6 @@ import (
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/range/disc"
-	"github.com/moorara/algo/set"
 )
 
 var testNFA = []*NFA{
@@ -67,6 +66,53 @@ var testNFA = []*NFA{
 			Add(5, 0, NewStates(5)).
 			Add(5, 1, NewStates(5)).
 			Add(5, 2, NewStates(5)),
+	},
+	// [A-Z][A-Za-z]*
+	{
+		start: 0,
+		final: NewStates(1),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'Z'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'z'}, Value: 1},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(1)).
+			Add(1, 0, NewStates(1)).
+			Add(1, 1, NewStates(1)),
+	},
+	// 0|[1-9][0-9]*
+	{
+		start: 0,
+		final: NewStates(1, 2),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(1)).
+			Add(0, 1, NewStates(2)).
+			Add(2, 0, NewStates(2)).
+			Add(2, 1, NewStates(2)),
+	},
+	// 0|0x[0-9A-Fa-f]+
+	{
+		start: 0,
+		final: NewStates(1, 3),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'X', Hi: 'X'}, Value: 2},
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'f'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'x', Hi: 'x'}, Value: 2},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(1)).
+			Add(1, 2, NewStates(2)).
+			Add(2, 0, NewStates(3)).
+			Add(2, 1, NewStates(3)).
+			Add(3, 0, NewStates(3)).
+			Add(3, 1, NewStates(3)),
 	},
 }
 
@@ -128,7 +174,7 @@ func TestNFABuilder(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b := new(NFABuilder).SetStart(tc.start).SetFinal(tc.final...)
+			b := NewNFABuilder().SetStart(tc.start).SetFinal(tc.final...)
 
 			for _, tr := range tc.trans {
 				b.AddTransition(tr.s, tr.start, tr.end, tr.next)
@@ -397,38 +443,34 @@ func TestNFA_Transitions(t *testing.T) {
 		next   []State
 	}
 
-	eqTransition := func(a, b transition) bool {
-		return a.s == b.s && reflect.DeepEqual(a.ranges, b.ranges) && reflect.DeepEqual(a.next, b.next)
-	}
-
 	tests := []struct {
 		name          string
 		n             *NFA
-		expectedTrans set.Set[transition]
+		expectedTrans []transition
 	}{
 		{
 			name: "OK",
 			n:    testNFA[0],
-			expectedTrans: set.New(eqTransition,
-				transition{0, []disc.Range[Symbol]{{Lo: E, Hi: E}}, []State{1, 3}},
-				transition{1, []disc.Range[Symbol]{{Lo: 'a', Hi: 'a'}}, []State{2}},
-				transition{2, []disc.Range[Symbol]{{Lo: 'a', Hi: 'a'}}, []State{2}},
-				transition{3, []disc.Range[Symbol]{{Lo: 'b', Hi: 'b'}}, []State{4}},
-				transition{4, []disc.Range[Symbol]{{Lo: 'b', Hi: 'b'}}, []State{4}},
-			),
+			expectedTrans: []transition{
+				{0, []disc.Range[Symbol]{{Lo: E, Hi: E}}, []State{1, 3}},
+				{1, []disc.Range[Symbol]{{Lo: 'a', Hi: 'a'}}, []State{2}},
+				{2, []disc.Range[Symbol]{{Lo: 'a', Hi: 'a'}}, []State{2}},
+				{3, []disc.Range[Symbol]{{Lo: 'b', Hi: 'b'}}, []State{4}},
+				{4, []disc.Range[Symbol]{{Lo: 'b', Hi: 'b'}}, []State{4}},
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			trans := set.New(eqTransition)
+			trans := []transition{}
 			for s, seq := range tc.n.Transitions() {
 				for ranges, next := range seq {
-					trans.Add(transition{s, ranges, next})
+					trans = append(trans, transition{s, ranges, next})
 				}
 			}
 
-			assert.True(t, trans.Equal(tc.expectedTrans))
+			assert.True(t, reflect.DeepEqual(trans, tc.expectedTrans))
 		})
 	}
 }
@@ -439,52 +481,203 @@ func TestNFA_TransitionsFrom(t *testing.T) {
 		next   []State
 	}
 
-	eqTransition := func(a, b transition) bool {
-		return reflect.DeepEqual(a.ranges, b.ranges) && reflect.DeepEqual(a.next, b.next)
-	}
-
 	tests := []struct {
 		name          string
 		n             *NFA
 		s             State
-		expectedTrans set.Set[transition]
+		expectedTrans []transition
 	}{
 		{
 			name: "OK",
 			n:    testNFA[0],
 			s:    0,
-			expectedTrans: set.New(eqTransition,
-				transition{[]disc.Range[Symbol]{{Lo: E, Hi: E}}, []State{1, 3}},
-			),
+			expectedTrans: []transition{
+				{[]disc.Range[Symbol]{{Lo: E, Hi: E}}, []State{1, 3}},
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			trans := set.New(eqTransition)
+			trans := []transition{}
 			for ranges, next := range tc.n.TransitionsFrom(tc.s) {
-				trans.Add(transition{ranges, next})
+				trans = append(trans, transition{ranges, next})
 			}
 
-			assert.True(t, trans.Equal(tc.expectedTrans))
+			assert.True(t, reflect.DeepEqual(trans, tc.expectedTrans))
+		})
+	}
+}
+
+func TestNFA_Star(t *testing.T) {
+	tests := []struct {
+		name         string
+		n            *NFA
+		expectedStar *NFA
+	}{
+		{
+			name: "OK",
+			n:    testNFA[3],
+			expectedStar: &NFA{
+				start: 0,
+				final: NewStates(1),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1, 2)).
+					Add(2, 1, NewStates(3)).
+					Add(2, 2, NewStates(4)).
+					Add(3, 0, NewStates(1, 2)).
+					Add(4, 0, NewStates(1, 2)).
+					Add(4, 1, NewStates(4)).
+					Add(4, 2, NewStates(4)),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			star := tc.n.Star()
+
+			assert.True(t, star.Equal(tc.expectedStar))
+		})
+	}
+}
+
+func TestNFA_Union(t *testing.T) {
+	tests := []struct {
+		name          string
+		n             *NFA
+		ns            []*NFA
+		expectedUnion *NFA
+	}{
+		{
+			name: "OK",
+			n:    testNFA[3],
+			ns:   []*NFA{testNFA[4]},
+			expectedUnion: &NFA{
+				start: 0,
+				final: NewStates(1),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 2},
+					{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, Value: 3},
+					{Range: disc.Range[Symbol]{Lo: 'X', Hi: 'X'}, Value: 4},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'f'}, Value: 3},
+					{Range: disc.Range[Symbol]{Lo: 'x', Hi: 'x'}, Value: 4},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(2, 5)).
+					Add(2, 1, NewStates(3)).
+					Add(2, 2, NewStates(4)).
+					Add(3, 0, NewStates(1)).
+					Add(4, 0, NewStates(1)).
+					Add(4, 1, NewStates(4)).
+					Add(4, 2, NewStates(4)).
+					Add(5, 1, NewStates(6)).
+					Add(6, 0, NewStates(1)).
+					Add(6, 4, NewStates(7)).
+					Add(7, 1, NewStates(8)).
+					Add(7, 2, NewStates(8)).
+					Add(7, 3, NewStates(8)).
+					Add(8, 0, NewStates(1)).
+					Add(8, 1, NewStates(8)).
+					Add(8, 2, NewStates(8)).
+					Add(8, 3, NewStates(8)),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			union := tc.n.Union(tc.ns...)
+
+			assert.True(t, union.Equal(tc.expectedUnion))
+		})
+	}
+}
+
+func TestNFA_Concat(t *testing.T) {
+	tests := []struct {
+		name           string
+		n              *NFA
+		ns             []*NFA
+		expectedConcat *NFA
+	}{
+		{
+			name: "OK",
+			n:    testNFA[2],
+			ns:   []*NFA{testNFA[3]},
+			expectedConcat: &NFA{
+				start: 0,
+				final: NewStates(2, 3),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'Z'}, Value: 2},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'z'}, Value: 3},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 2, NewStates(1)).
+					Add(1, 0, NewStates(2)).
+					Add(1, 1, NewStates(3)).
+					Add(1, 2, NewStates(1)).
+					Add(1, 3, NewStates(1)).
+					Add(3, 0, NewStates(3)).
+					Add(3, 1, NewStates(3)),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			concat := tc.n.Concat(tc.ns...)
+
+			assert.True(t, concat.Equal(tc.expectedConcat))
 		})
 	}
 }
 
 func TestNFA_DOT(t *testing.T) {
 	tests := []struct {
-		name string
-		n    *NFA
+		name        string
+		n           *NFA
+		expectedDOT string
 	}{
 		{
 			name: "OK",
 			n:    testNFA[0],
+			expectedDOT: `digraph "NFA" {
+  rankdir=LR;
+  concentrate=false;
+  node [shape=circle];
+
+  start [style=invis];
+  0 [label="0"];
+  1 [label="1"];
+  2 [label="2", shape=doublecircle];
+  3 [label="3"];
+  4 [label="4", shape=doublecircle];
+
+  start -> 0 [];
+  0 -> 1 [label="[ε..ε]"];
+  0 -> 3 [label="[ε..ε]"];
+  1 -> 2 [label="[a..a]"];
+  2 -> 2 [label="[a..a]"];
+  3 -> 4 [label="[b..b]"];
+  4 -> 4 [label="[b..b]"];
+}
+`,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.NotEmpty(t, tc.n.DOT())
+			assert.Equal(t, tc.expectedDOT, tc.n.DOT())
 		})
 	}
 }
