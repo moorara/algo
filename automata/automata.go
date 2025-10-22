@@ -5,13 +5,8 @@
 package automata
 
 import (
-	"bytes"
-	"fmt"
-	"iter"
-
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/hash"
-	"github.com/moorara/algo/range/disc"
 	"github.com/moorara/algo/set"
 )
 
@@ -23,10 +18,6 @@ var (
 	EqSymbol   = generic.NewEqualFunc[Symbol]()
 	CmpSymbol  = generic.NewCompareFunc[Symbol]()
 	HashSymbol = hash.HashFuncForInt32[Symbol](nil)
-
-	eqClassID   = generic.NewEqualFunc[classID]()
-	cmpClassID  = generic.NewCompareFunc[classID]()
-	hashClassID = hash.HashFuncForInt[classID](nil)
 
 	EqStates = func(a, b States) bool {
 		if a == nil && b == nil {
@@ -63,34 +54,6 @@ var (
 
 		return a.Union(b)
 	}
-
-	classesOpts = &disc.RangeMapOpts[Symbol, classID]{
-		Format: func(all iter.Seq2[disc.Range[Symbol], classID]) string {
-			var b bytes.Buffer
-
-			b.WriteString("Equivalence Classes:\n")
-
-			for r, cid := range all {
-				var lo, hi Symbol
-
-				if r.Lo == E {
-					lo = 'ε'
-				} else {
-					lo = r.Lo
-				}
-
-				if r.Hi == E {
-					hi = 'ε'
-				} else {
-					hi = r.Hi
-				}
-
-				fmt.Fprintf(&b, "  [%c..%c]: %d\n", lo, hi, cid)
-			}
-
-			return b.String()
-		},
-	}
 )
 
 // State represents a state in an automaton, identified by an integer.
@@ -120,6 +83,3 @@ func NewSymbols(a ...Symbol) set.Set[Symbol] {
 
 // String represents a sequence of symbols in an automaton.
 type String []Symbol
-
-// classID is used to identify equivalence classes of input symbols.
-type classID int

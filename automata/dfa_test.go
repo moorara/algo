@@ -1,11 +1,14 @@
 package automata
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/range/disc"
+	"github.com/moorara/algo/set"
 )
 
 var testDFA = []*DFA{
@@ -13,7 +16,7 @@ var testDFA = []*DFA{
 	{
 		start: 0,
 		final: NewStates(1),
-		classes: disc.NewRangeMap(eqClassID, classesOpts, []disc.RangeValue[Symbol, classID]{
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
 			{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
 			{Range: disc.Range[Symbol]{Lo: '1', Hi: '1'}, Value: 1},
 		}),
@@ -26,7 +29,7 @@ var testDFA = []*DFA{
 	{
 		start: 0,
 		final: NewStates(1, 2, 3, 5),
-		classes: disc.NewRangeMap(eqClassID, classesOpts, []disc.RangeValue[Symbol, classID]{
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
 			{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
 			{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
 			{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, Value: 2},
@@ -144,13 +147,10 @@ func TestDFA_String(t *testing.T) {
 			d:    testDFA[0],
 			expectedString: `Start state: 0
 Final states: 1
-Equivalence Classes:
-  [0..0]: 0
-  [1..1]: 1
 Transitions:
-  0 --1--> 1
-  1 --0--> 1
-  1 --1--> 1
+  0 -- [1..1] --> 1
+  1 -- [0..0] --> 1
+  1 -- [1..1] --> 1
 `,
 		},
 	}
@@ -163,16 +163,13 @@ Transitions:
 }
 
 func TestDFA_Clone(t *testing.T) {
-	d := testDFA[0].Clone()
-	d.states = []State{0, 1}
-
 	tests := []struct {
 		name string
 		d    *DFA
 	}{
 		{
 			name: "OK",
-			d:    d,
+			d:    testDFA[0],
 		},
 	}
 
@@ -222,7 +219,7 @@ func TestDFA_Equal(t *testing.T) {
 			rhs: &DFA{
 				start: 0,
 				final: NewStates(1),
-				classes: disc.NewRangeMap(eqClassID, classesOpts, []disc.RangeValue[Symbol, classID]{
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
 					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 1},
 					{Range: disc.Range[Symbol]{Lo: '1', Hi: '1'}, Value: 0},
 				}),
@@ -235,7 +232,7 @@ func TestDFA_Equal(t *testing.T) {
 			rhs: &DFA{
 				start: 0,
 				final: NewStates(1),
-				classes: disc.NewRangeMap(eqClassID, classesOpts, []disc.RangeValue[Symbol, classID]{
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
 					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
 					{Range: disc.Range[Symbol]{Lo: '1', Hi: '1'}, Value: 1},
 				}),
@@ -253,7 +250,7 @@ func TestDFA_Equal(t *testing.T) {
 			rhs: &DFA{
 				start: 0,
 				final: NewStates(1),
-				classes: disc.NewRangeMap(eqClassID, classesOpts, []disc.RangeValue[Symbol, classID]{
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
 					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
 					{Range: disc.Range[Symbol]{Lo: '1', Hi: '1'}, Value: 1},
 				}),
@@ -329,6 +326,132 @@ func TestDFA_States(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedStates, tc.d.States())
+		})
+	}
+}
+
+func TestDFA_Symbols(t *testing.T) {
+	tests := []struct {
+		name            string
+		d               *DFA
+		expectedSymbols []disc.Range[Symbol]
+	}{
+		{
+			name: "OK",
+			d:    testDFA[0],
+			expectedSymbols: []disc.Range[Symbol]{
+				{Lo: '0', Hi: '0'},
+				{Lo: '1', Hi: '1'},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedSymbols, tc.d.Symbols())
+		})
+	}
+}
+
+func TestDFA_classes(t *testing.T) {
+	tests := []struct {
+		name            string
+		d               *DFA
+		expectedClasses classMapping
+	}{
+		{
+			name: "OK",
+			d:    testDFA[0],
+			expectedClasses: newClassMapping([]generic.KeyValue[classID, rangeSet]{
+				{Key: 0, Val: newRangeSet(disc.Range[Symbol]{Lo: '0', Hi: '0'})},
+				{Key: 1, Val: newRangeSet(disc.Range[Symbol]{Lo: '1', Hi: '1'})},
+			}),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.True(t, tc.d.classes().Equal(tc.expectedClasses))
+		})
+	}
+}
+
+func TestDFA_Transitions(t *testing.T) {
+	type transition struct {
+		s      State
+		ranges []disc.Range[Symbol]
+		next   State
+	}
+
+	eqTransition := func(a, b transition) bool {
+		return a.s == b.s && reflect.DeepEqual(a.ranges, b.ranges) && a.next == b.next
+	}
+
+	tests := []struct {
+		name          string
+		d             *DFA
+		expectedTrans set.Set[transition]
+	}{
+		{
+			name: "OK",
+			d:    testDFA[0],
+			expectedTrans: set.New(eqTransition,
+				transition{0, []disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
+				transition{1, []disc.Range[Symbol]{{Lo: '0', Hi: '0'}}, 1},
+				transition{1, []disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
+			),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			trans := set.New(eqTransition)
+			for s, seq := range tc.d.Transitions() {
+				for ranges, next := range seq {
+					trans.Add(transition{s, ranges, next})
+				}
+			}
+
+			assert.True(t, trans.Equal(tc.expectedTrans))
+		})
+	}
+}
+
+func TestDFA_TransitionsFrom(t *testing.T) {
+	type transition struct {
+		ranges []disc.Range[Symbol]
+		next   State
+	}
+
+	eqTransition := func(a, b transition) bool {
+		return reflect.DeepEqual(a.ranges, b.ranges) && a.next == b.next
+	}
+
+	tests := []struct {
+		name          string
+		d             *DFA
+		s             State
+		expectedTrans set.Set[transition]
+	}{
+		{
+			name: "OK",
+			d:    testDFA[0],
+			s:    1,
+			expectedTrans: set.New(eqTransition,
+				transition{[]disc.Range[Symbol]{{Lo: '0', Hi: '0'}}, 1},
+				transition{[]disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
+			),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			trans := set.New(eqTransition)
+			for ranges, next := range tc.d.TransitionsFrom(tc.s) {
+				trans.Add(transition{ranges, next})
+			}
+
+			assert.True(t, trans.Equal(tc.expectedTrans))
 		})
 	}
 }

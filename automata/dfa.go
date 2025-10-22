@@ -3,6 +3,7 @@ package automata
 import (
 	"bytes"
 	"fmt"
+	"iter"
 	"slices"
 	"strings"
 
@@ -88,22 +89,6 @@ func newDFATransitionTable() *dfaTransitionTable {
 	}
 }
 
-// String implements the fmt.Stringer interface.
-func (t *dfaTransitionTable) String() string {
-	lines := make([]string, 0, t.Size()*2) // Approximation
-
-	for s, stab := range t.All() {
-		for cid, next := range stab.All() {
-			lines = append(lines, fmt.Sprintf("  %d --%d--> %d", s, cid, next))
-		}
-	}
-
-	// Sort lines for consistent output.
-	sort.Quick(lines, generic.NewCompareFunc[string]())
-
-	return fmt.Sprintf("Transitions:\n%s\n", strings.Join(lines, "\n"))
-}
-
 // Clone implements the generic.Cloner interface.
 func (t *dfaTransitionTable) Clone() *dfaTransitionTable {
 	clone := newDFATransitionTable()
@@ -169,7 +154,7 @@ func (b *DFABuilder) AddTransition(s State, start, end Symbol, next State) *DFAB
 
 	ranges, ok := b.trans.Get(s)
 	if !ok {
-		ranges = disc.NewRangeMap[Symbol, State](EqState, nil, nil)
+		ranges = disc.NewRangeMap[Symbol, State](EqState, nil)
 		b.trans.Put(s, ranges)
 	}
 
@@ -243,7 +228,7 @@ func (b *DFABuilder) Build() *DFA {
 
 	nextCID := classID(0)
 	transitionVectors := symboltable.NewRedBlack(cmpDFATransitionVector, eqClassID)
-	equivalenceClasses := disc.NewRangeMap(eqClassID, classesOpts, nil)
+	ranges := newRangeMapping(nil)
 	transitions := newDFATransitionTable()
 
 	// Group ranges by their transition vectors to form equivalence classes.
@@ -255,7 +240,7 @@ func (b *DFABuilder) Build() *DFA {
 			transitionVectors.Put(sub.Val, cid)
 		}
 
-		equivalenceClasses.Add(sub.Key, cid)
+		ranges.Add(sub.Key, cid)
 
 		// Build class-based transitions for the current range and its transitions.
 		for ends := range sub.Val.All() {
@@ -264,10 +249,10 @@ func (b *DFABuilder) Build() *DFA {
 	}
 
 	return &DFA{
-		start:   b.start,
-		final:   b.final,
-		classes: equivalenceClasses,
-		trans:   transitions,
+		start:  b.start,
+		final:  b.final,
+		ranges: ranges,
+		trans:  transitions,
 	}
 }
 
@@ -285,13 +270,15 @@ func (b *DFABuilder) Build() *DFA {
 //
 // This DFA model is meant to be immutable once created.
 type DFA struct {
-	start   State
-	final   States
-	classes disc.RangeMap[Symbol, classID]
-	trans   *dfaTransitionTable
+	start  State
+	final  States
+	ranges rangeMapping
+	trans  *dfaTransitionTable
 
-	// Derived values calculated lazily
-	states []State
+	// Derived values (computed lazily)
+	_states  []State
+	_symbols []disc.Range[Symbol]
+	_classes classMapping
 }
 
 // String implements the fmt.Stringer interface.
@@ -309,7 +296,22 @@ func (d *DFA) String() string {
 		b.Truncate(b.Len() - 2)
 	}
 
-	fmt.Fprintf(&b, "\n%s%s", d.classes, d.trans)
+	// Get classID-to-ranges mapping.
+	classes := d.classes()
+
+	trans := make([]string, 0, d.trans.Size()*2) // Approximation
+	for s, stab := range d.trans.All() {
+		for cid, next := range stab.All() {
+			if ranges, ok := classes.Get(cid); ok {
+				trans = append(trans, fmt.Sprintf("  %d -- %s --> %d", s, ranges, next))
+			}
+		}
+	}
+
+	// Sort transitions for consistent output.
+	sort.Quick(trans, generic.NewCompareFunc[string]())
+
+	fmt.Fprintf(&b, "\nTransitions:\n%s\n", strings.Join(trans, "\n"))
 
 	return b.String()
 }
@@ -317,15 +319,10 @@ func (d *DFA) String() string {
 // Clone implements the generic.Cloner interface.
 func (d *DFA) Clone() *DFA {
 	dd := &DFA{
-		start:   d.start,
-		final:   d.final.Clone(),
-		classes: d.classes.Clone(),
-		trans:   d.trans.Clone(),
-	}
-
-	if d.states != nil {
-		dd.states = make([]State, len(d.states))
-		copy(dd.states, d.states)
+		start:  d.start,
+		final:  d.final.Clone(),
+		ranges: d.ranges.Clone(),
+		trans:  d.trans.Clone(),
 	}
 
 	return dd
@@ -339,7 +336,7 @@ func (d *DFA) Equal(rhs *DFA) bool {
 
 	return d.start == rhs.start &&
 		d.final.Equal(rhs.final) &&
-		d.classes.Equal(rhs.classes) &&
+		d.ranges.Equal(rhs.ranges) &&
 		d.trans.Equal(rhs.trans)
 }
 
@@ -356,7 +353,7 @@ func (d *DFA) Final() []State {
 // States returns all states in the DFA.
 func (d *DFA) States() []State {
 	// Lazy initialization
-	if d.states == nil {
+	if d._states == nil {
 		states := NewStates(d.start).Union(d.final)
 		for s, stab := range d.trans.All() {
 			states.Add(s)
@@ -365,8 +362,74 @@ func (d *DFA) States() []State {
 			}
 		}
 
-		d.states = generic.Collect1(states.All())
+		d._states = generic.Collect1(states.All())
 	}
 
-	return d.states
+	return d._states
+}
+
+// Symbols returns all symbol ranges in the DFA.
+func (d *DFA) Symbols() []disc.Range[Symbol] {
+	// Lazy initialization
+	if d._symbols == nil {
+		d._symbols = make([]disc.Range[Symbol], 0, d.ranges.Size())
+		for r := range d.ranges.All() {
+			d._symbols = append(d._symbols, r)
+		}
+	}
+
+	return d._symbols
+}
+
+// classes populates the equivalence classes of the input symbols lazily.
+// It builds a classID-to-ranges mapping from the range-to-classID mapping.
+func (d *DFA) classes() classMapping {
+	// Lazy initialization
+	if d._classes == nil {
+		d._classes = newClassMapping(nil)
+
+		for r, cid := range d.ranges.All() {
+			ranges, ok := d._classes.Get(cid)
+			if !ok {
+				ranges = newRangeSet()
+				d._classes.Put(cid, ranges)
+			}
+
+			ranges.Add(r)
+		}
+	}
+
+	return d._classes
+}
+
+// Transitions returns all transitions in the DFA.
+func (d *DFA) Transitions() iter.Seq2[State, iter.Seq2[[]disc.Range[Symbol], State]] {
+	return func(yield func(State, iter.Seq2[[]disc.Range[Symbol], State]) bool) {
+		for s := range d.trans.All() {
+			if !yield(s, d.TransitionsFrom(s)) {
+				return
+			}
+		}
+	}
+}
+
+// TransitionsFrom returns all transitions from the given state in the DFA.
+func (d *DFA) TransitionsFrom(s State) iter.Seq2[[]disc.Range[Symbol], State] {
+	// Get classID-to-ranges mapping.
+	classes := d.classes()
+
+	return func(yield func([]disc.Range[Symbol], State) bool) {
+		if stab, ok := d.trans.Get(s); ok {
+			for cid, next := range stab.All() {
+				if ranges, ok := classes.Get(cid); ok {
+					k := generic.Collect1(ranges.All())
+					v := next
+
+					if !yield(k, v) {
+						return
+					}
+				}
+			}
+		}
+	}
 }

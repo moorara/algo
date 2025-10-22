@@ -3,6 +3,7 @@ package automata
 import (
 	"bytes"
 	"fmt"
+	"iter"
 	"slices"
 	"strings"
 
@@ -99,22 +100,6 @@ func newNFATransitionTable() *nfaTransitionTable {
 	}
 }
 
-// String implements the fmt.Stringer interface.
-func (t *nfaTransitionTable) String() string {
-	lines := make([]string, 0, t.Size()*2) // Approximation
-
-	for s, stab := range t.All() {
-		for cid, next := range stab.All() {
-			lines = append(lines, fmt.Sprintf("  %d --%d--> %s", s, cid, next))
-		}
-	}
-
-	// Sort lines for consistent output.
-	sort.Quick(lines, generic.NewCompareFunc[string]())
-
-	return fmt.Sprintf("Transitions:\n%s\n", strings.Join(lines, "\n"))
-}
-
 // Clone implements the generic.Cloner interface.
 func (t *nfaTransitionTable) Clone() *nfaTransitionTable {
 	clone := newNFATransitionTable()
@@ -181,7 +166,7 @@ func (b *NFABuilder) AddTransition(s State, start, end Symbol, next []State) *NF
 	ranges, ok := b.trans.Get(s)
 	if !ok {
 		opts := &disc.RangeMapOpts[Symbol, States]{Resolve: unionStates}
-		ranges = disc.NewRangeMap[Symbol, States](EqStates, opts, nil)
+		ranges = disc.NewRangeMap[Symbol, States](EqStates, opts)
 		b.trans.Put(s, ranges)
 	}
 
@@ -255,7 +240,7 @@ func (b *NFABuilder) Build() *NFA {
 
 	nextCID := classID(0)
 	transitionVectors := symboltable.NewRedBlack(cmpNFATransitionVector, eqClassID)
-	equivalenceClasses := disc.NewRangeMap(eqClassID, classesOpts, nil)
+	ranges := newRangeMapping(nil)
 	transitions := newNFATransitionTable()
 
 	// Group ranges by their transition vectors to form equivalence classes.
@@ -267,7 +252,7 @@ func (b *NFABuilder) Build() *NFA {
 			transitionVectors.Put(sub.Val, cid)
 		}
 
-		equivalenceClasses.Add(sub.Key, cid)
+		ranges.Add(sub.Key, cid)
 
 		// Build class-based transitions for the current range and its transitions.
 		for ends := range sub.Val.All() {
@@ -276,10 +261,10 @@ func (b *NFABuilder) Build() *NFA {
 	}
 
 	return &NFA{
-		start:   b.start,
-		final:   b.final,
-		classes: equivalenceClasses,
-		trans:   transitions,
+		start:  b.start,
+		final:  b.final,
+		ranges: ranges,
+		trans:  transitions,
 	}
 }
 
@@ -297,13 +282,15 @@ func (b *NFABuilder) Build() *NFA {
 //
 // This NFA model is meant to be immutable once created.
 type NFA struct {
-	start   State
-	final   States
-	classes disc.RangeMap[Symbol, classID]
-	trans   *nfaTransitionTable
+	start  State
+	final  States
+	ranges rangeMapping
+	trans  *nfaTransitionTable
 
-	// Derived values calculated lazily
-	states []State
+	// Derived values (computed lazily)
+	_states  []State
+	_symbols []disc.Range[Symbol]
+	_classes classMapping
 }
 
 // String implements the fmt.Stringer interface.
@@ -321,7 +308,22 @@ func (n *NFA) String() string {
 		b.Truncate(b.Len() - 2)
 	}
 
-	fmt.Fprintf(&b, "\n%s%s", n.classes, n.trans)
+	// Get classID-to-ranges mapping.
+	classes := n.classes()
+
+	trans := make([]string, 0, n.trans.Size()*2) // Approximation
+	for s, stab := range n.trans.All() {
+		for cid, next := range stab.All() {
+			if ranges, ok := classes.Get(cid); ok {
+				trans = append(trans, fmt.Sprintf("  %d -- %s --> %s", s, ranges, next))
+			}
+		}
+	}
+
+	// Sort transitions for consistent output.
+	sort.Quick(trans, generic.NewCompareFunc[string]())
+
+	fmt.Fprintf(&b, "\nTransitions:\n%s\n", strings.Join(trans, "\n"))
 
 	return b.String()
 }
@@ -329,15 +331,10 @@ func (n *NFA) String() string {
 // Clone implements the generic.Cloner interface.
 func (n *NFA) Clone() *NFA {
 	nn := &NFA{
-		start:   n.start,
-		final:   n.final.Clone(),
-		classes: n.classes.Clone(),
-		trans:   n.trans.Clone(),
-	}
-
-	if n.states != nil {
-		nn.states = make([]State, len(n.states))
-		copy(nn.states, n.states)
+		start:  n.start,
+		final:  n.final.Clone(),
+		ranges: n.ranges.Clone(),
+		trans:  n.trans.Clone(),
 	}
 
 	return nn
@@ -351,7 +348,7 @@ func (n *NFA) Equal(rhs *NFA) bool {
 
 	return n.start == rhs.start &&
 		n.final.Equal(rhs.final) &&
-		n.classes.Equal(rhs.classes) &&
+		n.ranges.Equal(rhs.ranges) &&
 		n.trans.Equal(rhs.trans)
 }
 
@@ -368,7 +365,7 @@ func (n *NFA) Final() []State {
 // States returns all states in the NFA.
 func (n *NFA) States() []State {
 	// Lazy initialization
-	if n.states == nil {
+	if n._states == nil {
 		states := NewStates(n.start).Union(n.final)
 		for s, stab := range n.trans.All() {
 			states.Add(s)
@@ -377,8 +374,86 @@ func (n *NFA) States() []State {
 			}
 		}
 
-		n.states = generic.Collect1(states.All())
+		n._states = generic.Collect1(states.All())
 	}
 
-	return n.states
+	return n._states
+}
+
+// Symbols returns all symbol ranges in the NFA.
+func (n *NFA) Symbols() []disc.Range[Symbol] {
+	// Lazy initialization
+	if n._symbols == nil {
+		n._symbols = make([]disc.Range[Symbol], 0, n.ranges.Size())
+		for r := range n.ranges.All() {
+			if r.Includes(E) {
+				lr, rr := r.Subtract(disc.Range[Symbol]{Lo: r.Lo, Hi: r.Hi})
+
+				if !lr.Empty {
+					n._symbols = append(n._symbols, lr.Range)
+				}
+
+				if !rr.Empty {
+					n._symbols = append(n._symbols, rr.Range)
+				}
+			} else {
+				n._symbols = append(n._symbols, r)
+			}
+		}
+	}
+
+	return n._symbols
+}
+
+// classes populates the equivalence classes of the input symbols lazily.
+// It builds a classID-to-ranges mapping from the range-to-classID mapping.
+func (n *NFA) classes() classMapping {
+	// Lazy initialization
+	if n._classes == nil {
+		n._classes = newClassMapping(nil)
+
+		for r, cid := range n.ranges.All() {
+			ranges, ok := n._classes.Get(cid)
+			if !ok {
+				ranges = newRangeSet()
+				n._classes.Put(cid, ranges)
+			}
+
+			ranges.Add(r)
+		}
+	}
+
+	return n._classes
+}
+
+// Transitions returns all transitions in the NFA.
+func (n *NFA) Transitions() iter.Seq2[State, iter.Seq2[[]disc.Range[Symbol], []State]] {
+	return func(yield func(State, iter.Seq2[[]disc.Range[Symbol], []State]) bool) {
+		for s := range n.trans.All() {
+			if !yield(s, n.TransitionsFrom(s)) {
+				return
+			}
+		}
+	}
+}
+
+// TransitionsFrom returns all transitions from the given state in the NFA.
+func (n *NFA) TransitionsFrom(s State) iter.Seq2[[]disc.Range[Symbol], []State] {
+	// Get classID-to-ranges mapping.
+	classes := n.classes()
+
+	return func(yield func([]disc.Range[Symbol], []State) bool) {
+		if stab, ok := n.trans.Get(s); ok {
+			for cid, next := range stab.All() {
+				if ranges, ok := classes.Get(cid); ok {
+					k := generic.Collect1(ranges.All())
+					v := generic.Collect1(next.All())
+
+					if !yield(k, v) {
+						return
+					}
+				}
+			}
+		}
+	}
 }
