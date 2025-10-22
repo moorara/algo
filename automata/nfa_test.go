@@ -470,3 +470,21 @@ func TestNFA_TransitionsFrom(t *testing.T) {
 		})
 	}
 }
+
+func TestNFA_DOT(t *testing.T) {
+	tests := []struct {
+		name string
+		n    *NFA
+	}{
+		{
+			name: "OK",
+			n:    testNFA[0],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NotEmpty(t, tc.n.DOT())
+		})
+	}
+}

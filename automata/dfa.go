@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/range/disc"
 	"github.com/moorara/algo/set"
@@ -296,7 +297,7 @@ func (d *DFA) String() string {
 		b.Truncate(b.Len() - 2)
 	}
 
-	// Get classID-to-ranges mapping.
+	// Get the classID-to-ranges mapping.
 	classes := d.classes()
 
 	trans := make([]string, 0, d.trans.Size()*2) // Approximation
@@ -432,4 +433,42 @@ func (d *DFA) TransitionsFrom(s State) iter.Seq2[[]disc.Range[Symbol], State] {
 			}
 		}
 	}
+}
+
+// DOT generates a DOT representation of the DFA transition graph for visualization.
+func (d *DFA) DOT() string {
+	// Get the classID-to-ranges mapping.
+	classes := d.classes()
+
+	graph := dot.NewGraph(false, true, false, "DFA", dot.RankDirLR, "", "", dot.ShapeCircle)
+
+	for _, s := range d.States() {
+		name := fmt.Sprintf("%d", s)
+		label := fmt.Sprintf("%d", s)
+
+		if s == d.start {
+			graph.AddNode(dot.NewNode("start", "", "", "", dot.StyleInvis, "", "", ""))
+			graph.AddEdge(dot.NewEdge("start", name, dot.EdgeTypeDirected, "", "", "", "", "", ""))
+		}
+
+		var shape dot.Shape
+		if d.final.Contains(s) {
+			shape = dot.ShapeDoubleCircle
+		}
+
+		graph.AddNode(dot.NewNode(name, "", label, "", "", shape, "", ""))
+	}
+
+	for s, stab := range d.trans.All() {
+		for cid, next := range stab.All() {
+			if ranges, ok := classes.Get(cid); ok {
+				from := fmt.Sprintf("%d", s)
+				to := fmt.Sprintf("%d", next)
+
+				graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", ranges.String(), "", "", "", ""))
+			}
+		}
+	}
+
+	return graph.DOT() + "\n"
 }

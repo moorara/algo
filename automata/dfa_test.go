@@ -455,3 +455,21 @@ func TestDFA_TransitionsFrom(t *testing.T) {
 		})
 	}
 }
+
+func TestDFA_DOT(t *testing.T) {
+	tests := []struct {
+		name string
+		d    *DFA
+	}{
+		{
+			name: "OK",
+			d:    testDFA[0],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NotEmpty(t, tc.d.DOT())
+		})
+	}
+}
