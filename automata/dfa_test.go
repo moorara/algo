@@ -24,6 +24,26 @@ var testDFA = []*DFA{
 			Add(1, 0, 1).
 			Add(1, 1, 1),
 	},
+	// (a|b)*abb
+	{
+		start: 0,
+		final: NewStates(4),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+		}),
+		trans: newDFATransitionTable().
+			Add(0, 0, 1).
+			Add(0, 1, 2).
+			Add(1, 0, 1).
+			Add(1, 1, 3).
+			Add(2, 0, 1).
+			Add(2, 1, 2).
+			Add(3, 0, 1).
+			Add(3, 1, 4).
+			Add(4, 0, 1).
+			Add(4, 1, 2),
+	},
 	// ([A-Za-z_][0-9A-Za-z_]*)|[0-9]+|(0x[0-9A-Fa-f]+)|[ \t\n]+|[+\-*/=]
 	{
 		start: 0,
@@ -115,13 +135,13 @@ func TestDFABuilder(t *testing.T) {
 				{s: 5, start: 'A', end: 'F', next: 5},
 				{s: 5, start: 'a', end: 'f', next: 5},
 			},
-			expectedDFA: testDFA[1],
+			expectedDFA: testDFA[2],
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b := NewDFABuilder().SetStart(tc.start).SetFinal(tc.final...)
+			b := NewDFABuilder().SetStart(tc.start).SetFinal(tc.final)
 
 			for _, tr := range tc.trans {
 				b.AddTransition(tr.s, tr.start, tr.end, tr.next)
@@ -443,6 +463,46 @@ func TestDFA_TransitionsFrom(t *testing.T) {
 			}
 
 			assert.True(t, reflect.DeepEqual(trans, tc.expectedTrans))
+		})
+	}
+}
+
+func TestDFA_ToNFA(t *testing.T) {
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedNFA *NFA
+	}{
+		{
+			name: "OK",
+			d:    testDFA[1],
+			expectedNFA: &NFA{
+				start: 0,
+				final: NewStates(4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1)).
+					Add(0, 1, NewStates(2)).
+					Add(1, 0, NewStates(1)).
+					Add(1, 1, NewStates(3)).
+					Add(2, 0, NewStates(1)).
+					Add(2, 1, NewStates(2)).
+					Add(3, 0, NewStates(1)).
+					Add(3, 1, NewStates(4)).
+					Add(4, 0, NewStates(1)).
+					Add(4, 1, NewStates(2)),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			nfa := tc.d.ToNFA()
+
+			assert.True(t, nfa.Equal(tc.expectedNFA), "Expected:\n%s\nGot:\n%s", tc.expectedNFA, nfa)
 		})
 	}
 }

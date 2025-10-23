@@ -4,7 +4,87 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/range/disc"
 )
+
+func TestRangeSet(t *testing.T) {
+	tests := []struct {
+		name           string
+		rs             []disc.Range[Symbol]
+		expectedString string
+	}{
+		{
+			name: "OK",
+			rs: []disc.Range[Symbol]{
+				{Lo: 'A', Hi: 'F'},
+				{Lo: 'a', Hi: 'f'},
+			},
+			expectedString: "[A..F], [a..f]",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			rs := newRangeSet(tc.rs...)
+
+			assert.Equal(t, tc.expectedString, rs.String())
+		})
+	}
+}
+
+func TestRangeMapping(t *testing.T) {
+	tests := []struct {
+		name           string
+		pairs          []disc.RangeValue[Symbol, classID]
+		expectedString string
+	}{
+		{
+			name: "OK",
+			pairs: []disc.RangeValue[Symbol, classID]{
+				{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, Value: 0},
+				{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'f'}, Value: 0},
+			},
+			expectedString: `Ranges:
+  [A..F]: 0
+  [a..f]: 0
+`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			rm := newRangeMapping(tc.pairs)
+
+			assert.Equal(t, tc.expectedString, rm.String())
+		})
+	}
+}
+
+func TestClassMapping(t *testing.T) {
+	tests := []struct {
+		name           string
+		pairs          []generic.KeyValue[classID, rangeSet]
+		expectedString string
+	}{
+		{
+			name: "OK",
+			pairs: []generic.KeyValue[classID, rangeSet]{
+				{Key: 0, Val: newRangeSet(disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, disc.Range[Symbol]{Lo: 'a', Hi: 'f'})},
+			},
+			expectedString: "{<0:[A..F], [a..f]>}",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cm := newClassMapping(tc.pairs)
+
+			assert.Equal(t, tc.expectedString, cm.String())
+		})
+	}
+}
 
 func TestStateManager(t *testing.T) {
 	tests := []struct {
@@ -34,6 +114,31 @@ func TestStateManager(t *testing.T) {
 			// Test retrieving the same state again
 			state = sm.GetOrCreateState(tc.id, tc.s)
 			assert.Equal(t, tc.expectedState, state)
+		})
+	}
+}
+
+func TestFmtRange(t *testing.T) {
+	tests := []struct {
+		name           string
+		r              disc.Range[Symbol]
+		expectedString string
+	}{
+		{
+			name:           "EmptyRange",
+			r:              disc.Range[Symbol]{Lo: E, Hi: E},
+			expectedString: "[ε..ε]",
+		},
+		{
+			name:           "DigitRange",
+			r:              disc.Range[Symbol]{Lo: '0', Hi: '9'},
+			expectedString: "[0..9]",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedString, fmtRange(tc.r))
 		})
 	}
 }

@@ -19,36 +19,25 @@ var (
 	hashClassID = hash.HashFuncForInt[classID](nil)
 )
 
-// classID is used to identify equivalence classes of input symbols.
-type classID int
+// rangeSet represents a set of symbol ranges.
+type rangeSet set.Set[disc.Range[Symbol]]
 
-// classMapping represents the equivalence classes of the input symbols.
-// It is mapping from the classs ID to the set of ranges of symbols belonging to that class.
-type classMapping symboltable.SymbolTable[classID, rangeSet]
-
-func newClassMapping(pairs []generic.KeyValue[classID, rangeSet]) classMapping {
-	tab := symboltable.NewQuadraticHashTable(
-		hashClassID,
-		eqClassID,
-		func(a, b rangeSet) bool {
-			if a == nil && b == nil {
-				return true
-			}
-
-			if a == nil || b == nil {
-				return false
-			}
-
-			return a.Equal(b)
+// newRangeSet creates a new set of symbol ranges.
+func newRangeSet(rs ...disc.Range[Symbol]) rangeSet {
+	return set.NewStableWithFormat(
+		func(a, b disc.Range[Symbol]) bool {
+			return a.Lo == b.Lo && a.Hi == b.Hi
 		},
-		symboltable.HashOpts{},
+		func(all []disc.Range[Symbol]) string {
+			vals := make([]string, len(all))
+			for i, r := range all {
+				vals[i] = fmtRange(r)
+			}
+
+			return strings.Join(vals, ", ")
+		},
+		rs...,
 	)
-
-	for _, p := range pairs {
-		tab.Put(p.Key, p.Val)
-	}
-
-	return tab
 }
 
 // rangeMapping represents the equivalence classes of the input symbols.
@@ -72,44 +61,33 @@ func newRangeMapping(pairs []disc.RangeValue[Symbol, classID]) rangeMapping {
 	return disc.NewRangeMap(eqClassID, opts, pairs...)
 }
 
-// rangeSet represents a set of symbol ranges.
-type rangeSet set.Set[disc.Range[Symbol]]
+// classMapping represents the equivalence classes of the input symbols.
+// It is mapping from the classs ID to the set of ranges of symbols belonging to that class.
+type classMapping symboltable.SymbolTable[classID, rangeSet]
 
-// newRangeSet creates a new set of symbol ranges.
-func newRangeSet(rs ...disc.Range[Symbol]) rangeSet {
-	return set.NewStableWithFormat(
-		func(a, b disc.Range[Symbol]) bool {
-			return a.Lo == b.Lo && a.Hi == b.Hi
-		},
-		func(all []disc.Range[Symbol]) string {
-			vals := make([]string, len(all))
-			for i, r := range all {
-				vals[i] = fmtRange(r)
+func newClassMapping(pairs []generic.KeyValue[classID, rangeSet]) classMapping {
+	// Use an ordered symbol table so iterations over classes are deterministic and
+	// the resulting computation and textual output are reproducible.
+	tab := symboltable.NewRedBlack(
+		cmpClassID,
+		func(a, b rangeSet) bool {
+			if a == nil && b == nil {
+				return true
 			}
 
-			return strings.Join(vals, ", ")
+			if a == nil || b == nil {
+				return false
+			}
+
+			return a.Equal(b)
 		},
-		rs...,
 	)
-}
 
-// fmtRange formats a symbol range as a string.
-func fmtRange(r disc.Range[Symbol]) string {
-	var lo, hi Symbol
-
-	if r.Lo == E {
-		lo = 'ε'
-	} else {
-		lo = r.Lo
+	for _, p := range pairs {
+		tab.Put(p.Key, p.Val)
 	}
 
-	if r.Hi == E {
-		hi = 'ε'
-	} else {
-		hi = r.Hi
-	}
-
-	return fmt.Sprintf("[%c..%c]", lo, hi)
+	return tab
 }
 
 // stateManager is used for keeping track of states when combining multiple automata.
@@ -137,6 +115,25 @@ func (m *stateManager) GetOrCreateState(id int, s State) State {
 	m.last++
 	m.states[id][s] = m.last
 	return m.last
+}
+
+// fmtRange formats a symbol range as a string.
+func fmtRange(r disc.Range[Symbol]) string {
+	var lo, hi Symbol
+
+	if r.Lo == E {
+		lo = 'ε'
+	} else {
+		lo = r.Lo
+	}
+
+	if r.Hi == E {
+		hi = 'ε'
+	} else {
+		hi = r.Hi
+	}
+
+	return fmt.Sprintf("[%c..%c]", lo, hi)
 }
 
 // generateStatePermutations generates all permutations of a sequence of states using recursion and backtracking.

@@ -83,3 +83,6 @@ func NewSymbols(a ...Symbol) set.Set[Symbol] {
 
 // String represents a sequence of symbols in an automaton.
 type String []Symbol
+
+// classID is used to identify equivalence classes of input symbols.
+type classID int

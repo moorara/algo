@@ -27,45 +27,26 @@ var testNFA = []*NFA{
 			Add(3, 2, NewStates(4)).
 			Add(4, 2, NewStates(4)),
 	},
-	// ([A-Za-z_][0-9A-Za-z_]*)|[0-9]+|(0x[0-9A-Fa-f]+)|[ \t\n]+|[+\-*/=]
+	// (a|b)*abb
 	{
 		start: 0,
-		final: NewStates(1, 2, 5),
+		final: NewStates(10),
 		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
-			{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
-			{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
-			{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, Value: 2},
-			{Range: disc.Range[Symbol]{Lo: 'G', Hi: 'W'}, Value: 3},
-			{Range: disc.Range[Symbol]{Lo: 'X', Hi: 'X'}, Value: 4},
-			{Range: disc.Range[Symbol]{Lo: 'Y', Hi: 'Z'}, Value: 3},
-			{Range: disc.Range[Symbol]{Lo: '_', Hi: '_'}, Value: 3},
-			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'f'}, Value: 2},
-			{Range: disc.Range[Symbol]{Lo: 'g', Hi: 'w'}, Value: 3},
-			{Range: disc.Range[Symbol]{Lo: 'x', Hi: 'x'}, Value: 4},
-			{Range: disc.Range[Symbol]{Lo: 'y', Hi: 'z'}, Value: 3},
+			{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
 		}),
 		trans: newNFATransitionTable().
-			Add(0, 0, NewStates(2, 3)).
-			Add(0, 1, NewStates(2)).
-			Add(0, 2, NewStates(1)).
-			Add(0, 3, NewStates(1)).
-			Add(0, 4, NewStates(1)).
-			Add(1, 0, NewStates(1)).
-			Add(1, 1, NewStates(1)).
-			Add(1, 2, NewStates(1)).
-			Add(1, 3, NewStates(1)).
-			Add(1, 4, NewStates(1)).
-			Add(2, 0, NewStates(2)).
-			Add(2, 1, NewStates(2)).
-			Add(3, 0, NewStates(2)).
-			Add(3, 1, NewStates(2)).
-			Add(3, 4, NewStates(4)).
-			Add(4, 0, NewStates(5)).
-			Add(4, 1, NewStates(5)).
+			Add(0, 0, NewStates(1, 7)).
+			Add(1, 0, NewStates(2, 4)).
+			Add(2, 1, NewStates(3)).
+			Add(3, 0, NewStates(6)).
 			Add(4, 2, NewStates(5)).
-			Add(5, 0, NewStates(5)).
-			Add(5, 1, NewStates(5)).
-			Add(5, 2, NewStates(5)),
+			Add(5, 0, NewStates(6)).
+			Add(6, 0, NewStates(1, 7)).
+			Add(7, 1, NewStates(8)).
+			Add(8, 2, NewStates(9)).
+			Add(9, 2, NewStates(10)),
 	},
 	// [A-Z][A-Za-z]*
 	{
@@ -113,6 +94,46 @@ var testNFA = []*NFA{
 			Add(2, 1, NewStates(3)).
 			Add(3, 0, NewStates(3)).
 			Add(3, 1, NewStates(3)),
+	},
+	// ([A-Za-z_][0-9A-Za-z_]*)|[0-9]+|(0x[0-9A-Fa-f]+)|[ \t\n]+|[+\-*/=]
+	{
+		start: 0,
+		final: NewStates(1, 2, 5),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, Value: 2},
+			{Range: disc.Range[Symbol]{Lo: 'G', Hi: 'W'}, Value: 3},
+			{Range: disc.Range[Symbol]{Lo: 'X', Hi: 'X'}, Value: 4},
+			{Range: disc.Range[Symbol]{Lo: 'Y', Hi: 'Z'}, Value: 3},
+			{Range: disc.Range[Symbol]{Lo: '_', Hi: '_'}, Value: 3},
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'f'}, Value: 2},
+			{Range: disc.Range[Symbol]{Lo: 'g', Hi: 'w'}, Value: 3},
+			{Range: disc.Range[Symbol]{Lo: 'x', Hi: 'x'}, Value: 4},
+			{Range: disc.Range[Symbol]{Lo: 'y', Hi: 'z'}, Value: 3},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(2, 3)).
+			Add(0, 1, NewStates(2)).
+			Add(0, 2, NewStates(1)).
+			Add(0, 3, NewStates(1)).
+			Add(0, 4, NewStates(1)).
+			Add(1, 0, NewStates(1)).
+			Add(1, 1, NewStates(1)).
+			Add(1, 2, NewStates(1)).
+			Add(1, 3, NewStates(1)).
+			Add(1, 4, NewStates(1)).
+			Add(2, 0, NewStates(2)).
+			Add(2, 1, NewStates(2)).
+			Add(3, 0, NewStates(2)).
+			Add(3, 1, NewStates(2)).
+			Add(3, 4, NewStates(4)).
+			Add(4, 0, NewStates(5)).
+			Add(4, 1, NewStates(5)).
+			Add(4, 2, NewStates(5)).
+			Add(5, 0, NewStates(5)).
+			Add(5, 1, NewStates(5)).
+			Add(5, 2, NewStates(5)),
 	},
 }
 
@@ -168,13 +189,13 @@ func TestNFABuilder(t *testing.T) {
 				{s: 5, start: 'A', end: 'F', next: []State{5}},
 				{s: 5, start: 'a', end: 'f', next: []State{5}},
 			},
-			expectedNFA: testNFA[1],
+			expectedNFA: testNFA[5],
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b := NewNFABuilder().SetStart(tc.start).SetFinal(tc.final...)
+			b := NewNFABuilder().SetStart(tc.start).SetFinal(tc.final)
 
 			for _, tr := range tc.trans {
 				b.AddTransition(tr.s, tr.start, tr.end, tr.next)
@@ -542,7 +563,7 @@ func TestNFA_Star(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			star := tc.n.Star()
 
-			assert.True(t, star.Equal(tc.expectedStar))
+			assert.True(t, star.Equal(tc.expectedStar), "Expected:\n%s\nGot:\n%s", tc.expectedStar, star)
 		})
 	}
 }
@@ -596,7 +617,7 @@ func TestNFA_Union(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			union := tc.n.Union(tc.ns...)
 
-			assert.True(t, union.Equal(tc.expectedUnion))
+			assert.True(t, union.Equal(tc.expectedUnion), "Expected:\n%s\nGot:\n%s", tc.expectedUnion, union)
 		})
 	}
 }
@@ -637,7 +658,29 @@ func TestNFA_Concat(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			concat := tc.n.Concat(tc.ns...)
 
-			assert.True(t, concat.Equal(tc.expectedConcat))
+			assert.True(t, concat.Equal(tc.expectedConcat), "Expected:\n%s\nGot:\n%s", tc.expectedConcat, concat)
+		})
+	}
+}
+
+func TestNFA_ToDFA(t *testing.T) {
+	tests := []struct {
+		name        string
+		n           *NFA
+		expectedDFA *DFA
+	}{
+		{
+			name:        "OK",
+			n:           testNFA[1],
+			expectedDFA: testDFA[1],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.n.ToDFA()
+
+			assert.True(t, dfa.Equal(tc.expectedDFA), "Expected:\n%s\nGot:\n%s", tc.expectedDFA, dfa)
 		})
 	}
 }

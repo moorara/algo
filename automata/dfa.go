@@ -150,8 +150,8 @@ func (b *DFABuilder) SetStart(s State) *DFABuilder {
 }
 
 // SetFinal sets the final (accepting) states of the DFA.
-func (b *DFABuilder) SetFinal(ss ...State) *DFABuilder {
-	b.final = NewStates(ss...)
+func (b *DFABuilder) SetFinal(f []State) *DFABuilder {
+	b.final = NewStates(f...)
 	return b
 }
 
@@ -302,13 +302,10 @@ func (d *DFA) String() string {
 		b.Truncate(b.Len() - 2)
 	}
 
-	// Get the classID-to-ranges mapping.
-	classes := d.classes()
-
 	trans := make([]string, 0, d.trans.Size()*2) // Approximation
 	for s, stab := range d.trans.All() {
 		for cid, next := range stab.All() {
-			if ranges, ok := classes.Get(cid); ok {
+			if ranges, ok := d.classes().Get(cid); ok {
 				trans = append(trans, fmt.Sprintf("  %d -- %s --> %d", s, ranges, next))
 			}
 		}
@@ -418,13 +415,10 @@ func (d *DFA) Transitions() iter.Seq2[State, iter.Seq2[[]disc.Range[Symbol], Sta
 
 // TransitionsFrom returns all transitions from the given state in the DFA.
 func (d *DFA) TransitionsFrom(s State) iter.Seq2[[]disc.Range[Symbol], State] {
-	// Get classID-to-ranges mapping.
-	classes := d.classes()
-
 	return func(yield func([]disc.Range[Symbol], State) bool) {
 		if stab, ok := d.trans.Get(s); ok {
 			for cid, next := range stab.All() {
-				if ranges, ok := classes.Get(cid); ok {
+				if ranges, ok := d.classes().Get(cid); ok {
 					k := generic.Collect1(ranges.All())
 					v := next
 
@@ -437,11 +431,24 @@ func (d *DFA) TransitionsFrom(s State) iter.Seq2[[]disc.Range[Symbol], State] {
 	}
 }
 
+// ToNFA constructs a new NFA accepting the same language as the DFA (every DFA is an NFA).
+func (d *DFA) ToNFA() *NFA {
+	b := NewNFABuilder().SetStart(d.start)
+	b.final = d.final.Clone()
+
+	for s, seq := range d.Transitions() {
+		for ranges, next := range seq {
+			for _, r := range ranges {
+				b.AddTransition(s, r.Lo, r.Hi, []State{next})
+			}
+		}
+	}
+
+	return b.Build()
+}
+
 // DOT generates a DOT representation of the DFA transition graph for visualization.
 func (d *DFA) DOT() string {
-	// Get the classID-to-ranges mapping.
-	classes := d.classes()
-
 	graph := dot.NewGraph(false, true, false, "DFA", dot.RankDirLR, "", "", dot.ShapeCircle)
 
 	for _, s := range d.States() {
@@ -463,7 +470,7 @@ func (d *DFA) DOT() string {
 
 	for s, stab := range d.trans.All() {
 		for cid, next := range stab.All() {
-			if ranges, ok := classes.Get(cid); ok {
+			if ranges, ok := d.classes().Get(cid); ok {
 				from := fmt.Sprintf("%d", s)
 				to := fmt.Sprintf("%d", next)
 

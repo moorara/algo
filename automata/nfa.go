@@ -9,10 +9,13 @@ import (
 
 	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/range/disc"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/symboltable"
 )
+
+var εRange = disc.Range[Symbol]{Lo: E, Hi: E}
 
 /* ------------------------------------------------------------------------------------------------------------------------ */
 
@@ -161,8 +164,8 @@ func (b *NFABuilder) SetStart(s State) *NFABuilder {
 }
 
 // SetFinal sets the final (accepting) states of the NFA.
-func (b *NFABuilder) SetFinal(ss ...State) *NFABuilder {
-	b.final = NewStates(ss...)
+func (b *NFABuilder) SetFinal(f []State) *NFABuilder {
+	b.final = NewStates(f...)
 	return b
 }
 
@@ -298,6 +301,62 @@ type NFA struct {
 	_classes classMapping
 }
 
+// εClosure returns the set of NFA states reachable from some NFA state s in set T on ε-transitions alone.
+// εClosure(T) = Union(εClosure(s)) for all s ∈ T.
+func (n *NFA) εClosure(T States) States {
+	closure := T.Clone()
+
+	// Look up the class ID for ε
+	_, eid, hasε := n.ranges.Find(E)
+	if !hasε {
+		return closure
+	}
+
+	stack := list.NewStack[State](64, nil) // Approximation
+	for s := range T.All() {
+		stack.Push(s)
+	}
+
+	for !stack.IsEmpty() {
+		t, _ := stack.Pop()
+
+		if next := n.next(t, eid); next != nil {
+			for u := range next.All() {
+				if !closure.Contains(u) {
+					closure.Add(u)
+					stack.Push(u)
+				}
+			}
+		}
+	}
+
+	return closure
+}
+
+// move returns the set of NFA states to which there is a transition on the given input from some state s in T.
+func (n *NFA) move(T States, cid classID) States {
+	states := NewStates()
+
+	for s := range T.All() {
+		if next := n.next(s, cid); next != nil {
+			states = states.Union(next)
+		}
+	}
+
+	return states
+}
+
+// next returns the set of next states from state s on the given input.
+func (n *NFA) next(s State, cid classID) States {
+	if stab, ok := n.trans.Get(s); ok {
+		if next, ok := stab.Get(cid); ok {
+			return next
+		}
+	}
+
+	return nil
+}
+
 // String implements the fmt.Stringer interface.
 func (n *NFA) String() string {
 	var b bytes.Buffer
@@ -313,13 +372,10 @@ func (n *NFA) String() string {
 		b.Truncate(b.Len() - 2)
 	}
 
-	// Get the classID-to-ranges mapping.
-	classes := n.classes()
-
 	trans := make([]string, 0, n.trans.Size()*2) // Approximation
 	for s, stab := range n.trans.All() {
 		for cid, next := range stab.All() {
-			if ranges, ok := classes.Get(cid); ok {
+			if ranges, ok := n.classes().Get(cid); ok {
 				trans = append(trans, fmt.Sprintf("  %d -- %s --> %s", s, ranges, next))
 			}
 		}
@@ -388,17 +444,7 @@ func (n *NFA) Symbols() []disc.Range[Symbol] {
 	if n._symbols == nil {
 		n._symbols = make([]disc.Range[Symbol], 0, n.ranges.Size())
 		for r := range n.ranges.All() {
-			if r.Includes(E) {
-				lr, rr := r.Subtract(disc.Range[Symbol]{Lo: r.Lo, Hi: r.Hi})
-
-				if !lr.Empty {
-					n._symbols = append(n._symbols, lr.Range)
-				}
-
-				if !rr.Empty {
-					n._symbols = append(n._symbols, rr.Range)
-				}
-			} else {
+			if r != εRange {
 				n._symbols = append(n._symbols, r)
 			}
 		}
@@ -441,13 +487,10 @@ func (n *NFA) Transitions() iter.Seq2[State, iter.Seq2[[]disc.Range[Symbol], []S
 
 // TransitionsFrom returns all transitions from the given state in the NFA.
 func (n *NFA) TransitionsFrom(s State) iter.Seq2[[]disc.Range[Symbol], []State] {
-	// Get classID-to-ranges mapping.
-	classes := n.classes()
-
 	return func(yield func([]disc.Range[Symbol], []State) bool) {
 		if stab, ok := n.trans.Get(s); ok {
 			for cid, next := range stab.All() {
-				if ranges, ok := classes.Get(cid); ok {
+				if ranges, ok := n.classes().Get(cid); ok {
 					k := generic.Collect1(ranges.All())
 					v := generic.Collect1(next.All())
 
@@ -465,7 +508,7 @@ func (n *NFA) Star() *NFA {
 	start, final := State(0), State(1)
 	sm := newStateManager(final)
 
-	b := NewNFABuilder().SetStart(start).SetFinal(final)
+	b := NewNFABuilder().SetStart(start).SetFinal([]State{final})
 
 	for s, seq := range n.Transitions() {
 		ss := sm.GetOrCreateState(0, s)
@@ -503,7 +546,7 @@ func (n *NFA) Union(ns ...*NFA) *NFA {
 	start, final := State(0), State(1)
 	sm := newStateManager(final)
 
-	b := NewNFABuilder().SetStart(start).SetFinal(final)
+	b := NewNFABuilder().SetStart(start).SetFinal([]State{final})
 
 	for id, nfa := range all {
 		for s, seq := range nfa.Transitions() {
@@ -541,7 +584,7 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 	start, final := State(0), []State{0}
 	sm := newStateManager(0)
 
-	b := NewNFABuilder().SetStart(start).SetFinal(final...)
+	b := NewNFABuilder().SetStart(start).SetFinal(final)
 
 	for id, nfa := range all {
 		for s, seq := range nfa.Transitions() {
@@ -585,16 +628,61 @@ func (n *NFA) Concat(ns ...*NFA) *NFA {
 		}
 	}
 
-	b.SetFinal(final...)
+	b.SetFinal(final)
+
+	return b.Build()
+}
+
+// ToDFA constructs a new DFA accepting the same language as the NFA.
+// It implements the subset construction algorithm.
+func (n *NFA) ToDFA() *DFA {
+	// Look up the class ID for ε
+	_, eid, hasε := n.ranges.Find(E)
+
+	b := NewDFABuilder().SetStart(0)
+
+	// Initially, ε-closure(s₀) is the only state in Dstates
+	S0 := NewStates(n.start)
+	Dstates := list.NewSoftQueue(EqStates)
+	Dstates.Enqueue(n.εClosure(S0))
+
+	for T, i := Dstates.Dequeue(); i >= 0; T, i = Dstates.Dequeue() {
+		// For each input symbol c (or equivalency for each equivalence class of the input symbols)
+		for cid, ranges := range n.classes().All() {
+			if !hasε || cid != eid {
+				U := n.εClosure(n.move(T, cid))
+
+				// If U is not in Dstates, add U to Dstates
+				j := Dstates.Contains(U)
+				if j == -1 {
+					j = Dstates.Enqueue(U)
+				}
+
+				for r := range ranges.All() {
+					b.AddTransition(State(i), r.Lo, r.Hi, State(j))
+				}
+			}
+		}
+	}
+
+	final := NewStates()
+
+	for i, S := range Dstates.Values() {
+		for f := range n.final.All() {
+			if S.Contains(f) {
+				final.Add(State(i))
+				break // The accepting states of D are all those sets of N's states that include at least one accepting state of N
+			}
+		}
+	}
+
+	b.final = final
 
 	return b.Build()
 }
 
 // DOT generates a DOT representation of the NFA transition graph for visualization.
 func (n *NFA) DOT() string {
-	// Get the classID-to-ranges mapping.
-	classes := n.classes()
-
 	graph := dot.NewGraph(false, true, false, "NFA", dot.RankDirLR, "", "", dot.ShapeCircle)
 
 	for _, s := range n.States() {
@@ -616,7 +704,7 @@ func (n *NFA) DOT() string {
 
 	for s, stab := range n.trans.All() {
 		for cid, next := range stab.All() {
-			if ranges, ok := classes.Get(cid); ok {
+			if ranges, ok := n.classes().Get(cid); ok {
 				for t := range next.All() {
 					from := fmt.Sprintf("%d", s)
 					to := fmt.Sprintf("%d", t)
