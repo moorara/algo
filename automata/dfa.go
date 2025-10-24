@@ -12,6 +12,7 @@ import (
 	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/range/disc"
 	"github.com/moorara/algo/set"
+	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
 
@@ -339,6 +340,109 @@ func (d *DFA) Equal(rhs *DFA) bool {
 		d.final.Equal(rhs.final) &&
 		d.ranges.Equal(rhs.ranges) &&
 		d.trans.Equal(rhs.trans)
+}
+
+// Isomorphic determines whether or not two DFAs are isomorphically the same.
+//
+// Two DFAs D₁ and D₂ are said to be isomorphic if there exists a bijection f: S(D₁) → S(D₂) between their state sets such that,
+// for every input symbol a, there is a transition from state s to state t on input a in D₁
+// if and only if there is a transition from state f(s) to state f(t) on input a in D₂.
+//
+// In simpler terms, the two DFAs have the same structure:
+// one can be transformed into the other by renaming its states and preserving the transitions.
+func (d *DFA) Isomorphic(rhs *DFA) bool {
+	// D₁ and D₂ must have the same number of final states.
+	if d.final.Size() != rhs.final.Size() {
+		return false
+	}
+
+	// D₁ and D₂ must have the same number of states.
+	Q1, Q2 := d.States(), rhs.States()
+	if len(Q1) != len(Q2) {
+		return false
+	}
+
+	// D₁ and D₂ must have the same input alphabet.
+	Σ1, Σ2 := d.Symbols(), rhs.Symbols()
+
+	if len(Σ1) != len(Σ2) {
+		return false
+	}
+
+	for i := range Σ1 {
+		if Σ1[i] != Σ2[i] {
+			return false
+		}
+	}
+
+	// D₁ and D₂ must have the same sorted degree sequence.
+	// len(degs1) == len(degs2) since D₁ and D₂ have the same number of states.
+	degs1, degs2 := d.getSortedDegreeSequence(), rhs.getSortedDegreeSequence()
+	for i := range degs1 {
+		if degs1[i] != degs2[i] {
+			return false
+		}
+	}
+
+	// Since generateStatePermutations uses backtracking and modifies the slice in-place, we need a copy.
+	states := make([]State, len(Q1))
+	copy(states, Q1)
+
+	// Methodically checking if any permutation of D₁ states is equal to D₂.
+	return !generateStatePermutations(states, 0, len(states)-1, func(permutation []State) bool {
+		// Create a bijection between the states of D₁ and the current permutation of D₁.
+		// A bijection or bijective function is a type of function that creates a one-to-one correspondence between two sets (states1 ↔ permutation).
+		bijection := make(map[State]State, len(Q1))
+		for i, s := range Q1 {
+			bijection[s] = permutation[i]
+		}
+
+		permutedStart := bijection[d.start]
+
+		permutedFinal := make([]State, 0, d.final.Size())
+		for f := range d.final.All() {
+			permutedFinal = append(permutedFinal, bijection[f])
+		}
+
+		b := NewDFABuilder().SetStart(permutedStart).SetFinal(permutedFinal)
+
+		for s, stab := range d.trans.All() {
+			for cid, t := range stab.All() {
+				ss, tt := bijection[s], bijection[t]
+
+				if ranges, ok := d.classes().Get(cid); ok {
+					for r := range ranges.All() {
+						b.AddTransition(ss, r.Lo, r.Hi, tt)
+					}
+				}
+			}
+		}
+
+		// If the current permutation of D₁ is equal to D₂, we stop checking more permutations by returning false.
+		// If the current permutation of D₁ is not equal to D₂, we continue with checking more permutations by returning true.
+		return !b.Build().Equal(rhs)
+	})
+}
+
+// getSortedDegreeSequence calculates the total degree (sum of in-degrees and out-degrees)
+// for each state in the DFA and returns the degree sequence sorted in ascending order.
+func (d *DFA) getSortedDegreeSequence() []int {
+	totalDegrees := map[State]int{}
+	for s, strans := range d.trans.All() {
+		for _, t := range strans.All() {
+			totalDegrees[s]++
+			totalDegrees[t]++
+		}
+	}
+
+	sortedDegrees := make([]int, len(totalDegrees))
+	for i, degree := range totalDegrees {
+		sortedDegrees[i] = degree
+	}
+
+	sort.Quick3Way[int](sortedDegrees, generic.NewCompareFunc[int]())
+
+	return sortedDegrees
 }
 
 // Start returns the start state of the DFA.

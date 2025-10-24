@@ -350,6 +350,161 @@ func TestNFA_Equal(t *testing.T) {
 	}
 }
 
+func TestNFA_Isomorphic(t *testing.T) {
+	nfa := &NFA{
+		start: 0,
+		final: NewStates(2, 4),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(1, 3)).
+			Add(1, 1, NewStates(2)).
+			Add(2, 1, NewStates(2)).
+			Add(3, 2, NewStates(4)).
+			Add(4, 2, NewStates(4)),
+	}
+
+	tests := []struct {
+		name               string
+		n                  *NFA
+		rhs                *NFA
+		expectedIsomorphic bool
+	}{
+		{
+			name: "DiffFinalLens",
+			n:    nfa,
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+				}),
+				trans: newNFATransitionTable(),
+			},
+			expectedIsomorphic: false,
+		},
+		{
+			name: "DiffStateLens",
+			n:    nfa,
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1, 3)).
+					Add(1, 1, NewStates(2)).
+					Add(2, 1, NewStates(2)).
+					Add(3, 2, NewStates(4)).
+					Add(4, 2, NewStates(4)).
+					Add(4, 1, NewStates(5)).
+					Add(4, 2, NewStates(5)),
+			},
+			expectedIsomorphic: false,
+		},
+		{
+			name: "DiffAlphabetLens",
+			n:    nfa,
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+					{Range: disc.Range[Symbol]{Lo: 'c', Hi: 'c'}, Value: 3},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1, 3)).
+					Add(1, 1, NewStates(2)).
+					Add(2, 1, NewStates(2)).
+					Add(3, 2, NewStates(4)).
+					Add(4, 2, NewStates(4)),
+			},
+			expectedIsomorphic: false,
+		},
+		{
+			name: "AlphabetNotEqual",
+			n:    nfa,
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'z', Hi: 'z'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1, 3)).
+					Add(1, 1, NewStates(2)).
+					Add(2, 1, NewStates(2)).
+					Add(3, 2, NewStates(4)).
+					Add(4, 2, NewStates(4)),
+			},
+			expectedIsomorphic: false,
+		},
+		{
+			name: "SortedDegreesNotEqual",
+			n:    nfa,
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1, 3)).
+					Add(1, 1, NewStates(2)).
+					Add(2, 1, NewStates(2)).
+					Add(3, 2, NewStates(4)),
+			},
+			expectedIsomorphic: false,
+		},
+		{
+			name:               "Equal",
+			n:                  nfa,
+			rhs:                nfa,
+			expectedIsomorphic: true,
+		},
+		{
+			name: "Isomorphic",
+			n:    nfa,
+			rhs: &NFA{
+				start: 4,
+				final: NewStates(0, 1),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(4, 0, NewStates(2, 3)).
+					Add(2, 1, NewStates(0)).
+					Add(0, 1, NewStates(0)).
+					Add(3, 2, NewStates(1)).
+					Add(1, 2, NewStates(1)),
+			},
+			expectedIsomorphic: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedIsomorphic, tc.n.Isomorphic(tc.rhs))
+		})
+	}
+}
+
 func TestNFA_Start(t *testing.T) {
 	tests := []struct {
 		name          string

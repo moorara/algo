@@ -332,6 +332,148 @@ func TestDFA_Equal(t *testing.T) {
 	}
 }
 
+func TestDFA_Isomorphic(t *testing.T) {
+	dfa := &DFA{
+		start: 0,
+		final: NewStates(1, 2),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+		}),
+		trans: newDFATransitionTable().
+			Add(0, 0, 1).
+			Add(1, 0, 1).
+			Add(0, 1, 2).
+			Add(2, 1, 2),
+	}
+
+	tests := []struct {
+		name               string
+		d                  *DFA
+		rhs                *DFA
+		expectedIsomorphic bool
+	}{
+		{
+			name: "DiffFinalLens",
+			d:    dfa,
+			rhs: &DFA{
+				start: 0,
+				final: NewStates(2),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+				}),
+				trans: newDFATransitionTable(),
+			},
+			expectedIsomorphic: false,
+		},
+		{
+			name: "DiffStateLens",
+			d:    dfa,
+			rhs: &DFA{
+				start: 0,
+				final: NewStates(1, 2),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+				}),
+				trans: newDFATransitionTable().
+					Add(0, 0, 1).
+					Add(1, 0, 1).
+					Add(0, 1, 2).
+					Add(2, 1, 2).
+					Add(2, 0, 3).
+					Add(2, 1, 3),
+			},
+			expectedIsomorphic: false,
+		},
+		{
+			name: "DiffAlphabetLens",
+			d:    dfa,
+			rhs: &DFA{
+				start: 0,
+				final: NewStates(1, 2),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'c', Hi: 'c'}, Value: 2},
+				}),
+				trans: newDFATransitionTable().
+					Add(0, 0, 1).
+					Add(1, 0, 1).
+					Add(0, 1, 2).
+					Add(2, 1, 2),
+			},
+			expectedIsomorphic: false,
+		},
+		{
+			name: "AlphabetNotEqual",
+			d:    dfa,
+			rhs: &DFA{
+				start: 0,
+				final: NewStates(1, 2),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'z', Hi: 'z'}, Value: 1},
+				}),
+				trans: newDFATransitionTable().
+					Add(0, 0, 1).
+					Add(1, 0, 1).
+					Add(0, 1, 2).
+					Add(2, 1, 2),
+			},
+			expectedIsomorphic: false,
+		},
+		{
+			name: "SortedDegreesNotEqual",
+			d:    dfa,
+			rhs: &DFA{
+				start: 0,
+				final: NewStates(1, 2),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+				}),
+				trans: newDFATransitionTable().
+					Add(0, 0, 1).
+					Add(1, 0, 1).
+					Add(0, 1, 2),
+			},
+			expectedIsomorphic: false,
+		},
+		{
+			name:               "Equal",
+			d:                  dfa,
+			rhs:                dfa,
+			expectedIsomorphic: true,
+		},
+		{
+			name: "Isomorphic",
+			d:    dfa,
+			rhs: &DFA{
+				start: 2,
+				final: NewStates(0, 1),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+				}),
+				trans: newDFATransitionTable().
+					Add(2, 0, 0).
+					Add(0, 0, 0).
+					Add(2, 1, 1).
+					Add(1, 1, 1),
+			},
+			expectedIsomorphic: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedIsomorphic, tc.d.Isomorphic(tc.rhs))
+		})
+	}
+}
+
 func TestDFA_Start(t *testing.T) {
 	tests := []struct {
 		name          string

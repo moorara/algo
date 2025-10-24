@@ -12,6 +12,7 @@ import (
 	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/range/disc"
 	"github.com/moorara/algo/set"
+	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
 
@@ -410,6 +411,116 @@ func (n *NFA) Equal(rhs *NFA) bool {
 		n.trans.Equal(rhs.trans)
 }
 
+// Isomorphic determines whether or not two NFAs are isomorphically the same.
+//
+// Two NFAs N₁ and N₂ are said to be isomorphic if there exists a bijection f: S(N₁) → S(N₂) between their state sets such that,
+// for every input symbol a, there is a transition from state s to state t on input a in N₁
+// if and only if there is a transition from state f(s) to state f(t) on input a in N₂.
+//
+// In simpler terms, the two NFAs have the same structure:
+// one can be transformed into the other by renaming its states and preserving the transitions.
+func (n *NFA) Isomorphic(rhs *NFA) bool {
+	// N₁ and N₂ must have the same number of final states.
+	if n.final.Size() != rhs.final.Size() {
+		return false
+	}
+
+	// N₁ and N₂ must have the same number of states.
+	Q1, Q2 := n.States(), rhs.States()
+	if len(Q1) != len(Q2) {
+		return false
+	}
+
+	// N₁ and N₂ must have the same input alphabet.
+	Σ1, Σ2 := n.Symbols(), rhs.Symbols()
+
+	if len(Σ1) != len(Σ2) {
+		return false
+	}
+
+	for i := range Σ1 {
+		if Σ1[i] != Σ2[i] {
+			return false
+		}
+	}
+
+	// N₁ and N₂ must have the same sorted degree sequence.
+	// len(degs1) == len(degs2) since N₁ and N₂ have the same number of states.
+	degs1, degs2 := n.getSortedDegreeSequence(), rhs.getSortedDegreeSequence()
+	for i := range degs1 {
+		if degs1[i] != degs2[i] {
+			return false
+		}
+	}
+
+	// Since generateStatePermutations uses backtracking and modifies the slice in-place, we need a copy.
+	states := make([]State, len(Q1))
+	copy(states, Q1)
+
+	// Methodically checking if any permutation of N₁ states is equal to N₂.
+	return !generateStatePermutations(states, 0, len(states)-1, func(permutation []State) bool {
+		// Create a bijection between the states of N₁ and the current permutation of N₁.
+		// A bijection or bijective function is a type of function that creates a one-to-one correspondence between two sets (states1 ↔ permutation).
+		bijection := make(map[State]State, len(Q1))
+		for i, s := range Q1 {
+			bijection[s] = permutation[i]
+		}
+
+		permutedStart := bijection[n.start]
+
+		permutedFinal := make([]State, 0, n.final.Size())
+		for f := range n.final.All() {
+			permutedFinal = append(permutedFinal, bijection[f])
+		}
+
+		b := NewNFABuilder().SetStart(permutedStart).SetFinal(permutedFinal)
+
+		for s, stab := range n.trans.All() {
+			for cid, ts := range stab.All() {
+				ss := bijection[s]
+
+				tts := make([]State, 0, ts.Size())
+				for t := range ts.All() {
+					tts = append(tts, bijection[t])
+				}
+
+				if ranges, ok := n.classes().Get(cid); ok {
+					for r := range ranges.All() {
+						b.AddTransition(ss, r.Lo, r.Hi, tts)
+					}
+				}
+			}
+		}
+
+		// If the current permutation of N₁ is equal to N₂, we stop checking more permutations by returning false.
+		// If the current permutation of N₁ is not equal to N₂, we continue with checking more permutations by returning true.
+		return !b.Build().Equal(rhs)
+	})
+}
+
+// getSortedDegreeSequence calculates the total degree (sum of in-degrees and out-degrees)
+// for each state in the NFA and returns the degree sequence sorted in ascending order.
+func (n *NFA) getSortedDegreeSequence() []int {
+	totalDegrees := map[State]int{}
+	for s, strans := range n.trans.All() {
+		for _, states := range strans.All() {
+			for t := range states.All() {
+				totalDegrees[s]++
+				totalDegrees[t]++
+			}
+		}
+	}
+
+	sortedDegrees := make([]int, len(totalDegrees))
+	for i, degree := range totalDegrees {
+		sortedDegrees[i] = degree
+	}
+
+	sort.Quick3Way[int](sortedDegrees, generic.NewCompareFunc[int]())
+
+	return sortedDegrees
+}
+
 // Start returns the start state of the NFA.
 func (n *NFA) Start() State {
 	return n.start
@@ -428,7 +539,7 @@ func (n *NFA) States() []State {
 		for s, stab := range n.trans.All() {
 			states.Add(s)
 			for _, next := range stab.All() {
-				states.Union(next)
+				states = states.Union(next)
 			}
 		}
 
