@@ -276,7 +276,8 @@ func (b *DFABuilder) Build() *DFA {
 //   - q₀ ∈ Q is the initial (start) state.
 //   - F ⊆ Q is the set of accepting (final) states.
 //
-// This DFA model is meant to be immutable once created.
+// This model is meant to be an immutable representation of deterministic finite automata.
+// Algorithms that transform or optimize a DFA must construct and return a new DFA.
 type DFA struct {
 	start  State
 	final  States
@@ -350,6 +351,8 @@ func (d *DFA) Equal(rhs *DFA) bool {
 //
 // In simpler terms, the two DFAs have the same structure:
 // one can be transformed into the other by renaming its states and preserving the transitions.
+//
+// This is a very expensive operation as graph isomorphism problem is an NP (non-deterministic polynomial time) problem.
 func (d *DFA) Isomorphic(rhs *DFA) bool {
 	// D₁ and D₂ must have the same number of final states.
 	if d.final.Size() != rhs.final.Size() {
@@ -1068,3 +1071,60 @@ func (d *DFA) DOT() string {
 
 	return graph.DOT() + "\n"
 }
+
+// Runner constructs a new DFARunner for simulating (running) the DFA on input symbols.
+func (d *DFA) Runner() *DFARunner {
+	trans := symboltable.NewQuadraticHashTable(HashState, EqState, eqClassIDStateTable, symboltable.HashOpts{})
+
+	for s, stab := range d.trans.All() {
+		stabClone := symboltable.NewQuadraticHashTable(hashClassID, eqClassID, EqState, symboltable.HashOpts{})
+		for cid, next := range stab.All() {
+			stabClone.Put(cid, next)
+		}
+
+		trans.Put(s, stabClone)
+	}
+
+	return &DFARunner{
+		start:  d.start,
+		final:  d.final.Clone(),
+		ranges: d.ranges.Clone(),
+		trans:  trans,
+	}
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+// DFARunner is used for simulating (running) a DFA on input symbols.
+// It is immutable and optimized for fast execution.
+type DFARunner struct {
+	start  State
+	final  States
+	ranges rangeMapping
+	trans  symboltable.SymbolTable[State, symboltable.SymbolTable[classID, State]]
+}
+
+// Next returns the next state from state s on input symbol a.
+func (r *DFARunner) Next(s State, a Symbol) State {
+	if stab, ok := r.trans.Get(s); ok {
+		if _, cid, ok := r.ranges.Find(a); ok {
+			if next, ok := stab.Get(cid); ok {
+				return next
+			}
+		}
+	}
+
+	return -1
+}
+
+// Accept determines whether an input string is recognized (accepted) by the DFA.
+func (r *DFARunner) Accept(s String) bool {
+	var curr State
+	for curr = r.start; len(s) > 0; s = s[1:] {
+		curr = r.Next(curr, s[0])
+	}
+
+	return r.final.Contains(curr)
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------ */

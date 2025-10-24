@@ -977,3 +977,97 @@ func TestDFA_DOT(t *testing.T) {
 		})
 	}
 }
+
+func TestDFA_Runner(t *testing.T) {
+	tests := []struct {
+		name string
+		d    *DFA
+	}{
+		{
+			name: "OK",
+			d:    testDFA[0],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := tc.d.Runner()
+
+			assert.NotNil(t, r)
+			assert.NotNil(t, r.trans)
+			assert.Equal(t, tc.d.start, r.start)
+			assert.True(t, r.final.Equal(tc.d.final))
+			assert.True(t, r.ranges.Equal(tc.d.ranges))
+			assert.NotNil(t, r.trans)
+		})
+	}
+}
+
+func TestDFARunner_Next(t *testing.T) {
+	runner := testDFA[0].Runner()
+
+	tests := []struct {
+		name         string
+		r            *DFARunner
+		s            State
+		a            Symbol
+		expectedNext State
+	}{
+		{
+			name:         "NotOK",
+			r:            runner,
+			s:            0,
+			a:            '0',
+			expectedNext: -1,
+		},
+		{
+			name:         "OK",
+			r:            runner,
+			s:            0,
+			a:            '1',
+			expectedNext: 1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedNext, tc.r.Next(tc.s, tc.a))
+		})
+	}
+}
+
+func TestDFARunner_Accept(t *testing.T) {
+	runner := testDFA[5].Runner()
+
+	tests := []struct {
+		name           string
+		r              *DFARunner
+		s              String
+		expectedAccept bool
+	}{
+		{
+			name:           "EmptyString",
+			r:              runner,
+			s:              String{},
+			expectedAccept: false,
+		},
+		{
+			name:           "NotAccepted",
+			r:              runner,
+			s:              String{'0', '1', '_', 'I', 'd'},
+			expectedAccept: false,
+		},
+		{
+			name:           "Accepted",
+			r:              runner,
+			s:              String{'I', 'd', '_', '0', '1'},
+			expectedAccept: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedAccept, tc.r.Accept(tc.s))
+		})
+	}
+}

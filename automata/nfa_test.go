@@ -879,3 +879,96 @@ func TestNFA_DOT(t *testing.T) {
 		})
 	}
 }
+
+func TestNFA_Runner(t *testing.T) {
+	tests := []struct {
+		name string
+		n    *NFA
+	}{
+		{
+			name: "OK",
+			n:    testNFA[0],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := tc.n.Runner()
+
+			assert.NotNil(t, r)
+			assert.NotNil(t, r.trans)
+			assert.Equal(t, tc.n.start, r.start)
+			assert.True(t, r.final.Equal(tc.n.final))
+			assert.True(t, r.ranges.Equal(tc.n.ranges))
+		})
+	}
+}
+
+func TestNFARunner_Next(t *testing.T) {
+	runner := testNFA[0].Runner()
+
+	tests := []struct {
+		name         string
+		r            *NFARunner
+		s            State
+		a            Symbol
+		expectedNext []State
+	}{
+		{
+			name:         "NotOK",
+			r:            runner,
+			s:            0,
+			a:            'a',
+			expectedNext: nil,
+		},
+		{
+			name:         "OK",
+			r:            runner,
+			s:            0,
+			a:            E,
+			expectedNext: []State{1, 3},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedNext, tc.r.Next(tc.s, tc.a))
+		})
+	}
+}
+
+func TestNFARunner_Accept(t *testing.T) {
+	runner := testNFA[5].Runner()
+
+	tests := []struct {
+		name           string
+		r              *NFARunner
+		s              String
+		expectedAccept bool
+	}{
+		{
+			name:           "EmptyString",
+			r:              runner,
+			s:              String{},
+			expectedAccept: false,
+		},
+		{
+			name:           "NotAccepted",
+			r:              runner,
+			s:              String{'0', '1', '_', 'I', 'd'},
+			expectedAccept: false,
+		},
+		{
+			name:           "Accepted",
+			r:              runner,
+			s:              String{'I', 'd', '_', '0', '1'},
+			expectedAccept: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedAccept, tc.r.Accept(tc.s))
+		})
+	}
+}

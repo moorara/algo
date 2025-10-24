@@ -289,7 +289,8 @@ func (b *NFABuilder) Build() *NFA {
 //   - q₀ ∈ Q is the initial (start) state.
 //   - F ⊆ Q is the set of accepting (final) states.
 //
-// This NFA model is meant to be immutable once created.
+// This model is meant to be an immutable representation of non-deterministic finite automata.
+// Algorithms that transform or optimize a NFA must construct and return a new NFA.
 type NFA struct {
 	start  State
 	final  States
@@ -419,6 +420,8 @@ func (n *NFA) Equal(rhs *NFA) bool {
 //
 // In simpler terms, the two NFAs have the same structure:
 // one can be transformed into the other by renaming its states and preserving the transitions.
+//
+// This is a very expensive operation as graph isomorphism problem is an NP (non-deterministic polynomial time) problem.
 func (n *NFA) Isomorphic(rhs *NFA) bool {
 	// N₁ and N₂ must have the same number of final states.
 	if n.final.Size() != rhs.final.Size() {
@@ -828,3 +831,116 @@ func (n *NFA) DOT() string {
 
 	return graph.DOT() + "\n"
 }
+
+// Runner constructs a new NFARunner for simulating (running) the NFA on input symbols.
+func (n *NFA) Runner() *NFARunner {
+	trans := symboltable.NewQuadraticHashTable(HashState, EqState, eqClassIDStatesTable, symboltable.HashOpts{})
+
+	for s, stab := range n.trans.All() {
+		stabClone := symboltable.NewQuadraticHashTable(hashClassID, eqClassID, EqStates, symboltable.HashOpts{})
+		for cid, next := range stab.All() {
+			stabClone.Put(cid, next)
+		}
+
+		trans.Put(s, stabClone)
+	}
+
+	return &NFARunner{
+		start:  n.start,
+		final:  n.final.Clone(),
+		ranges: n.ranges.Clone(),
+		trans:  trans,
+	}
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+// NFARunner is used for simulating (running) a NFA on input symbols.
+// It is immutable and optimized for fast execution.
+type NFARunner struct {
+	start  State
+	final  States
+	ranges rangeMapping
+	trans  symboltable.SymbolTable[State, symboltable.SymbolTable[classID, States]]
+}
+
+// εClosure returns the set of NFA states reachable from some NFA state s in set T on ε-transitions alone.
+// εClosure(T) = Union(εClosure(s)) for all s ∈ T.
+func (r *NFARunner) εClosure(T States) States {
+	closure := T.Clone()
+
+	stack := list.NewStack[State](64, nil) // Approximation
+	for s := range T.All() {
+		stack.Push(s)
+	}
+
+	for !stack.IsEmpty() {
+		t, _ := stack.Pop()
+
+		if next := r.next(t, E); next != nil {
+			for u := range next.All() {
+				if !closure.Contains(u) {
+					closure.Add(u)
+					stack.Push(u)
+				}
+			}
+		}
+	}
+
+	return closure
+}
+
+// move returns the set of NFA states to which there is a transition on the given input from some state s in T.
+func (r *NFARunner) move(T States, a Symbol) States {
+	states := NewStates()
+
+	for s := range T.All() {
+		if next := r.next(s, a); next != nil {
+			states = states.Union(next)
+		}
+	}
+
+	return states
+}
+
+// next returns the set of next states from state s on the given input.
+func (r *NFARunner) next(s State, a Symbol) States {
+	if stab, ok := r.trans.Get(s); ok {
+		if _, cid, ok := r.ranges.Find(a); ok {
+			if next, ok := stab.Get(cid); ok {
+				return next
+			}
+		}
+	}
+
+	return nil
+}
+
+// Next returns the next states from state s on input symbol a.
+func (r *NFARunner) Next(s State, a Symbol) []State {
+	if next := r.next(s, a); next != nil {
+		return generic.Collect1(next.All())
+	}
+
+	return nil
+}
+
+// Accept determines whether an input string is recognized (accepted) by the NFA.
+func (r *NFARunner) Accept(s String) bool {
+	S := NewStates(r.start)
+
+	for S = r.εClosure(S); len(s) > 0; s = s[1:] {
+		S = r.εClosure(r.move(S, s[0]))
+	}
+
+	for s := range S.All() {
+		if r.final.Contains(s) {
+			return true
+		}
+	}
+
+	return false
+
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
