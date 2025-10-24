@@ -1,5 +1,28 @@
 # Changelog
 
+## [v0.12.0](https://github.com/moorara/algo/tree/v0.12.0) (2025-10-24)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.11.0...v0.12.0)
+
+**New Features:**
+
+  - Support range-based input for finite automata [#311](https://github.com/moorara/algo/issues/311) ([moorara](https://github.com/moorara))
+
+**Merged Changes:**
+
+  - Refactor automata [#327](https://github.com/moorara/algo/pull/327) ([moorara](https://github.com/moorara))
+  - Update golang.org/x/exp digest to 90e834f [#325](https://github.com/moorara/algo/pull/325) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Update golang.org/x/exp digest to d2f985d [#324](https://github.com/moorara/algo/pull/324) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Update Go modules [#323](https://github.com/moorara/algo/pull/323) ([moorara](https://github.com/moorara))
+  - Update golang.org/x/exp digest to 42675ad [#319](https://github.com/moorara/algo/pull/319) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Update actions/checkout action to v5 [#320](https://github.com/moorara/algo/pull/320) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Update golang.org/x/exp digest to 645b1fa [#318](https://github.com/moorara/algo/pull/318) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Update golang.org/x/exp digest to dcc06ee [#317](https://github.com/moorara/algo/pull/317) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Address all linting issues [#316](https://github.com/moorara/algo/pull/316) ([moorara](https://github.com/moorara))
+  - Update golang.org/x/exp digest to 054e65f [#314](https://github.com/moorara/algo/pull/314) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Update golang.org/x/exp digest to dead583 [#313](https://github.com/moorara/algo/pull/313) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+
+
 ## [v0.11.0](https://github.com/moorara/algo/tree/v0.11.0) (2025-02-22)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.10.10...v0.11.0)
