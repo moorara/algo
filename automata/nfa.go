@@ -4,40 +4,303 @@ import (
 	"bytes"
 	"fmt"
 	"iter"
+	"slices"
 	"strings"
 
 	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/list"
+	"github.com/moorara/algo/range/disc"
+	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
 )
 
-// NFA implements a non-deterministic finite automaton.
+var εRange = disc.Range[Symbol]{Lo: E, Hi: E}
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+// nfaTransitionEnds represents the states involved in a NFA transition.
+type nfaTransitionEnds struct {
+	State State
+	Next  States
+}
+
+var cmpNFATransitionEnds = func(lhs, rhs nfaTransitionEnds) int {
+	if c := CmpState(lhs.State, rhs.State); c != 0 {
+		return c
+	}
+
+	// Next States are sorted set and can be compared element-wise.
+
+	s1 := generic.Collect1(lhs.Next.All())
+	s2 := generic.Collect1(rhs.Next.All())
+
+	for i := 0; i < len(s1) && i < len(s2); i++ {
+		if c := CmpState(s1[i], s2[i]); c != 0 {
+			return c
+		}
+	}
+
+	return len(s1) - len(s2)
+}
+
+// nfaTransition  represents a transition from one state to a set of states on a range of input symbols.
+type nfaTransition struct {
+	Ends  nfaTransitionEnds
+	Range disc.Range[Symbol]
+}
+
+// nfaBound represents a boundary (start or end) of a range associated with a NFA transition.
+type nfaBound struct {
+	Value      Symbol
+	Start      bool
+	Transition nfaTransition
+}
+
+// nfaTransitionVector represents a NFA transition vector.
+type nfaTransitionVector set.Set[nfaTransitionEnds]
+
+func newNFATransitionVector() nfaTransitionVector {
+	return set.NewSorted(cmpNFATransitionEnds)
+}
+
+var cmpNFATransitionVector = func(lhs, rhs nfaTransitionVector) int {
+	v1 := generic.Collect1(lhs.All())
+	v2 := generic.Collect1(rhs.All())
+
+	for i := 0; i < len(v1) && i < len(v2); i++ {
+		if c := cmpNFATransitionEnds(v1[i], v2[i]); c != 0 {
+			return c
+		}
+	}
+
+	return len(v1) - len(v2)
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+var eqClassIDStatesTable = func(a, b symboltable.SymbolTable[classID, States]) bool {
+	if a == nil && b == nil {
+		return true
+	}
+
+	if a == nil || b == nil {
+		return false
+	}
+
+	return a.Equal(b)
+}
+
+// nfaTransitionTable represents the transition table of a NFA.
+type nfaTransitionTable struct {
+	// Use an ordered symbol table so iterations over states and classes are deterministic and
+	// the resulting computation and textual output are reproducible.
+	symboltable.SymbolTable[State, symboltable.SymbolTable[classID, States]]
+}
+
+// newNFATransitionTable creates a new instance of nfaTransitionTable.
+func newNFATransitionTable() *nfaTransitionTable {
+	return &nfaTransitionTable{
+		symboltable.NewRedBlack(CmpState, eqClassIDStatesTable),
+	}
+}
+
+// Clone implements the generic.Cloner interface.
+func (t *nfaTransitionTable) Clone() *nfaTransitionTable {
+	clone := newNFATransitionTable()
+
+	for s, stab := range t.All() {
+		stabClone := symboltable.NewRedBlack(cmpClassID, EqStates)
+		for cid, next := range stab.All() {
+			stabClone.Put(cid, next)
+		}
+		clone.Put(s, stabClone)
+	}
+
+	return clone
+}
+
+// Equal implements the generic.Equaler interface.
+func (t *nfaTransitionTable) Equal(rhs *nfaTransitionTable) bool {
+	return t.SymbolTable.Equal(rhs.SymbolTable)
+}
+
+// Add inserts a new transition into the NFA transition table.
+func (t *nfaTransitionTable) Add(s State, cid classID, next States) *nfaTransitionTable {
+	stab, ok := t.Get(s)
+	if !ok {
+		stab = symboltable.NewRedBlack(cmpClassID, EqStates)
+		t.Put(s, stab)
+	}
+
+	stab.Put(cid, next)
+
+	return t
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+// NFABuilder implements the Builder design pattern for constructing NFA instances.
+//
+// The Builder pattern separates the construction of an NFA from its representation,
+// This approach ensures the resulting NFA is immutable and optimized for simulation (running).
+type NFABuilder struct {
+	start State
+	final States
+	trans symboltable.SymbolTable[State, disc.RangeMap[Symbol, States]]
+}
+
+// NewNFABuilder creates a new NFA builder instance.
+func NewNFABuilder() *NFABuilder {
+	return &NFABuilder{
+		trans: symboltable.NewRedBlack[State, disc.RangeMap[Symbol, States]](CmpState, nil),
+	}
+}
+
+// SetStart sets the start state of the NFA.
+func (b *NFABuilder) SetStart(s State) *NFABuilder {
+	b.start = s
+	return b
+}
+
+// SetFinal sets the final (accepting) states of the NFA.
+func (b *NFABuilder) SetFinal(f []State) *NFABuilder {
+	b.final = NewStates(f...)
+	return b
+}
+
+// AddTransition adds transitions from state s to states next on all input symbols in the range [start, end].
+func (b *NFABuilder) AddTransition(s State, start, end Symbol, next []State) *NFABuilder {
+	ranges, ok := b.trans.Get(s)
+	if !ok {
+		opts := &disc.RangeMapOpts[Symbol, States]{Resolve: unionStates}
+		ranges = disc.NewRangeMap(EqStates, opts)
+		b.trans.Put(s, ranges)
+	}
+
+	ranges.Add(
+		disc.Range[Symbol]{Lo: start, Hi: end},
+		NewStates(next...),
+	)
+
+	return b
+}
+
+// Build constructs the NFA based on the configurations provided to the builder.
+//
+// This method reduces the size of the alphabet by computing the equivalence classes of input symbols based on the transition function.
+// The resulting NFA will recognize the same language, but with a minimized alphabet optimized for faster simulation and smaller memory footprint.
+//
+// Formally, given a NFA = (Q, Σ, δ, q₀, F), we want compute a partition of Σ into k equivalence classes such that
+//
+//	P = {C₁, C₂, ..., Cₖ} where each Cᵢ ⊆ Σ and ∪ Cᵢ = Σ
+//	∀ a, b ∈ Cᵢ, ∀ q ∈ Q: δ(q, a) = δ(q, b)
+//
+// Informally, two symbols are equivalent if they lead to the same next state from any given state (every state treats them the same).
+func (b *NFABuilder) Build() *NFA {
+	// Collect boundaries for all ranges.
+	bounds := make([]nfaBound, 0, b.trans.Size()*2*2) // Approximation
+	for s, ranges := range b.trans.All() {
+		for r, next := range ranges.All() {
+			bounds = append(bounds,
+				nfaBound{r.Lo, true, nfaTransition{nfaTransitionEnds{s, next}, r}},
+				nfaBound{r.Hi + 1, false, nfaTransition{nfaTransitionEnds{s, next}, r}},
+			)
+		}
+	}
+
+	// Sort boundaries in increasing order.
+	slices.SortFunc(bounds, func(lhs, rhs nfaBound) int {
+		return int(lhs.Value - rhs.Value)
+	})
+
+	active := make(map[nfaTransitionEnds]disc.Range[Symbol])
+	partition := make([]generic.KeyValue[disc.Range[Symbol], nfaTransitionVector], 0, len(bounds)/2) // Approximation
+
+	for i := 0; i < len(bounds)-1; i++ {
+		// Maintain a list of transitions seen between the beginning and end of the current range.
+		if b := bounds[i]; b.Start {
+			active[b.Transition.Ends] = b.Transition.Range
+		} else {
+			delete(active, b.Transition.Ends)
+		}
+
+		lo := bounds[i].Value
+		hi := bounds[i+1].Value - 1
+
+		// This effectively dedups the boundaries.
+		if lo <= hi {
+			// Collect all transitions seen between the beginning and end of the current range.
+			vector := newNFATransitionVector()
+			for ends := range active {
+				vector.Add(ends)
+			}
+
+			// Skip empty classes corresponding to ranges between the end of one boundary and start of the next one.
+			if vector.Size() > 0 {
+				partition = append(partition, generic.KeyValue[disc.Range[Symbol], nfaTransitionVector]{
+					Key: disc.Range[Symbol]{Lo: lo, Hi: hi},
+					Val: vector,
+				})
+			}
+		}
+	}
+
+	nextCID := classID(0)
+	transitionVectors := symboltable.NewRedBlack(cmpNFATransitionVector, eqClassID)
+	ranges := newRangeMapping(nil)
+	transitions := newNFATransitionTable()
+
+	// Group ranges by their transition vectors to form equivalence classes.
+	for _, sub := range partition {
+		cid, ok := transitionVectors.Get(sub.Val)
+		if !ok {
+			cid = nextCID
+			nextCID++
+			transitionVectors.Put(sub.Val, cid)
+		}
+
+		ranges.Add(sub.Key, cid)
+
+		// Build class-based transitions for the current range and its transitions.
+		for ends := range sub.Val.All() {
+			transitions.Add(ends.State, cid, ends.Next)
+		}
+	}
+
+	return &NFA{
+		start:  b.start,
+		final:  b.final,
+		ranges: ranges,
+		trans:  transitions,
+	}
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+// NFA represents a non-deterministic finite automaton.
+//
+// A NFA is defined by a 5-tuple (Q, Σ, δ, q₀, F) where:
+//
+//   - Q is a finite set of states.
+//   - Σ is a finite set of input symbols (alphabet).
+//   - δ: Q × Σ → P(Q) is the transition function.
+//   - q₀ ∈ Q is the initial (start) state.
+//   - F ⊆ Q is the set of accepting (final) states.
+//
+// This model is meant to be an immutable representation of non-deterministic finite automata.
+// Algorithms that transform or optimize a NFA must construct and return a new NFA.
 type NFA struct {
-	Start State
-	Final States
-	trans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, States]]
-}
+	start  State
+	final  States
+	ranges rangeMapping
+	trans  *nfaTransitionTable
 
-// NewNFA creates a new non-deterministic finite automaton.
-// Finite automata are recognizers; they simply say yes or no for each possible input string.
-func NewNFA(start State, final []State) *NFA {
-	return &NFA{
-		Start: start,
-		Final: NewStates(final...),
-		trans: symboltable.NewRedBlack(CmpState, eqSymbolStates),
-	}
-}
-
-// newNFA creates a new non-deterministic finite automaton with a set of final states.
-// This function is intended for internal use within this package only.
-func newNFA(start State, final States) *NFA {
-	return &NFA{
-		Start: start,
-		Final: final.Clone(),
-		trans: symboltable.NewRedBlack(CmpState, eqSymbolStates),
-	}
+	// Derived values (computed lazily)
+	_states  []State
+	_symbols []disc.Range[Symbol]
+	_classes classMapping
 }
 
 // εClosure returns the set of NFA states reachable from some NFA state s in set T on ε-transitions alone.
@@ -45,7 +308,13 @@ func newNFA(start State, final States) *NFA {
 func (n *NFA) εClosure(T States) States {
 	closure := T.Clone()
 
-	stack := list.NewStack[State](128, nil)
+	// Look up the class ID for ε
+	_, eid, hasε := n.ranges.Find(E)
+	if !hasε {
+		return closure
+	}
+
+	stack := list.NewStack[State](64, nil) // Approximation
 	for s := range T.All() {
 		stack.Push(s)
 	}
@@ -53,7 +322,7 @@ func (n *NFA) εClosure(T States) States {
 	for !stack.IsEmpty() {
 		t, _ := stack.Pop()
 
-		if next := n.next(t, E); next != nil {
+		if next := n.next(t, eid); next != nil {
 			for u := range next.All() {
 				if !closure.Contains(u) {
 					closure.Add(u)
@@ -66,11 +335,12 @@ func (n *NFA) εClosure(T States) States {
 	return closure
 }
 
-// move returns the set of NFA states to which there is a transition on input symbol a from some state s in T.
-func (n *NFA) move(T States, a Symbol) States {
+// move returns the set of NFA states to which there is a transition on the given input from some state s in T.
+func (n *NFA) move(T States, cid classID) States {
 	states := NewStates()
+
 	for s := range T.All() {
-		if next := n.next(s, a); next != nil {
+		if next := n.next(s, cid); next != nil {
 			states = states.Union(next)
 		}
 	}
@@ -78,90 +348,10 @@ func (n *NFA) move(T States, a Symbol) States {
 	return states
 }
 
-// String returns a string representation of the NFA.
-func (n *NFA) String() string {
-	var b bytes.Buffer
-
-	fmt.Fprintf(&b, "Start state: %d\n", n.Start)
-	fmt.Fprintf(&b, "Final states: ")
-
-	for s := range n.Final.All() {
-		fmt.Fprintf(&b, "%d, ", s)
-	}
-
-	b.Truncate(b.Len() - 2)
-	b.WriteString("\n")
-
-	b.WriteString("Transitions:\n")
-	for _, s := range n.States() {
-		if next := n.next(s, E); next != nil {
-			fmt.Fprintf(&b, "  (%d, ε) --> %s\n", s, next)
-		}
-
-		for _, a := range n.Symbols() {
-			if next := n.next(s, a); next != nil {
-				fmt.Fprintf(&b, "  (%d, %c) --> %s\n", s, a, next)
-			}
-		}
-	}
-
-	return b.String()
-}
-
-// Equal determines whether or not two NFAs are identical in structure and labeling.
-// Two NFAs are considered equal if they have the same start state, final states, and transitions.
-//
-// For isomorphic equality, structural equivalence with potentially different state names, use the Isomorphic method.
-func (n *NFA) Equal(rhs *NFA) bool {
-	return n.Start == rhs.Start &&
-		n.Final.Equal(rhs.Final) &&
-		n.trans.Equal(rhs.trans)
-}
-
-// Clone returns a deep copy of the NFA, ensuring the clone is independent of the original.
-func (n *NFA) Clone() *NFA {
-	nfa := newNFA(n.Start, n.Final)
-
-	for s, strans := range n.trans.All() {
-		for a, states := range strans.All() {
-			next := generic.Collect1(states.All())
-			nfa.Add(s, a, next)
-		}
-	}
-
-	return nfa
-}
-
-// Add inserts a new transition into the NFA.
-func (n *NFA) Add(s State, a Symbol, next []State) {
-	strans, ok := n.trans.Get(s)
-	if !ok {
-		strans = symboltable.NewRedBlack(CmpSymbol, eqStateSet)
-		n.trans.Put(s, strans)
-	}
-
-	states, ok := strans.Get(a)
-	if !ok {
-		states = NewStates()
-		strans.Put(a, states)
-	}
-
-	states.Add(next...)
-}
-
-// Next returns the set of next states based on the current state s and the input symbol a.
-// If no valid transition exists, it returns nil
-func (n *NFA) Next(s State, a Symbol) []State {
-	if next := n.next(s, a); next != nil {
-		return generic.Collect1(next.All())
-	}
-
-	return nil
-}
-
-func (n *NFA) next(s State, a Symbol) States {
-	if strans, ok := n.trans.Get(s); ok {
-		if next, ok := strans.Get(a); ok {
+// next returns the set of next states from state s on the given input.
+func (n *NFA) next(s State, cid classID) States {
+	if stab, ok := n.trans.Get(s); ok {
+		if next, ok := stab.Get(cid); ok {
 			return next
 		}
 	}
@@ -169,242 +359,57 @@ func (n *NFA) next(s State, a Symbol) States {
 	return nil
 }
 
-// Accept determines whether or not an input string is recognized (accepted) by the NFA.
-func (n *NFA) Accept(s String) bool {
-	S := NewStates(n.Start)
-	for S = n.εClosure(S); len(s) > 0; s = s[1:] {
-		S = n.εClosure(n.move(S, s[0]))
+// String implements the fmt.Stringer interface.
+func (n *NFA) String() string {
+	var b bytes.Buffer
+
+	fmt.Fprintf(&b, "Start state: %d\n", n.start)
+	fmt.Fprintf(&b, "Final states: ")
+
+	for s := range n.final.All() {
+		fmt.Fprintf(&b, "%d, ", s)
 	}
 
-	for s := range S.All() {
-		if n.Final.Contains(s) {
-			return true
-		}
+	if b.Len() >= 2 {
+		b.Truncate(b.Len() - 2)
 	}
 
-	return false
-}
-
-// States returns the set of all states of the NFA.
-func (n *NFA) States() []State {
-	return generic.Collect1(n.states().All())
-}
-
-func (n *NFA) states() States {
-	states := NewStates(n.Start)
-	states = states.Union(n.Final)
-
-	for s, strans := range n.trans.All() {
-		for _, next := range strans.All() {
-			states.Add(s)
-			states = states.Union(next)
-		}
-	}
-
-	return states
-}
-
-// Symbols returns the set of all input symbols of the NFA.
-func (n *NFA) Symbols() []Symbol {
-	return generic.Collect1(n.symbols().All())
-}
-
-func (n *NFA) symbols() Symbols {
-	symbols := NewSymbols()
-
-	for _, strans := range n.trans.All() {
-		for a := range strans.All() {
-			if a != E {
-				symbols.Add(a)
+	trans := make([]string, 0, n.trans.Size()*2) // Approximation
+	for s, stab := range n.trans.All() {
+		for cid, next := range stab.All() {
+			if ranges, ok := n.classes().Get(cid); ok {
+				trans = append(trans, fmt.Sprintf("  %d -- %s --> %s", s, ranges, next))
 			}
 		}
 	}
 
-	return symbols
+	fmt.Fprintf(&b, "\nTransitions:\n%s\n", strings.Join(trans, "\n"))
+
+	return b.String()
 }
 
-// Transitions returns an iterator sequence containing all transitions in the NFA.
-func (n *NFA) Transitions() iter.Seq[*Transition[[]State]] {
-	return func(yield func(*Transition[[]State]) bool) {
-		for s, strans := range n.trans.All() {
-			for a, next := range strans.All() {
-				tr := &Transition[[]State]{
-					State:  s,
-					Symbol: a,
-					Next:   generic.Collect1(next.All()),
-				}
-
-				if !yield(tr) {
-					return
-				}
-			}
-		}
+// Clone implements the generic.Cloner interface.
+func (n *NFA) Clone() *NFA {
+	nn := &NFA{
+		start:  n.start,
+		final:  n.final.Clone(),
+		ranges: n.ranges.Clone(),
+		trans:  n.trans.Clone(),
 	}
+
+	return nn
 }
 
-// Star constructs a new NFA that accepts the Kleene star closure of the language accepted by the NFA.
-func (n *NFA) Star() *NFA {
-	start, final := State(0), State(1)
-	star := NewNFA(start, []State{final})
-
-	sm := newStateManager(final)
-
-	for s, strans := range n.trans.All() {
-		ss := sm.GetOrCreateState(0, s)
-
-		for a, states := range strans.All() {
-			next := make([]State, 0, states.Size())
-			for t := range states.All() {
-				tt := sm.GetOrCreateState(0, t)
-				next = append(next, tt)
-			}
-
-			star.Add(ss, a, next)
-		}
+// Equal implements the generic.Equaler interface.
+func (n *NFA) Equal(rhs *NFA) bool {
+	if rhs == nil {
+		return false
 	}
 
-	ss := sm.GetOrCreateState(0, n.Start)
-	star.Add(start, E, []State{ss})
-	star.Add(start, E, []State{final})
-
-	for f := range n.Final.All() {
-		ff := sm.GetOrCreateState(0, f)
-		star.Add(ff, E, []State{ss})
-		star.Add(ff, E, []State{final})
-	}
-
-	return star
-}
-
-// Union constructs a new NFA that accepts the union of languages accepted by each individual NFA.
-func (n *NFA) Union(ns ...*NFA) *NFA {
-	start, final := State(0), State(1)
-	union := NewNFA(start, []State{final})
-	nfas := append([]*NFA{n}, ns...)
-
-	sm := newStateManager(final)
-
-	for id, nfa := range nfas {
-		for s, strans := range nfa.trans.All() {
-			ss := sm.GetOrCreateState(id, s)
-
-			for a, states := range strans.All() {
-				next := make([]State, 0, states.Size())
-				for t := range states.All() {
-					tt := sm.GetOrCreateState(id, t)
-					next = append(next, tt)
-				}
-
-				union.Add(ss, a, next)
-			}
-		}
-
-		ss := sm.GetOrCreateState(id, nfa.Start)
-		union.Add(start, E, []State{ss})
-
-		for f := range nfa.Final.All() {
-			ff := sm.GetOrCreateState(id, f)
-			union.Add(ff, E, []State{final})
-		}
-	}
-
-	return union
-}
-
-// Concat constructs a new NFA that accepts the concatenation of languages accepted by each individual NFA.
-func (n *NFA) Concat(ns ...*NFA) *NFA {
-	final := []State{0}
-	concat := NewNFA(0, final)
-
-	nfas := append([]*NFA{n}, ns...)
-	sm := newStateManager(0)
-
-	for id, nfa := range nfas {
-		for s, strans := range nfa.trans.All() {
-			// If s is the start state of the current NFA,
-			// we need to map it to the previous NFA final states.
-			var sp []State
-			if s == nfa.Start {
-				sp = final
-			} else {
-				ss := sm.GetOrCreateState(id, s)
-				sp = []State{ss}
-			}
-
-			for a, states := range strans.All() {
-				// If any of the next state is the start state of the current NFA,
-				// we need to map it to the previous NFA final states.
-				var nextp []State
-				for t := range states.All() {
-					if t == nfa.Start {
-						nextp = append(nextp, final...)
-					} else {
-						tt := sm.GetOrCreateState(id, t)
-						nextp = append(nextp, tt)
-					}
-				}
-
-				// Add new transitions
-				for _, s := range sp {
-					concat.Add(s, a, nextp)
-				}
-			}
-		}
-
-		// Update the current final states
-		final = make([]State, 0, nfa.Final.Size())
-		for f := range nfa.Final.All() {
-			ff := sm.GetOrCreateState(id, f)
-			final = append(final, ff)
-		}
-	}
-
-	concat.Final = NewStates(final...)
-
-	return concat
-}
-
-// ToDFA constructs a new DFA accepting the same language as the NFA.
-// It implements the subset construction algorithm.
-//
-// For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
-func (n *NFA) ToDFA() *DFA {
-	dfa := NewDFA(0, nil)
-
-	Dstates := list.NewSoftQueue(func(s, t States) bool {
-		return s.Equal(t)
-	})
-
-	// Initially, ε-closure(s0) is the only state in Dstates
-	S0 := NewStates(n.Start)
-	Dstates.Enqueue(n.εClosure(S0))
-
-	for T, i := Dstates.Dequeue(); i >= 0; T, i = Dstates.Dequeue() {
-		for _, a := range n.Symbols() { // for each input symbol c
-			U := n.εClosure(n.move(T, a))
-
-			// If U is not in Dstates, add U to Dstates
-			j := Dstates.Contains(U)
-			if j == -1 {
-				j = Dstates.Enqueue(U)
-			}
-
-			dfa.Add(State(i), a, State(j))
-		}
-	}
-
-	dfa.Final = NewStates()
-
-	for i, S := range Dstates.Values() {
-		for f := range n.Final.All() {
-			if S.Contains(f) {
-				dfa.Final.Add(State(i))
-				break // The accepting states of D are all those sets of N's states that include at least one accepting state of N
-			}
-		}
-	}
-
-	return dfa
+	return n.start == rhs.start &&
+		n.final.Equal(rhs.final) &&
+		n.ranges.Equal(rhs.ranges) &&
+		n.trans.Equal(rhs.trans)
 }
 
 // Isomorphic determines whether or not two NFAs are isomorphically the same.
@@ -415,57 +420,66 @@ func (n *NFA) ToDFA() *DFA {
 //
 // In simpler terms, the two NFAs have the same structure:
 // one can be transformed into the other by renaming its states and preserving the transitions.
+//
+// This is a very expensive operation as graph isomorphism problem is an NP (non-deterministic polynomial time) problem.
 func (n *NFA) Isomorphic(rhs *NFA) bool {
 	// N₁ and N₂ must have the same number of final states.
-	if n.Final.Size() != rhs.Final.Size() {
+	if n.final.Size() != rhs.final.Size() {
 		return false
 	}
 
 	// N₁ and N₂ must have the same number of states.
-	states1, states2 := n.States(), rhs.States()
-	if len(states1) != len(states2) {
+	Q1, Q2 := n.States(), rhs.States()
+	if len(Q1) != len(Q2) {
 		return false
 	}
 
 	// N₁ and N₂ must have the same input alphabet.
-	symbols1, symbols2 := n.symbols(), rhs.symbols()
-	if !symbols1.Equal(symbols2) {
+	Σ1, Σ2 := n.Symbols(), rhs.Symbols()
+
+	if len(Σ1) != len(Σ2) {
 		return false
 	}
 
-	// N₁ and N₂ must have the same sorted degree sequence.
-	// len(degrees1) == len(degrees2) since N₁ and N₂ have the same number of states.
-	degrees1, degrees2 := n.getSortedDegreeSequence(), rhs.getSortedDegreeSequence()
-	for i := range degrees1 {
-		if degrees1[i] != degrees2[i] {
+	for i := range Σ1 {
+		if Σ1[i] != Σ2[i] {
 			return false
 		}
 	}
 
-	// Since generatePermutations uses backtracking and modifies the slice in-place, we need a copy.
-	states := make([]State, len(states1))
-	copy(states, states1)
+	// N₁ and N₂ must have the same sorted degree sequence.
+	// len(degs1) == len(degs2) since N₁ and N₂ have the same number of states.
+	degs1, degs2 := n.getSortedDegreeSequence(), rhs.getSortedDegreeSequence()
+	for i := range degs1 {
+		if degs1[i] != degs2[i] {
+			return false
+		}
+	}
+
+	// Since generateStatePermutations uses backtracking and modifies the slice in-place, we need a copy.
+	states := make([]State, len(Q1))
+	copy(states, Q1)
 
 	// Methodically checking if any permutation of N₁ states is equal to N₂.
-	return !generatePermutations(states, 0, len(states)-1, func(permutation []State) bool {
+	return !generateStatePermutations(states, 0, len(states)-1, func(permutation []State) bool {
 		// Create a bijection between the states of N₁ and the current permutation of N₁.
 		// A bijection or bijective function is a type of function that creates a one-to-one correspondence between two sets (states1 ↔ permutation).
-		bijection := make(map[State]State, len(states1))
-		for i, s := range states1 {
+		bijection := make(map[State]State, len(Q1))
+		for i, s := range Q1 {
 			bijection[s] = permutation[i]
 		}
 
-		permutedStart := bijection[n.Start]
+		permutedStart := bijection[n.start]
 
-		permutedFinal := make([]State, 0, n.Final.Size())
-		for f := range n.Final.All() {
+		permutedFinal := make([]State, 0, n.final.Size())
+		for f := range n.final.All() {
 			permutedFinal = append(permutedFinal, bijection[f])
 		}
 
-		permutedNFA := NewNFA(permutedStart, permutedFinal)
+		b := NewNFABuilder().SetStart(permutedStart).SetFinal(permutedFinal)
 
-		for s, strans := range n.trans.All() {
-			for a, ts := range strans.All() {
+		for s, stab := range n.trans.All() {
+			for cid, ts := range stab.All() {
 				ss := bijection[s]
 
 				tts := make([]State, 0, ts.Size())
@@ -473,13 +487,17 @@ func (n *NFA) Isomorphic(rhs *NFA) bool {
 					tts = append(tts, bijection[t])
 				}
 
-				permutedNFA.Add(ss, a, tts)
+				if ranges, ok := n.classes().Get(cid); ok {
+					for r := range ranges.All() {
+						b.AddTransition(ss, r.Lo, r.Hi, tts)
+					}
+				}
 			}
 		}
 
 		// If the current permutation of N₁ is equal to N₂, we stop checking more permutations by returning false.
 		// If the current permutation of N₁ is not equal to N₂, we continue with checking more permutations by returning true.
-		return !permutedNFA.Equal(rhs)
+		return !b.Build().Equal(rhs)
 	})
 }
 
@@ -506,7 +524,278 @@ func (n *NFA) getSortedDegreeSequence() []int {
 	return sortedDegrees
 }
 
-// DOT generates a DOT representation of the transition graph of the NFA.
+// Start returns the start state of the NFA.
+func (n *NFA) Start() State {
+	return n.start
+}
+
+// Final returns the final (accepting) states of the NFA.
+func (n *NFA) Final() []State {
+	return generic.Collect1(n.final.All())
+}
+
+// States returns all states in the NFA.
+func (n *NFA) States() []State {
+	// Lazy initialization
+	if n._states == nil {
+		states := NewStates(n.start).Union(n.final)
+		for s, stab := range n.trans.All() {
+			states.Add(s)
+			for _, next := range stab.All() {
+				states = states.Union(next)
+			}
+		}
+
+		n._states = generic.Collect1(states.All())
+	}
+
+	return n._states
+}
+
+// Symbols returns all symbol ranges in the NFA.
+func (n *NFA) Symbols() []disc.Range[Symbol] {
+	// Lazy initialization
+	if n._symbols == nil {
+		n._symbols = make([]disc.Range[Symbol], 0, n.ranges.Size())
+		for r := range n.ranges.All() {
+			if r != εRange {
+				n._symbols = append(n._symbols, r)
+			}
+		}
+	}
+
+	return n._symbols
+}
+
+// classes populates the equivalence classes of the input symbols lazily.
+// It builds a classID-to-ranges mapping from the range-to-classID mapping.
+func (n *NFA) classes() classMapping {
+	// Lazy initialization
+	if n._classes == nil {
+		n._classes = newClassMapping(nil)
+
+		for r, cid := range n.ranges.All() {
+			ranges, ok := n._classes.Get(cid)
+			if !ok {
+				ranges = newRangeSet()
+				n._classes.Put(cid, ranges)
+			}
+
+			ranges.Add(r)
+		}
+	}
+
+	return n._classes
+}
+
+// Transitions returns all transitions in the NFA.
+func (n *NFA) Transitions() iter.Seq2[State, iter.Seq2[[]disc.Range[Symbol], []State]] {
+	return func(yield func(State, iter.Seq2[[]disc.Range[Symbol], []State]) bool) {
+		for s := range n.trans.All() {
+			if !yield(s, n.TransitionsFrom(s)) {
+				return
+			}
+		}
+	}
+}
+
+// TransitionsFrom returns all transitions from the given state in the NFA.
+func (n *NFA) TransitionsFrom(s State) iter.Seq2[[]disc.Range[Symbol], []State] {
+	return func(yield func([]disc.Range[Symbol], []State) bool) {
+		if stab, ok := n.trans.Get(s); ok {
+			for cid, next := range stab.All() {
+				if ranges, ok := n.classes().Get(cid); ok {
+					k := generic.Collect1(ranges.All())
+					v := generic.Collect1(next.All())
+
+					if !yield(k, v) {
+						return
+					}
+				}
+			}
+		}
+	}
+}
+
+// Star constructs a new NFA that accepts the Kleene star closure of the language accepted by the NFA.
+func (n *NFA) Star() *NFA {
+	start, final := State(0), State(1)
+	sm := newStateManager(final)
+
+	b := NewNFABuilder().SetStart(start).SetFinal([]State{final})
+
+	for s, seq := range n.Transitions() {
+		ss := sm.GetOrCreateState(0, s)
+
+		for ranges, states := range seq {
+			next := make([]State, 0, len(states))
+			for _, t := range states {
+				tt := sm.GetOrCreateState(0, t)
+				next = append(next, tt)
+			}
+
+			for _, r := range ranges {
+				b.AddTransition(ss, r.Lo, r.Hi, next)
+			}
+		}
+	}
+
+	ss := sm.GetOrCreateState(0, n.start)
+	b.AddTransition(start, E, E, []State{ss})
+	b.AddTransition(start, E, E, []State{final})
+
+	for f := range n.final.All() {
+		ff := sm.GetOrCreateState(0, f)
+		b.AddTransition(ff, E, E, []State{ss})
+		b.AddTransition(ff, E, E, []State{final})
+	}
+
+	return b.Build()
+}
+
+// Union constructs a new NFA that accepts the union of languages accepted by each individual NFA.
+func (n *NFA) Union(ns ...*NFA) *NFA {
+	all := append([]*NFA{n}, ns...)
+
+	start, final := State(0), State(1)
+	sm := newStateManager(final)
+
+	b := NewNFABuilder().SetStart(start).SetFinal([]State{final})
+
+	for id, nfa := range all {
+		for s, seq := range nfa.Transitions() {
+			ss := sm.GetOrCreateState(id, s)
+
+			for ranges, states := range seq {
+				next := make([]State, 0, len(states))
+				for _, t := range states {
+					tt := sm.GetOrCreateState(id, t)
+					next = append(next, tt)
+				}
+
+				for _, r := range ranges {
+					b.AddTransition(ss, r.Lo, r.Hi, next)
+				}
+			}
+		}
+
+		ss := sm.GetOrCreateState(id, nfa.start)
+		b.AddTransition(start, E, E, []State{ss})
+
+		for f := range nfa.final.All() {
+			ff := sm.GetOrCreateState(id, f)
+			b.AddTransition(ff, E, E, []State{final})
+		}
+	}
+
+	return b.Build()
+}
+
+// Concat constructs a new NFA that accepts the concatenation of languages accepted by each individual NFA.
+func (n *NFA) Concat(ns ...*NFA) *NFA {
+	all := append([]*NFA{n}, ns...)
+
+	start, final := State(0), []State{0}
+	sm := newStateManager(0)
+
+	b := NewNFABuilder().SetStart(start).SetFinal(final)
+
+	for id, nfa := range all {
+		for s, seq := range nfa.Transitions() {
+			// If s is the start state of the current NFA,
+			// we need to map it to the previous NFA final states.
+			var sp []State
+			if s == nfa.start {
+				sp = final
+			} else {
+				ss := sm.GetOrCreateState(id, s)
+				sp = []State{ss}
+			}
+
+			for ranges, states := range seq {
+				// If any of the next state is the start state of the current NFA,
+				// we need to map it to the previous NFA final states.
+				var nextp []State
+				for _, t := range states {
+					if t == nfa.start {
+						nextp = append(nextp, final...)
+					} else {
+						tt := sm.GetOrCreateState(id, t)
+						nextp = append(nextp, tt)
+					}
+				}
+
+				// Add new transitions.
+				for _, s := range sp {
+					for _, r := range ranges {
+						b.AddTransition(s, r.Lo, r.Hi, nextp)
+					}
+				}
+			}
+		}
+
+		// Update the current final states.
+		final = make([]State, 0, nfa.final.Size())
+		for f := range nfa.final.All() {
+			ff := sm.GetOrCreateState(id, f)
+			final = append(final, ff)
+		}
+	}
+
+	b.SetFinal(final)
+
+	return b.Build()
+}
+
+// ToDFA constructs a new DFA accepting the same language as the NFA.
+// It implements the subset construction algorithm.
+func (n *NFA) ToDFA() *DFA {
+	// Look up the class ID for ε
+	_, eid, hasε := n.ranges.Find(E)
+
+	b := NewDFABuilder().SetStart(0)
+
+	// Initially, ε-closure(s₀) is the only state in Dstates
+	S0 := NewStates(n.start)
+	Dstates := list.NewSoftQueue(EqStates)
+	Dstates.Enqueue(n.εClosure(S0))
+
+	for T, i := Dstates.Dequeue(); i >= 0; T, i = Dstates.Dequeue() {
+		// For each input symbol c (or equivalency for each equivalence class of the input symbols)
+		for cid, ranges := range n.classes().All() {
+			if !hasε || cid != eid {
+				U := n.εClosure(n.move(T, cid))
+
+				// If U is not in Dstates, add U to Dstates
+				j := Dstates.Contains(U)
+				if j == -1 {
+					j = Dstates.Enqueue(U)
+				}
+
+				for r := range ranges.All() {
+					b.AddTransition(State(i), r.Lo, r.Hi, State(j))
+				}
+			}
+		}
+	}
+
+	final := NewStates()
+
+	for i, S := range Dstates.Values() {
+		for f := range n.final.All() {
+			if S.Contains(f) {
+				final.Add(State(i))
+				break // The accepting states of D are all those sets of N's states that include at least one accepting state of N
+			}
+		}
+	}
+
+	b.final = final
+
+	return b.Build()
+}
+
+// DOT generates a DOT representation of the NFA transition graph for visualization.
 func (n *NFA) DOT() string {
 	graph := dot.NewGraph(false, true, false, "NFA", dot.RankDirLR, "", "", dot.ShapeCircle)
 
@@ -514,57 +803,144 @@ func (n *NFA) DOT() string {
 		name := fmt.Sprintf("%d", s)
 		label := fmt.Sprintf("%d", s)
 
-		if s == n.Start {
+		if s == n.start {
 			graph.AddNode(dot.NewNode("start", "", "", "", dot.StyleInvis, "", "", ""))
 			graph.AddEdge(dot.NewEdge("start", name, dot.EdgeTypeDirected, "", "", "", "", "", ""))
 		}
 
 		var shape dot.Shape
-		if n.Final.Contains(s) {
+		if n.final.Contains(s) {
 			shape = dot.ShapeDoubleCircle
 		}
 
 		graph.AddNode(dot.NewNode(name, "", label, "", "", shape, "", ""))
 	}
 
-	/* Group all the transitions with the same states and combine their symbols into one label */
+	for s, stab := range n.trans.All() {
+		for cid, next := range stab.All() {
+			if ranges, ok := n.classes().Get(cid); ok {
+				for t := range next.All() {
+					from := fmt.Sprintf("%d", s)
+					to := fmt.Sprintf("%d", t)
 
-	edges := symboltable.NewRedBlack[State, symboltable.SymbolTable[State, []string]](CmpState, nil)
-
-	for from, ftrans := range n.trans.All() {
-		row, ok := edges.Get(from)
-		if !ok {
-			row = symboltable.NewRedBlack[State, []string](CmpState, nil)
-			edges.Put(from, row)
-		}
-
-		for sym, states := range ftrans.All() {
-			var label string
-			if sym == E {
-				label = "ε"
-			} else {
-				label = string(sym)
-			}
-
-			for to := range states.All() {
-				labels, _ := row.Get(to)
-				labels = append(labels, label)
-				row.Put(to, labels)
+					graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", ranges.String(), "", "", "", ""))
+				}
 			}
 		}
 	}
 
-	for from, fedges := range edges.All() {
-		for to, labels := range fedges.All() {
-			from := fmt.Sprintf("%d", from)
-			to := fmt.Sprintf("%d", to)
-
-			sort.Quick(labels, generic.NewCompareFunc[string]())
-			label := strings.Join(labels, ",")
-
-			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", label, "", "", "", ""))
-		}
-	}
-
-	return graph.DOT()
+	return graph.DOT() + "\n"
 }
+
+// Runner constructs a new NFARunner for simulating (running) the NFA on input symbols.
+func (n *NFA) Runner() *NFARunner {
+	trans := symboltable.NewQuadraticHashTable(HashState, EqState, eqClassIDStatesTable, symboltable.HashOpts{})
+
+	for s, stab := range n.trans.All() {
+		stabClone := symboltable.NewQuadraticHashTable(hashClassID, eqClassID, EqStates, symboltable.HashOpts{})
+		for cid, next := range stab.All() {
+			stabClone.Put(cid, next)
+		}
+
+		trans.Put(s, stabClone)
+	}
+
+	return &NFARunner{
+		start:  n.start,
+		final:  n.final.Clone(),
+		ranges: n.ranges.Clone(),
+		trans:  trans,
+	}
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+// NFARunner is used for simulating (running) a NFA on input symbols.
+// It is immutable and optimized for fast execution.
+type NFARunner struct {
+	start  State
+	final  States
+	ranges rangeMapping
+	trans  symboltable.SymbolTable[State, symboltable.SymbolTable[classID, States]]
+}
+
+// εClosure returns the set of NFA states reachable from some NFA state s in set T on ε-transitions alone.
+// εClosure(T) = Union(εClosure(s)) for all s ∈ T.
+func (r *NFARunner) εClosure(T States) States {
+	closure := T.Clone()
+
+	stack := list.NewStack[State](64, nil) // Approximation
+	for s := range T.All() {
+		stack.Push(s)
+	}
+
+	for !stack.IsEmpty() {
+		t, _ := stack.Pop()
+
+		if next := r.next(t, E); next != nil {
+			for u := range next.All() {
+				if !closure.Contains(u) {
+					closure.Add(u)
+					stack.Push(u)
+				}
+			}
+		}
+	}
+
+	return closure
+}
+
+// move returns the set of NFA states to which there is a transition on the given input from some state s in T.
+func (r *NFARunner) move(T States, a Symbol) States {
+	states := NewStates()
+
+	for s := range T.All() {
+		if next := r.next(s, a); next != nil {
+			states = states.Union(next)
+		}
+	}
+
+	return states
+}
+
+// next returns the set of next states from state s on the given input.
+func (r *NFARunner) next(s State, a Symbol) States {
+	if stab, ok := r.trans.Get(s); ok {
+		if _, cid, ok := r.ranges.Find(a); ok {
+			if next, ok := stab.Get(cid); ok {
+				return next
+			}
+		}
+	}
+
+	return nil
+}
+
+// Next returns the next states from state s on input symbol a.
+func (r *NFARunner) Next(s State, a Symbol) []State {
+	if next := r.next(s, a); next != nil {
+		return generic.Collect1(next.All())
+	}
+
+	return nil
+}
+
+// Accept determines whether an input string is recognized (accepted) by the NFA.
+func (r *NFARunner) Accept(s String) bool {
+	S := NewStates(r.start)
+
+	for S = r.εClosure(S); len(s) > 0; s = s[1:] {
+		S = r.εClosure(r.move(S, s[0]))
+	}
+
+	for s := range S.All() {
+		if r.final.Contains(s) {
+			return true
+		}
+	}
+
+	return false
+
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------ */

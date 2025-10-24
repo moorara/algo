@@ -6,6 +6,143 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestFuncs(t *testing.T) {
+	t.Run("EqStates", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			a, b     States
+			expected bool
+		}{
+			{
+				name:     "NotEqual_BothNil",
+				a:        nil,
+				b:        nil,
+				expected: true,
+			},
+			{
+				name:     "NotEqual_FirstNotNilSecondNil",
+				a:        NewStates(1, 2),
+				b:        nil,
+				expected: false,
+			},
+			{
+				name:     "NotEqual_FirstNilSecondNotNil",
+				a:        nil,
+				b:        NewStates(3, 4),
+				expected: false,
+			},
+			{
+				name:     "NotEqual_BothNotNil",
+				a:        NewStates(1, 2),
+				b:        NewStates(3, 4),
+				expected: false,
+			},
+			{
+				name:     "Equal",
+				a:        NewStates(1, 2),
+				b:        NewStates(1, 2),
+				expected: true,
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				assert.Equal(t, tc.expected, EqStates(tc.a, tc.b))
+			})
+		}
+	})
+
+	t.Run("EqSymbols", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			a, b     Symbols
+			expected bool
+		}{
+			{
+				name:     "NotEqual_BothNil",
+				a:        nil,
+				b:        nil,
+				expected: true,
+			},
+			{
+				name:     "NotEqual_FirstNotNilSecondNil",
+				a:        NewSymbols('a', 'b'),
+				b:        nil,
+				expected: false,
+			},
+			{
+				name:     "NotEqual_FirstNilSecondNotNil",
+				a:        nil,
+				b:        NewSymbols('c', 'd'),
+				expected: false,
+			},
+			{
+				name:     "NotEqual_BothNotNil",
+				a:        NewSymbols('a', 'b'),
+				b:        NewSymbols('c', 'd'),
+				expected: false,
+			},
+			{
+				name:     "Equal",
+				a:        NewSymbols('a', 'b'),
+				b:        NewSymbols('a', 'b'),
+				expected: true,
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				assert.Equal(t, tc.expected, EqSymbols(tc.a, tc.b))
+			})
+		}
+	})
+
+	t.Run("unionStates", func(t *testing.T) {
+		tests := []struct {
+			name          string
+			a, b          States
+			expectedUnion States
+		}{
+			{
+				name:          "BothNil",
+				a:             nil,
+				b:             nil,
+				expectedUnion: nil,
+			},
+			{
+				name:          "FirstNotNilSecondNil",
+				a:             NewStates(1, 2),
+				b:             nil,
+				expectedUnion: NewStates(1, 2),
+			},
+			{
+				name:          "FirstNilSecondNotNil",
+				a:             nil,
+				b:             NewStates(2, 3),
+				expectedUnion: NewStates(2, 3),
+			},
+			{
+				name:          "BothNotNil",
+				a:             NewStates(1, 2),
+				b:             NewStates(2, 3),
+				expectedUnion: NewStates(1, 2, 3),
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				union := unionStates(tc.a, tc.b)
+
+				if tc.expectedUnion == nil {
+					assert.Nil(t, union)
+				} else {
+					assert.True(t, union.Equal(tc.expectedUnion), "expected: %s\ngot: %s\n", tc.expectedUnion, union)
+				}
+			})
+		}
+	})
+}
+
 func TestNewStates(t *testing.T) {
 	tests := []struct {
 		name string
@@ -44,87 +181,6 @@ func TestNewSymbols(t *testing.T) {
 
 			assert.NotNil(t, set)
 			assert.True(t, set.Contains(tc.a...))
-		})
-	}
-}
-
-func TestToString(t *testing.T) {
-	tests := []struct {
-		name           string
-		s              string
-		expectedString String
-	}{
-		{
-			name:           "OK",
-			s:              "ababb",
-			expectedString: String{'a', 'b', 'a', 'b', 'b'},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedString, toString(tc.s))
-		})
-	}
-}
-
-func TestStateManager(t *testing.T) {
-	tests := []struct {
-		name          string
-		last          State
-		id            int
-		s             State
-		expectedState State
-	}{
-		{
-			name:          "OK",
-			last:          10,
-			id:            0,
-			s:             1,
-			expectedState: 11,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			sm := newStateManager(tc.last)
-			state := sm.GetOrCreateState(tc.id, tc.s)
-			assert.Equal(t, tc.expectedState, state)
-		})
-	}
-}
-
-func TestGeneratePermutations(t *testing.T) {
-	tests := []struct {
-		name                 string
-		states               []State
-		start                int
-		end                  int
-		expectedReturn       bool
-		expectedPermutations [][]State
-	}{
-		{
-			name:   "OK",
-			states: []State{0, 1, 2},
-			start:  0,
-			end:    2,
-			expectedPermutations: [][]State{
-				{0, 1, 2},
-				{0, 2, 1},
-				{1, 0, 2},
-				{1, 2, 0},
-				{2, 1, 0},
-				{2, 0, 1},
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.True(t, generatePermutations(tc.states, tc.start, tc.end, func(perm []State) bool {
-				assert.Contains(t, tc.expectedPermutations, perm)
-				return true
-			}))
 		})
 	}
 }

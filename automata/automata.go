@@ -8,7 +8,6 @@ import (
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/set"
-	"github.com/moorara/algo/symboltable"
 )
 
 var (
@@ -20,16 +19,40 @@ var (
 	CmpSymbol  = generic.NewCompareFunc[Symbol]()
 	HashSymbol = hash.HashFuncForInt32[Symbol](nil)
 
-	eqStateSet = func(a, b States) bool {
+	EqStates = func(a, b States) bool {
+		if a == nil && b == nil {
+			return true
+		}
+
+		if a == nil || b == nil {
+			return false
+		}
+
 		return a.Equal(b)
 	}
 
-	eqSymbolState = func(a, b symboltable.SymbolTable[Symbol, State]) bool {
+	EqSymbols = func(a, b Symbols) bool {
+		if a == nil && b == nil {
+			return true
+		}
+
+		if a == nil || b == nil {
+			return false
+		}
+
 		return a.Equal(b)
 	}
 
-	eqSymbolStates = func(a, b symboltable.SymbolTable[Symbol, States]) bool {
-		return a.Equal(b)
+	unionStates = func(a, b States) States {
+		if a == nil && b == nil {
+			return nil
+		} else if a == nil {
+			return b
+		} else if b == nil {
+			return a
+		}
+
+		return a.Union(b)
 	}
 )
 
@@ -61,67 +84,5 @@ func NewSymbols(a ...Symbol) set.Set[Symbol] {
 // String represents a sequence of symbols in an automaton.
 type String []Symbol
 
-// toString creates a string of symbols from a string.
-func toString(s string) String {
-	res := make(String, len(s))
-	for i, r := range s {
-		res[i] = Symbol(r)
-	}
-
-	return res
-}
-
-// Transition represents a transition in a finite automaton.
-// It can be either a DFA transition with a single next state or an NFA transition with multiple next states.
-type Transition[T State | []State] struct {
-	State
-	Symbol
-	Next T
-}
-
-// stateManager is used for keeping track of states when combining multiple automata.
-type stateManager struct {
-	last   State
-	states map[int]map[State]State
-}
-
-func newStateManager(last State) *stateManager {
-	return &stateManager{
-		last:   last,
-		states: map[int]map[State]State{},
-	}
-}
-
-func (m *stateManager) GetOrCreateState(id int, s State) State {
-	if _, ok := m.states[id]; !ok {
-		m.states[id] = make(map[State]State)
-	}
-
-	if t, ok := m.states[id][s]; ok {
-		return t
-	}
-
-	m.last++
-	m.states[id][s] = m.last
-	return m.last
-}
-
-// generatePermutations generates all permutations of a sequence of states using recursion and backtracking.
-// Each permutation is passed to the provided yield function.
-func generatePermutations(states []State, start, end int, yield func([]State) bool) bool {
-	if start == end {
-		return yield(states)
-	}
-
-	for i := start; i <= end; i++ {
-		states[start], states[i] = states[i], states[start]
-		cont := generatePermutations(states, start+1, end, yield)
-		states[start], states[i] = states[i], states[start]
-
-		if !cont {
-			return false
-		}
-	}
-
-	return true
-}
+// classID is used to identify equivalence classes of input symbols.
+type classID int

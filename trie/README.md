@@ -1,3 +1,4 @@
+# Trie
 
 This package provides implementations for **prefix tree** a.k.a. **trie** data structures.
 

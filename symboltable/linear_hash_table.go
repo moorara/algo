@@ -117,7 +117,7 @@ func (ht *linearHashTable[K, V]) resize(m int) {
 		return
 	}
 
-	newHT := NewLinearHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	newHT := NewLinearHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		InitialCap:    m,
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
@@ -310,7 +310,7 @@ func (ht *linearHashTable[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V, b
 // SelectMatch selects a subset of key-values from the hash table that satisfy the given predicate.
 // It returns a new hash table containing the matching key-values, of the same type as the original hash table.
 func (ht *linearHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic.Collection2[K, V] {
-	newHT := NewLinearHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	newHT := NewLinearHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
 	})
@@ -330,12 +330,12 @@ func (ht *linearHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic
 // while the second hash table contains those that do not satisfy the predicate (unmatched key-values).
 // Both hash tables are of the same type as the original hash table.
 func (ht *linearHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (generic.Collection2[K, V], generic.Collection2[K, V]) {
-	matched := NewLinearHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	matched := NewLinearHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
 	})
 
-	unmatched := NewLinearHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	unmatched := NewLinearHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
 	})

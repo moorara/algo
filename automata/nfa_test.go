@@ -1,148 +1,215 @@
 package automata
 
 import (
+	"reflect"
 	"testing"
 
-	"github.com/moorara/algo/generic"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/range/disc"
 )
 
-func getTestNFAs() []*NFA {
-	// aa*|bb*
-	n0 := NewNFA(0, []State{2, 4})
-	n0.Add(0, E, []State{1, 3})
-	n0.Add(1, 'a', []State{2})
-	n0.Add(2, 'a', []State{2})
-	n0.Add(3, 'b', []State{4})
-	n0.Add(4, 'b', []State{4})
-
+var testNFA = []*NFA{
+	// (a+|b+)
+	{
+		start: 0,
+		final: NewStates(2, 4),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(1, 3)).
+			Add(1, 1, NewStates(2)).
+			Add(2, 1, NewStates(2)).
+			Add(3, 2, NewStates(4)).
+			Add(4, 2, NewStates(4)),
+	},
 	// (a|b)*abb
-	n1 := NewNFA(0, []State{10})
-	n1.Add(0, E, []State{1, 7})
-	n1.Add(1, E, []State{2, 4})
-	n1.Add(2, 'a', []State{3})
-	n1.Add(3, E, []State{6})
-	n1.Add(4, 'b', []State{5})
-	n1.Add(5, E, []State{6})
-	n1.Add(6, E, []State{1, 7})
-	n1.Add(7, 'a', []State{8})
-	n1.Add(8, 'b', []State{9})
-	n1.Add(9, 'b', []State{10})
-
-	// ab+|ba+
-	n2 := NewNFA(0, []State{2, 4})
-	n2.Add(0, 'a', []State{1})
-	n2.Add(1, 'b', []State{2})
-	n2.Add(2, 'b', []State{2})
-	n2.Add(0, 'b', []State{3})
-	n2.Add(3, 'a', []State{4})
-	n2.Add(4, 'a', []State{4})
-
-	// (ab)+
-	n3 := NewNFA(0, []State{2})
-	n3.Add(0, 'a', []State{1})
-	n3.Add(1, 'b', []State{2})
-	n3.Add(2, 'a', []State{1})
-
-	// (ab+|ba+)*
-	n4 := NewNFA(0, []State{1})
-	n4.Add(0, E, []State{1})
-	n4.Add(0, E, []State{2})
-	n4.Add(2, 'a', []State{3})
-	n4.Add(2, 'b', []State{4})
-	n4.Add(3, 'b', []State{5})
-	n4.Add(4, 'a', []State{6})
-	n4.Add(5, 'b', []State{5})
-	n4.Add(6, 'a', []State{6})
-	n4.Add(5, E, []State{1})
-	n4.Add(5, E, []State{2})
-	n4.Add(6, E, []State{1})
-	n4.Add(6, E, []State{2})
-
-	// ab+|ba+|(ab)+
-	n5 := NewNFA(0, []State{1})
-	n5.Add(0, E, []State{2})
-	n5.Add(0, E, []State{7})
-	n5.Add(2, 'a', []State{3})
-	n5.Add(2, 'b', []State{4})
-	n5.Add(3, 'b', []State{5})
-	n5.Add(4, 'a', []State{6})
-	n5.Add(5, 'b', []State{5})
-	n5.Add(5, E, []State{1})
-	n5.Add(6, 'a', []State{6})
-	n5.Add(6, E, []State{1})
-	n5.Add(7, 'a', []State{8})
-	n5.Add(8, 'b', []State{9})
-	n5.Add(9, 'a', []State{8})
-	n5.Add(9, E, []State{1})
-
-	// (ab+|ba+)(ab)+
-	n6 := NewNFA(0, []State{6})
-	n6.Add(0, 'a', []State{1})
-	n6.Add(0, 'b', []State{2})
-	n6.Add(1, 'b', []State{3})
-	n6.Add(2, 'a', []State{4})
-	n6.Add(3, 'a', []State{5})
-	n6.Add(3, 'b', []State{3})
-	n6.Add(4, 'a', []State{4})
-	n6.Add(4, 'a', []State{5})
-	n6.Add(5, 'b', []State{6})
-	n6.Add(6, 'a', []State{5})
-
-	return []*NFA{n0, n1, n2, n3, n4, n5, n6}
+	{
+		start: 0,
+		final: NewStates(10),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(1, 7)).
+			Add(1, 0, NewStates(2, 4)).
+			Add(2, 1, NewStates(3)).
+			Add(3, 0, NewStates(6)).
+			Add(4, 2, NewStates(5)).
+			Add(5, 0, NewStates(6)).
+			Add(6, 0, NewStates(1, 7)).
+			Add(7, 1, NewStates(8)).
+			Add(8, 2, NewStates(9)).
+			Add(9, 2, NewStates(10)),
+	},
+	// [A-Z][A-Za-z]*
+	{
+		start: 0,
+		final: NewStates(1),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'Z'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'z'}, Value: 1},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(1)).
+			Add(1, 0, NewStates(1)).
+			Add(1, 1, NewStates(1)),
+	},
+	// 0|[1-9][0-9]*
+	{
+		start: 0,
+		final: NewStates(1, 2),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(1)).
+			Add(0, 1, NewStates(2)).
+			Add(2, 0, NewStates(2)).
+			Add(2, 1, NewStates(2)),
+	},
+	// 0|0x[0-9A-Fa-f]+
+	{
+		start: 0,
+		final: NewStates(1, 3),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'X', Hi: 'X'}, Value: 2},
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'f'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'x', Hi: 'x'}, Value: 2},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(1)).
+			Add(1, 2, NewStates(2)).
+			Add(2, 0, NewStates(3)).
+			Add(2, 1, NewStates(3)).
+			Add(3, 0, NewStates(3)).
+			Add(3, 1, NewStates(3)),
+	},
+	// ([A-Za-z_][0-9A-Za-z_]*)|[0-9]+|(0x[0-9A-Fa-f]+)|[ \t\n]+|[+\-*/=]
+	{
+		start: 0,
+		final: NewStates(1, 2, 5),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, Value: 2},
+			{Range: disc.Range[Symbol]{Lo: 'G', Hi: 'W'}, Value: 3},
+			{Range: disc.Range[Symbol]{Lo: 'X', Hi: 'X'}, Value: 4},
+			{Range: disc.Range[Symbol]{Lo: 'Y', Hi: 'Z'}, Value: 3},
+			{Range: disc.Range[Symbol]{Lo: '_', Hi: '_'}, Value: 3},
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'f'}, Value: 2},
+			{Range: disc.Range[Symbol]{Lo: 'g', Hi: 'w'}, Value: 3},
+			{Range: disc.Range[Symbol]{Lo: 'x', Hi: 'x'}, Value: 4},
+			{Range: disc.Range[Symbol]{Lo: 'y', Hi: 'z'}, Value: 3},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(2, 3)).
+			Add(0, 1, NewStates(2)).
+			Add(0, 2, NewStates(1)).
+			Add(0, 3, NewStates(1)).
+			Add(0, 4, NewStates(1)).
+			Add(1, 0, NewStates(1)).
+			Add(1, 1, NewStates(1)).
+			Add(1, 2, NewStates(1)).
+			Add(1, 3, NewStates(1)).
+			Add(1, 4, NewStates(1)).
+			Add(2, 0, NewStates(2)).
+			Add(2, 1, NewStates(2)).
+			Add(3, 0, NewStates(2)).
+			Add(3, 1, NewStates(2)).
+			Add(3, 4, NewStates(4)).
+			Add(4, 0, NewStates(5)).
+			Add(4, 1, NewStates(5)).
+			Add(4, 2, NewStates(5)).
+			Add(5, 0, NewStates(5)).
+			Add(5, 1, NewStates(5)).
+			Add(5, 2, NewStates(5)),
+	},
 }
 
-func TestNewNFA(t *testing.T) {
+func TestNFABuilder(t *testing.T) {
+	type transition struct {
+		s          State
+		start, end Symbol
+		next       []State
+	}
+
 	tests := []struct {
-		name  string
-		start State
-		final []State
+		name        string
+		start       State
+		final       []State
+		trans       []transition
+		expectedNFA *NFA
 	}{
 		{
-			name:  "OK",
+			name:  "Simple",
 			start: 0,
 			final: []State{2, 4},
+			trans: []transition{
+				{s: 0, start: E, end: E, next: []State{1, 3}},
+				{s: 1, start: 'a', end: 'a', next: []State{2}},
+				{s: 2, start: 'a', end: 'a', next: []State{2}},
+				{s: 3, start: 'b', end: 'b', next: []State{4}},
+				{s: 4, start: 'b', end: 'b', next: []State{4}},
+			},
+			expectedNFA: testNFA[0],
 		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			nfa := NewNFA(tc.start, tc.final)
-
-			assert.NotNil(t, nfa)
-			assert.Equal(t, tc.start, nfa.Start)
-			assert.True(t, nfa.Final.Contains(tc.final...))
-		})
-	}
-}
-
-func Test_newNFA(t *testing.T) {
-	tests := []struct {
-		name  string
-		start State
-		final States
-	}{
 		{
-			name:  "OK",
+			name:  "ID_NUM_WS_OP",
 			start: 0,
-			final: NewStates(2, 4),
+			final: []State{1, 2, 5},
+			trans: []transition{
+				{s: 0, start: '0', end: '0', next: []State{3}},
+				{s: 0, start: '0', end: '9', next: []State{2}},
+				{s: 0, start: 'A', end: 'Z', next: []State{1}},
+				{s: 0, start: 'a', end: 'z', next: []State{1}},
+				{s: 0, start: '_', end: '_', next: []State{1}},
+				{s: 1, start: '0', end: '9', next: []State{1}},
+				{s: 1, start: 'A', end: 'Z', next: []State{1}},
+				{s: 1, start: 'a', end: 'z', next: []State{1}},
+				{s: 1, start: '_', end: '_', next: []State{1}},
+				{s: 2, start: '0', end: '9', next: []State{2}},
+				{s: 3, start: '0', end: '9', next: []State{2}},
+				{s: 3, start: 'X', end: 'X', next: []State{4}},
+				{s: 3, start: 'x', end: 'x', next: []State{4}},
+				{s: 4, start: '0', end: '9', next: []State{5}},
+				{s: 4, start: 'A', end: 'F', next: []State{5}},
+				{s: 4, start: 'a', end: 'f', next: []State{5}},
+				{s: 5, start: '0', end: '9', next: []State{5}},
+				{s: 5, start: 'A', end: 'F', next: []State{5}},
+				{s: 5, start: 'a', end: 'f', next: []State{5}},
+			},
+			expectedNFA: testNFA[5],
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			nfa := newNFA(tc.start, tc.final)
+			b := NewNFABuilder().SetStart(tc.start).SetFinal(tc.final)
 
-			assert.NotNil(t, nfa)
-			assert.Equal(t, tc.start, nfa.Start)
-			assert.True(t, nfa.Final.Equal(tc.final))
+			for _, tr := range tc.trans {
+				b.AddTransition(tr.s, tr.start, tr.end, tr.next)
+			}
+
+			t.Run("Build", func(t *testing.T) {
+				nfa := b.Build()
+				assert.True(t, nfa.Equal(tc.expectedNFA), "Expected:\n%s\nGot:\n%s", tc.expectedNFA.trans, nfa.trans)
+			})
 		})
 	}
 }
 
 func TestNFA_String(t *testing.T) {
-	nfas := getTestNFAs()
-
 	tests := []struct {
 		name           string
 		n              *NFA
@@ -150,20 +217,15 @@ func TestNFA_String(t *testing.T) {
 	}{
 		{
 			name: "OK",
-			n:    nfas[1],
+			n:    testNFA[0],
 			expectedString: `Start state: 0
-Final states: 10
+Final states: 2, 4
 Transitions:
-  (0, ε) --> {1, 7}
-  (1, ε) --> {2, 4}
-  (2, a) --> {3}
-  (3, ε) --> {6}
-  (4, b) --> {5}
-  (5, ε) --> {6}
-  (6, ε) --> {1, 7}
-  (7, a) --> {8}
-  (8, b) --> {9}
-  (9, b) --> {10}
+  0 -- [ε..ε] --> {1, 3}
+  1 -- [a..a] --> {2}
+  2 -- [a..a] --> {2}
+  3 -- [b..b] --> {4}
+  4 -- [b..b] --> {4}
 `,
 		},
 	}
@@ -175,9 +237,28 @@ Transitions:
 	}
 }
 
-func TestNFA_Equal(t *testing.T) {
-	nfas := getTestNFAs()
+func TestNFA_Clone(t *testing.T) {
+	tests := []struct {
+		name string
+		n    *NFA
+	}{
+		{
+			name: "OK",
+			n:    testNFA[0],
+		},
+	}
 
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			clone := tc.n.Clone()
+
+			assert.NotSame(t, clone, tc.n)
+			assert.True(t, clone.Equal(tc.n))
+		})
+	}
+}
+
+func TestNFA_Equal(t *testing.T) {
 	tests := []struct {
 		name          string
 		n             *NFA
@@ -185,16 +266,80 @@ func TestNFA_Equal(t *testing.T) {
 		expectedEqual bool
 	}{
 		{
-			name:          "Equal",
-			n:             nfas[0],
-			rhs:           nfas[0],
-			expectedEqual: true,
+			name:          "NotEqual_Nil",
+			n:             testNFA[0],
+			rhs:           nil,
+			expectedEqual: false,
 		},
 		{
-			name:          "NotEqual",
-			n:             nfas[0],
-			rhs:           nfas[1],
+			name: "NotEqual_DiffStart",
+			n:    testNFA[0],
+			rhs: &NFA{
+				start: 1,
+			},
 			expectedEqual: false,
+		},
+		{
+			name: "NotEqual_DiffFinal",
+			n:    testNFA[0],
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(1, 3),
+			},
+			expectedEqual: false,
+		},
+		{
+			name: "NotEqual_DiffClasses",
+			n:    testNFA[0],
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 2},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+				}),
+			},
+			expectedEqual: false,
+		},
+		{
+			name: "NotEqual_DiffTransitions",
+			n:    testNFA[0],
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(1, 1, NewStates(2)).
+					Add(2, 1, NewStates(2)).
+					Add(3, 2, NewStates(4)).
+					Add(4, 2, NewStates(4)),
+			},
+			expectedEqual: false,
+		},
+		{
+			name: "Equal",
+			n:    testNFA[0],
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1, 3)).
+					Add(1, 1, NewStates(2)).
+					Add(2, 1, NewStates(2)).
+					Add(3, 2, NewStates(4)).
+					Add(4, 2, NewStates(4)),
+			},
+			expectedEqual: true,
 		},
 	}
 
@@ -205,372 +350,22 @@ func TestNFA_Equal(t *testing.T) {
 	}
 }
 
-func TestNFA_Clone(t *testing.T) {
-	nfas := getTestNFAs()
-
-	tests := []struct {
-		name string
-		n    *NFA
-	}{
-		{
-			name: "OK",
-			n:    nfas[0],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			nfa := tc.n.Clone()
-			assert.True(t, nfa.Equal(tc.n))
-		})
-	}
-}
-
-func TestNFA_Add(t *testing.T) {
-	nfa := NewNFA(0, []State{1, 2, 3, 4})
-
-	tests := []struct {
-		name string
-		n    *NFA
-		s    State
-		a    Symbol
-		next []State
-	}{
-		{
-			name: "NewState",
-			n:    nfa,
-			s:    State(0),
-			a:    'a',
-			next: []State{1, 2},
-		},
-		{
-			name: "ExistingState",
-			n:    nfa,
-			s:    State(0),
-			a:    'b',
-			next: []State{3, 4},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.n.Add(tc.s, tc.a, tc.next)
-		})
-	}
-}
-
-func TestNFA_Next(t *testing.T) {
-	nfas := getTestNFAs()
-
-	tests := []struct {
-		name           string
-		n              *NFA
-		s              State
-		a              Symbol
-		expectedStates []State
-	}{
-		{
-			name:           "First",
-			n:              nfas[0],
-			s:              State(0),
-			a:              E,
-			expectedStates: []State{1, 3},
-		},
-		{
-			name:           "Second",
-			n:              nfas[1],
-			s:              State(1),
-			a:              E,
-			expectedStates: []State{2, 4},
-		},
-		{
-			name:           "Invalid",
-			n:              nfas[0],
-			s:              State(0),
-			a:              'c',
-			expectedStates: nil,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			states := tc.n.Next(tc.s, tc.a)
-			assert.Equal(t, tc.expectedStates, states)
-		})
-	}
-}
-
-func TestNFA_Accept(t *testing.T) {
-	nfa := getTestNFAs()[0]
-
-	tests := []struct {
-		name           string
-		n              *NFA
-		s              String
-		expectedResult bool
-	}{
-		{
-			name:           "Accepted",
-			n:              nfa,
-			s:              toString("aaaa"),
-			expectedResult: true,
-		},
-		{
-			name:           "NotAccepted",
-			n:              nfa,
-			s:              toString("abbb"),
-			expectedResult: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			b := tc.n.Accept(tc.s)
-			assert.Equal(t, tc.expectedResult, b)
-		})
-	}
-}
-
-func TestNFA_States(t *testing.T) {
-	nfas := getTestNFAs()
-
-	tests := []struct {
-		name           string
-		n              *NFA
-		expectedStates []State
-	}{
-		{
-			name:           "Empty",
-			n:              NewNFA(0, []State{1, 2}),
-			expectedStates: []State{0, 1, 2},
-		},
-		{
-			name:           "First",
-			n:              nfas[0],
-			expectedStates: []State{0, 1, 2, 3, 4},
-		},
-		{
-			name:           "Second",
-			n:              nfas[1],
-			expectedStates: []State{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedStates, tc.n.States())
-		})
-	}
-}
-
-func TestNFA_Symbols(t *testing.T) {
-	nfas := getTestNFAs()
-
-	tests := []struct {
-		name            string
-		n               *NFA
-		expectedSymbols []Symbol
-	}{
-		{
-			name:            "First",
-			n:               nfas[0],
-			expectedSymbols: []Symbol{'a', 'b'},
-		},
-		{
-			name:            "Second",
-			n:               nfas[1],
-			expectedSymbols: []Symbol{'a', 'b'},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedSymbols, tc.n.Symbols())
-		})
-	}
-}
-
-func TestNFA_Transitions(t *testing.T) {
-	nfas := getTestNFAs()
-
-	tests := []struct {
-		name                string
-		n                   *NFA
-		expectedTransitions []*Transition[[]State]
-	}{
-		{
-			name: "First",
-			n:    nfas[0],
-			expectedTransitions: []*Transition[[]State]{
-				{0, E, []State{1, 3}},
-				{1, 'a', []State{2}},
-				{2, 'a', []State{2}},
-				{3, 'b', []State{4}},
-				{4, 'b', []State{4}},
-			},
-		},
-		{
-			name: "Second",
-			n:    nfas[1],
-			expectedTransitions: []*Transition[[]State]{
-				{0, E, []State{1, 7}},
-				{1, E, []State{2, 4}},
-				{2, 'a', []State{3}},
-				{3, E, []State{6}},
-				{4, 'b', []State{5}},
-				{5, E, []State{6}},
-				{6, E, []State{1, 7}},
-				{7, 'a', []State{8}},
-				{8, 'b', []State{9}},
-				{9, 'b', []State{10}},
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			transitions := generic.Collect1(tc.n.Transitions())
-			assert.Equal(t, tc.expectedTransitions, transitions)
-		})
-	}
-}
-
-func TestNFA_Star(t *testing.T) {
-	nfas := getTestNFAs()
-
-	tests := []struct {
-		name        string
-		n           *NFA
-		expectedNFA *NFA
-	}{
-		{
-			name:        "OK",
-			n:           nfas[2],
-			expectedNFA: nfas[4],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			nfa := tc.n.Star()
-			assert.True(t, nfa.Equal(tc.expectedNFA))
-		})
-	}
-}
-
-func TestNFA_Union(t *testing.T) {
-	nfas := getTestNFAs()
-
-	tests := []struct {
-		name        string
-		n           *NFA
-		ns          []*NFA
-		expectedNFA *NFA
-	}{
-		{
-			name:        "OK",
-			n:           nfas[2],
-			ns:          nfas[3:4],
-			expectedNFA: nfas[5],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			nfa := tc.n.Union(tc.ns...)
-			assert.True(t, nfa.Equal(tc.expectedNFA))
-		})
-	}
-}
-
-func TestNFA_Concat(t *testing.T) {
-	nfas := getTestNFAs()
-
-	tests := []struct {
-		name        string
-		n           *NFA
-		ns          []*NFA
-		expectedNFA *NFA
-	}{
-		{
-			name:        "OK",
-			n:           nfas[2],
-			ns:          nfas[3:4],
-			expectedNFA: nfas[6],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			nfa := tc.n.Concat(tc.ns...)
-			assert.True(t, nfa.Equal(tc.expectedNFA))
-		})
-	}
-}
-
-func TestNFA_ToDFA(t *testing.T) {
-	nfas := getTestNFAs()
-	dfas := getTestDFAs()
-
-	tests := []struct {
-		name        string
-		n           *NFA
-		expectedDFA *DFA
-	}{
-		{
-			name:        "OK",
-			n:           nfas[1],
-			expectedDFA: dfas[1],
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			dfa := tc.n.ToDFA()
-			assert.True(t, dfa.Equal(tc.expectedDFA))
-		})
-	}
-}
-
 func TestNFA_Isomorphic(t *testing.T) {
-	// aa*|bb*
-	n0 := NewNFA(0, []State{2, 4})
-	n0.Add(0, E, []State{1, 3})
-	n0.Add(1, 'a', []State{2})
-	n0.Add(2, 'a', []State{2})
-	n0.Add(3, 'b', []State{4})
-	n0.Add(4, 'b', []State{4})
-
-	n1 := NewNFA(0, []State{2})
-
-	n2 := NewNFA(0, []State{3, 6})
-	n2.Add(0, E, []State{1, 4})
-	n2.Add(1, 'a', []State{2})
-	n2.Add(2, 'a', []State{3})
-	n2.Add(3, 'a', []State{3})
-	n2.Add(4, 'b', []State{5})
-	n2.Add(5, 'b', []State{6})
-	n2.Add(6, 'b', []State{6})
-
-	n3 := NewNFA(0, []State{2, 4})
-	n3.Add(0, E, []State{1, 3})
-	n3.Add(1, 'a', []State{2})
-	n3.Add(2, 'c', []State{2})
-	n3.Add(3, 'b', []State{4})
-	n3.Add(4, 'c', []State{4})
-
-	n4 := NewNFA(0, []State{2, 4})
-	n4.Add(0, E, []State{1, 3})
-	n4.Add(1, 'a', []State{2})
-	n4.Add(2, 'a', []State{2})
-	n4.Add(3, 'b', []State{4})
-
-	n5 := NewNFA(4, []State{0, 1})
-	n5.Add(4, E, []State{2, 3})
-	n5.Add(2, 'a', []State{0})
-	n5.Add(0, 'a', []State{0})
-	n5.Add(3, 'b', []State{1})
-	n5.Add(1, 'b', []State{1})
+	nfa := &NFA{
+		start: 0,
+		final: NewStates(2, 4),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+			{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+		}),
+		trans: newNFATransitionTable().
+			Add(0, 0, NewStates(1, 3)).
+			Add(1, 1, NewStates(2)).
+			Add(2, 1, NewStates(2)).
+			Add(3, 2, NewStates(4)).
+			Add(4, 2, NewStates(4)),
+	}
 
 	tests := []struct {
 		name               string
@@ -579,39 +374,126 @@ func TestNFA_Isomorphic(t *testing.T) {
 		expectedIsomorphic bool
 	}{
 		{
-			name:               "FinalStatesNotEqualSize",
-			n:                  n0,
-			rhs:                n1,
+			name: "DiffFinalLens",
+			n:    nfa,
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+				}),
+				trans: newNFATransitionTable(),
+			},
 			expectedIsomorphic: false,
 		},
 		{
-			name:               "StatesNotEqualSize",
-			n:                  n0,
-			rhs:                n2,
+			name: "DiffStateLens",
+			n:    nfa,
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1, 3)).
+					Add(1, 1, NewStates(2)).
+					Add(2, 1, NewStates(2)).
+					Add(3, 2, NewStates(4)).
+					Add(4, 2, NewStates(4)).
+					Add(4, 1, NewStates(5)).
+					Add(4, 2, NewStates(5)),
+			},
 			expectedIsomorphic: false,
 		},
 		{
-			name:               "SymbolsNotEqual",
-			n:                  n0,
-			rhs:                n3,
+			name: "DiffAlphabetLens",
+			n:    nfa,
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+					{Range: disc.Range[Symbol]{Lo: 'c', Hi: 'c'}, Value: 3},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1, 3)).
+					Add(1, 1, NewStates(2)).
+					Add(2, 1, NewStates(2)).
+					Add(3, 2, NewStates(4)).
+					Add(4, 2, NewStates(4)),
+			},
 			expectedIsomorphic: false,
 		},
 		{
-			name:               "DegreesNotEqual",
-			n:                  n0,
-			rhs:                n4,
+			name: "AlphabetNotEqual",
+			n:    nfa,
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'z', Hi: 'z'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1, 3)).
+					Add(1, 1, NewStates(2)).
+					Add(2, 1, NewStates(2)).
+					Add(3, 2, NewStates(4)).
+					Add(4, 2, NewStates(4)),
+			},
+			expectedIsomorphic: false,
+		},
+		{
+			name: "SortedDegreesNotEqual",
+			n:    nfa,
+			rhs: &NFA{
+				start: 0,
+				final: NewStates(2, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1, 3)).
+					Add(1, 1, NewStates(2)).
+					Add(2, 1, NewStates(2)).
+					Add(3, 2, NewStates(4)),
+			},
 			expectedIsomorphic: false,
 		},
 		{
 			name:               "Equal",
-			n:                  n0,
-			rhs:                n0,
+			n:                  nfa,
+			rhs:                nfa,
 			expectedIsomorphic: true,
 		},
 		{
-			name:               "Isomorphic",
-			n:                  n0,
-			rhs:                n5,
+			name: "Isomorphic",
+			n:    nfa,
+			rhs: &NFA{
+				start: 4,
+				final: NewStates(0, 1),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(4, 0, NewStates(2, 3)).
+					Add(2, 1, NewStates(0)).
+					Add(0, 1, NewStates(0)).
+					Add(3, 2, NewStates(1)).
+					Add(1, 2, NewStates(1)),
+			},
 			expectedIsomorphic: true,
 		},
 	}
@@ -623,32 +505,350 @@ func TestNFA_Isomorphic(t *testing.T) {
 	}
 }
 
-func TestNFA_DOT(t *testing.T) {
-	nfas := getTestNFAs()
+func TestNFA_Start(t *testing.T) {
+	tests := []struct {
+		name          string
+		n             *NFA
+		expectedStart State
+	}{
+		{
+			name:          "OK",
+			n:             testNFA[0],
+			expectedStart: 0,
+		},
+	}
 
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedStart, tc.n.Start())
+		})
+	}
+}
+
+func TestNFA_Final(t *testing.T) {
+	tests := []struct {
+		name          string
+		n             *NFA
+		expectedFinal []State
+	}{
+		{
+			name:          "OK",
+			n:             testNFA[0],
+			expectedFinal: []State{2, 4},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedFinal, tc.n.Final())
+		})
+	}
+}
+
+func TestNFA_States(t *testing.T) {
+	tests := []struct {
+		name           string
+		n              *NFA
+		expectedStates []State
+	}{
+		{
+			name:           "OK",
+			n:              testNFA[0],
+			expectedStates: []State{0, 1, 2, 3, 4},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedStates, tc.n.States())
+		})
+	}
+}
+
+func TestNFA_Symbols(t *testing.T) {
+	tests := []struct {
+		name            string
+		n               *NFA
+		expectedSymbols []disc.Range[Symbol]
+	}{
+		{
+			name: "OK",
+			n:    testNFA[0],
+			expectedSymbols: []disc.Range[Symbol]{
+				{Lo: 'a', Hi: 'a'},
+				{Lo: 'b', Hi: 'b'},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedSymbols, tc.n.Symbols())
+		})
+	}
+}
+
+func TestNFA_classes(t *testing.T) {
+	tests := []struct {
+		name            string
+		n               *NFA
+		expectedClasses classMapping
+	}{
+		{
+			name: "OK",
+			n:    testNFA[0],
+			expectedClasses: newClassMapping([]generic.KeyValue[classID, rangeSet]{
+				{Key: 0, Val: newRangeSet(disc.Range[Symbol]{Lo: E, Hi: E})},
+				{Key: 1, Val: newRangeSet(disc.Range[Symbol]{Lo: 'a', Hi: 'a'})},
+				{Key: 2, Val: newRangeSet(disc.Range[Symbol]{Lo: 'b', Hi: 'b'})},
+			}),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.True(t, tc.n.classes().Equal(tc.expectedClasses))
+		})
+	}
+}
+
+func TestNFA_Transitions(t *testing.T) {
+	type transition struct {
+		s      State
+		ranges []disc.Range[Symbol]
+		next   []State
+	}
+
+	tests := []struct {
+		name          string
+		n             *NFA
+		expectedTrans []transition
+	}{
+		{
+			name: "OK",
+			n:    testNFA[0],
+			expectedTrans: []transition{
+				{0, []disc.Range[Symbol]{{Lo: E, Hi: E}}, []State{1, 3}},
+				{1, []disc.Range[Symbol]{{Lo: 'a', Hi: 'a'}}, []State{2}},
+				{2, []disc.Range[Symbol]{{Lo: 'a', Hi: 'a'}}, []State{2}},
+				{3, []disc.Range[Symbol]{{Lo: 'b', Hi: 'b'}}, []State{4}},
+				{4, []disc.Range[Symbol]{{Lo: 'b', Hi: 'b'}}, []State{4}},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			trans := []transition{}
+			for s, seq := range tc.n.Transitions() {
+				for ranges, next := range seq {
+					trans = append(trans, transition{s, ranges, next})
+				}
+			}
+
+			assert.True(t, reflect.DeepEqual(trans, tc.expectedTrans))
+		})
+	}
+}
+
+func TestNFA_TransitionsFrom(t *testing.T) {
+	type transition struct {
+		ranges []disc.Range[Symbol]
+		next   []State
+	}
+
+	tests := []struct {
+		name          string
+		n             *NFA
+		s             State
+		expectedTrans []transition
+	}{
+		{
+			name: "OK",
+			n:    testNFA[0],
+			s:    0,
+			expectedTrans: []transition{
+				{[]disc.Range[Symbol]{{Lo: E, Hi: E}}, []State{1, 3}},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			trans := []transition{}
+			for ranges, next := range tc.n.TransitionsFrom(tc.s) {
+				trans = append(trans, transition{ranges, next})
+			}
+
+			assert.True(t, reflect.DeepEqual(trans, tc.expectedTrans))
+		})
+	}
+}
+
+func TestNFA_Star(t *testing.T) {
+	tests := []struct {
+		name         string
+		n            *NFA
+		expectedStar *NFA
+	}{
+		{
+			name: "OK",
+			n:    testNFA[3],
+			expectedStar: &NFA{
+				start: 0,
+				final: NewStates(1),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 2},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(1, 2)).
+					Add(2, 1, NewStates(3)).
+					Add(2, 2, NewStates(4)).
+					Add(3, 0, NewStates(1, 2)).
+					Add(4, 0, NewStates(1, 2)).
+					Add(4, 1, NewStates(4)).
+					Add(4, 2, NewStates(4)),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			star := tc.n.Star()
+
+			assert.True(t, star.Equal(tc.expectedStar), "Expected:\n%s\nGot:\n%s", tc.expectedStar, star)
+		})
+	}
+}
+
+func TestNFA_Union(t *testing.T) {
+	tests := []struct {
+		name          string
+		n             *NFA
+		ns            []*NFA
+		expectedUnion *NFA
+	}{
+		{
+			name: "OK",
+			n:    testNFA[3],
+			ns:   []*NFA{testNFA[4]},
+			expectedUnion: &NFA{
+				start: 0,
+				final: NewStates(1),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 2},
+					{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, Value: 3},
+					{Range: disc.Range[Symbol]{Lo: 'X', Hi: 'X'}, Value: 4},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'f'}, Value: 3},
+					{Range: disc.Range[Symbol]{Lo: 'x', Hi: 'x'}, Value: 4},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(2, 5)).
+					Add(2, 1, NewStates(3)).
+					Add(2, 2, NewStates(4)).
+					Add(3, 0, NewStates(1)).
+					Add(4, 0, NewStates(1)).
+					Add(4, 1, NewStates(4)).
+					Add(4, 2, NewStates(4)).
+					Add(5, 1, NewStates(6)).
+					Add(6, 0, NewStates(1)).
+					Add(6, 4, NewStates(7)).
+					Add(7, 1, NewStates(8)).
+					Add(7, 2, NewStates(8)).
+					Add(7, 3, NewStates(8)).
+					Add(8, 0, NewStates(1)).
+					Add(8, 1, NewStates(8)).
+					Add(8, 2, NewStates(8)).
+					Add(8, 3, NewStates(8)),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			union := tc.n.Union(tc.ns...)
+
+			assert.True(t, union.Equal(tc.expectedUnion), "Expected:\n%s\nGot:\n%s", tc.expectedUnion, union)
+		})
+	}
+}
+
+func TestNFA_Concat(t *testing.T) {
+	tests := []struct {
+		name           string
+		n              *NFA
+		ns             []*NFA
+		expectedConcat *NFA
+	}{
+		{
+			name: "OK",
+			n:    testNFA[2],
+			ns:   []*NFA{testNFA[3]},
+			expectedConcat: &NFA{
+				start: 0,
+				final: NewStates(2, 3),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'Z'}, Value: 2},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'z'}, Value: 3},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 2, NewStates(1)).
+					Add(1, 0, NewStates(2)).
+					Add(1, 1, NewStates(3)).
+					Add(1, 2, NewStates(1)).
+					Add(1, 3, NewStates(1)).
+					Add(3, 0, NewStates(3)).
+					Add(3, 1, NewStates(3)),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			concat := tc.n.Concat(tc.ns...)
+
+			assert.True(t, concat.Equal(tc.expectedConcat), "Expected:\n%s\nGot:\n%s", tc.expectedConcat, concat)
+		})
+	}
+}
+
+func TestNFA_ToDFA(t *testing.T) {
+	tests := []struct {
+		name        string
+		n           *NFA
+		expectedDFA *DFA
+	}{
+		{
+			name:        "OK",
+			n:           testNFA[1],
+			expectedDFA: testDFA[1],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.n.ToDFA()
+
+			assert.True(t, dfa.Equal(tc.expectedDFA), "Expected:\n%s\nGot:\n%s", tc.expectedDFA, dfa)
+		})
+	}
+}
+
+func TestNFA_DOT(t *testing.T) {
 	tests := []struct {
 		name        string
 		n           *NFA
 		expectedDOT string
 	}{
 		{
-			name: "Empty",
-			n:    NewNFA(0, []State{1}),
-			expectedDOT: `digraph "NFA" {
-  rankdir=LR;
-  concentrate=false;
-  node [shape=circle];
-
-  start [style=invis];
-  0 [label="0"];
-  1 [label="1", shape=doublecircle];
-
-  start -> 0 [];
-}`,
-		},
-		{
-			name: "First",
-			n:    nfas[0],
+			name: "OK",
+			n:    testNFA[0],
 			expectedDOT: `digraph "NFA" {
   rankdir=LR;
   concentrate=false;
@@ -662,75 +862,113 @@ func TestNFA_DOT(t *testing.T) {
   4 [label="4", shape=doublecircle];
 
   start -> 0 [];
-  0 -> 1 [label="ε"];
-  0 -> 3 [label="ε"];
-  1 -> 2 [label="a"];
-  2 -> 2 [label="a"];
-  3 -> 4 [label="b"];
-  4 -> 4 [label="b"];
-}`,
-		},
-		{
-			name: "Second",
-			n:    nfas[1],
-			expectedDOT: `digraph "NFA" {
-  rankdir=LR;
-  concentrate=false;
-  node [shape=circle];
-
-  start [style=invis];
-  0 [label="0"];
-  1 [label="1"];
-  2 [label="2"];
-  3 [label="3"];
-  4 [label="4"];
-  5 [label="5"];
-  6 [label="6"];
-  7 [label="7"];
-  8 [label="8"];
-  9 [label="9"];
-  10 [label="10", shape=doublecircle];
-
-  start -> 0 [];
-  0 -> 1 [label="ε"];
-  0 -> 7 [label="ε"];
-  1 -> 2 [label="ε"];
-  1 -> 4 [label="ε"];
-  2 -> 3 [label="a"];
-  3 -> 6 [label="ε"];
-  4 -> 5 [label="b"];
-  5 -> 6 [label="ε"];
-  6 -> 1 [label="ε"];
-  6 -> 7 [label="ε"];
-  7 -> 8 [label="a"];
-  8 -> 9 [label="b"];
-  9 -> 10 [label="b"];
-}`,
-		},
-		{
-			name: "Third",
-			n:    nfas[3],
-			expectedDOT: `digraph "NFA" {
-  rankdir=LR;
-  concentrate=false;
-  node [shape=circle];
-
-  start [style=invis];
-  0 [label="0"];
-  1 [label="1"];
-  2 [label="2", shape=doublecircle];
-
-  start -> 0 [];
-  0 -> 1 [label="a"];
-  1 -> 2 [label="b"];
-  2 -> 1 [label="a"];
-}`,
+  0 -> 1 [label="[ε..ε]"];
+  0 -> 3 [label="[ε..ε]"];
+  1 -> 2 [label="[a..a]"];
+  2 -> 2 [label="[a..a]"];
+  3 -> 4 [label="[b..b]"];
+  4 -> 4 [label="[b..b]"];
+}
+`,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedDOT, tc.n.DOT())
+		})
+	}
+}
+
+func TestNFA_Runner(t *testing.T) {
+	tests := []struct {
+		name string
+		n    *NFA
+	}{
+		{
+			name: "OK",
+			n:    testNFA[0],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := tc.n.Runner()
+
+			assert.NotNil(t, r)
+			assert.NotNil(t, r.trans)
+			assert.Equal(t, tc.n.start, r.start)
+			assert.True(t, r.final.Equal(tc.n.final))
+			assert.True(t, r.ranges.Equal(tc.n.ranges))
+		})
+	}
+}
+
+func TestNFARunner_Next(t *testing.T) {
+	runner := testNFA[0].Runner()
+
+	tests := []struct {
+		name         string
+		r            *NFARunner
+		s            State
+		a            Symbol
+		expectedNext []State
+	}{
+		{
+			name:         "NotOK",
+			r:            runner,
+			s:            0,
+			a:            'a',
+			expectedNext: nil,
+		},
+		{
+			name:         "OK",
+			r:            runner,
+			s:            0,
+			a:            E,
+			expectedNext: []State{1, 3},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedNext, tc.r.Next(tc.s, tc.a))
+		})
+	}
+}
+
+func TestNFARunner_Accept(t *testing.T) {
+	runner := testNFA[5].Runner()
+
+	tests := []struct {
+		name           string
+		r              *NFARunner
+		s              String
+		expectedAccept bool
+	}{
+		{
+			name:           "EmptyString",
+			r:              runner,
+			s:              String{},
+			expectedAccept: false,
+		},
+		{
+			name:           "NotAccepted",
+			r:              runner,
+			s:              String{'0', '1', '_', 'I', 'd'},
+			expectedAccept: false,
+		},
+		{
+			name:           "Accepted",
+			r:              runner,
+			s:              String{'I', 'd', '_', '0', '1'},
+			expectedAccept: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedAccept, tc.r.Accept(tc.s))
 		})
 	}
 }

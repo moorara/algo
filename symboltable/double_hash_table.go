@@ -139,7 +139,7 @@ func (ht *doubleHashTable[K, V]) resize(m int) {
 	// Ensure the table size remains prime
 	m = smallestPrimeLargerThan(m)
 
-	newHT := NewDoubleHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	newHT := NewDoubleHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		InitialCap:    m,
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
@@ -328,7 +328,7 @@ func (ht *doubleHashTable[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V, b
 // SelectMatch selects a subset of key-values from the hash table that satisfy the given predicate.
 // It returns a new hash table containing the matching key-values, of the same type as the original hash table.
 func (ht *doubleHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic.Collection2[K, V] {
-	newHT := NewDoubleHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	newHT := NewDoubleHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
 	})
@@ -348,12 +348,12 @@ func (ht *doubleHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic
 // while the second hash table contains those that do not satisfy the predicate (unmatched key-values).
 // Both hash tables are of the same type as the original hash table.
 func (ht *doubleHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (generic.Collection2[K, V], generic.Collection2[K, V]) {
-	matched := NewDoubleHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	matched := NewDoubleHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
 	})
 
-	unmatched := NewDoubleHashTable[K, V](ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
+	unmatched := NewDoubleHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
 		MinLoadFactor: ht.minLF,
 		MaxLoadFactor: ht.maxLF,
 	})

@@ -26,12 +26,12 @@ func TestNewSorted(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewSorted(tc.compare, tc.vals...)
+			s := NewSorted(tc.compare, tc.vals...).(*sorted[string])
 
 			assert.NotNil(t, s)
-			assert.Equal(t, tc.expectedMembers, s.(*sorted[string]).members)
-			assert.NotNil(t, s.(*sorted[string]).compare)
-			assert.NotNil(t, s.(*sorted[string]).format)
+			assert.Equal(t, tc.expectedMembers, s.members)
+			assert.NotNil(t, s.compare)
+			assert.NotNil(t, s.format)
 		})
 	}
 }
@@ -40,14 +40,14 @@ func TestNewSortedWithFormat(t *testing.T) {
 	tests := []struct {
 		name            string
 		compare         generic.CompareFunc[string]
-		format          StringFormat[string]
+		format          FormatFunc[string]
 		vals            []string
 		expectedMembers []string
 	}{
 		{
 			name:            "OK",
 			compare:         generic.NewCompareFunc[string](),
-			format:          defaultStringFormat[string],
+			format:          defaultFormat[string],
 			vals:            []string{"d", "c", "b", "a"},
 			expectedMembers: []string{"a", "b", "c", "d"},
 		},
@@ -55,12 +55,12 @@ func TestNewSortedWithFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewSortedWithFormat(tc.compare, tc.format, tc.vals...)
+			s := NewSortedWithFormat(tc.compare, tc.format, tc.vals...).(*sorted[string])
 
 			assert.NotNil(t, s)
-			assert.Equal(t, tc.expectedMembers, s.(*sorted[string]).members)
-			assert.NotNil(t, s.(*sorted[string]).compare)
-			assert.NotNil(t, s.(*sorted[string]).format)
+			assert.Equal(t, tc.expectedMembers, s.members)
+			assert.NotNil(t, s.compare)
+			assert.NotNil(t, s.format)
 		})
 	}
 }
@@ -78,7 +78,7 @@ func TestSorted_String(t *testing.T) {
 			s: &sorted[string]{
 				members: []string{},
 				compare: cmpFunc,
-				format:  defaultStringFormat[string],
+				format:  defaultFormat[string],
 			},
 			expectedString: "{}",
 		},
@@ -87,7 +87,7 @@ func TestSorted_String(t *testing.T) {
 			s: &sorted[string]{
 				members: []string{"a", "b", "c", "d"},
 				compare: cmpFunc,
-				format:  defaultStringFormat[string],
+				format:  defaultFormat[string],
 			},
 			expectedString: "{a, b, c, d}",
 		},
@@ -106,7 +106,7 @@ func TestSorted_Equal(t *testing.T) {
 	tests := []struct {
 		name     string
 		s        *sorted[string]
-		t        Set[string]
+		rhs      Set[string]
 		expected bool
 	}{
 		{
@@ -115,7 +115,7 @@ func TestSorted_Equal(t *testing.T) {
 				members: []string{},
 				compare: cmpFunc,
 			},
-			t: &sorted[string]{
+			rhs: &sorted[string]{
 				members: []string{},
 				compare: cmpFunc,
 			},
@@ -127,7 +127,7 @@ func TestSorted_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				compare: cmpFunc,
 			},
-			t: &sorted[string]{
+			rhs: &sorted[string]{
 				members: []string{"a", "b", "c", "d"},
 				compare: cmpFunc,
 			},
@@ -139,7 +139,7 @@ func TestSorted_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				compare: cmpFunc,
 			},
-			t: &sorted[string]{
+			rhs: &sorted[string]{
 				members: []string{"c", "d", "e", "f"},
 				compare: cmpFunc,
 			},
@@ -151,7 +151,7 @@ func TestSorted_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d"},
 				compare: cmpFunc,
 			},
-			t: &sorted[string]{
+			rhs: &sorted[string]{
 				members: []string{"a", "b", "c", "d", "e", "f"},
 				compare: cmpFunc,
 			},
@@ -163,7 +163,7 @@ func TestSorted_Equal(t *testing.T) {
 				members: []string{"a", "b", "c", "d", "e", "f"},
 				compare: cmpFunc,
 			},
-			t: &sorted[string]{
+			rhs: &sorted[string]{
 				members: []string{"a", "b", "c", "d"},
 				compare: cmpFunc,
 			},
@@ -173,8 +173,87 @@ func TestSorted_Equal(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b := tc.s.Equal(tc.t)
+			b := tc.s.Equal(tc.rhs)
 			assert.Equal(t, tc.expected, b)
+		})
+	}
+}
+
+func TestSorted_Compare(t *testing.T) {
+	cmpFunc := generic.NewCompareFunc[string]()
+
+	tests := []struct {
+		name     string
+		s        *sorted[string]
+		rhs      *sorted[string]
+		expected int
+	}{
+		{
+			name: "Smaller_ByElement",
+			s: &sorted[string]{
+				members: []string{"a", "b", "c", "d"},
+				compare: cmpFunc,
+			},
+			rhs: &sorted[string]{
+				members: []string{"a", "b", "d", "e"},
+				compare: cmpFunc,
+			},
+			expected: -1,
+		},
+		{
+			name: "Greater_ByElement",
+			s: &sorted[string]{
+				members: []string{"a", "b", "d", "e"},
+				compare: cmpFunc,
+			},
+			rhs: &sorted[string]{
+				members: []string{"a", "b", "c", "d"},
+				compare: cmpFunc,
+			},
+			expected: 1,
+		},
+		{
+			name: "Smaller_ByLength",
+			s: &sorted[string]{
+				members: []string{"a", "b", "c"},
+				compare: cmpFunc,
+			},
+			rhs: &sorted[string]{
+				members: []string{"a", "b", "c", "d"},
+				compare: cmpFunc,
+			},
+			expected: -1,
+		},
+		{
+			name: "Greater_ByLength",
+			s: &sorted[string]{
+				members: []string{"a", "b", "c", "d"},
+				compare: cmpFunc,
+			},
+			rhs: &sorted[string]{
+				members: []string{"a", "b", "c"},
+				compare: cmpFunc,
+			},
+			expected: 1,
+		},
+		{
+			name: "Equal",
+			s: &sorted[string]{
+				members: []string{"a", "b", "c", "d"},
+				compare: cmpFunc,
+			},
+			rhs: &sorted[string]{
+				members: []string{"a", "b", "c", "d"},
+				compare: cmpFunc,
+			},
+			expected: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			c := tc.s.Compare(tc.rhs)
+			assert.Equal(t, tc.expected, c)
 		})
 	}
 }

@@ -4,11 +4,17 @@ import "github.com/moorara/algo/generic"
 
 // Queue represents a queue abstract data type.
 type Queue[T any] interface {
+	// Size returns the number of values in the queue.
 	Size() int
+	// IsEmpty returns true if the queue is empty.
 	IsEmpty() bool
+	// Enqueue adds a new value to the queue.
 	Enqueue(T)
+	// Dequeue removes a value from the queue.
 	Dequeue() (T, bool)
+	// Peek returns the next value in queue without removing it from the queue.
 	Peek() (T, bool)
+	// Contains returns true if a given value is already in the queue.
 	Contains(T) bool
 }
 
@@ -37,17 +43,14 @@ func NewQueue[T any](nodeSize int, equal generic.EqualFunc[T]) Queue[T] {
 	}
 }
 
-// Size returns the number of values in the queue.
 func (q *arrayQueue[T]) Size() int {
 	return q.listSize
 }
 
-// IsEmpty returns true if the queue is empty.
 func (q *arrayQueue[T]) IsEmpty() bool {
 	return q.listSize == 0
 }
 
-// Enqueue adds a new value to the queue.
 func (q *arrayQueue[T]) Enqueue(val T) {
 	q.listSize++
 	q.rearIndex++
@@ -63,7 +66,6 @@ func (q *arrayQueue[T]) Enqueue(val T) {
 	q.rearNode.block[q.rearIndex] = val
 }
 
-// Dequeue removes a value from the queue.
 func (q *arrayQueue[T]) Dequeue() (T, bool) {
 	if q.IsEmpty() {
 		var zero T
@@ -81,7 +83,6 @@ func (q *arrayQueue[T]) Dequeue() (T, bool) {
 	return val, true
 }
 
-// Peek returns the next value in queue without removing it from the queue.
 func (q *arrayQueue[T]) Peek() (T, bool) {
 	if q.IsEmpty() {
 		var zero T
@@ -91,7 +92,6 @@ func (q *arrayQueue[T]) Peek() (T, bool) {
 	return q.frontNode.block[q.frontIndex], true
 }
 
-// Contains returns true if a given value is already in the queue.
 func (q *arrayQueue[T]) Contains(val T) bool {
 	n, i := q.frontNode, q.frontIndex
 

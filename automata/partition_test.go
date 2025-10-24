@@ -3,38 +3,75 @@ package automata
 import (
 	"testing"
 
-	"github.com/moorara/algo/symboltable"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewGroups(t *testing.T) {
+func TestEqGroup(t *testing.T) {
 	tests := []struct {
-		name string
-		g    []group
+		name     string
+		a, b     group
+		expected bool
 	}{
 		{
-			name: "OK",
-			g: []group{
-				{States: NewStates(0), rep: 0},
-				{States: NewStates(1, 2), rep: 1},
-				{States: NewStates(3, 4), rep: 2},
-			},
+			name:     "NotEqual",
+			a:        group{States: NewStates(2, 4, 8), Rep: 2},
+			b:        group{States: NewStates(3, 5, 7), Rep: 3},
+			expected: false,
+		},
+		{
+			name:     "Equal_SameRepresentative",
+			a:        group{States: NewStates(2, 4, 8), Rep: 2},
+			b:        group{States: NewStates(2, 4, 8), Rep: 2},
+			expected: true,
+		},
+		{
+			name:     "Equal_DiffRepresentative",
+			a:        group{States: NewStates(2, 4, 8), Rep: 2},
+			b:        group{States: NewStates(2, 4, 8), Rep: 4},
+			expected: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			set := newGroups(tc.g...)
+			assert.Equal(t, tc.expected, eqGroup(tc.a, tc.b))
+		})
+	}
+}
 
-			assert.NotNil(t, set)
-			assert.True(t, set.Contains(tc.g...))
+func TestNewGroups(t *testing.T) {
+	tests := []struct {
+		name           string
+		gs             []group
+		expectedString string
+	}{
+		{
+			name: "OK",
+			gs: []group{
+				{States: NewStates(2, 4, 8), Rep: 2},
+				{States: NewStates(3, 5, 7), Rep: 3},
+			},
+			expectedString: "{{2, 4, 8}, {3, 5, 7}}",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gs := newGroups(tc.gs...)
+
+			assert.NotNil(t, gs)
+			assert.Equal(t, tc.expectedString, gs.String())
 		})
 	}
 }
 
 func TestNewPartition(t *testing.T) {
-	P := newPartition()
-	assert.NotNil(t, P)
+	t.Run("OK", func(t *testing.T) {
+		P := newPartition()
+
+		assert.NotNil(t, P)
+		assert.NotNil(t, P.groups)
+	})
 }
 
 func TestPartition_Equal(t *testing.T) {
@@ -48,15 +85,15 @@ func TestPartition_Equal(t *testing.T) {
 			name: "Equal",
 			p: &partition{
 				groups: newGroups(
-					group{States: NewStates(0), rep: 0},
-					group{States: NewStates(1, 2), rep: 1},
+					group{States: NewStates(0), Rep: 0},
+					group{States: NewStates(1, 2), Rep: 1},
 				),
 				nextRep: 2,
 			},
 			rhs: &partition{
 				groups: newGroups(
-					group{States: NewStates(0), rep: 0},
-					group{States: NewStates(1, 2), rep: 1},
+					group{States: NewStates(0), Rep: 0},
+					group{States: NewStates(1, 2), Rep: 1},
 				),
 				nextRep: 2,
 			},
@@ -66,16 +103,16 @@ func TestPartition_Equal(t *testing.T) {
 			name: "NotEqual",
 			p: &partition{
 				groups: newGroups(
-					group{States: NewStates(0), rep: 0},
-					group{States: NewStates(1, 2), rep: 1},
+					group{States: NewStates(0), Rep: 0},
+					group{States: NewStates(1, 2), Rep: 1},
 				),
 				nextRep: 2,
 			},
 			rhs: &partition{
 				groups: newGroups(
-					group{States: NewStates(0), rep: 0},
-					group{States: NewStates(1), rep: 1},
-					group{States: NewStates(2), rep: 2},
+					group{States: NewStates(0), Rep: 0},
+					group{States: NewStates(1), Rep: 1},
+					group{States: NewStates(2), Rep: 2},
 				),
 				nextRep: 3,
 			},
@@ -101,7 +138,7 @@ func TestPartition_Add(t *testing.T) {
 			name: "OK",
 			p: &partition{
 				groups: newGroups(
-					group{States: NewStates(0), rep: 0},
+					group{States: NewStates(0), Rep: 0},
 				),
 				nextRep: 1,
 			},
@@ -111,9 +148,9 @@ func TestPartition_Add(t *testing.T) {
 			},
 			expectedPartition: &partition{
 				groups: newGroups(
-					group{States: NewStates(0), rep: 0},
-					group{States: NewStates(1, 2), rep: 1},
-					group{States: NewStates(3, 4), rep: 2},
+					group{States: NewStates(0), Rep: 0},
+					group{States: NewStates(1, 2), Rep: 1},
+					group{States: NewStates(3, 4), Rep: 2},
 				),
 				nextRep: 3,
 			},
@@ -129,7 +166,7 @@ func TestPartition_Add(t *testing.T) {
 	}
 }
 
-func TestPartition_Rep(t *testing.T) {
+func TestPartition_FindRep(t *testing.T) {
 	tests := []struct {
 		name        string
 		p           *partition
@@ -137,12 +174,12 @@ func TestPartition_Rep(t *testing.T) {
 		expectedRep State
 	}{
 		{
-			name: "OK",
+			name: "Found",
 			p: &partition{
 				groups: newGroups(
-					group{States: NewStates(0), rep: 0},
-					group{States: NewStates(1, 2), rep: 1},
-					group{States: NewStates(3, 4), rep: 2},
+					group{States: NewStates(0), Rep: 0},
+					group{States: NewStates(1, 2), Rep: 1},
+					group{States: NewStates(3, 4), Rep: 2},
 				),
 				nextRep: 4,
 			},
@@ -150,112 +187,25 @@ func TestPartition_Rep(t *testing.T) {
 			expectedRep: State(2),
 		},
 		{
-			name: "NotOK",
+			name: "NotFound",
 			p: &partition{
 				groups: newGroups(
-					group{States: NewStates(0), rep: 0},
-					group{States: NewStates(1, 2), rep: 1},
-					group{States: NewStates(3, 4), rep: 2},
+					group{States: NewStates(0), Rep: 0},
+					group{States: NewStates(1, 2), Rep: 1},
+					group{States: NewStates(3, 4), Rep: 2},
 				),
 				nextRep: 4,
 			},
 			s:           State(8),
-			expectedRep: State(-1),
+			expectedRep: -1,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			rep := tc.p.Rep(tc.s)
+			rep := tc.p.FindRep(tc.s)
 
 			assert.Equal(t, tc.expectedRep, rep)
-		})
-	}
-}
-
-func TestPartition_BuildGroupTrans(t *testing.T) {
-	dfa := getTestDFAs()[2]
-
-	trans := symboltable.NewRedBlack(CmpState, eqSymbolState)
-
-	s2Trans := symboltable.NewRedBlack(CmpSymbol, EqState)
-	s2Trans.Put('b', 1)
-	trans.Put(2, s2Trans)
-
-	s4Trans := symboltable.NewRedBlack(CmpSymbol, EqState)
-	s4Trans.Put('a', 1)
-	trans.Put(4, s4Trans)
-
-	tests := []struct {
-		name          string
-		p             *partition
-		dfa           *DFA
-		G             group
-		expectedTrans symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]]
-	}{
-		{
-			name: "OK",
-			p: &partition{
-				groups: newGroups(
-					group{States: NewStates(0, 1, 3), rep: 0},
-					group{States: NewStates(2, 4), rep: 1},
-				),
-				nextRep: 2,
-			},
-			dfa:           dfa,
-			G:             group{States: NewStates(2, 4), rep: 1},
-			expectedTrans: trans,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			trans := tc.p.BuildGroupTrans(tc.dfa, tc.G)
-
-			assert.True(t, trans.Equal(tc.expectedTrans))
-		})
-	}
-}
-
-func TestPartition_PartitionAndAddGroups(t *testing.T) {
-	trans := symboltable.NewRedBlack(CmpState, eqSymbolState)
-
-	s2Trans := symboltable.NewRedBlack(CmpSymbol, EqState)
-	s2Trans.Put('b', 1)
-	trans.Put(2, s2Trans)
-
-	s4Trans := symboltable.NewRedBlack(CmpSymbol, EqState)
-	s4Trans.Put('a', 1)
-	trans.Put(4, s4Trans)
-
-	tests := []struct {
-		name              string
-		p                 *partition
-		Gtrans            symboltable.SymbolTable[State, symboltable.SymbolTable[Symbol, State]]
-		expectedPartition *partition
-	}{
-		{
-			name: "OK",
-			p: &partition{
-				groups:  newGroups(),
-				nextRep: 0,
-			},
-			Gtrans: trans,
-			expectedPartition: &partition{
-				groups: newGroups(
-					group{States: NewStates(2), rep: 0},
-					group{States: NewStates(4), rep: 1},
-				),
-				nextRep: 2,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.p.PartitionAndAddGroups(tc.Gtrans)
-
-			assert.True(t, tc.p.Equal(tc.expectedPartition))
 		})
 	}
 }

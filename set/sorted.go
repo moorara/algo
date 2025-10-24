@@ -13,7 +13,7 @@ import (
 type sorted[T any] struct {
 	members []T
 	compare generic.CompareFunc[T]
-	format  StringFormat[T]
+	format  FormatFunc[T]
 }
 
 // NewSorted creates a new set that maintains its members in sorted order.
@@ -22,7 +22,7 @@ func NewSorted[T any](compare generic.CompareFunc[T], vals ...T) Set[T] {
 	s := &sorted[T]{
 		members: make([]T, 0),
 		compare: compare,
-		format:  defaultStringFormat[T],
+		format:  defaultFormat[T],
 	}
 
 	s.Add(vals...)
@@ -31,7 +31,7 @@ func NewSorted[T any](compare generic.CompareFunc[T], vals ...T) Set[T] {
 }
 
 // NewSortedWithFormat creates a new sorted set with a custom format for String method.
-func NewSortedWithFormat[T any](compare generic.CompareFunc[T], format StringFormat[T], vals ...T) Set[T] {
+func NewSortedWithFormat[T any](compare generic.CompareFunc[T], format FormatFunc[T], vals ...T) Set[T] {
 	s := &sorted[T]{
 		members: make([]T, 0),
 		compare: compare,
@@ -79,6 +79,16 @@ func (s *sorted[T]) Equal(rhs Set[T]) bool {
 	}
 
 	return true
+}
+
+func (s *sorted[T]) Compare(rhs *sorted[T]) int {
+	for i := 0; i < len(s.members) && i < len(rhs.members); i++ {
+		if c := s.compare(s.members[i], rhs.members[i]); c != 0 {
+			return c
+		}
+	}
+
+	return len(s.members) - len(rhs.members)
 }
 
 func (s *sorted[T]) Clone() Set[T] {
