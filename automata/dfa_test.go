@@ -44,6 +44,49 @@ var testDFA = []*DFA{
 			Add(4, 0, 1).
 			Add(4, 1, 2),
 	},
+	// (ab)+
+	{
+		start: 0,
+		final: NewStates(2),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+		}),
+		trans: newDFATransitionTable().
+			Add(0, 0, 1).
+			Add(1, 1, 2).
+			Add(2, 0, 1),
+	},
+	// ab+|ba+
+	{
+		start: 0,
+		final: NewStates(2, 4),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+		}),
+		trans: newDFATransitionTable().
+			Add(0, 0, 1).
+			Add(1, 1, 2).
+			Add(2, 1, 2).
+			Add(0, 1, 3).
+			Add(3, 0, 4).
+			Add(4, 0, 4),
+	},
+	// ab(a|b)*
+	{
+		start: 0,
+		final: NewStates(2),
+		ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+			{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+			{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+		}),
+		trans: newDFATransitionTable().
+			Add(0, 0, 1).
+			Add(1, 1, 2).
+			Add(2, 0, 2).
+			Add(2, 1, 2),
+	},
 	// ([A-Za-z_][0-9A-Za-z_]*)|[0-9]+|(0x[0-9A-Fa-f]+)|[ \t\n]+|[+\-*/=]
 	{
 		start: 0,
@@ -135,7 +178,7 @@ func TestDFABuilder(t *testing.T) {
 				{s: 5, start: 'A', end: 'F', next: 5},
 				{s: 5, start: 'a', end: 'f', next: 5},
 			},
-			expectedDFA: testDFA[2],
+			expectedDFA: testDFA[5],
 		},
 	}
 
@@ -463,6 +506,258 @@ func TestDFA_TransitionsFrom(t *testing.T) {
 			}
 
 			assert.True(t, reflect.DeepEqual(trans, tc.expectedTrans))
+		})
+	}
+}
+
+func TestDFA_Minimize(t *testing.T) {
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedDFA *DFA
+	}{
+		{
+			name: "OK",
+			d:    testDFA[1],
+			expectedDFA: &DFA{
+				start: 0,
+				final: NewStates(3),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+				}),
+				trans: newDFATransitionTable().
+					Add(0, 0, 1).
+					Add(0, 1, 0).
+					Add(1, 0, 1).
+					Add(1, 1, 2).
+					Add(2, 0, 1).
+					Add(2, 1, 3).
+					Add(3, 0, 1).
+					Add(3, 1, 0),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.d.Minimize()
+
+			assert.True(t, dfa.Equal(tc.expectedDFA), "Expected:\n%s\nGot:\n%s", tc.expectedDFA, dfa)
+		})
+	}
+}
+
+func TestBuildGroupTransitions(t *testing.T) {
+	tests := []struct {
+		name               string
+		d                  *DFA
+		P                  *partition
+		G                  group
+		expectedGroupTrans *dfaTransitionTable
+	}{
+		{
+			name: "OK",
+			d:    testDFA[3],
+			P: &partition{
+				groups: newGroups(
+					group{States: NewStates(0, 1, 3), Rep: 0},
+					group{States: NewStates(2, 4), Rep: 1},
+				),
+				nextRep: 2,
+			},
+			G: group{States: NewStates(2, 4), Rep: 1},
+			expectedGroupTrans: newDFATransitionTable().
+				Add(2, 1, 1).
+				Add(4, 0, 1),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			Gtrans := buildGroupTransitions(tc.d, tc.P, tc.G)
+
+			assert.True(t, Gtrans.Equal(tc.expectedGroupTrans))
+		})
+	}
+}
+
+func TestPartitionGroups(t *testing.T) {
+	tests := []struct {
+		name              string
+		P                 *partition
+		Gtrans            *dfaTransitionTable
+		expectedPartition *partition
+	}{
+		{
+			name: "OK",
+			P: &partition{
+				groups:  newGroups(),
+				nextRep: 0,
+			},
+			Gtrans: newDFATransitionTable().
+				Add(2, 1, 1).
+				Add(4, 0, 1),
+			expectedPartition: &partition{
+				groups: newGroups(
+					group{States: NewStates(2), Rep: 0},
+					group{States: NewStates(4), Rep: 1},
+				),
+				nextRep: 2,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			partitionGroup(tc.P, tc.Gtrans)
+
+			assert.True(t, tc.P.Equal(tc.expectedPartition))
+		})
+	}
+}
+
+func TestDFA_EliminateDeadStates(t *testing.T) {
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedDFA *DFA
+	}{
+		{
+			name: "OK",
+			d: &DFA{ // ab(a|b)*
+				start: 0,
+				final: NewStates(2),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+				}),
+				trans: newDFATransitionTable().
+					Add(0, 0, 1).
+					Add(0, 1, 3).
+					Add(1, 0, 4).
+					Add(1, 1, 2).
+					Add(2, 0, 2).
+					Add(2, 1, 2).
+					Add(3, 0, 3).
+					Add(3, 1, 3).
+					Add(4, 0, 4).
+					Add(4, 1, 4),
+			},
+			expectedDFA: testDFA[4],
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.d.EliminateDeadStates()
+
+			assert.True(t, dfa.Equal(tc.expectedDFA), "Expected:\n%s\nGot:\n%s", tc.expectedDFA, dfa)
+		})
+	}
+}
+
+func TestDFA_ReindexStates(t *testing.T) {
+	tests := []struct {
+		name        string
+		d           *DFA
+		expectedDFA *DFA
+	}{
+		{
+			name: "OK",
+			d: &DFA{ // (0|1)+\.(0|1)+
+				start: 0,
+				final: NewStates(3, 4),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: '.', Hi: '.'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: '0', Hi: '1'}, Value: 1},
+				}),
+				trans: newDFATransitionTable().
+					Add(0, 1, 3).
+					Add(3, 1, 3).
+					Add(3, 0, 1).
+					Add(1, 1, 4).
+					Add(4, 1, 4),
+			},
+			expectedDFA: &DFA{ // (0|1)+\.(0|1)+
+				start: 0,
+				final: NewStates(1, 3),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: '.', Hi: '.'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: '0', Hi: '1'}, Value: 1},
+				}),
+				trans: newDFATransitionTable().
+					Add(0, 1, 1).
+					Add(1, 1, 1).
+					Add(1, 0, 2).
+					Add(2, 1, 3).
+					Add(3, 1, 3),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa := tc.d.ReindexStates()
+
+			assert.True(t, dfa.Equal(tc.expectedDFA), "Expected:\n%s\nGot:\n%s", tc.expectedDFA, dfa)
+		})
+	}
+}
+
+func TestDFA_Union(t *testing.T) {
+	tests := []struct {
+		name             string
+		d                *DFA
+		ds               []*DFA
+		expectedDFA      *DFA
+		expectedFinalMap [][]State
+	}{
+		{
+			name: "OK",
+			d:    testDFA[2],
+			ds: []*DFA{
+				testDFA[3],
+				testDFA[4],
+			},
+			expectedDFA: &DFA{
+				start: 0,
+				final: NewStates(3, 4, 5, 6, 7, 8),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+				}),
+				trans: newDFATransitionTable().
+					Add(0, 0, 1).
+					Add(0, 1, 2).
+					Add(1, 1, 3).
+					Add(2, 0, 4).
+					Add(3, 0, 5).
+					Add(3, 1, 6).
+					Add(4, 0, 4).
+					Add(5, 0, 7).
+					Add(5, 1, 8).
+					Add(6, 0, 7).
+					Add(6, 1, 6).
+					Add(7, 0, 7).
+					Add(7, 1, 7).
+					Add(8, 0, 5).
+					Add(8, 1, 7),
+			},
+			expectedFinalMap: [][]State{
+				{3, 8},
+				{3, 4, 6},
+				{3, 5, 6, 7, 8},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa, finalMap := tc.d.Union(tc.ds...)
+
+			assert.True(t, dfa.Equal(tc.expectedDFA), "Expected:\n%s\nGot:\n%s", tc.expectedDFA, dfa)
+			assert.Equal(t, tc.expectedFinalMap, finalMap, "Expected:\n%v\nGot:\n%v", tc.expectedFinalMap, finalMap)
 		})
 	}
 }

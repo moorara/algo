@@ -9,7 +9,7 @@ import (
 	"github.com/moorara/algo/range/disc"
 )
 
-func TestRangeSet(t *testing.T) {
+func TestNewRangeSet(t *testing.T) {
 	tests := []struct {
 		name           string
 		rs             []disc.Range[Symbol]
@@ -29,12 +29,13 @@ func TestRangeSet(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			rs := newRangeSet(tc.rs...)
 
+			assert.NotNil(t, rs)
 			assert.Equal(t, tc.expectedString, rs.String())
 		})
 	}
 }
 
-func TestRangeMapping(t *testing.T) {
+func TestNewRangeMapping(t *testing.T) {
 	tests := []struct {
 		name           string
 		pairs          []disc.RangeValue[Symbol, classID]
@@ -57,12 +58,13 @@ func TestRangeMapping(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			rm := newRangeMapping(tc.pairs)
 
+			assert.NotNil(t, rm)
 			assert.Equal(t, tc.expectedString, rm.String())
 		})
 	}
 }
 
-func TestClassMapping(t *testing.T) {
+func TestNewClassMapping(t *testing.T) {
 	tests := []struct {
 		name           string
 		pairs          []generic.KeyValue[classID, rangeSet]
@@ -81,6 +83,7 @@ func TestClassMapping(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cm := newClassMapping(tc.pairs)
 
+			assert.NotNil(t, cm)
 			assert.Equal(t, tc.expectedString, cm.String())
 		})
 	}

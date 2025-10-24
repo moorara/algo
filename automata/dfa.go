@@ -9,6 +9,7 @@ import (
 
 	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/list"
 	"github.com/moorara/algo/range/disc"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/symboltable"
@@ -429,6 +430,488 @@ func (d *DFA) TransitionsFrom(s State) iter.Seq2[[]disc.Range[Symbol], State] {
 			}
 		}
 	}
+}
+
+// Minimize creates a unique DFA with the minimum number of states.
+//
+// The minimization algorithm sometimes produces a DFA with one dead state.
+// This state is not accepting and transfers to itself on each input symbol.
+//
+// We often want to know when there is no longer any possibility of acceptance.
+// If so, we may want to eliminate the dead state and use an automaton that is missing some transitions.
+// This automaton has one fewer state than the minimum-state DFA.
+// Strictly speaking, such an automaton is not a DFA, because of the missing transitions to the dead state.
+//
+// For more information and details, see "Compilers: Principles, Techniques, and Tools (2nd Edition)".
+func (d *DFA) Minimize() *DFA {
+	/*
+	 * 1. Start with an initial partition P with two groups,
+	 *    F and S - F, the accepting and non-accepting states.
+	 */
+
+	// Gather the set of all states
+	states := NewStates(d.States()...)
+
+	F := d.final.Clone()       // F
+	NF := states.Difference(F) // S - F
+
+	Π := newPartition()
+	Π.Add(NF, F)
+
+	/*
+	 * 2. Initially, let Πnew = Π.
+	 *    For (each group G of Π) {
+	 *      Partition G into subgroups such that two states s and t are in the same subgroup
+	 *      if and only if for all input symbols a, states s and t have transitions on a to states in the same group of Π
+	 *      (at worst, a state will be in a subgroup by itself).
+	 *
+	 *      Replace G in Pnew by the set of all subgroups formed.
+	 *    }
+	 *
+	 * 3. If Πnew = Π, let Πfinal = Π and continue with step (4).
+	 *    Otherwise, repeat step (2) with Πnew in place of Π.
+	 */
+
+	for {
+		Πnew := newPartition()
+
+		// For every group in the current partition
+		for G := range Π.groups.All() {
+			Gtrans := buildGroupTransitions(d, Π, G)
+			partitionGroup(Πnew, Gtrans)
+		}
+
+		if Πnew.Equal(Π) {
+			break
+		}
+
+		Π = Πnew
+	}
+
+	/*
+	 * 4. Choose one state in each group of Πfinal as the representative for that group.
+	 *    The representatives will be the states of the minimum-state DFA D′.
+	 *    The other components of D′ are constructed as follows:
+	 *
+	 *    (a) The start state of D′ is the representative of the group containing the start state of D.
+	 *    (b) The accepting states of D′ are the representatives of those groups that contain an accepting state of D
+	 *        (each group contains either only accepting states, or only non-accepting states).
+	 *    (c) Let s be the representative of some group G of Πfinal, and let the transition of D from s on input a be to state t.
+	 *        Let r be the representative of t's group H. Then in D′, there is a transition from s to r on input a.
+	 */
+
+	start := Π.FindRep(d.start)
+
+	final := NewStates()
+	for f := range d.final.All() {
+		g := Π.FindRep(f)
+		final.Add(g)
+	}
+
+	b := NewDFABuilder().SetStart(start)
+	b.final = final
+
+	for G := range Π.groups.All() {
+		// Get any state in the group
+		s, _ := G.States.FirstMatch(func(State) bool {
+			return true
+		})
+
+		if stab, ok := d.trans.Get(s); ok {
+			for cid, next := range stab.All() {
+				rep := Π.FindRep(next)
+
+				if ranges, ok := d.classes().Get(cid); ok {
+					for r := range ranges.All() {
+						b.AddTransition(G.Rep, r.Lo, r.Hi, rep)
+					}
+				}
+			}
+		}
+	}
+
+	return b.Build()
+}
+
+// buildGroupTransitions constructs a transition table for the states in group G using the current partition and the DFA.
+//
+// For every DFA transition s --classID--> next where s is a member of G, the table records
+// a mapping from the pair (s, classID) to the representative state of the partition group that contains next.
+//
+// The resulting table maps (state, classID) -> representative state and
+// captures how each state in G behaves with respect to the current partition.
+//
+// The partitioning algorithm uses this table to further split G into smaller subgroups.
+func buildGroupTransitions(d *DFA, P *partition, G group) *dfaTransitionTable {
+	Gtrans := newDFATransitionTable()
+
+	for s := range G.All() {
+		if stab, ok := d.trans.Get(s); ok {
+			for cid, next := range stab.All() {
+				if rep := P.FindRep(next); rep != -1 {
+					Gtrans.Add(s, cid, rep)
+				}
+			}
+		}
+	}
+
+	return Gtrans
+}
+
+// partitionGroup splits the states described by Gtrans into subgroups and adds those subgroups to P.
+//
+// Gtrans maps each state to its transition profile:
+// for every classID, it records the group representative of the next state.
+//
+// This method partition the group G into subgroups such that two states s and t are in the same subgroup
+// if and only if, for all input symbols a (or the equivalance classes of the input symbols),
+// the transitions of s and t on all inputs lead to states in the same group.
+//
+// If no such grouping is possible, a state will be placed in a subgroup by itself.
+func partitionGroup(P *partition, Gtrans *dfaTransitionTable) {
+	all := generic.Collect2(Gtrans.All())
+
+	for i := 0; i < len(all); i++ {
+		s, stab := all[i].Key, all[i].Val
+
+		// If s is not already added to the new partition
+		if P.FindRep(s) == -1 {
+			// Create a new group in the new partition
+			H := NewStates(s)
+
+			// Add all other states with same classID --> rep mapping to the new group
+			for j := i + 1; j < len(all); j++ {
+				t, ttab := all[j].Key, all[j].Val
+
+				if stab.Equal(ttab) && !H.Contains(t) {
+					H.Add(t)
+				}
+			}
+
+			P.Add(H)
+		}
+	}
+}
+
+// EliminateDeadStates eliminates the dead states and all transitions to them.
+// The subset construction and minimization algorithms sometimes produce a DFA with a single dead state.
+//
+// Strictly speaking, a DFA must have a transition from every state on every input symbol in its input alphabet.
+// When we construct a DFA to be used in a lexical analyzer, we need to treat the dead state differently.
+// We must know when there is no longer any possibility of recognizing a longer lexeme.
+// Thus, we should always omit transitions to the dead state and eliminate the dead state itself.
+func (d *DFA) EliminateDeadStates() *DFA {
+	// 1. Construct a directed graph from the DFA with all the transitions reversed.
+	adj := map[State]States{}
+	for s, strans := range d.trans.All() {
+		for _, t := range strans.All() {
+			if adj[t] == nil {
+				adj[t] = NewStates()
+			}
+			adj[t].Add(s)
+		}
+	}
+
+	// 2. Add a new state that transitions to all final states of the DFA.
+	u := State(-1)
+	adj[u] = d.final.Clone()
+
+	// 3. Finally, we find all states reachable from this new state using a depth-first search (DFS).
+	//    All other states not connected to this new state will be identified as dead states.
+	visited := map[State]bool{}
+	for s := range adj {
+		visited[s] = false
+	}
+
+	markReachable(adj, visited, u)
+
+	deads := NewStates()
+	for s, visited := range visited {
+		if !visited {
+			deads.Add(s)
+		}
+	}
+
+	b := NewDFABuilder().SetStart(d.start)
+	b.final = d.final.Clone()
+
+	for s, stab := range d.trans.All() {
+		for cid, t := range stab.All() {
+			if !deads.Contains(s) && !deads.Contains(t) {
+				if ranges, ok := d.classes().Get(cid); ok {
+					for r := range ranges.All() {
+						b.AddTransition(s, r.Lo, r.Hi, t)
+					}
+				}
+			}
+		}
+	}
+
+	return b.Build()
+}
+
+// markReachable is a depth-first search on the DFA graph.
+func markReachable(adj map[State]States, visited map[State]bool, s State) {
+	visited[s] = true
+
+	if adj[s] != nil {
+		for t := range adj[s].All() {
+			if !visited[t] {
+				markReachable(adj, visited, t)
+			}
+		}
+	}
+}
+
+// ReindexStates reassigns indices to states based on a
+// breadth-first traversal of the DFA, starting from the initial state.
+// This method is typically called after removing unreachable or dead states from the DFA.
+func (d *DFA) ReindexStates() *DFA {
+	sm := newStateManager(-1)
+
+	visited := map[State]bool{}
+	queue := list.NewQueue[State](64, nil)
+
+	visited[d.start] = true
+	queue.Enqueue(d.start)
+	sm.GetOrCreateState(0, d.start)
+
+	for !queue.IsEmpty() {
+		s, _ := queue.Dequeue()
+		if adj, ok := d.trans.Get(s); ok {
+			for _, t := range adj.All() {
+				if !visited[t] {
+					visited[t] = true
+					queue.Enqueue(t)
+					sm.GetOrCreateState(0, t)
+				}
+			}
+		}
+	}
+
+	start := sm.GetOrCreateState(0, d.start)
+
+	b := NewDFABuilder().SetStart(start)
+
+	final := NewStates()
+	for f := range d.final.All() {
+		ff := sm.GetOrCreateState(0, f)
+		final.Add(ff)
+	}
+
+	b.final = final
+
+	for s, stab := range d.trans.All() {
+		ss := sm.GetOrCreateState(0, s)
+
+		for cid, t := range stab.All() {
+			tt := sm.GetOrCreateState(0, t)
+
+			if ranges, ok := d.classes().Get(cid); ok {
+				for r := range ranges.All() {
+					b.AddTransition(ss, r.Lo, r.Hi, tt)
+				}
+			}
+		}
+	}
+
+	return b.Build()
+}
+
+// Union constructs a DFA that recognizes the union of the languages accepted by the provided DFAs.
+//
+// The process involves:
+//
+//  1. Converting each DFA to an NFA.
+//  2. Building a single NFA that accepts the union of all input NFAs.
+//  3. Converting the unified NFA to a DFA.
+//  4. Removing dead states and transitions to them.
+//  5. Reindexing states to maintain a compact representation.
+//
+// The returned DFA accepts any string accepted by at least one input DFA.
+// The second return value maps each input DFA to its corresponding final states in the resulting DFA.
+//
+// Note: The resulting DFA is not minimized, so final states remain distinguishable for each input DFA.
+// This is useful for applications like lexical analysis, where tracking the origin of acceptance matters.
+func (d *DFA) Union(ds ...*DFA) (*DFA, [][]State) {
+	var finalMap [][]State
+
+	// 1. Convert all DFAs to NFAs.
+	all := append([]*DFA{d}, ds...)
+	ns := make([]*NFA, len(all))
+	for i, d := range all {
+		ns[i] = d.ToNFA()
+	}
+
+	// 2. Construct a new NFA that accepts the union of the languages accepted by each NFA.
+	var N *NFA
+
+	{
+		start, final := State(0), State(1)
+		finalMap = make([][]State, len(ns))
+
+		b := NewNFABuilder().SetStart(start).SetFinal([]State{final})
+		sm := newStateManager(final)
+
+		for id, n := range ns {
+			for s, stab := range n.trans.All() {
+				ss := sm.GetOrCreateState(id, s)
+
+				for cid, states := range stab.All() {
+					next := make([]State, 0, states.Size())
+					for t := range states.All() {
+						tt := sm.GetOrCreateState(id, t)
+						next = append(next, tt)
+					}
+
+					if ranges, ok := n.classes().Get(cid); ok {
+						for r := range ranges.All() {
+							b.AddTransition(ss, r.Lo, r.Hi, next)
+						}
+					}
+				}
+			}
+
+			ss := sm.GetOrCreateState(id, n.start)
+			b.AddTransition(start, E, E, []State{ss})
+
+			for f := range n.final.All() {
+				ff := sm.GetOrCreateState(id, f)
+				b.AddTransition(ff, E, E, []State{final})
+				finalMap[id] = append(finalMap[id], ff)
+			}
+		}
+
+		N = b.Build()
+	}
+
+	// 3. Convert the NFA into a DFA.
+	var D *DFA
+
+	{
+		// Look up the class ID for ε
+		_, eid, hasε := N.ranges.Find(E)
+
+		b := NewDFABuilder().SetStart(0)
+
+		// Initially, ε-closure(s₀) is the only state in Dstates
+		S0 := NewStates(N.start)
+		Dstates := list.NewSoftQueue(EqStates)
+		Dstates.Enqueue(N.εClosure(S0))
+
+		for T, i := Dstates.Dequeue(); i >= 0; T, i = Dstates.Dequeue() {
+			// For each input symbol c (or equivalency for each equivalence class of the input symbols)
+			for cid, ranges := range N.classes().All() {
+				if !hasε || cid != eid {
+					U := N.εClosure(N.move(T, cid))
+
+					// If U is not in Dstates, add U to Dstates
+					j := Dstates.Contains(U)
+					if j == -1 {
+						j = Dstates.Enqueue(U)
+					}
+
+					for r := range ranges.All() {
+						b.AddTransition(State(i), r.Lo, r.Hi, State(j))
+					}
+				}
+			}
+		}
+
+		final := NewStates()
+
+		for i, S := range Dstates.Values() {
+			for f := range N.final.All() {
+				if S.Contains(f) {
+					final.Add(State(i))
+					break // The accepting states of D are all those sets of N's states that include at least one accepting state of N
+				}
+			}
+		}
+
+		b.final = final
+		D = b.Build()
+
+		// Remap the final states from the union NFA to combined DFA.
+		for id, states := range finalMap {
+			mapped := NewStates()
+			for _, f := range states {
+				for i, S := range Dstates.Values() {
+					if S.Contains(f) {
+						mapped.Add(State(i))
+					}
+				}
+			}
+			finalMap[id] = generic.Collect1(mapped.All())
+		}
+	}
+
+	// 4. Remove dead states and their transitions.
+	D = D.EliminateDeadStates()
+
+	// 5. Reassign state indices.
+	{
+		sm := newStateManager(-1)
+
+		visited := map[State]bool{}
+		queue := list.NewQueue[State](64, nil)
+
+		visited[D.start] = true
+		queue.Enqueue(D.start)
+		sm.GetOrCreateState(0, D.start)
+
+		for !queue.IsEmpty() {
+			s, _ := queue.Dequeue()
+			if stab, ok := D.trans.Get(s); ok {
+				for _, t := range stab.All() {
+					if !visited[t] {
+						visited[t] = true
+						queue.Enqueue(t)
+						sm.GetOrCreateState(0, t)
+					}
+				}
+			}
+		}
+
+		start := sm.GetOrCreateState(0, D.start)
+		b := NewDFABuilder().SetStart(start)
+
+		final := NewStates()
+		for f := range D.final.All() {
+			ff := sm.GetOrCreateState(0, f)
+			final.Add(ff)
+		}
+
+		b.final = final
+
+		for s, stab := range D.trans.All() {
+			ss := sm.GetOrCreateState(0, s)
+
+			for cid, t := range stab.All() {
+				tt := sm.GetOrCreateState(0, t)
+
+				if ranges, ok := D.classes().Get(cid); ok {
+					for r := range ranges.All() {
+						b.AddTransition(ss, r.Lo, r.Hi, tt)
+					}
+				}
+			}
+		}
+
+		D = b.Build()
+
+		// Remap the final states from the old indices to new indices.
+		for id, states := range finalMap {
+			mapped := NewStates()
+			for _, f := range states {
+				ff := sm.GetOrCreateState(0, f)
+				mapped.Add(ff)
+			}
+			finalMap[id] = generic.Collect1(mapped.All())
+		}
+	}
+
+	return D, finalMap
 }
 
 // ToNFA constructs a new NFA accepting the same language as the DFA (every DFA is an NFA).
