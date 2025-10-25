@@ -656,13 +656,17 @@ func (n *NFA) Star() *NFA {
 // Union constructs a new NFA that accepts the union of languages accepted by each individual NFA.
 func (n *NFA) Union(ns ...*NFA) *NFA {
 	all := append([]*NFA{n}, ns...)
+	return UnionNFA(all...)
+}
 
+// UnionNFA constructs a new NFA that accepts the union of languages accepted by each individual NFA.
+func UnionNFA(ns ...*NFA) *NFA {
 	start, final := State(0), State(1)
 	sm := newStateManager(final)
 
 	b := NewNFABuilder().SetStart(start).SetFinal([]State{final})
 
-	for id, nfa := range all {
+	for id, nfa := range ns {
 		for s, seq := range nfa.Transitions() {
 			ss := sm.GetOrCreateState(id, s)
 
@@ -694,13 +698,17 @@ func (n *NFA) Union(ns ...*NFA) *NFA {
 // Concat constructs a new NFA that accepts the concatenation of languages accepted by each individual NFA.
 func (n *NFA) Concat(ns ...*NFA) *NFA {
 	all := append([]*NFA{n}, ns...)
+	return ConcatNFA(all...)
+}
 
+// ConcatNFA constructs a new NFA that accepts the concatenation of languages accepted by each individual NFA.
+func ConcatNFA(ns ...*NFA) *NFA {
 	start, final := State(0), []State{0}
 	sm := newStateManager(0)
 
 	b := NewNFABuilder().SetStart(start).SetFinal(final)
 
-	for id, nfa := range all {
+	for id, nfa := range ns {
 		for s, seq := range nfa.Transitions() {
 			// If s is the start state of the current NFA,
 			// we need to map it to the previous NFA final states.
