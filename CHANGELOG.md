@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.12.1](https://github.com/moorara/algo/tree/v0.12.1) (2025-10-24)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.12.0...v0.12.1)
+
+**Merged Changes:**
+
+  - Add more methods to automata package [#330](https://github.com/moorara/algo/pull/330) ([moorara](https://github.com/moorara))
+  - Update actions/upload-artifact action to v5 [#329](https://github.com/moorara/algo/pull/329) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+
+
 ## [v0.12.0](https://github.com/moorara/algo/tree/v0.12.0) (2025-10-24)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.11.0...v0.12.0)
