@@ -733,7 +733,9 @@ func TestNFA_Union(t *testing.T) {
 		{
 			name: "OK",
 			n:    testNFA[3],
-			ns:   []*NFA{testNFA[4]},
+			ns: []*NFA{
+				testNFA[4],
+			},
 			expectedUnion: &NFA{
 				start: 0,
 				final: NewStates(1),
@@ -777,6 +779,61 @@ func TestNFA_Union(t *testing.T) {
 	}
 }
 
+func TestUnionNFA(t *testing.T) {
+	tests := []struct {
+		name          string
+		ns            []*NFA
+		expectedUnion *NFA
+	}{
+		{
+			name: "OK",
+			ns: []*NFA{
+				testNFA[3],
+				testNFA[4],
+			},
+			expectedUnion: &NFA{
+				start: 0,
+				final: NewStates(1),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: E, Hi: E}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 2},
+					{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'F'}, Value: 3},
+					{Range: disc.Range[Symbol]{Lo: 'X', Hi: 'X'}, Value: 4},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'f'}, Value: 3},
+					{Range: disc.Range[Symbol]{Lo: 'x', Hi: 'x'}, Value: 4},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 0, NewStates(2, 5)).
+					Add(2, 1, NewStates(3)).
+					Add(2, 2, NewStates(4)).
+					Add(3, 0, NewStates(1)).
+					Add(4, 0, NewStates(1)).
+					Add(4, 1, NewStates(4)).
+					Add(4, 2, NewStates(4)).
+					Add(5, 1, NewStates(6)).
+					Add(6, 0, NewStates(1)).
+					Add(6, 4, NewStates(7)).
+					Add(7, 1, NewStates(8)).
+					Add(7, 2, NewStates(8)).
+					Add(7, 3, NewStates(8)).
+					Add(8, 0, NewStates(1)).
+					Add(8, 1, NewStates(8)).
+					Add(8, 2, NewStates(8)).
+					Add(8, 3, NewStates(8)),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			union := UnionNFA(tc.ns...)
+
+			assert.True(t, union.Equal(tc.expectedUnion), "Expected:\n%s\nGot:\n%s", tc.expectedUnion, union)
+		})
+	}
+}
+
 func TestNFA_Concat(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -787,7 +844,9 @@ func TestNFA_Concat(t *testing.T) {
 		{
 			name: "OK",
 			n:    testNFA[2],
-			ns:   []*NFA{testNFA[3]},
+			ns: []*NFA{
+				testNFA[3],
+			},
 			expectedConcat: &NFA{
 				start: 0,
 				final: NewStates(2, 3),
@@ -812,6 +871,49 @@ func TestNFA_Concat(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			concat := tc.n.Concat(tc.ns...)
+
+			assert.True(t, concat.Equal(tc.expectedConcat), "Expected:\n%s\nGot:\n%s", tc.expectedConcat, concat)
+		})
+	}
+}
+
+func TestConcatNFA(t *testing.T) {
+	tests := []struct {
+		name           string
+		n              *NFA
+		ns             []*NFA
+		expectedConcat *NFA
+	}{
+		{
+			name: "OK",
+			ns: []*NFA{
+				testNFA[2],
+				testNFA[3],
+			},
+			expectedConcat: &NFA{
+				start: 0,
+				final: NewStates(2, 3),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: '0', Hi: '0'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: '1', Hi: '9'}, Value: 1},
+					{Range: disc.Range[Symbol]{Lo: 'A', Hi: 'Z'}, Value: 2},
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'z'}, Value: 3},
+				}),
+				trans: newNFATransitionTable().
+					Add(0, 2, NewStates(1)).
+					Add(1, 0, NewStates(2)).
+					Add(1, 1, NewStates(3)).
+					Add(1, 2, NewStates(1)).
+					Add(1, 3, NewStates(1)).
+					Add(3, 0, NewStates(3)).
+					Add(3, 1, NewStates(3)),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			concat := ConcatNFA(tc.ns...)
 
 			assert.True(t, concat.Equal(tc.expectedConcat), "Expected:\n%s\nGot:\n%s", tc.expectedConcat, concat)
 		})

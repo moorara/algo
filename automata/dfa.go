@@ -841,12 +841,31 @@ func (d *DFA) ReindexStates() *DFA {
 // Note: The resulting DFA is not minimized, so final states remain distinguishable for each input DFA.
 // This is useful for applications like lexical analysis, where tracking the origin of acceptance matters.
 func (d *DFA) Union(ds ...*DFA) (*DFA, [][]State) {
+	all := append([]*DFA{d}, ds...)
+	return UnionDFA(all...)
+}
+
+// UnionDFA constructs a DFA that recognizes the union of the languages accepted by the provided DFAs.
+//
+// The process involves:
+//
+//  1. Converting each DFA to an NFA.
+//  2. Building a single NFA that accepts the union of all input NFAs.
+//  3. Converting the unified NFA to a DFA.
+//  4. Removing dead states and transitions to them.
+//  5. Reindexing states to maintain a compact representation.
+//
+// The returned DFA accepts any string accepted by at least one input DFA.
+// The second return value maps each input DFA to its corresponding final states in the resulting DFA.
+//
+// Note: The resulting DFA is not minimized, so final states remain distinguishable for each input DFA.
+// This is useful for applications like lexical analysis, where tracking the origin of acceptance matters.
+func UnionDFA(ds ...*DFA) (*DFA, [][]State) {
 	var finalMap [][]State
 
 	// 1. Convert all DFAs to NFAs.
-	all := append([]*DFA{d}, ds...)
-	ns := make([]*NFA, len(all))
-	for i, d := range all {
+	ns := make([]*NFA, len(ds))
+	for i, d := range ds {
 		ns[i] = d.ToNFA()
 	}
 

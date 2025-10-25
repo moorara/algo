@@ -904,6 +904,62 @@ func TestDFA_Union(t *testing.T) {
 	}
 }
 
+func TestUnionDFA(t *testing.T) {
+	tests := []struct {
+		name             string
+		ds               []*DFA
+		expectedDFA      *DFA
+		expectedFinalMap [][]State
+	}{
+		{
+			name: "OK",
+			ds: []*DFA{
+				testDFA[2],
+				testDFA[3],
+				testDFA[4],
+			},
+			expectedDFA: &DFA{
+				start: 0,
+				final: NewStates(3, 4, 5, 6, 7, 8),
+				ranges: newRangeMapping([]disc.RangeValue[Symbol, classID]{
+					{Range: disc.Range[Symbol]{Lo: 'a', Hi: 'a'}, Value: 0},
+					{Range: disc.Range[Symbol]{Lo: 'b', Hi: 'b'}, Value: 1},
+				}),
+				trans: newDFATransitionTable().
+					Add(0, 0, 1).
+					Add(0, 1, 2).
+					Add(1, 1, 3).
+					Add(2, 0, 4).
+					Add(3, 0, 5).
+					Add(3, 1, 6).
+					Add(4, 0, 4).
+					Add(5, 0, 7).
+					Add(5, 1, 8).
+					Add(6, 0, 7).
+					Add(6, 1, 6).
+					Add(7, 0, 7).
+					Add(7, 1, 7).
+					Add(8, 0, 5).
+					Add(8, 1, 7),
+			},
+			expectedFinalMap: [][]State{
+				{3, 8},
+				{3, 4, 6},
+				{3, 5, 6, 7, 8},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dfa, finalMap := UnionDFA(tc.ds...)
+
+			assert.True(t, dfa.Equal(tc.expectedDFA), "Expected:\n%s\nGot:\n%s", tc.expectedDFA, dfa)
+			assert.Equal(t, tc.expectedFinalMap, finalMap, "Expected:\n%v\nGot:\n%v", tc.expectedFinalMap, finalMap)
+		})
+	}
+}
+
 func TestDFA_ToNFA(t *testing.T) {
 	tests := []struct {
 		name        string
