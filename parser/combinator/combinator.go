@@ -21,76 +21,62 @@
 // refer to "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 package combinator
 
+import "slices"
+
+// Parser is the type for a function that receives a parsing input and returns a parsing output.
+// The second return value determines whether or not the parsing was successful and the output is valid.
+type Parser func(Input) (Output, bool)
+
+// Input is the input to a parser function.
+type Input interface {
+	// Current returns the current rune from input along with its position in the input.
+	Current() (rune, int)
+	// Remaining returns the remaining of input. If no input left, it returns nil.
+	Remaining() Input
+}
+
+// Output is the output of a parser function.
+type Output struct {
+	Result    Result
+	Remaining Input
+}
+
+// List is the type for the result of concatenation or repetition.
+type List []Result
+
+// Result is the result of parsing a production rule.
+// It represents a production rule result.
+type Result struct {
+	// Val is the actual result of a parser function.
+	// It can be an abstract syntax tree, a finite automata, or any other data structure.
+	Val any
+	// Pos is the first position in the source corresponding to the parsing result.
+	Pos int
+	// Bag is an optional collection of key-value pairs holding extra information and metadata about the parsing result.
+	// You should always check this field to be not nil before using it.
+	Bag Bag
+}
+
 type (
-	// BagKey is the type for the keys in Bag type.
-	BagKey string
-	// BagVal is the type for the values in Bag type.
-	BagVal any
 	// Bag is the type for a collection of key-value pairs.
 	Bag map[BagKey]BagVal
-)
 
-type (
-	// Empty is the empty string ε.
-	Empty struct{}
+	// BagKey is the type for the keys in Bag type.
+	BagKey string
 
-	// Result is the result of parsing a production rule.
-	// It represents a production rule result.
-	Result struct {
-		// Val is the actual result of a parser function.
-		// It can be an abstract syntax tree, a finite automata, or any other data structure.
-		Val any
-		// Pos is the first position in the source corresponding to the parsing result.
-		Pos int
-		// Bag is an optional collection of key-value pairs holding extra information and metadata about the parsing result.
-		// You should always check this field to be not nil before using it.
-		Bag Bag
-	}
-
-	// List is the type for the result of concatenation or repetition.
-	List []Result
-)
-
-type (
-	// Input is the input to a parser function.
-	Input interface {
-		// Current returns the current rune from input along with its position in the input.
-		Current() (rune, int)
-		// Remaining returns the remaining of input. If no input left, it returns nil.
-		Remaining() Input
-	}
-
-	// Output is the output of a parser function.
-	Output struct {
-		Result    Result
-		Remaining Input
-	}
-
-	// Parser is the type for a function that receives a parsing input and returns a parsing output.
-	// The second return value determines whether or not the parsing was successful and the output is valid.
-	Parser func(Input) (Output, bool)
-)
-
-type (
-	// Mapper is a function that receives a parsing result and returns a new result.
-	// The second return value determines whether or not the mapping was successful and the first value is valid.
-	Mapper func(Result) (Result, bool)
-
-	// Binder is a function that receives a parsing result and returns a new parser.
-	// It is often used for modifying the behavior of previous parsers in the chain.
-	Binder func(Result) Parser
+	// BagVal is the type for the values in Bag type.
+	BagVal any
 )
 
 // Get returns the parsing result of a symbol from the right-side of a production rule.
+// If the position i is out of bounds, the second return value is false.
 //
 // Example:
 //
-//	Production Rule: range → "{" num ( "," num? )? "}"
+//	// Production Rule: range → "{" num ( "," num? )? "}"
 //	r = {2,4}
 //	r.Get(1) = 2
 //	r.Get(3) = 4
-//
-// If the position i is out of bounds, the second return value is false.
 func (r *Result) Get(i int) (Result, bool) {
 	if l, ok := r.Val.(List); ok {
 		if 0 <= i && i < len(l) {
@@ -99,6 +85,23 @@ func (r *Result) Get(i int) (Result, bool) {
 	}
 
 	return Result{}, false
+}
+
+// Empty represents the empty string ε.
+type Empty struct{}
+
+// E is the empty parser for consuming the empty string ε.
+// It always succeeds without consuming any input.
+var E Parser = func(in Input) (Output, bool) {
+	_, pos := in.Current()
+
+	return Output{
+		Result: Result{
+			Val: Empty{},
+			Pos: pos,
+		},
+		Remaining: in,
+	}, true
 }
 
 // ExpectRune creates a parser that returns a successful result only if the input starts with the given rune.
@@ -110,6 +113,42 @@ func ExpectRune(r rune) Parser {
 
 		if curr, pos := in.Current(); curr == r {
 			return Output{
+				Result:    Result{curr, pos, nil},
+				Remaining: in.Remaining(),
+			}, true
+		}
+
+		return Output{}, false
+	}
+}
+
+// NotExpectRune creates a parser that returns a successful result only if the input does not start with the given rune.
+func NotExpectRune(r rune) Parser {
+	return func(in Input) (Output, bool) {
+		if in == nil {
+			return Output{}, false
+		}
+
+		if curr, pos := in.Current(); curr != r {
+			return Output{
+				Result:    Result{curr, pos, nil},
+				Remaining: in.Remaining(),
+			}, true
+		}
+
+		return Output{}, false
+	}
+}
+
+// ExpectRuneIn creates a parser that returns a successful result only if the input starts with any of the given runes.
+func ExpectRuneIn(runes ...rune) Parser {
+	return func(in Input) (Output, bool) {
+		if in == nil {
+			return Output{}, false
+		}
+
+		if r, pos := in.Current(); slices.Contains(runes, r) {
+			return Output{
 				Result:    Result{r, pos, nil},
 				Remaining: in.Remaining(),
 			}, true
@@ -119,20 +158,18 @@ func ExpectRune(r rune) Parser {
 	}
 }
 
-// ExpectRuneIn creates a parser that returns a successful result only if the input starts with one of the given runes.
-func ExpectRuneIn(runes ...rune) Parser {
+// NotExpectRuneIn creates a parser that returns a successful result only if the input does not start with any of the given runes.
+func NotExpectRuneIn(runes ...rune) Parser {
 	return func(in Input) (Output, bool) {
 		if in == nil {
 			return Output{}, false
 		}
 
-		for _, r := range runes {
-			if curr, pos := in.Current(); curr == r {
-				return Output{
-					Result:    Result{r, pos, nil},
-					Remaining: in.Remaining(),
-				}, true
-			}
+		if r, pos := in.Current(); !slices.Contains(runes, r) {
+			return Output{
+				Result:    Result{r, pos, nil},
+				Remaining: in.Remaining(),
+			}, true
 		}
 
 		return Output{}, false
@@ -140,13 +177,31 @@ func ExpectRuneIn(runes ...rune) Parser {
 }
 
 // ExpectRuneInRange creates a parser that returns a successful result only if the input starts with a rune in the given range.
-func ExpectRuneInRange(low, up rune) Parser {
+func ExpectRuneInRange(lo, hi rune) Parser {
 	return func(in Input) (Output, bool) {
-		if in == nil {
+		if in == nil || lo > hi {
 			return Output{}, false
 		}
 
-		if r, pos := in.Current(); low <= r && r <= up {
+		if r, pos := in.Current(); lo <= r && r <= hi {
+			return Output{
+				Result:    Result{r, pos, nil},
+				Remaining: in.Remaining(),
+			}, true
+		}
+
+		return Output{}, false
+	}
+}
+
+// NotExpectRuneInRange creates a parser that returns a successful result only if the input does not start with a rune in the given range.
+func NotExpectRuneInRange(lo, hi rune) Parser {
+	return func(in Input) (Output, bool) {
+		if in == nil || lo > hi {
+			return Output{}, false
+		}
+
+		if r, pos := in.Current(); r < lo || hi < r {
 			return Output{
 				Result:    Result{r, pos, nil},
 				Remaining: in.Remaining(),
@@ -187,6 +242,40 @@ func ExpectRunes(runes ...rune) Parser {
 	}
 }
 
+// NotExpectRunes creates a parser that returns a successful result only if the input does not start with the given runes in the given order.
+func NotExpectRunes(runes ...rune) Parser {
+	return func(in Input) (Output, bool) {
+		var pos int
+		val := make([]rune, len(runes))
+
+		for i, r := range runes {
+			if in == nil {
+				return Output{}, false
+			}
+
+			curr, p := in.Current()
+			if curr == r {
+				return Output{}, false
+			}
+
+			// Accumulate the parsed runes
+			val[i] = curr
+
+			// Save only the first position
+			if i == 0 {
+				pos = p
+			}
+
+			in = in.Remaining()
+		}
+
+		return Output{
+			Result:    Result{val, pos, nil},
+			Remaining: in,
+		}, true
+	}
+}
+
 // ExpectString creates a parser that returns a successful result only if the input starts with the given string.
 func ExpectString(s string) Parser {
 	return func(in Input) (Output, bool) {
@@ -199,38 +288,48 @@ func ExpectString(s string) Parser {
 	}
 }
 
-// ExcludeRunes can be bound on a rune parser to exclude certain runes.
-func ExcludeRunes(r ...rune) Binder {
-	return func(res Result) Parser {
-		return func(in Input) (Output, bool) {
-			if a, ok := res.Val.(rune); ok {
-				for _, b := range r {
-					if a == b {
-						return Output{}, false
-					}
-				}
-			}
-
-			return Output{
-				Result:    res,
-				Remaining: in,
-			}, true
+// NotExpectString creates a parser that returns a successful result only if the input does not start with the given string.
+func NotExpectString(s string) Parser {
+	return func(in Input) (Output, bool) {
+		if out, ok := NotExpectRunes([]rune(s)...)(in); ok {
+			out.Result.Val = string(out.Result.Val.([]rune))
+			return out, true
 		}
+
+		return Output{}, false
 	}
 }
 
-// CONCAT composes a parser that concats parser p to a sequence of parsers.
-// It applies parser p to the input, then applies the next parser to the remaining of the input,
+// ALT composes a parser that alternates a sequence of parsers.
+// It applies the first parser to the input and if it does not succeed,
+// it applies the next parser to the same input, and continues parsing to the last parser.
+// It stops at the first successful parsing and returns its result.
+//
+//   - EBNF Operator: Alternation
+//   - EBNF Notation: p | q
+func ALT(p ...Parser) Parser {
+	return func(in Input) (Output, bool) {
+		for _, parse := range p {
+			if out, ok := parse(in); ok {
+				return out, true
+			}
+		}
+
+		return Output{}, false
+	}
+}
+
+// CONCAT composes a parser that concats a sequence of parsers.
+// It applies the first parser to the input, then applies the next parser to the remaining of the input,
 // and continues parsing to the last parser.
 //
 //   - EBNF Operator: Concatenation
 //   - EBNF Notation: p q
-func (p Parser) CONCAT(q ...Parser) Parser {
+func CONCAT(p ...Parser) Parser {
 	return func(in Input) (Output, bool) {
 		var l List
 
-		all := append([]Parser{p}, q...)
-		for _, parse := range all {
+		for _, parse := range p {
 			out, ok := parse(in)
 			if !ok {
 				return Output{}, false
@@ -247,32 +346,12 @@ func (p Parser) CONCAT(q ...Parser) Parser {
 	}
 }
 
-// ALT composes a parser that alternate parser p with a sequence of parsers.
-// It applies parser p to the input and if it does not succeed,
-// it applies the next parser to the same input, and continues parsing to the last parser.
-// It stops at the first successful parsing and returns its result.
-//
-//   - EBNF Operator: Alternation
-//   - EBNF Notation: p | q
-func (p Parser) ALT(q ...Parser) Parser {
-	return func(in Input) (Output, bool) {
-		all := append([]Parser{p}, q...)
-		for _, parse := range all {
-			if out, ok := parse(in); ok {
-				return out, true
-			}
-		}
-
-		return Output{}, false
-	}
-}
-
 // OPT composes a parser that applies parser p zero or one time to the input.
 // If the parser does not succeed, it will return an empty result.
 //
 //   - EBNF Operator: Optional
 //   - EBNF Notation: [ p ] or p?
-func (p Parser) OPT() Parser {
+func OPT(p Parser) Parser {
 	return func(in Input) (Output, bool) {
 		if out, ok := p(in); ok {
 			return out, true
@@ -292,7 +371,7 @@ func (p Parser) OPT() Parser {
 //
 //   - EBNF Operator: Repetition (Kleene Star)
 //   - EBNF Notation: { p } or p*
-func (p Parser) REP() Parser {
+func REP(p Parser) Parser {
 	return func(in Input) (Output, bool) {
 		var l List
 
@@ -327,7 +406,7 @@ func (p Parser) REP() Parser {
 //
 //   - EBNF Operator: Kleene Plus
 //   - EBNF Notation: p+
-func (p Parser) REP1() Parser {
+func REP1(p Parser) Parser {
 	return func(in Input) (Output, bool) {
 		if out, ok := p.REP()(in); ok {
 			if res, ok := out.Result.Val.(List); ok && len(res) > 0 {
@@ -337,6 +416,56 @@ func (p Parser) REP1() Parser {
 
 		return Output{}, false
 	}
+}
+
+// ALT composes a parser that alternates parser p with a sequence of parsers.
+// It applies parser p to the input and if it does not succeed,
+// it applies the next parser to the same input, and continues parsing to the last parser.
+// It stops at the first successful parsing and returns its result.
+//
+//   - EBNF Operator: Alternation
+//   - EBNF Notation: p | q
+func (p Parser) ALT(q ...Parser) Parser {
+	all := append([]Parser{p}, q...)
+	return ALT(all...)
+}
+
+// CONCAT composes a parser that concats parser p to a sequence of parsers.
+// It applies parser p to the input, then applies the next parser to the remaining of the input,
+// and continues parsing to the last parser.
+//
+//   - EBNF Operator: Concatenation
+//   - EBNF Notation: p q
+func (p Parser) CONCAT(q ...Parser) Parser {
+	all := append([]Parser{p}, q...)
+	return CONCAT(all...)
+}
+
+// OPT composes a parser that applies parser p zero or one time to the input.
+// If the parser does not succeed, it will return an empty result.
+//
+//   - EBNF Operator: Optional
+//   - EBNF Notation: [ p ] or p?
+func (p Parser) OPT() Parser {
+	return OPT(p)
+}
+
+// REP composes a parser that applies parser p zero or more times to the input and accumulates the results.
+// If the parser does not succeed, it will return an empty result.
+//
+//   - EBNF Operator: Repetition (Kleene Star)
+//   - EBNF Notation: { p } or p*
+func (p Parser) REP() Parser {
+	return REP(p)
+}
+
+// REP1 composes a parser that applies parser p one or more times to the input and accumulates the results.
+// This does not allow parsing zero times (empty result).
+//
+//   - EBNF Operator: Kleene Plus
+//   - EBNF Notation: p+
+func (p Parser) REP1() Parser {
+	return REP1(p)
 }
 
 // Flatten composes a parser that applies parser p to the input and flattens all results into a single list.
@@ -370,6 +499,7 @@ func flatten(r Result) List {
 }
 
 // Select composes a parser that applies parser p to the input and returns a list of symbols from the right-side of the production rule.
+//
 // This will not have any effect if the result of parsing is not a list.
 // If indices are invalid, you will get the empty string ε.
 func (p Parser) Select(i ...int) Parser {
@@ -384,7 +514,7 @@ func (p Parser) Select(i ...int) Parser {
 			return out, true
 		}
 
-		var sub List
+		sub := make(List, 0, len(i))
 		for _, j := range i {
 			if 0 <= j && j < len(l) {
 				sub = append(sub, l[j])
@@ -409,6 +539,7 @@ func (p Parser) Select(i ...int) Parser {
 
 // Get composes a parser that applies parser p to the input and returns the value of a symbol from the right-side of the production rule.
 // This can be used after CONCAT, REP, REP1, Flatten, and/or Select.
+//
 // It will not have any effect if used after other operators and the result of parsing is not a list.
 // If index is invalid, you will get the empty string ε.
 func (p Parser) Get(i int) Parser {
@@ -439,9 +570,14 @@ func (p Parser) Get(i int) Parser {
 	}
 }
 
-// Map composes a parser that uses parser p to parse the input and applies a mapper function to the result of parsing.
-// If the parser does not succeed, the mapper function will not be applied.
-func (p Parser) Map(f Mapper) Parser {
+// Map composes a parser that uses parser p to parse the input and applies a map function to the result.
+// If the parser does not succeed, the map function will not be applied.
+//
+// Use Map to transform, annotate or convert parsing results into another form
+// (for example: convert a matched rune into an int, build AST nodes, attach metadata, etc.).
+//
+// The remaining input returned by p is preserved when the mapping succeeds.
+func (p Parser) Map(f MapFunc) Parser {
 	return func(in Input) (Output, bool) {
 		if out, ok := p(in); ok {
 			if res, ok := f(out.Result); ok {
@@ -454,10 +590,37 @@ func (p Parser) Map(f Mapper) Parser {
 	}
 }
 
-// Bind composes a parser that uses parser p to parse the input and builds a second parser from the result of parsing.
+// MapFunc is a function that receives a parsing result and returns a new result.
+// The second return value determines whether or not the mapping was successful.
+type MapFunc func(Result) (Result, bool)
+
+// Bind composes a parser that uses parser p to parse the input and produces a new parser from the result.
 // It then applies the new parser to the remaining input from the first parser.
-// You can use this to implement syntax annotations.
-func (p Parser) Bind(f Binder) Parser {
+//
+// Bind lets later parsing decisions depend on values parsed earlier.
+// This is useful for context-sensitive checks that cannot be expressed by purely context-free grammar rules.
+//
+// Quick refresher:
+//
+//   - Context-free grammars define productions where
+//     each rule's right-hand side does not depend on previously parsed values.
+//     They are sufficient for many language constructs.
+//   - Context-sensitive constructs require the parser to adapt based on previously parsed data
+//     (for example, requiring a sequence to repeat N times where N was parsed earlier).
+//
+// Bind is a convenient way to add lightweight, context-sensitive constraints
+// (sometimes called syntax annotations) on top of a context-free parser.
+// The bound function inspects the parsing result and returns a new parser that enforces the constraint.
+//
+// Consider the following context-free production, where a number is followed by zero or more identifiers:
+//
+//	stmt → num id*
+//
+// Context-sensitive constraint: the number indicates how many identifiers must follow.
+//
+// Using Bind, you parse the number first, then return a parser that consumes exactly that many id occurrences.
+// This keeps the grammar mostly context-free while enforcing a small context-sensitive constraint using a Bind-produced parser.
+func (p Parser) Bind(f BindFunc) Parser {
 	return func(in Input) (Output, bool) {
 		out, ok := p(in)
 		if !ok {
@@ -467,3 +630,7 @@ func (p Parser) Bind(f Binder) Parser {
 		return f(out.Result)(out.Remaining)
 	}
 }
+
+// BindFunc is a function that receives a parsing result and returns a new parser.
+// It is more powerful than MapFunc as it can produce a new parser based on the value of the parsing result.
+type BindFunc func(Result) Parser
