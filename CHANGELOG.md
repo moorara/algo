@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.12.2](https://github.com/moorara/algo/tree/v0.12.2) (2025-10-26)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.12.1...v0.12.2)
+
+**Merged Changes:**
+
+  - Refactor parser/combinator package [#331](https://github.com/moorara/algo/pull/331) ([moorara](https://github.com/moorara))
+
+
 ## [v0.12.1](https://github.com/moorara/algo/tree/v0.12.1) (2025-10-24)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.12.0...v0.12.1)
