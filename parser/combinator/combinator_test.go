@@ -7,16 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// empty --> ε
-var _empty = func(in Input) (Output, bool) {
-	return Output{
-		Result: Result{
-			Val: Empty{},
-		},
-		Remaining: in,
-	}, true
-}
-
 // stringInput implements the input interface for strings.
 type stringInput struct {
 	pos   int
@@ -42,6 +32,34 @@ func (s *stringInput) Remaining() Input {
 	return &stringInput{
 		pos:   s.pos + 1,
 		runes: s.runes[1:],
+	}
+}
+
+func TestE(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name:       "OK",
+			in:         newStringInput("abc"),
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{Empty{}, 0, nil},
+				Remaining: newStringInput("abc"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := E(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
 	}
 }
 
@@ -168,6 +186,61 @@ func TestExpectRune(t *testing.T) {
 	}
 }
 
+func TestNotExpectRune(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		r           rune
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name:       "Input_Empty",
+			in:         nil,
+			r:          'a',
+			expectedOK: false,
+		},
+		{
+			name:       "Parser_Unsuccessful",
+			in:         newStringInput("a"),
+			r:          'a',
+			expectedOK: false,
+		},
+		{
+			name:       "Successful_Without_Remaining",
+			in:         newStringInput("a"),
+			r:          'b',
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{'a', 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name:       "Successful_With_Remaining",
+			in:         newStringInput("ab"),
+			r:          'b',
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{'a', 0, nil},
+				Remaining: &stringInput{
+					pos:   1,
+					runes: []rune("b"),
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := NotExpectRune(tc.r)(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
+	}
+}
+
 func TestExpectRuneIn(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -223,40 +296,30 @@ func TestExpectRuneIn(t *testing.T) {
 	}
 }
 
-func TestExpectRuneInRange(t *testing.T) {
+func TestNotExpectRuneIn(t *testing.T) {
 	tests := []struct {
 		name        string
 		in          Input
-		low, up     rune
+		runes       []rune
 		expectedOK  bool
 		expectedOut Output
 	}{
 		{
 			name:       "Input_Empty",
 			in:         nil,
-			low:        'a',
-			up:         'z',
+			runes:      []rune{'A', 'B'},
 			expectedOK: false,
 		},
 		{
 			name:       "Parser_Unsuccessful",
 			in:         newStringInput("a"),
-			low:        '0',
-			up:         '9',
-			expectedOK: false,
-		},
-		{
-			name:       "Invalid_Range",
-			in:         newStringInput("a"),
-			low:        'z',
-			up:         'a',
+			runes:      []rune{'a', 'b'},
 			expectedOK: false,
 		},
 		{
 			name:       "Successful_Without_Remaining",
 			in:         newStringInput("a"),
-			low:        'a',
-			up:         'z',
+			runes:      []rune{'A', 'B'},
 			expectedOK: true,
 			expectedOut: Output{
 				Result:    Result{'a', 0, nil},
@@ -266,8 +329,7 @@ func TestExpectRuneInRange(t *testing.T) {
 		{
 			name:       "Successful_With_Remaining",
 			in:         newStringInput("ab"),
-			low:        'a',
-			up:         'z',
+			runes:      []rune{'A', 'B'},
 			expectedOK: true,
 			expectedOut: Output{
 				Result: Result{'a', 0, nil},
@@ -281,7 +343,139 @@ func TestExpectRuneInRange(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			out, ok := ExpectRuneInRange(tc.low, tc.up)(tc.in)
+			out, ok := NotExpectRuneIn(tc.runes...)(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
+	}
+}
+
+func TestExpectRuneInRange(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		lo, hi      rune
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name:       "Input_Empty",
+			in:         nil,
+			lo:         'a',
+			hi:         'z',
+			expectedOK: false,
+		},
+		{
+			name:       "Parser_Unsuccessful",
+			in:         newStringInput("a"),
+			lo:         '0',
+			hi:         '9',
+			expectedOK: false,
+		},
+		{
+			name:       "Invalid_Range",
+			in:         newStringInput("a"),
+			lo:         'z',
+			hi:         'a',
+			expectedOK: false,
+		},
+		{
+			name:       "Successful_Without_Remaining",
+			in:         newStringInput("a"),
+			lo:         'a',
+			hi:         'z',
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{'a', 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name:       "Successful_With_Remaining",
+			in:         newStringInput("ab"),
+			lo:         'a',
+			hi:         'z',
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{'a', 0, nil},
+				Remaining: &stringInput{
+					pos:   1,
+					runes: []rune("b"),
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := ExpectRuneInRange(tc.lo, tc.hi)(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
+	}
+}
+
+func TestNotExpectRuneInRange(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		lo, hi      rune
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name:       "Input_Empty",
+			in:         nil,
+			lo:         'A',
+			hi:         'Z',
+			expectedOK: false,
+		},
+		{
+			name:       "Parser_Unsuccessful",
+			in:         newStringInput("a"),
+			lo:         'a',
+			hi:         'z',
+			expectedOK: false,
+		},
+		{
+			name:       "Invalid_Range",
+			in:         newStringInput("a"),
+			lo:         'Z',
+			hi:         'A',
+			expectedOK: false,
+		},
+		{
+			name:       "Successful_Without_Remaining",
+			in:         newStringInput("a"),
+			lo:         'A',
+			hi:         'Z',
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{'a', 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name:       "Successful_With_Remaining",
+			in:         newStringInput("ab"),
+			lo:         'A',
+			hi:         'Z',
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{'a', 0, nil},
+				Remaining: &stringInput{
+					pos:   1,
+					runes: []rune("b"),
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := NotExpectRuneInRange(tc.lo, tc.hi)(tc.in)
 
 			assert.Equal(t, tc.expectedOK, ok)
 			assert.Equal(t, tc.expectedOut, out)
@@ -312,7 +506,7 @@ func TestExpectRunes(t *testing.T) {
 		{
 			name:       "Input_Not_Matching",
 			in:         newStringInput("ab"),
-			runes:      []rune{'0', '9'},
+			runes:      []rune{'b', 'a'},
 			expectedOK: false,
 		},
 		{
@@ -353,6 +547,77 @@ func TestExpectRunes(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			out, ok := ExpectRunes(tc.runes...)(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
+	}
+}
+
+func TestNotExpectRunes(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		runes       []rune
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name:       "Input_Empty",
+			in:         nil,
+			runes:      []rune{'b', 'a'},
+			expectedOK: false,
+		},
+		{
+			name:       "Input_Not_Enough",
+			in:         newStringInput("a"),
+			runes:      []rune{'b', 'a'},
+			expectedOK: false,
+		},
+		{
+			name:       "Input_Matching",
+			in:         newStringInput("ab"),
+			runes:      []rune{'a', 'b'},
+			expectedOK: false,
+		},
+		{
+			name:       "Successful_Empty_Runes",
+			in:         newStringInput("ab"),
+			runes:      []rune{},
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{[]rune{}, 0, nil},
+				Remaining: newStringInput("ab"),
+			},
+		},
+		{
+			name:       "Successful_Witouth_Remaining",
+			in:         newStringInput("ab"),
+			runes:      []rune{'b', 'a'},
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{[]rune{'a', 'b'}, 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name:       "Successful_With_Remaining",
+			in:         newStringInput("abcd"),
+			runes:      []rune{'b', 'a'},
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{[]rune{'a', 'b'}, 0, nil},
+				Remaining: &stringInput{
+					pos:   2,
+					runes: []rune("cd"),
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := NotExpectRunes(tc.runes...)(tc.in)
 
 			assert.Equal(t, tc.expectedOK, ok)
 			assert.Equal(t, tc.expectedOut, out)
@@ -424,6 +689,665 @@ func TestExpectString(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			out, ok := ExpectString(tc.s)(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
+	}
+}
+
+func TestNotExpectString(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		s           string
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name:       "Input_Empty",
+			in:         nil,
+			s:          "ba",
+			expectedOK: false,
+		},
+		{
+			name:       "Input_Not_Enough",
+			in:         newStringInput("a"),
+			s:          "ba",
+			expectedOK: false,
+		},
+		{
+			name:       "Input_Matching",
+			in:         newStringInput("ab"),
+			s:          "ab",
+			expectedOK: false,
+		},
+		{
+			name:       "Successful_Empty_String",
+			in:         newStringInput("ab"),
+			s:          "",
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{"", 0, nil},
+				Remaining: newStringInput("ab"),
+			},
+		},
+		{
+			name:       "Successful_Without_Remaining",
+			in:         newStringInput("ab"),
+			s:          "ba",
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{"ab", 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name:       "Successful_With_Remaining",
+			in:         newStringInput("abcd"),
+			s:          "ba",
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{"ab", 0, nil},
+				Remaining: &stringInput{
+					pos:   2,
+					runes: []rune("cd"),
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := NotExpectString(tc.s)(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
+	}
+}
+
+func TestALT(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		p           []Parser
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name: "Input_Empty",
+			in:   nil,
+			p: []Parser{
+				ExpectString("ab"),
+				ExpectString("00"),
+			},
+			expectedOK: false,
+		},
+		{
+			name: "Parser_Unsuccessful",
+			in:   newStringInput("ab"),
+			p: []Parser{
+				ExpectString("00"),
+				ExpectString("11"),
+			},
+			expectedOK: false,
+		},
+		{
+			name: "First_Parser_Successful",
+			in:   newStringInput("ab"),
+			p: []Parser{
+				ExpectString("ab"),
+				ExpectString("00"),
+			},
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{"ab", 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name: "Second_Parser_Successful",
+			in:   newStringInput("ab"),
+			p: []Parser{
+				ExpectString("00"),
+				ExpectString("ab"),
+			},
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{"ab", 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name: "Successful_With_Remaining",
+			in:   newStringInput("abcd"),
+			p: []Parser{
+				ExpectString("ab"),
+				ExpectString("cd"),
+			},
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{"ab", 0, nil},
+				Remaining: &stringInput{
+					pos:   2,
+					runes: []rune("cd"),
+				},
+			},
+		},
+		{
+			name: "Unsuccessful_Multiple_Parsers",
+			in:   newStringInput("abcd"),
+			p: []Parser{
+				ExpectString("00"),
+				ExpectString("11"),
+				ExpectString("22"),
+				ExpectString("33"),
+				ExpectString("44"),
+			},
+			expectedOK: false,
+		},
+		{
+			name: "Successful_Multiple_Parsers",
+			in:   newStringInput("abcd"),
+			p: []Parser{
+				ExpectString("00"),
+				ExpectString("11"),
+				ExpectString("22"),
+				ExpectString("33"),
+				ExpectString("ab"),
+			},
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{"ab", 0, nil},
+				Remaining: &stringInput{
+					pos:   2,
+					runes: []rune("cd"),
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := ALT(tc.p...)(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
+	}
+}
+
+func TestCONCAT(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		p           []Parser
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name: "Input_Empty",
+			in:   nil,
+			p: []Parser{
+				ExpectString("b"),
+				ExpectString("a"),
+			},
+			expectedOK: false,
+		},
+		{
+			name: "Input_Not_Enough",
+			in:   newStringInput("a"),
+			p: []Parser{
+				ExpectString("b"),
+				ExpectString("a"),
+			},
+			expectedOK: false,
+		},
+		{
+			name: "First_Parser_Unsuccessful",
+			in:   newStringInput("abcd"),
+			p: []Parser{
+				ExpectString("cd"),
+				ExpectString("00"),
+			},
+			expectedOK: false,
+		},
+		{
+			name: "Second_Parser_Unsuccessful",
+			in:   newStringInput("abcd"),
+			p: []Parser{
+				ExpectString("00"),
+				ExpectString("ab"),
+			},
+			expectedOK: false,
+		},
+		{
+			name: "Successful_Without_Remaining",
+			in:   newStringInput("abcd"),
+			p: []Parser{
+				ExpectString("ab"),
+				ExpectString("cd"),
+			},
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{
+					Val: List{
+						Result{"ab", 0, nil},
+						Result{"cd", 2, nil},
+					},
+					Pos: 0,
+				},
+				Remaining: nil,
+			},
+		},
+		{
+			name: "Successful_With_Remaining",
+			in:   newStringInput("abcdef"),
+			p: []Parser{
+				ExpectString("ab"),
+				ExpectString("cd"),
+			},
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{
+					Val: List{
+						Result{"ab", 0, nil},
+						Result{"cd", 2, nil},
+					},
+					Pos: 0,
+				},
+				Remaining: &stringInput{
+					pos:   4,
+					runes: []rune("ef"),
+				},
+			},
+		},
+		{
+			name: "Unuccessful_Multiple_Parsers",
+			in:   newStringInput("abcdefghijklmn"),
+			p: []Parser{
+				ExpectString("cd"),
+				ExpectString("ef"),
+				ExpectString("ij"),
+				ExpectString("ab"),
+			},
+			expectedOK: false,
+		},
+		{
+			name: "Successful_Multiple_Parsers",
+			in:   newStringInput("abcdefghijklmn"),
+			p: []Parser{
+				ExpectString("ab"),
+				ExpectString("cd"),
+				ExpectString("ef"),
+				ExpectString("gh"),
+				ExpectString("ij"),
+			},
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{
+					Val: List{
+						Result{"ab", 0, nil},
+						Result{"cd", 2, nil},
+						Result{"ef", 4, nil},
+						Result{"gh", 6, nil},
+						Result{"ij", 8, nil},
+					},
+					Pos: 0,
+				},
+				Remaining: &stringInput{
+					pos:   10,
+					runes: []rune("klmn"),
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := CONCAT(tc.p...)(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
+	}
+}
+
+func TestOPT(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		p           Parser
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name:       "Input_Empty",
+			in:         nil,
+			p:          ExpectString("ab"),
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{Empty{}, 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name:       "Successful_Empty_Result",
+			in:         newStringInput("ab"),
+			p:          ExpectString("00"),
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{Empty{}, 0, nil},
+				Remaining: newStringInput("ab"),
+			},
+		},
+		{
+			name:       "Successful_Without_Remaining",
+			in:         newStringInput("ab"),
+			p:          ExpectString("ab"),
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{"ab", 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name:       "Successful_With_Remaining",
+			in:         newStringInput("abcd"),
+			p:          ExpectString("ab"),
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{"ab", 0, nil},
+				Remaining: &stringInput{
+					pos:   2,
+					runes: []rune("cd"),
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := OPT(tc.p)(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
+	}
+}
+
+func TestREP(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		p           Parser
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name:       "Input_Empty",
+			in:         nil,
+			p:          ExpectRuneInRange('0', '9'),
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{Empty{}, 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name:       "Successful_Zero",
+			in:         newStringInput("ab"),
+			p:          ExpectRuneInRange('0', '9'),
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{Empty{}, 0, nil},
+				Remaining: newStringInput("ab"),
+			},
+		},
+		{
+			name:       "Successful_One",
+			in:         newStringInput("1ab"),
+			p:          ExpectRuneInRange('0', '9'),
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{
+					Val: List{
+						Result{'1', 0, nil},
+					},
+					Pos: 0,
+				},
+				Remaining: &stringInput{
+					pos:   1,
+					runes: []rune("ab"),
+				},
+			},
+		},
+		{
+			name:       "Successful_Many",
+			in:         newStringInput("1234ab"),
+			p:          ExpectRuneInRange('0', '9'),
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{
+					Val: List{
+						Result{'1', 0, nil},
+						Result{'2', 1, nil},
+						Result{'3', 2, nil},
+						Result{'4', 3, nil},
+					},
+					Pos: 0,
+				},
+				Remaining: &stringInput{
+					pos:   4,
+					runes: []rune("ab"),
+				},
+			},
+		},
+		{
+			name:       "Successful_Without_Remaining",
+			in:         newStringInput("1234"),
+			p:          ExpectRuneInRange('0', '9'),
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{
+					Val: List{
+						Result{'1', 0, nil},
+						Result{'2', 1, nil},
+						Result{'3', 2, nil},
+						Result{'4', 3, nil},
+					},
+					Pos: 0,
+				},
+				Remaining: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := REP(tc.p)(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
+	}
+}
+
+func TestREP1(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		p           Parser
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name:       "Input_Empty",
+			in:         nil,
+			p:          ExpectRuneInRange('0', '9'),
+			expectedOK: false,
+		},
+		{
+			name:       "Unsuccessful_Zero",
+			in:         newStringInput("ab"),
+			p:          ExpectRuneInRange('0', '9'),
+			expectedOK: false,
+		},
+		{
+			name:       "Successful_One",
+			in:         newStringInput("1ab"),
+			p:          ExpectRuneInRange('0', '9'),
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{
+					Val: List{
+						Result{'1', 0, nil},
+					},
+					Pos: 0,
+				},
+				Remaining: &stringInput{
+					pos:   1,
+					runes: []rune("ab"),
+				},
+			},
+		},
+		{
+			name:       "Successful_Many",
+			in:         newStringInput("1234ab"),
+			p:          ExpectRuneInRange('0', '9'),
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{
+					Val: List{
+						Result{'1', 0, nil},
+						Result{'2', 1, nil},
+						Result{'3', 2, nil},
+						Result{'4', 3, nil},
+					},
+					Pos: 0,
+				},
+				Remaining: &stringInput{
+					pos:   4,
+					runes: []rune("ab"),
+				},
+			},
+		},
+		{
+			name:       "Successful_Without_Remaining",
+			in:         newStringInput("1234"),
+			p:          ExpectRuneInRange('0', '9'),
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{
+					Val: List{
+						Result{'1', 0, nil},
+						Result{'2', 1, nil},
+						Result{'3', 2, nil},
+						Result{'4', 3, nil},
+					},
+					Pos: 0,
+				},
+				Remaining: nil,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := REP1(tc.p)(tc.in)
+
+			assert.Equal(t, tc.expectedOK, ok)
+			assert.Equal(t, tc.expectedOut, out)
+		})
+	}
+}
+
+func TestParser_ALT(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          Input
+		p           Parser
+		q           []Parser
+		expectedOK  bool
+		expectedOut Output
+	}{
+		{
+			name:       "Input_Empty",
+			in:         nil,
+			p:          ExpectString("ab"),
+			q:          []Parser{ExpectString("00")},
+			expectedOK: false,
+		},
+		{
+			name:       "Parser_Unsuccessful",
+			in:         newStringInput("ab"),
+			p:          ExpectString("00"),
+			q:          []Parser{ExpectString("11")},
+			expectedOK: false,
+		},
+		{
+			name:       "First_Parser_Successful",
+			in:         newStringInput("ab"),
+			p:          ExpectString("ab"),
+			q:          []Parser{ExpectString("00")},
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{"ab", 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name:       "Second_Parser_Successful",
+			in:         newStringInput("ab"),
+			p:          ExpectString("00"),
+			q:          []Parser{ExpectString("ab")},
+			expectedOK: true,
+			expectedOut: Output{
+				Result:    Result{"ab", 0, nil},
+				Remaining: nil,
+			},
+		},
+		{
+			name:       "Successful_With_Remaining",
+			in:         newStringInput("abcd"),
+			p:          ExpectString("ab"),
+			q:          []Parser{ExpectString("cd")},
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{"ab", 0, nil},
+				Remaining: &stringInput{
+					pos:   2,
+					runes: []rune("cd"),
+				},
+			},
+		},
+		{
+			name:       "Unsuccessful_Multiple_Parsers",
+			in:         newStringInput("abcd"),
+			p:          ExpectString("00"),
+			q:          []Parser{ExpectString("11"), ExpectString("22"), ExpectString("33"), ExpectString("44")},
+			expectedOK: false,
+		},
+		{
+			name:       "Successful_Multiple_Parsers",
+			in:         newStringInput("abcd"),
+			p:          ExpectString("00"),
+			q:          []Parser{ExpectString("11"), ExpectString("22"), ExpectString("33"), ExpectString("ab")},
+			expectedOK: true,
+			expectedOut: Output{
+				Result: Result{"ab", 0, nil},
+				Remaining: &stringInput{
+					pos:   2,
+					runes: []rune("cd"),
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, ok := tc.p.ALT(tc.q...)(tc.in)
 
 			assert.Equal(t, tc.expectedOK, ok)
 			assert.Equal(t, tc.expectedOut, out)
@@ -540,98 +1464,6 @@ func TestParser_CONCAT(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			out, ok := tc.p.CONCAT(tc.q...)(tc.in)
-
-			assert.Equal(t, tc.expectedOK, ok)
-			assert.Equal(t, tc.expectedOut, out)
-		})
-	}
-}
-
-func TestParser_ALT(t *testing.T) {
-	tests := []struct {
-		name        string
-		in          Input
-		p           Parser
-		q           []Parser
-		expectedOK  bool
-		expectedOut Output
-	}{
-		{
-			name:       "Input_Empty",
-			in:         nil,
-			p:          ExpectString("ab"),
-			q:          []Parser{ExpectString("00")},
-			expectedOK: false,
-		},
-		{
-			name:       "Parser_Unsuccessful",
-			in:         newStringInput("ab"),
-			p:          ExpectString("00"),
-			q:          []Parser{ExpectString("11")},
-			expectedOK: false,
-		},
-		{
-			name:       "First_Parser_Successful",
-			in:         newStringInput("ab"),
-			p:          ExpectString("ab"),
-			q:          []Parser{ExpectString("00")},
-			expectedOK: true,
-			expectedOut: Output{
-				Result:    Result{"ab", 0, nil},
-				Remaining: nil,
-			},
-		},
-		{
-			name:       "Second_Parser_Successful",
-			in:         newStringInput("ab"),
-			p:          ExpectString("00"),
-			q:          []Parser{ExpectString("ab")},
-			expectedOK: true,
-			expectedOut: Output{
-				Result:    Result{"ab", 0, nil},
-				Remaining: nil,
-			},
-		},
-		{
-			name:       "Successful_With_Remaining",
-			in:         newStringInput("abcd"),
-			p:          ExpectString("ab"),
-			q:          []Parser{ExpectString("cd")},
-			expectedOK: true,
-			expectedOut: Output{
-				Result: Result{"ab", 0, nil},
-				Remaining: &stringInput{
-					pos:   2,
-					runes: []rune("cd"),
-				},
-			},
-		},
-		{
-			name:       "Unsuccessful_Multiple_Parsers",
-			in:         newStringInput("abcd"),
-			p:          ExpectString("00"),
-			q:          []Parser{ExpectString("11"), ExpectString("22"), ExpectString("33"), ExpectString("44")},
-			expectedOK: false,
-		},
-		{
-			name:       "Successful_Multiple_Parsers",
-			in:         newStringInput("abcd"),
-			p:          ExpectString("00"),
-			q:          []Parser{ExpectString("11"), ExpectString("22"), ExpectString("33"), ExpectString("ab")},
-			expectedOK: true,
-			expectedOut: Output{
-				Result: Result{"ab", 0, nil},
-				Remaining: &stringInput{
-					pos:   2,
-					runes: []rune("cd"),
-				},
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			out, ok := tc.p.ALT(tc.q...)(tc.in)
 
 			assert.Equal(t, tc.expectedOK, ok)
 			assert.Equal(t, tc.expectedOut, out)
@@ -1180,7 +2012,7 @@ func TestParser_Map(t *testing.T) {
 		name        string
 		in          Input
 		p           Parser
-		f           Mapper
+		f           MapFunc
 		expectedOK  bool
 		expectedOut Output
 	}{
@@ -1236,57 +2068,79 @@ func TestParser_Map(t *testing.T) {
 }
 
 func TestParser_Bind(t *testing.T) {
+	// This syntax annotation is bound on a digit parser and expects that many 'a' runes to follow.
+	// For example, input "4aaaa" is valid, while "4aaa" is not.
 	annotate := func(r Result) Parser {
-		if r.Val.(rune) == '(' {
-			return ExpectRune(' ').REP().CONCAT(ExpectRune(')')).Get(1)
+		count := int(r.Val.(rune) - '0')
+		seq := make([]Parser, 0, count)
+		for range count {
+			seq = append(seq, ExpectRune('a'))
 		}
-		return _empty
+		return CONCAT(seq...)
 	}
 
 	tests := []struct {
 		name        string
 		in          Input
 		p           Parser
-		f           Binder
+		f           BindFunc
 		expectedOK  bool
 		expectedOut Output
 	}{
 		{
 			name:       "Input_Empty",
 			in:         nil,
-			p:          ExpectRune('('),
+			p:          ExpectRuneInRange('0', '9'),
 			f:          annotate,
 			expectedOK: false,
 		},
 		{
 			name:       "Parser_Unsuccessful",
-			in:         newStringInput("(  )"),
-			p:          ExpectRune('['),
+			in:         newStringInput("4aaaa"),
+			p:          ExpectRuneInRange('a', 'f'),
 			f:          annotate,
 			expectedOK: false,
 		},
 		{
 			name:       "Successful_Without_Remaining",
-			in:         newStringInput("(  )"),
-			p:          ExpectRune('('),
+			in:         newStringInput("4aaaa"),
+			p:          ExpectRuneInRange('0', '9'),
 			f:          annotate,
 			expectedOK: true,
 			expectedOut: Output{
-				Result:    Result{')', 3, nil},
+				Result: Result{
+					Val: List{
+						{'a', 1, nil},
+						{'a', 2, nil},
+						{'a', 3, nil},
+						{'a', 4, nil},
+					},
+					Pos: 1,
+					Bag: nil,
+				},
 				Remaining: nil,
 			},
 		},
 		{
 			name:       "Successful_With_Remaining",
-			in:         newStringInput("(  )tail"),
-			p:          ExpectRune('('),
+			in:         newStringInput("4aaaa-tail"),
+			p:          ExpectRuneInRange('0', '9'),
 			f:          annotate,
 			expectedOK: true,
 			expectedOut: Output{
-				Result: Result{')', 3, nil},
+				Result: Result{
+					Val: List{
+						{'a', 1, nil},
+						{'a', 2, nil},
+						{'a', 3, nil},
+						{'a', 4, nil},
+					},
+					Pos: 1,
+					Bag: nil,
+				},
 				Remaining: &stringInput{
-					pos:   4,
-					runes: []rune("tail"),
+					pos:   5,
+					runes: []rune("-tail"),
 				},
 			},
 		},
