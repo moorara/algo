@@ -110,7 +110,7 @@ func NewRangeMap[K Discrete, V any](equal generic.EqualFunc[V], opts *RangeMapOp
 	// The sorting algorithm must be stable, so the original order of ranges with the same low bound is retained.
 	// This preserves determinism when ranges share identical lower bounds but different values.
 	sort.Merge(m.pairs, func(lhs, rhs RangeValue[K, V]) int {
-		return int(lhs.Lo - rhs.Lo)
+		return int(lhs.Lo) - int(rhs.Lo)
 	})
 
 	// Merge and/or split overlapping and adjacent ranges.
