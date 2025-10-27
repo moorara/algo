@@ -80,7 +80,7 @@ func NewRangeList[T Discrete](opts *RangeListOpts[T], rs ...Range[T]) RangeList[
 
 	// Sort ranges by their low bound ascending.
 	sort.Quick(l.ranges, func(lhs, rhs Range[T]) int {
-		return int(lhs.Lo - rhs.Lo)
+		return int(lhs.Lo) - int(rhs.Lo)
 	})
 
 	// Merge overlapping and adjacent ranges.
