@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.12.3](https://github.com/moorara/algo/tree/v0.12.3) (2025-10-29)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.12.2...v0.12.3)
+
+**Merged Changes:**
+
+  - automata: compact DOT representation of DFA &amp; NFA [#334](https://github.com/moorara/algo/pull/334) ([moorara](https://github.com/moorara))
+  - dot: use Go escape sequences [#333](https://github.com/moorara/algo/pull/333) ([moorara](https://github.com/moorara))
+  - Fix range/disc [#332](https://github.com/moorara/algo/pull/332) ([moorara](https://github.com/moorara))
+
+
 ## [v0.12.2](https://github.com/moorara/algo/tree/v0.12.2) (2025-10-26)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.12.1...v0.12.2)
