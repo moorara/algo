@@ -40,6 +40,7 @@ func (e *Edge) DOT() string {
 
 	label := e.Label
 	label = strconv.Quote(label)
+	label = labelReplacer.Replace(label)
 
 	b.WriteString(e.From + " " + string(e.EdgeType) + " " + e.To + " [")
 	first = addListAttr(&b, first, "dirType", string(e.EdgeDir))

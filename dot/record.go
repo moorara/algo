@@ -5,14 +5,6 @@ import (
 	"strings"
 )
 
-var escapes = map[string]string{
-	`|`: `\|`,
-	`{`: `\{`,
-	`}`: `\}`,
-	`<`: `\<`,
-	`>`: `\>`,
-}
-
 // Record represents a record.
 type Record struct {
 	Fields []Field
@@ -71,9 +63,7 @@ func (f *simpleField) DOT() string {
 
 	if f.Label != "" {
 		label := f.Label
-		for old, new := range escapes {
-			label = strings.ReplaceAll(label, old, new)
-		}
+		label = fieldReplacer.Replace(label)
 
 		b.WriteString(label)
 	}
