@@ -1077,14 +1077,33 @@ func (d *DFA) DOT() string {
 		graph.AddNode(dot.NewNode(name, "", label, "", "", shape, "", ""))
 	}
 
-	for s, stab := range d.trans.All() {
-		for cid, next := range stab.All() {
-			if ranges, ok := d.classes().Get(cid); ok {
-				from := fmt.Sprintf("%d", s)
-				to := fmt.Sprintf("%d", next)
+	// Group all transitions with the same states and merge their ranges into one label.
+	edges := symboltable.NewRedBlack[State, symboltable.SymbolTable[State, rangeList]](CmpState, nil)
 
-				graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", ranges.String(), "", "", "", ""))
+	for from, seq := range d.Transitions() {
+		row, ok := edges.Get(from)
+		if !ok {
+			row = symboltable.NewRedBlack[State, rangeList](CmpState, nil)
+			edges.Put(from, row)
+		}
+
+		for rs, to := range seq {
+			ranges, ok := row.Get(to)
+			if !ok {
+				ranges = newRangeList()
+				row.Put(to, ranges)
 			}
+
+			ranges.Add(rs...)
+		}
+	}
+
+	for from, row := range edges.All() {
+		for to, ranges := range row.All() {
+			from := fmt.Sprintf("%d", from)
+			to := fmt.Sprintf("%d", to)
+
+			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", ranges.String(), "", "", "", ""))
 		}
 	}
 

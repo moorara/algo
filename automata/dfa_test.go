@@ -1020,8 +1020,7 @@ func TestDFA_DOT(t *testing.T) {
 
   start -> 0 [];
   0 -> 1 [label="[1..1]"];
-  1 -> 1 [label="[0..0]"];
-  1 -> 1 [label="[1..1]"];
+  1 -> 1 [label="[0..1]"];
 }
 `,
 		},

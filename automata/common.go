@@ -40,6 +40,25 @@ func newRangeSet(rs ...disc.Range[Symbol]) rangeSet {
 	)
 }
 
+// rangeList represents a list of symbol ranges.
+type rangeList disc.RangeList[Symbol]
+
+// newRangeList creates a new list of symbol ranges.
+func newRangeList(rs ...disc.Range[Symbol]) rangeList {
+	return disc.NewRangeList(
+		&disc.RangeListOpts[Symbol]{
+			Format: func(all iter.Seq[disc.Range[Symbol]]) string {
+				vals := make([]string, 0)
+				for r := range all {
+					vals = append(vals, fmtRange(r))
+				}
+				return strings.Join(vals, ", ")
+			},
+		},
+		rs...,
+	)
+}
+
 // rangeMapping represents the equivalence classes of the input symbols.
 // It is mapping from the a range of input symbols to the class ID they belong to.
 type rangeMapping disc.RangeMap[Symbol, classID]
