@@ -2,8 +2,7 @@ package dot
 
 import (
 	"bytes"
-	"fmt"
-	"strings"
+	"strconv"
 )
 
 // Node represents a graph node.
@@ -38,8 +37,7 @@ func (n *Node) DOT() string {
 	var b bytes.Buffer
 
 	label := n.Label
-	label = strings.ReplaceAll(label, `"`, `\"`)
-	label = fmt.Sprintf(`"%s"`, label)
+	label = strconv.Quote(label)
 
 	b.WriteString(n.Name + " [")
 	first = addListAttr(&b, first, "group", n.Group)

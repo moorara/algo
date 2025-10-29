@@ -2,8 +2,7 @@ package dot
 
 import (
 	"bytes"
-	"fmt"
-	"strings"
+	"strconv"
 )
 
 // Edge represents an edge.
@@ -40,8 +39,7 @@ func (e *Edge) DOT() string {
 	var b bytes.Buffer
 
 	label := e.Label
-	label = strings.ReplaceAll(label, `"`, `\"`)
-	label = fmt.Sprintf(`"%s"`, label)
+	label = strconv.Quote(label)
 
 	b.WriteString(e.From + " " + string(e.EdgeType) + " " + e.To + " [")
 	first = addListAttr(&b, first, "dirType", string(e.EdgeDir))
