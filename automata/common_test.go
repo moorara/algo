@@ -35,6 +35,34 @@ func TestNewRangeSet(t *testing.T) {
 	}
 }
 
+func TestNewRangeList(t *testing.T) {
+	tests := []struct {
+		name           string
+		rs             []disc.Range[Symbol]
+		expectedString string
+	}{
+		{
+			name: "OK",
+			rs: []disc.Range[Symbol]{
+				{Lo: 'A', Hi: 'M'},
+				{Lo: 'N', Hi: 'Z'},
+				{Lo: 'a', Hi: 'm'},
+				{Lo: 'n', Hi: 'z'},
+			},
+			expectedString: "[A..Z], [a..z]",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			rs := newRangeList(tc.rs...)
+
+			assert.NotNil(t, rs)
+			assert.Equal(t, tc.expectedString, rs.String())
+		})
+	}
+}
+
 func TestNewRangeMapping(t *testing.T) {
 	tests := []struct {
 		name           string
