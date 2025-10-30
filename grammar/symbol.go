@@ -10,8 +10,9 @@ import (
 )
 
 // Endmarker is a special symbol that is used to indicate the end of a string.
-// This special symbol assumed not to be a symbol of any grammar and
-// it is taken from a Private Use Area (PUA) in Unicode.
+// The endmarker special symbol is assumed not to be a symbol of any grammar.
+// It is taken from the Unicode Private Use Area (BMP PUA) and
+// must be a valid string since the underlying type of Terminal is string.
 //
 // The endmarker is not a formal part of the grammar itself but is introduced during parsing
 // to simplify the handling of end-of-input scenarios, especially in parsing algorithms like LL(1) or LR(1).

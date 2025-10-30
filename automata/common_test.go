@@ -9,6 +9,71 @@ import (
 	"github.com/moorara/algo/range/disc"
 )
 
+func TestFormatRange(t *testing.T) {
+	tests := []struct {
+		name           string
+		r              disc.Range[Symbol]
+		expectedString string
+	}{
+		{
+			name:           "Empty",
+			r:              disc.Range[Symbol]{Lo: E, Hi: E},
+			expectedString: "[ε..ε]",
+		},
+		{
+			name:           "Zero",
+			r:              disc.Range[Symbol]{Lo: 0, Hi: 0},
+			expectedString: "[NUL..NUL]",
+		},
+		{
+			name:           "HorizontalTab",
+			r:              disc.Range[Symbol]{Lo: '\t', Hi: '\t'},
+			expectedString: "[\\t..\\t]",
+		},
+		{
+			name:           "Newline",
+			r:              disc.Range[Symbol]{Lo: '\n', Hi: '\n'},
+			expectedString: "[\\n..\\n]",
+		},
+		{
+			name:           "VerticalTab",
+			r:              disc.Range[Symbol]{Lo: '\v', Hi: '\v'},
+			expectedString: "[\\v..\\v]",
+		},
+		{
+			name:           "FormFeed",
+			r:              disc.Range[Symbol]{Lo: '\f', Hi: '\f'},
+			expectedString: "[\\f..\\f]",
+		},
+		{
+			name:           "CarriageReturn",
+			r:              disc.Range[Symbol]{Lo: '\r', Hi: '\r'},
+			expectedString: "[\\r..\\r]",
+		},
+		{
+			name:           "Space",
+			r:              disc.Range[Symbol]{Lo: ' ', Hi: ' '},
+			expectedString: "[SP..SP]",
+		},
+		{
+			name:           "Digit",
+			r:              disc.Range[Symbol]{Lo: '0', Hi: '9'},
+			expectedString: "[0..9]",
+		},
+		{
+			name:           "Letter",
+			r:              disc.Range[Symbol]{Lo: 'A', Hi: 'Z'},
+			expectedString: "[A..Z]",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedString, formatRange(tc.r))
+		})
+	}
+}
+
 func TestNewRangeSet(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -145,31 +210,6 @@ func TestStateManager(t *testing.T) {
 			// Test retrieving the same state again
 			state = sm.GetOrCreateState(tc.id, tc.s)
 			assert.Equal(t, tc.expectedState, state)
-		})
-	}
-}
-
-func TestFmtRange(t *testing.T) {
-	tests := []struct {
-		name           string
-		r              disc.Range[Symbol]
-		expectedString string
-	}{
-		{
-			name:           "EmptyRange",
-			r:              disc.Range[Symbol]{Lo: E, Hi: E},
-			expectedString: "[ε..ε]",
-		},
-		{
-			name:           "DigitRange",
-			r:              disc.Range[Symbol]{Lo: '0', Hi: '9'},
-			expectedString: "[0..9]",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedString, fmtRange(tc.r))
 		})
 	}
 }
