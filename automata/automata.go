@@ -19,6 +19,10 @@ var (
 	CmpSymbol  = generic.NewCompareFunc[Symbol]()
 	HashSymbol = hash.HashFuncForInt32[Symbol](nil)
 
+	eqClassID   = generic.NewEqualFunc[classID]()
+	cmpClassID  = generic.NewCompareFunc[classID]()
+	hashClassID = hash.HashFuncForInt[classID](nil)
+
 	EqStates = func(a, b States) bool {
 		if a == nil && b == nil {
 			return true
@@ -71,7 +75,8 @@ func NewStates(s ...State) States {
 type Symbol rune
 
 // E is the empty string ε and is never a member of an input alphabet Σ.
-const E Symbol = 0
+// It is intentionally chosen outside the Unicode range to avoid conflicts with valid symbols.
+const E Symbol = -1
 
 // Symbols represents a set of symbols in an automaton.
 type Symbols set.Set[Symbol]

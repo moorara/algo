@@ -7,17 +7,37 @@ import (
 	"strings"
 
 	"github.com/moorara/algo/generic"
-	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/range/disc"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/symboltable"
 )
 
-var (
-	eqClassID   = generic.NewEqualFunc[classID]()
-	cmpClassID  = generic.NewCompareFunc[classID]()
-	hashClassID = hash.HashFuncForInt[classID](nil)
-)
+func formatRange(r disc.Range[Symbol]) string {
+	return fmt.Sprintf("[%s..%s]", formatRangeBound(r.Lo), formatRangeBound(r.Hi))
+}
+
+func formatRangeBound(a Symbol) string {
+	switch a {
+	case E:
+		return "ε"
+	case 0:
+		return "NUL"
+	case '\t':
+		return "\\t"
+	case '\n':
+		return "\\n"
+	case '\v':
+		return "\\v"
+	case '\f':
+		return "\\f"
+	case '\r':
+		return "\\r"
+	case ' ':
+		return "SP"
+	default:
+		return fmt.Sprintf("%c", a)
+	}
+}
 
 // rangeSet represents a set of symbol ranges.
 type rangeSet set.Set[disc.Range[Symbol]]
@@ -31,7 +51,7 @@ func newRangeSet(rs ...disc.Range[Symbol]) rangeSet {
 		func(all []disc.Range[Symbol]) string {
 			vals := make([]string, len(all))
 			for i, r := range all {
-				vals[i] = fmtRange(r)
+				vals[i] = formatRange(r)
 			}
 
 			return strings.Join(vals, ", ")
@@ -50,7 +70,7 @@ func newRangeList(rs ...disc.Range[Symbol]) rangeList {
 			Format: func(all iter.Seq[disc.Range[Symbol]]) string {
 				vals := make([]string, 0)
 				for r := range all {
-					vals = append(vals, fmtRange(r))
+					vals = append(vals, formatRange(r))
 				}
 				return strings.Join(vals, ", ")
 			},
@@ -70,7 +90,7 @@ func newRangeMapping(pairs []disc.RangeValue[Symbol, classID]) rangeMapping {
 
 			b.WriteString("Ranges:\n")
 			for r, cid := range all {
-				fmt.Fprintf(&b, "  %s: %d\n", fmtRange(r), cid)
+				fmt.Fprintf(&b, "  %s: %d\n", formatRange(r), cid)
 			}
 
 			return b.String()
@@ -134,25 +154,6 @@ func (m *stateManager) GetOrCreateState(id int, s State) State {
 	m.last++
 	m.states[id][s] = m.last
 	return m.last
-}
-
-// fmtRange formats a symbol range as a string.
-func fmtRange(r disc.Range[Symbol]) string {
-	var lo, hi Symbol
-
-	if r.Lo == E {
-		lo = 'ε'
-	} else {
-		lo = r.Lo
-	}
-
-	if r.Hi == E {
-		hi = 'ε'
-	} else {
-		hi = r.Hi
-	}
-
-	return fmt.Sprintf("[%c..%c]", lo, hi)
 }
 
 // generateStatePermutations generates all permutations of a sequence of states using recursion and backtracking.
