@@ -38,7 +38,6 @@ func (n *Node) DOT() string {
 
 	label := n.Label
 	label = strconv.Quote(label)
-	label = labelReplacer.Replace(label)
 
 	b.WriteString(n.Name + " [")
 	first = addListAttr(&b, first, "group", n.Group)

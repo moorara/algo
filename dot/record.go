@@ -5,6 +5,14 @@ import (
 	"strings"
 )
 
+var replacer = strings.NewReplacer(
+	`|`, `\|`,
+	`{`, `\{`,
+	`}`, `\}`,
+	`<`, `\<`,
+	`>`, `\>`,
+)
+
 // Record represents a record.
 type Record struct {
 	Fields []Field
@@ -63,7 +71,7 @@ func (f *simpleField) DOT() string {
 
 	if f.Label != "" {
 		label := f.Label
-		label = fieldReplacer.Replace(label)
+		label = replacer.Replace(label)
 
 		b.WriteString(label)
 	}
