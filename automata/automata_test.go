@@ -52,6 +52,81 @@ func TestFuncs(t *testing.T) {
 		}
 	})
 
+	t.Run("CmpStates", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			a, b     States
+			expected int
+		}{
+			{
+				name:     "BothNil",
+				a:        nil,
+				b:        nil,
+				expected: 0,
+			},
+			{
+				name:     "FirstNotNilSecondNil",
+				a:        NewStates(1, 2),
+				b:        nil,
+				expected: 1,
+			},
+			{
+				name:     "FirstNilSecondNotNil",
+				a:        nil,
+				b:        NewStates(3, 4),
+				expected: -1,
+			},
+			{
+				name:     "BothNotNil_Equal",
+				a:        NewStates(2, 4),
+				b:        NewStates(2, 4),
+				expected: 0,
+			},
+			{
+				name:     "BothNotNil_FirstLessThanSecond_ByFirstElement",
+				a:        NewStates(1, 4),
+				b:        NewStates(2, 4),
+				expected: -1,
+			},
+			{
+				name:     "BothNotNil_FirstLessThanSecond_BySecondElement",
+				a:        NewStates(2, 3),
+				b:        NewStates(2, 4),
+				expected: -1,
+			},
+			{
+				name:     "BothNotNil_FirstLessThanSecond_ByLength",
+				a:        NewStates(2, 4),
+				b:        NewStates(2, 4, 8),
+				expected: -1,
+			},
+			{
+				name:     "BothNotNil_FirstGreaterThanSecond_ByFirstElement",
+				a:        NewStates(2, 4),
+				b:        NewStates(1, 4),
+				expected: 1,
+			},
+			{
+				name:     "BothNotNil_FirstGreaterThanSecond_BySecondElement",
+				a:        NewStates(2, 4),
+				b:        NewStates(2, 3),
+				expected: 1,
+			},
+			{
+				name:     "BothNotNil_FirstGreaterThanSecond_ByLength",
+				a:        NewStates(2, 4, 8),
+				b:        NewStates(2, 4),
+				expected: 1,
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				assert.Equal(t, tc.expected, CmpStates(tc.a, tc.b))
+			})
+		}
+	})
+
 	t.Run("EqSymbols", func(t *testing.T) {
 		tests := []struct {
 			name     string

@@ -601,17 +601,35 @@ func (n *NFA) Transitions() iter.Seq2[State, iter.Seq2[[]disc.Range[Symbol], []S
 
 // TransitionsFrom returns all transitions from the given state in the NFA.
 func (n *NFA) TransitionsFrom(s State) iter.Seq2[[]disc.Range[Symbol], []State] {
-	return func(yield func([]disc.Range[Symbol], []State) bool) {
-		if stab, ok := n.trans.Get(s); ok {
-			for cid, next := range stab.All() {
-				if ranges, ok := n.classes().Get(cid); ok {
-					k := generic.Collect1(ranges.All())
-					v := generic.Collect1(next.All())
+	// Aggregate ranges leading to the same set of next states.
+	agg := symboltable.NewRedBlack[States, rangeList](CmpStates, nil)
 
-					if !yield(k, v) {
-						return
-					}
+	if stab, ok := n.trans.Get(s); ok {
+		for cid, next := range stab.All() {
+			// Ensure there is a range list for the current set of next states.
+			list, ok := agg.Get(next)
+			if !ok {
+				list = newRangeList()
+				agg.Put(next, list)
+			}
+
+			// Convert from class ID to ranges and combine all ranges.
+			if ranges, ok := n.classes().Get(cid); ok {
+				for r := range ranges.All() {
+					list.Add(r)
 				}
+			}
+		}
+	}
+
+	//  Yield all aggregated ranges and their corresponding set of next states.
+	return func(yield func([]disc.Range[Symbol], []State) bool) {
+		for next, list := range agg.All() {
+			states := generic.Collect1(next.All())
+			ranges := generic.Collect1(list.All())
+
+			if !yield(ranges, states) {
+				return
 			}
 		}
 	}
@@ -824,35 +842,15 @@ func (n *NFA) DOT() string {
 		graph.AddNode(dot.NewNode(name, "", label, "", "", shape, "", ""))
 	}
 
-	// Group all transitions with the same states and merge their ranges into one label.
-	edges := symboltable.NewRedBlack[State, symboltable.SymbolTable[State, rangeList]](CmpState, nil)
+	for s, seq := range n.Transitions() {
+		for ranges, next := range seq {
+			from := fmt.Sprintf("%d", s)
+			label := formatRangeSlice(ranges)
 
-	for from, seq := range n.Transitions() {
-		row, ok := edges.Get(from)
-		if !ok {
-			row = symboltable.NewRedBlack[State, rangeList](CmpState, nil)
-			edges.Put(from, row)
-		}
-
-		for rs, states := range seq {
-			for _, to := range states {
-				ranges, ok := row.Get(to)
-				if !ok {
-					ranges = newRangeList()
-					row.Put(to, ranges)
-				}
-
-				ranges.Add(rs...)
+			for _, t := range next {
+				to := fmt.Sprintf("%d", t)
+				graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", label, "", "", "", ""))
 			}
-		}
-	}
-
-	for from, row := range edges.All() {
-		for to, ranges := range row.All() {
-			from := fmt.Sprintf("%d", from)
-			to := fmt.Sprintf("%d", to)
-
-			graph.AddEdge(dot.NewEdge(from, to, dot.EdgeTypeDirected, "", ranges.String(), "", "", "", ""))
 		}
 	}
 

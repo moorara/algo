@@ -35,6 +35,28 @@ var (
 		return a.Equal(b)
 	}
 
+	CmpStates = func(a, b States) int {
+		if a == nil && b == nil {
+			return 0
+		} else if a == nil {
+			return -1
+		} else if b == nil {
+			return 1
+		}
+
+		// Assume a and b are sorted.
+		lhs := generic.Collect1(a.All())
+		rhs := generic.Collect1(b.All())
+
+		for i := 0; i < len(lhs) && i < len(rhs); i++ {
+			if c := CmpState(lhs[i], rhs[i]); c != 0 {
+				return c
+			}
+		}
+
+		return len(lhs) - len(rhs)
+	}
+
 	EqSymbols = func(a, b Symbols) bool {
 		if a == nil && b == nil {
 			return true

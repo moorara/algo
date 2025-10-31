@@ -597,8 +597,7 @@ func TestDFA_Transitions(t *testing.T) {
 			d:    testDFA[0],
 			expectedTrans: []transition{
 				{0, []disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
-				{1, []disc.Range[Symbol]{{Lo: '0', Hi: '0'}}, 1},
-				{1, []disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
+				{1, []disc.Range[Symbol]{{Lo: '0', Hi: '1'}}, 1},
 			},
 		},
 	}
@@ -634,8 +633,7 @@ func TestDFA_TransitionsFrom(t *testing.T) {
 			d:    testDFA[0],
 			s:    1,
 			expectedTrans: []transition{
-				{[]disc.Range[Symbol]{{Lo: '0', Hi: '0'}}, 1},
-				{[]disc.Range[Symbol]{{Lo: '1', Hi: '1'}}, 1},
+				{[]disc.Range[Symbol]{{Lo: '0', Hi: '1'}}, 1},
 			},
 		},
 	}

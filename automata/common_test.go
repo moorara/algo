@@ -9,6 +9,30 @@ import (
 	"github.com/moorara/algo/range/disc"
 )
 
+func TestFormatRangeSlice(t *testing.T) {
+	tests := []struct {
+		name           string
+		rs             []disc.Range[Symbol]
+		expectedString string
+	}{
+		{
+			name: "OK",
+			rs: []disc.Range[Symbol]{
+				{Lo: '0', Hi: '9'},
+				{Lo: 'A', Hi: 'F'},
+				{Lo: 'a', Hi: 'f'},
+			},
+			expectedString: "[0..9], [A..F], [a..f]",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedString, formatRangeSlice(tc.rs))
+		})
+	}
+}
+
 func TestFormatRange(t *testing.T) {
 	tests := []struct {
 		name           string
