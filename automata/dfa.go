@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"iter"
 	"slices"
-	"strings"
 
 	"github.com/moorara/algo/dot"
 	"github.com/moorara/algo/generic"
@@ -305,16 +304,13 @@ func (d *DFA) String() string {
 		b.Truncate(b.Len() - 2)
 	}
 
-	trans := make([]string, 0, d.trans.Size()*2) // Approximation
-	for s, stab := range d.trans.All() {
-		for cid, next := range stab.All() {
-			if ranges, ok := d.classes().Get(cid); ok {
-				trans = append(trans, fmt.Sprintf("  %d -- %s --> %d", s, ranges, next))
-			}
+	b.WriteString("\nTransitions:\n")
+
+	for s, seq := range d.Transitions() {
+		for ranges, next := range seq {
+			fmt.Fprintf(&b, "  %d -- %s --> %d\n", s, formatRangeSlice(ranges), next)
 		}
 	}
-
-	fmt.Fprintf(&b, "\nTransitions:\n%s\n", strings.Join(trans, "\n"))
 
 	return b.String()
 }

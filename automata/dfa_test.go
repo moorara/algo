@@ -211,8 +211,7 @@ func TestDFA_String(t *testing.T) {
 Final states: 1
 Transitions:
   0 -- [1..1] --> 1
-  1 -- [0..0] --> 1
-  1 -- [1..1] --> 1
+  1 -- [0..1] --> 1
 `,
 		},
 	}
