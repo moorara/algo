@@ -12,6 +12,20 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
+func formatRangeSlice(rs []disc.Range[Symbol]) string {
+	var b bytes.Buffer
+
+	for _, r := range rs {
+		fmt.Fprintf(&b, "%s, ", formatRange(r))
+	}
+
+	if b.Len() >= 2 {
+		b.Truncate(b.Len() - 2)
+	}
+
+	return b.String()
+}
+
 func formatRange(r disc.Range[Symbol]) string {
 	return fmt.Sprintf("[%s..%s]", formatRangeBound(r.Lo), formatRangeBound(r.Hi))
 }
@@ -48,14 +62,7 @@ func newRangeSet(rs ...disc.Range[Symbol]) rangeSet {
 		func(a, b disc.Range[Symbol]) bool {
 			return a.Lo == b.Lo && a.Hi == b.Hi
 		},
-		func(all []disc.Range[Symbol]) string {
-			vals := make([]string, len(all))
-			for i, r := range all {
-				vals[i] = formatRange(r)
-			}
-
-			return strings.Join(vals, ", ")
-		},
+		formatRangeSlice,
 		rs...,
 	)
 }
