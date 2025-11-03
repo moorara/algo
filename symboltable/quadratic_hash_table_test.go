@@ -3,20 +3,20 @@ package symboltable
 import (
 	"testing"
 
-	. "github.com/moorara/algo/generic"
-	. "github.com/moorara/algo/hash"
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/hash"
 )
 
 func getQuadHashTableTests() []symbolTableTest[string, int] {
-	hashFunc := HashFuncForString[string](nil)
-	eqKey := NewEqualFunc[string]()
-	eqVal := NewEqualFunc[int]()
+	hashFunc := hash.HashFuncForString[string](nil)
+	eqKey := generic.NewEqualFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 	opts := HashOpts{}
 
 	tests := getSymbolTableTests()
 
 	tests[0].symbolTable = "Quadratic Probing Hash Table"
-	tests[0].equal = NewQuadraticHashTable[string, int](hashFunc, eqKey, eqVal, opts)
+	tests[0].equal = NewQuadraticHashTable(hashFunc, eqKey, eqVal, opts)
 	tests[0].equal.Put("Apple", 182)
 	tests[0].equal.Put("Avocado", 200)
 	tests[0].equal.Put("Banana", 120)
@@ -35,7 +35,7 @@ func getQuadHashTableTests() []symbolTableTest[string, int] {
 	tests[0].expectedEqual = true
 
 	tests[1].symbolTable = "Quadratic Probing Hash Table"
-	tests[1].equal = NewQuadraticHashTable[string, int](hashFunc, eqKey, eqVal, opts)
+	tests[1].equal = NewQuadraticHashTable(hashFunc, eqKey, eqVal, opts)
 	tests[1].equal.Put("Golden Pheasant", 15)
 	tests[1].equal.Put("Harpy Eagle", 35)
 	tests[1].equal.Put("Kingfisher", 15)
@@ -47,7 +47,7 @@ func getQuadHashTableTests() []symbolTableTest[string, int] {
 	tests[1].expectedEqual = true
 
 	tests[2].symbolTable = "Quadratic Probing Hash Table"
-	tests[2].equal = NewQuadraticHashTable[string, int](hashFunc, eqKey, eqVal, opts)
+	tests[2].equal = NewQuadraticHashTable(hashFunc, eqKey, eqVal, opts)
 	tests[2].equal.Put("Accordion", 50)
 	tests[2].equal.Put("Bassoon", 140)
 	tests[2].equal.Put("Cello", 120)
@@ -67,7 +67,7 @@ func getQuadHashTableTests() []symbolTableTest[string, int] {
 	tests[2].expectedEqual = false
 
 	tests[3].symbolTable = "Quadratic Probing Hash Table"
-	tests[3].equal = NewQuadraticHashTable[string, int](hashFunc, eqKey, eqVal, opts)
+	tests[3].equal = NewQuadraticHashTable(hashFunc, eqKey, eqVal, opts)
 	tests[3].equal.Put("Berlin", 10)
 	// tests[3].equal.Put("London", 11)
 	tests[3].equal.Put("Montreal", 6)
@@ -91,7 +91,7 @@ func TestQuadraticHashTable(t *testing.T) {
 	tests := getQuadHashTableTests()
 
 	for _, tc := range tests {
-		ht := NewQuadraticHashTable[string, int](tc.hashKey, tc.eqKey, tc.eqVal, tc.opts)
+		ht := NewQuadraticHashTable(tc.hashKey, tc.eqKey, tc.eqVal, tc.opts)
 		runSymbolTableTest(t, ht, tc)
 	}
 }
