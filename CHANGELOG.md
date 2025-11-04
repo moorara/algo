@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.12.4](https://github.com/moorara/algo/tree/v0.12.4) (2025-11-03)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.12.3...v0.12.4)
+
+**Merged Changes:**
+
+  - Pin Go version to 1.25.0 [#342](https://github.com/moorara/algo/pull/342) ([moorara](https://github.com/moorara))
+  - Refactor HashOpts comments [#341](https://github.com/moorara/algo/pull/341) ([moorara](https://github.com/moorara))
+  - automata: aggregate ranges in String [#339](https://github.com/moorara/algo/pull/339) ([moorara](https://github.com/moorara))
+  - automata: aggregate ranges returned from TransitionsFrom iterator [#338](https://github.com/moorara/algo/pull/338) ([moorara](https://github.com/moorara))
+  - dot: refactor label formatting [#337](https://github.com/moorara/algo/pull/337) ([moorara](https://github.com/moorara))
+  - automata: format range strings properly [#336](https://github.com/moorara/algo/pull/336) ([moorara](https://github.com/moorara))
+  - Format DOT labels properly [#335](https://github.com/moorara/algo/pull/335) ([moorara](https://github.com/moorara))
+
+
 ## [v0.12.3](https://github.com/moorara/algo/tree/v0.12.3) (2025-10-29)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.12.2...v0.12.3)
