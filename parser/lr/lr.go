@@ -313,6 +313,7 @@ func (p *Parser) ParseAndEvaluate(eval EvaluateFunc) (*Value, error) {
 
 // EvaluateFunc is a function invoked every time a production rule
 // is matched or applied during the parsing of an input string.
+//
 // It receives a list of values corresponding to the right-hand side of the matched production
 // and expects a value to be returned representing the left-hand side of the production.
 //
