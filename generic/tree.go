@@ -6,15 +6,15 @@ type TraverseOrder int
 const (
 	// VLR is a pre-order traversal from left to right.
 	VLR TraverseOrder = iota
-	// VLR is a pre-order traversal from right to left.
+	// VRL is a pre-order traversal from right to left.
 	VRL
-	// VLR is an in-order traversal from left to right.
+	// LVR is an in-order traversal from left to right.
 	LVR
 	// RVL is an in-order traversal from right to left.
 	RVL
 	// LRV is a post-order traversal from left to right.
 	LRV
-	// LRV is a post-order traversal from right to left.
+	// RLV is a post-order traversal from right to left.
 	RLV
 	// Ascending is an ascending traversal.
 	Ascending
