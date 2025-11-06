@@ -130,6 +130,16 @@ func (p *Productions) Clone() *Productions {
 	return newP
 }
 
+// Size returns the number of production rules.
+func (p *Productions) Size() int {
+	size := 0
+	for _, prods := range p.table.All() {
+		size += prods.Size()
+	}
+
+	return size
+}
+
 // Add adds a new production rule.
 func (p *Productions) Add(ps ...*Production) {
 	for _, q := range ps {
@@ -175,9 +185,9 @@ func (p *Productions) Get(head NonTerminal) set.Set[*Production] {
 // All returns an iterator sequence containing all production rules.
 func (p *Productions) All() iter.Seq[*Production] {
 	return func(yield func(*Production) bool) {
-		for _, list := range p.table.All() {
-			for q := range list.All() {
-				if !yield(q) {
+		for _, prods := range p.table.All() {
+			for prod := range prods.All() {
+				if !yield(prod) {
 					return
 				}
 			}
@@ -238,7 +248,7 @@ func OrderProductionSet(set set.Set[*Production]) []*Production {
 // orderProductionSlice orders a slice of production rules in a deterministic way.
 func orderProductionSlice(prods []*Production) {
 	// Sort the productions using a custom comparison function.
-	sort.Quick[*Production](prods, cmpProduction)
+	sort.Quick(prods, cmpProduction)
 }
 
 // cmpProduction is a CompareFunc for Production type.
