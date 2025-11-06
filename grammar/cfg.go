@@ -196,7 +196,7 @@ func (g *CFG) Equal(rhs *CFG) bool {
 
 // Symbols returns the set of all symbols in the grammar, including both terminal and non-terminal symbols.
 func (g *CFG) Symbols() set.Set[Symbol] {
-	symbols := set.New[Symbol](EqSymbol)
+	symbols := set.New(EqSymbol)
 
 	for t := range g.Terminals.All() {
 		symbols.Add(t)
@@ -1126,7 +1126,7 @@ func (g *CFG) OrderTerminals() String[Terminal] {
 	}
 
 	// Sort terminals alphabetically based on the string representation of them.
-	sort.Quick[Terminal](terms, CmpTerminal)
+	sort.Quick(terms, CmpTerminal)
 
 	return terms
 }
@@ -1175,7 +1175,7 @@ func (g *CFG) OrderNonTerminals() (String[NonTerminal], String[NonTerminal], Str
 	}
 
 	// Sort unvisited non-terminals alphabetically based on the string representation of them.
-	sort.Quick[NonTerminal](unvisited, CmpNonTerminal)
+	sort.Quick(unvisited, CmpNonTerminal)
 
 	allNonTerms := make(String[NonTerminal], 0)
 	allNonTerms = append(allNonTerms, visited...)

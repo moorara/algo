@@ -253,6 +253,38 @@ func TestProductions_Clone(t *testing.T) {
 	}
 }
 
+func TestProductions_Size(t *testing.T) {
+	p := getTestProductions()
+
+	tests := []struct {
+		name         string
+		p            *Productions
+		expectedSize int
+	}{
+		{
+			name:         "1st",
+			p:            p[1],
+			expectedSize: 3,
+		},
+		{
+			name:         "2nd",
+			p:            p[2],
+			expectedSize: 9,
+		},
+		{
+			name:         "3rd",
+			p:            p[3],
+			expectedSize: 8,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedSize, tc.p.Size())
+		})
+	}
+}
+
 func TestProductions_Add(t *testing.T) {
 	p := getTestProductions()
 

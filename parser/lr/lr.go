@@ -126,7 +126,7 @@ func (p *Parser) nextToken() (lexer.Token, error) {
 // An error is returned if the input fails to conform to the grammar rules, indicating a syntax issue,
 // or if any of the provided functions return an error, indicating a semantic issue.
 func (p *Parser) Parse(tokenF parser.TokenFunc, prodF parser.ProductionFunc) error {
-	stack := list.NewStack[State](1024, EqState)
+	stack := list.NewStack(1024, EqState)
 	stack.Push(State(0)) // BuildStateMap ensures state 0 always includes the initial item "S′ → •S"
 
 	// Read the first input token.
@@ -211,7 +211,7 @@ func (p *Parser) Parse(tokenF parser.TokenFunc, prodF parser.ProductionFunc) err
 // An error is returned if the input fails to conform to the grammar rules, indicating a syntax issue.
 func (p *Parser) ParseAndBuildAST() (parser.Node, error) {
 	// Stack for constructing the abstract syntax tree.
-	nodes := list.NewStack[parser.Node](1024, parser.EqNode)
+	nodes := list.NewStack(1024, parser.EqNode)
 
 	err := p.Parse(
 		func(token *lexer.Token) error {
