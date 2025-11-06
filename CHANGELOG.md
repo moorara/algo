@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.12.5](https://github.com/moorara/algo/tree/v0.12.5) (2025-11-06)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.12.4...v0.12.5)
+
+**Merged Changes:**
+
+  - Provide a method to sort productions of a grammar [#345](https://github.com/moorara/algo/pull/345) ([moorara](https://github.com/moorara))
+  - Add Size method to Productions type [#344](https://github.com/moorara/algo/pull/344) ([moorara](https://github.com/moorara))
+  - Improve comments in parser packages [#343](https://github.com/moorara/algo/pull/343) ([moorara](https://github.com/moorara))
+
+
 ## [v0.12.4](https://github.com/moorara/algo/tree/v0.12.4) (2025-11-03)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.12.3...v0.12.4)
