@@ -23,12 +23,10 @@ const (
 )
 
 type (
-	// VisitFunc1 is a generic function type used during tree traversal
-	//   for processing nodes with a single value.
+	// VisitFunc1 is a generic function type used during tree traversal for processing nodes with a single value.
 	VisitFunc1[T any] func(T) bool
 
-	// VisitFunc2 is a generic function type used during tree traversal
-	//   for processing nodes with key-value pairs.
+	// VisitFunc2 is a generic function type used during tree traversal for processing nodes with key-value pairs.
 	VisitFunc2[K, V any] func(K, V) bool
 )
 
@@ -36,7 +34,7 @@ type (
 	// Tree1 represents a generic tree structure where nodes contain a single value.
 	Tree1[T any] interface {
 		// Traverse performs a traversal of the tree using the specified traversal order
-		//   and yields the value of each node to the provided VisitFunc1 function.
+		// and yields the value of each node to the provided VisitFunc1 function.
 		// If the function returns false, the traversal is halted.
 		Traverse(TraverseOrder, VisitFunc1[T])
 
@@ -48,7 +46,7 @@ type (
 	// Tree2 represents a generic tree structure where nodes contain key-value pairs.
 	Tree2[K, V any] interface {
 		// Traverse performs a traversal of the tree using the specified traversal order
-		//   and yields the key-value pair of each node to the provided VisitFunc2 function.
+		// and yields the key-value pair of each node to the provided VisitFunc2 function.
 		// If the function returns false, the traversal is halted.
 		Traverse(TraverseOrder, VisitFunc2[K, V])
 

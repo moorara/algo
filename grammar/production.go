@@ -42,6 +42,12 @@ func (p *Production) String() string {
 
 // Equal determines whether or not two production rules are the same.
 func (p *Production) Equal(rhs *Production) bool {
+	if p == nil && rhs == nil {
+		return true
+	} else if p == nil || rhs == nil {
+		return false
+	}
+
 	return p.Head.Equal(rhs.Head) && p.Body.Equal(rhs.Body)
 }
 
@@ -123,6 +129,12 @@ func (p *Productions) String() string {
 
 // Equal determines whether or not two sets of production rules are the same.
 func (p *Productions) Equal(rhs *Productions) bool {
+	if p == nil && rhs == nil {
+		return true
+	} else if p == nil || rhs == nil {
+		return false
+	}
+
 	return p.table.Equal(rhs.table)
 }
 

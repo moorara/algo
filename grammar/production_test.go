@@ -124,10 +124,16 @@ func TestProduction(t *testing.T) {
 
 	notEqual := &Production{"😐", String[Symbol]{Terminal("🙂"), NonTerminal("🙃")}}
 
+	t.Run("Equal_BothNil", func(t *testing.T) {
+		var p *Production
+		assert.True(t, p.Equal(nil))
+	})
+
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedString, tc.p.String())
 			assert.True(t, tc.p.Equal(tc.p))
+			assert.False(t, tc.p.Equal(nil))
 			assert.False(t, tc.p.Equal(notEqual))
 			assert.Equal(t, tc.expectedIsEmpty, tc.p.IsEmpty())
 			assert.Equal(t, tc.expectedIsSingle, tc.p.IsSingle())
@@ -202,6 +208,24 @@ func TestProductions_Equal(t *testing.T) {
 		rhs           *Productions
 		expectedEqual bool
 	}{
+		{
+			name:          "BothNil",
+			p:             nil,
+			rhs:           nil,
+			expectedEqual: true,
+		},
+		{
+			name:          "LeftNil",
+			p:             nil,
+			rhs:           p[2],
+			expectedEqual: false,
+		},
+		{
+			name:          "RightNil",
+			p:             p[2],
+			rhs:           nil,
+			expectedEqual: false,
+		},
 		{
 			name:          "Equal",
 			p:             p[2],
