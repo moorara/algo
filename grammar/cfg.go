@@ -1116,9 +1116,9 @@ func (g *CFG) ComputeFOLLOW(first FIRST) FOLLOW {
 	}
 }
 
-// OrderTerminals orders the unordered set of grammar terminals in a deterministic way.
+// OrderTerminals sorts the set of grammar terminals in a deterministic way.
 //
-// The goal of this function is to ensure a consistent and deterministic order for any given set of terminals.
+// The goal is to ensure a consistent and deterministic order for the grammar terminals.
 func (g *CFG) OrderTerminals() String[Terminal] {
 	terms := make(String[Terminal], 0)
 	for t := range g.Terminals.All() {
@@ -1131,9 +1131,9 @@ func (g *CFG) OrderTerminals() String[Terminal] {
 	return terms
 }
 
-// OrderNonTerminals orders the unordered set of grammar non-terminals in a deterministic way.
+// OrderNonTerminals sorts the set of grammar non-terminals in a deterministic way.
 //
-// The goal of this function is to ensure a consistent and deterministic order for any given set of non-terminals.
+// The goal is to ensure a consistent and deterministic order for the grammar non-terminals.
 func (g *CFG) OrderNonTerminals() (String[NonTerminal], String[NonTerminal], String[NonTerminal]) {
 	prods := generic.Collect1(g.Productions.All())
 	orderProductionSlice(prods)
@@ -1182,6 +1182,24 @@ func (g *CFG) OrderNonTerminals() (String[NonTerminal], String[NonTerminal], Str
 	allNonTerms = append(allNonTerms, unvisited...)
 
 	return visited, unvisited, allNonTerms
+}
+
+// OrderProductions sorts the collection of grammar productions in a deterministic way.
+//
+// The goal is to ensure a consistent and deterministic order for the grammar productions.
+func (g *CFG) OrderProductions() []*Production {
+	visited, unvisited, _ := g.OrderNonTerminals()
+	prods := make([]*Production, 0, g.Productions.Size())
+
+	for _, n := range visited {
+		prods = append(prods, OrderProductionSet(g.Productions.Get(n))...)
+	}
+
+	for _, n := range unvisited {
+		prods = append(prods, OrderProductionSet(g.Productions.Get(n))...)
+	}
+
+	return prods
 }
 
 // AddNewNonTerminal generates and adds a new non-terminal symbol to the grammar.
