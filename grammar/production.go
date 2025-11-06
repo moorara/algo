@@ -105,10 +105,16 @@ func (p *Productions) String() string {
 
 	for head, prods := range p.table.All() {
 		fmt.Fprintf(&b, "%s → ", head)
+
 		for _, q := range OrderProductionSet(prods) {
 			fmt.Fprintf(&b, "%s | ", q.Body.String())
 		}
-		b.Truncate(b.Len() - 3)
+
+		// Remove the last " | "
+		if b.Len() >= 3 {
+			b.Truncate(b.Len() - 3)
+		}
+
 		fmt.Fprintln(&b)
 	}
 

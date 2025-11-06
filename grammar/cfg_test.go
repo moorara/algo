@@ -2788,6 +2788,41 @@ func TestCFG_OrderNonTerminals(t *testing.T) {
 	}
 }
 
+func TestCFG_OrderProductions(t *testing.T) {
+	tests := []struct {
+		name                string
+		g                   *CFG
+		expectedProductions []*Production
+	}{
+		{
+			name: "OK",
+			g:    CFGrammars[4],
+			expectedProductions: []*Production{
+				{"S", String[Symbol]{NonTerminal("A"), NonTerminal("B")}},
+				{"A", String[Symbol]{Terminal("a"), NonTerminal("A")}},
+				{"A", String[Symbol]{Terminal("a")}},
+				{"B", String[Symbol]{Terminal("b"), NonTerminal("B")}},
+				{"B", String[Symbol]{Terminal("b")}},
+				{"C", String[Symbol]{Terminal("c"), NonTerminal("C")}},
+				{"C", String[Symbol]{Terminal("c")}},
+				{"D", String[Symbol]{Terminal("d")}},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.g.Verify())
+			prods := tc.g.OrderProductions()
+
+			assert.Len(t, prods, len(tc.expectedProductions))
+			for i, expectedProduction := range tc.expectedProductions {
+				assert.True(t, prods[i].Equal(expectedProduction))
+			}
+		})
+	}
+}
+
 func TestCFG_AddNewNonTerminal(t *testing.T) {
 	tests := []struct {
 		name                string
