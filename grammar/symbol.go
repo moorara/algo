@@ -96,10 +96,8 @@ func (t Terminal) String() string {
 
 // Equal determines whether or not two terminal symbols are the same.
 func (t Terminal) Equal(rhs Symbol) bool {
-	if v, ok := rhs.(Terminal); ok {
-		return t == v
-	}
-	return false
+	v, ok := rhs.(Terminal)
+	return ok && t == v
 }
 
 // Name returns the name of terminal symbol.
@@ -130,10 +128,8 @@ func (n NonTerminal) String() string {
 
 // Equal determines whether or not two non-terminal symbols are the same.
 func (n NonTerminal) Equal(rhs Symbol) bool {
-	if v, ok := rhs.(NonTerminal); ok {
-		return n == v
-	}
-	return false
+	v, ok := rhs.(NonTerminal)
+	return ok && n == v
 }
 
 // Name returns the name of non-terminal symbol.

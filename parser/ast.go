@@ -56,10 +56,8 @@ type Node interface {
 	Annotation() any
 }
 
-// Traverse performs a depth-first traversal of an abstract syntax tree (AST),
-// starting from the given root node.
-// It visits each node according to the specified traversal order
-// and passes each node to the provided visit function.
+// Traverse performs a depth-first traversal of an abstract syntax tree (AST), starting from the given root node.
+// It visits each node according to the specified traversal order and passes each node to the provided visit function.
 // If the visit function returns false, the traversal is stopped early.
 //
 // Valid traversal orders for an AST are VLR, VRL, LRV, and RLV.
@@ -143,7 +141,7 @@ func (n *InternalNode) Equal(rhs Node) bool {
 	nn, ok := rhs.(*InternalNode)
 	if !ok ||
 		!n.NonTerminal.Equal(nn.NonTerminal) ||
-		!equalProductions(n.Production, nn.Production) ||
+		!n.Production.Equal(nn.Production) ||
 		len(n.Children) != len(nn.Children) {
 		return false
 	}
@@ -155,13 +153,6 @@ func (n *InternalNode) Equal(rhs Node) bool {
 	}
 
 	return true
-}
-
-func equalProductions(lhs, rhs *grammar.Production) bool {
-	if lhs == nil || rhs == nil {
-		return lhs == rhs
-	}
-	return lhs.Equal(rhs)
 }
 
 // Symbol returns the non-terminal symbol associated with this internal node
