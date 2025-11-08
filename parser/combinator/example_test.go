@@ -12,15 +12,20 @@ func Example() {
 	expr := num.CONCAT(combinator.ExpectRune('+'), num).Map(evalExpr) // expr → num "+" num
 
 	in := newStringInput("27 + 69")
-	if out, ok := expr(in); ok {
-		n := out.Result.Val.(int)
-		fmt.Println(n)
+
+	out, err := expr(in)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
 	}
+
+	n := out.Result.Val.(int)
+	fmt.Println(n)
 }
 
 func ExampleParser_Map() {
 	// Production rule: num → [0-9]+
-	num := combinator.ExpectRuneInRange('0', '9').REP1().Map(func(r combinator.Result) (combinator.Result, bool) {
+	num := combinator.ExpectRuneInRange('0', '9').REP1().Map(func(r combinator.Result) (combinator.Result, error) {
 		l := r.Val.(combinator.List)
 
 		num := 0
@@ -28,14 +33,19 @@ func ExampleParser_Map() {
 			num = num*10 + int(r.Val.(rune)-'0')
 		}
 
-		return combinator.Result{Val: num, Pos: l[0].Pos}, true
+		return combinator.Result{Val: num, Pos: l[0].Pos}, nil
 	})
 
 	in := newStringInput("1024")
-	if out, ok := num(in); ok {
-		d := out.Result.Val.(int)
-		fmt.Println(d)
+
+	out, err := num(in)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
 	}
+
+	d := out.Result.Val.(int)
+	fmt.Println(d)
 }
 
 func ExampleParser_Bind() {
@@ -48,48 +58,50 @@ func ExampleParser_Bind() {
 		combinator.ExpectRune('+'),
 		letters,
 	).Bind(func(r combinator.Result) combinator.Parser {
-		return func(in combinator.Input) (combinator.Output, bool) {
+		return func(in combinator.Input) (*combinator.Output, error) {
 			r0, _ := r.Get(0)
 			r2, _ := r.Get(2)
 
 			s0 := r0.Val.(string)
 			s1 := r2.Val.(string)
 
-			if s0 == s1 {
-				return combinator.Output{
-					Result: combinator.Result{
-						Val: s0 + s1,
-						Pos: r0.Pos,
-					},
-					Remaining: in,
-				}, true
+			if s0 != s1 {
+				return nil, fmt.Errorf("mismatched strings: %q != %q", s0, s1)
 			}
 
-			return combinator.Output{}, false
+			return &combinator.Output{
+				Result: combinator.Result{
+					Val: s0 + s1,
+					Pos: r0.Pos,
+				},
+				Remaining: in,
+			}, nil
 		}
 	})
 
 	for _, s := range []string{"foo + bar", "baz + baz"} {
 		in := newStringInput(s)
-		if out, ok := copy(in); ok {
-			fmt.Println("Successfully parsed:", out.Result.Val)
+		out, err := copy(in)
+
+		if err == nil {
+			fmt.Println("Parsed:", out.Result.Val)
 		} else {
 			fmt.Println("Failed to parse:", s)
 		}
 	}
 }
 
-func toDigit(r combinator.Result) (combinator.Result, bool) {
+func toDigit(r combinator.Result) (combinator.Result, error) {
 	v := r.Val.(rune)
 	digit := int(v - '0')
 
 	return combinator.Result{
 		Val: digit,
 		Pos: r.Pos,
-	}, true
+	}, nil
 }
 
-func toNum(r combinator.Result) (combinator.Result, bool) {
+func toNum(r combinator.Result) (combinator.Result, error) {
 	l := r.Val.(combinator.List)
 
 	var num int
@@ -100,10 +112,10 @@ func toNum(r combinator.Result) (combinator.Result, bool) {
 	return combinator.Result{
 		Val: num,
 		Pos: l[0].Pos,
-	}, true
+	}, nil
 }
 
-func toString(r combinator.Result) (combinator.Result, bool) {
+func toString(r combinator.Result) (combinator.Result, error) {
 	l := r.Val.(combinator.List)
 
 	runes := make([]rune, len(l))
@@ -114,10 +126,10 @@ func toString(r combinator.Result) (combinator.Result, bool) {
 	return combinator.Result{
 		Val: string(runes),
 		Pos: l[0].Pos,
-	}, true
+	}, nil
 }
 
-func evalExpr(r combinator.Result) (combinator.Result, bool) {
+func evalExpr(r combinator.Result) (combinator.Result, error) {
 	r0, _ := r.Get(0)
 	r2, _ := r.Get(2)
 
@@ -127,7 +139,7 @@ func evalExpr(r combinator.Result) (combinator.Result, bool) {
 	return combinator.Result{
 		Val: int(n0 + n2),
 		Pos: r0.Pos,
-	}, true
+	}, nil
 }
 
 // stringInput implements the combinator.Input interface for strings.

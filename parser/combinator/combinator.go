@@ -21,11 +21,14 @@
 // refer to "Compilers: Principles, Techniques, and Tools (2nd Edition)".
 package combinator
 
-import "slices"
+import (
+	"errors"
+	"fmt"
+	"slices"
+)
 
-// Parser is the type for a function that receives a parsing input and returns a parsing output.
-// The second return value determines whether or not the parsing was successful and the output is valid.
-type Parser func(Input) (Output, bool)
+// Parser is the type for a function that receives an input and returns an output.
+type Parser func(Input) (*Output, error)
 
 // Input is the input to a parser function.
 type Input interface {
@@ -77,7 +80,7 @@ type (
 //	r = {2,4}
 //	r.Get(1) = 2
 //	r.Get(3) = 4
-func (r *Result) Get(i int) (Result, bool) {
+func (r Result) Get(i int) (Result, bool) {
 	if l, ok := r.Val.(List); ok {
 		if 0 <= i && i < len(l) {
 			return l[i], true
@@ -92,139 +95,153 @@ type Empty struct{}
 
 // E is the empty parser for consuming the empty string ε.
 // It always succeeds without consuming any input.
-var E Parser = func(in Input) (Output, bool) {
+var E Parser = func(in Input) (*Output, error) {
 	_, pos := in.Current()
 
-	return Output{
+	return &Output{
 		Result: Result{
 			Val: Empty{},
 			Pos: pos,
 		},
 		Remaining: in,
-	}, true
+	}, nil
 }
 
 // ExpectRune creates a parser that returns a successful result only if the input starts with the given rune.
 func ExpectRune(r rune) Parser {
-	return func(in Input) (Output, bool) {
+	return func(in Input) (*Output, error) {
 		if in == nil {
-			return Output{}, false
+			return nil, errors.New("end of input")
 		}
 
-		if curr, pos := in.Current(); curr == r {
-			return Output{
-				Result:    Result{curr, pos, nil},
-				Remaining: in.Remaining(),
-			}, true
+		curr, pos := in.Current()
+		if curr != r {
+			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
 		}
 
-		return Output{}, false
+		return &Output{
+			Result:    Result{curr, pos, nil},
+			Remaining: in.Remaining(),
+		}, nil
 	}
 }
 
 // NotExpectRune creates a parser that returns a successful result only if the input does not start with the given rune.
 func NotExpectRune(r rune) Parser {
-	return func(in Input) (Output, bool) {
+	return func(in Input) (*Output, error) {
 		if in == nil {
-			return Output{}, false
+			return nil, errors.New("end of input")
 		}
 
-		if curr, pos := in.Current(); curr != r {
-			return Output{
-				Result:    Result{curr, pos, nil},
-				Remaining: in.Remaining(),
-			}, true
+		curr, pos := in.Current()
+		if curr == r {
+			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
 		}
 
-		return Output{}, false
+		return &Output{
+			Result:    Result{curr, pos, nil},
+			Remaining: in.Remaining(),
+		}, nil
 	}
 }
 
 // ExpectRuneIn creates a parser that returns a successful result only if the input starts with any of the given runes.
 func ExpectRuneIn(runes ...rune) Parser {
-	return func(in Input) (Output, bool) {
+	return func(in Input) (*Output, error) {
 		if in == nil {
-			return Output{}, false
+			return nil, errors.New("end of input")
 		}
 
-		if r, pos := in.Current(); slices.Contains(runes, r) {
-			return Output{
-				Result:    Result{r, pos, nil},
-				Remaining: in.Remaining(),
-			}, true
+		curr, pos := in.Current()
+		if !slices.Contains(runes, curr) {
+			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
 		}
 
-		return Output{}, false
+		return &Output{
+			Result:    Result{curr, pos, nil},
+			Remaining: in.Remaining(),
+		}, nil
 	}
 }
 
 // NotExpectRuneIn creates a parser that returns a successful result only if the input does not start with any of the given runes.
 func NotExpectRuneIn(runes ...rune) Parser {
-	return func(in Input) (Output, bool) {
+	return func(in Input) (*Output, error) {
 		if in == nil {
-			return Output{}, false
+			return nil, errors.New("end of input")
 		}
 
-		if r, pos := in.Current(); !slices.Contains(runes, r) {
-			return Output{
-				Result:    Result{r, pos, nil},
-				Remaining: in.Remaining(),
-			}, true
+		curr, pos := in.Current()
+		if slices.Contains(runes, curr) {
+			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
 		}
 
-		return Output{}, false
+		return &Output{
+			Result:    Result{curr, pos, nil},
+			Remaining: in.Remaining(),
+		}, nil
 	}
 }
 
 // ExpectRuneInRange creates a parser that returns a successful result only if the input starts with a rune in the given range.
 func ExpectRuneInRange(lo, hi rune) Parser {
-	return func(in Input) (Output, bool) {
-		if in == nil || lo > hi {
-			return Output{}, false
+	return func(in Input) (*Output, error) {
+		if in == nil {
+			return nil, errors.New("end of input")
 		}
 
-		if r, pos := in.Current(); lo <= r && r <= hi {
-			return Output{
-				Result:    Result{r, pos, nil},
-				Remaining: in.Remaining(),
-			}, true
+		if lo > hi {
+			return nil, fmt.Errorf("invalid range [%c,%c]", lo, hi)
 		}
 
-		return Output{}, false
+		curr, pos := in.Current()
+		if curr < lo || hi < curr {
+			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+		}
+
+		return &Output{
+			Result:    Result{curr, pos, nil},
+			Remaining: in.Remaining(),
+		}, nil
 	}
 }
 
 // NotExpectRuneInRange creates a parser that returns a successful result only if the input does not start with a rune in the given range.
 func NotExpectRuneInRange(lo, hi rune) Parser {
-	return func(in Input) (Output, bool) {
-		if in == nil || lo > hi {
-			return Output{}, false
+	return func(in Input) (*Output, error) {
+		if in == nil {
+			return nil, errors.New("end of input")
 		}
 
-		if r, pos := in.Current(); r < lo || hi < r {
-			return Output{
-				Result:    Result{r, pos, nil},
-				Remaining: in.Remaining(),
-			}, true
+		if lo > hi {
+			return nil, fmt.Errorf("invalid range [%c,%c]", lo, hi)
 		}
 
-		return Output{}, false
+		curr, pos := in.Current()
+		if lo <= curr && curr <= hi {
+			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+		}
+
+		return &Output{
+			Result:    Result{curr, pos, nil},
+			Remaining: in.Remaining(),
+		}, nil
 	}
 }
 
 // ExpectRunes creates a parser that returns a successful result only if the input starts with the given runes in the given order.
 func ExpectRunes(runes ...rune) Parser {
-	return func(in Input) (Output, bool) {
+	return func(in Input) (*Output, error) {
 		var pos int
 
 		for i, r := range runes {
 			if in == nil {
-				return Output{}, false
+				return nil, errors.New("end of input")
 			}
 
 			curr, p := in.Current()
 			if curr != r {
-				return Output{}, false
+				return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
 			}
 
 			// Save only the first position
@@ -235,27 +252,27 @@ func ExpectRunes(runes ...rune) Parser {
 			in = in.Remaining()
 		}
 
-		return Output{
+		return &Output{
 			Result:    Result{runes, pos, nil},
 			Remaining: in,
-		}, true
+		}, nil
 	}
 }
 
 // NotExpectRunes creates a parser that returns a successful result only if the input does not start with the given runes in the given order.
 func NotExpectRunes(runes ...rune) Parser {
-	return func(in Input) (Output, bool) {
+	return func(in Input) (*Output, error) {
 		var pos int
 		val := make([]rune, len(runes))
 
 		for i, r := range runes {
 			if in == nil {
-				return Output{}, false
+				return nil, errors.New("end of input")
 			}
 
 			curr, p := in.Current()
 			if curr == r {
-				return Output{}, false
+				return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
 			}
 
 			// Accumulate the parsed runes
@@ -269,34 +286,36 @@ func NotExpectRunes(runes ...rune) Parser {
 			in = in.Remaining()
 		}
 
-		return Output{
+		return &Output{
 			Result:    Result{val, pos, nil},
 			Remaining: in,
-		}, true
+		}, nil
 	}
 }
 
 // ExpectString creates a parser that returns a successful result only if the input starts with the given string.
 func ExpectString(s string) Parser {
-	return func(in Input) (Output, bool) {
-		if out, ok := ExpectRunes([]rune(s)...)(in); ok {
-			out.Result.Val = s
-			return out, true
+	return func(in Input) (*Output, error) {
+		out, err := ExpectRunes([]rune(s)...)(in)
+		if err != nil {
+			return nil, err
 		}
 
-		return Output{}, false
+		out.Result.Val = s
+		return out, nil
 	}
 }
 
 // NotExpectString creates a parser that returns a successful result only if the input does not start with the given string.
 func NotExpectString(s string) Parser {
-	return func(in Input) (Output, bool) {
-		if out, ok := NotExpectRunes([]rune(s)...)(in); ok {
-			out.Result.Val = string(out.Result.Val.([]rune))
-			return out, true
+	return func(in Input) (*Output, error) {
+		out, err := NotExpectRunes([]rune(s)...)(in)
+		if err != nil {
+			return nil, err
 		}
 
-		return Output{}, false
+		out.Result.Val = string(out.Result.Val.([]rune))
+		return out, nil
 	}
 }
 
@@ -308,14 +327,23 @@ func NotExpectString(s string) Parser {
 //   - EBNF Operator: Alternation
 //   - EBNF Notation: p | q
 func ALT(p ...Parser) Parser {
-	return func(in Input) (Output, bool) {
+	if len(p) == 0 {
+		return E
+	}
+
+	return func(in Input) (*Output, error) {
+		if in == nil {
+			return nil, errors.New("end of input")
+		}
+
 		for _, parse := range p {
-			if out, ok := parse(in); ok {
-				return out, true
+			if out, err := parse(in); err == nil {
+				return out, nil
 			}
 		}
 
-		return Output{}, false
+		curr, pos := in.Current()
+		return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
 	}
 }
 
@@ -326,23 +354,27 @@ func ALT(p ...Parser) Parser {
 //   - EBNF Operator: Concatenation
 //   - EBNF Notation: p q
 func CONCAT(p ...Parser) Parser {
-	return func(in Input) (Output, bool) {
+	if len(p) == 0 {
+		return E
+	}
+
+	return func(in Input) (*Output, error) {
 		var l List
 
 		for _, parse := range p {
-			out, ok := parse(in)
-			if !ok {
-				return Output{}, false
+			out, err := parse(in)
+			if err != nil {
+				return nil, err
 			}
 
 			l = append(l, out.Result)
 			in = out.Remaining
 		}
 
-		return Output{
+		return &Output{
 			Result:    Result{l, l[0].Pos, nil},
 			Remaining: in,
-		}, true
+		}, nil
 	}
 }
 
@@ -351,18 +383,20 @@ func CONCAT(p ...Parser) Parser {
 //
 //   - EBNF Operator: Optional
 //   - EBNF Notation: [ p ] or p?
+//
+// OPT never returns an error.
 func OPT(p Parser) Parser {
-	return func(in Input) (Output, bool) {
-		if out, ok := p(in); ok {
-			return out, true
+	return func(in Input) (*Output, error) {
+		if out, err := p(in); err == nil {
+			return out, nil
 		}
 
-		return Output{
+		return &Output{
 			Result: Result{
 				Val: Empty{},
 			},
 			Remaining: in,
-		}, true
+		}, nil
 	}
 }
 
@@ -371,13 +405,15 @@ func OPT(p Parser) Parser {
 //
 //   - EBNF Operator: Repetition (Kleene Star)
 //   - EBNF Notation: { p } or p*
+//
+// REP never returns an error.
 func REP(p Parser) Parser {
-	return func(in Input) (Output, bool) {
+	return func(in Input) (*Output, error) {
 		var l List
 
 		for i := 0; in != nil; i++ {
-			out, ok := p(in)
-			if !ok {
+			out, err := p(in)
+			if err != nil {
 				break
 			}
 
@@ -385,7 +421,7 @@ func REP(p Parser) Parser {
 			in = out.Remaining
 		}
 
-		out := Output{
+		out := &Output{
 			Remaining: in,
 		}
 
@@ -397,7 +433,7 @@ func REP(p Parser) Parser {
 			out.Result = Result{l, l[0].Pos, nil}
 		}
 
-		return out, true
+		return out, nil
 	}
 }
 
@@ -407,14 +443,22 @@ func REP(p Parser) Parser {
 //   - EBNF Operator: Kleene Plus
 //   - EBNF Notation: p+
 func REP1(p Parser) Parser {
-	return func(in Input) (Output, bool) {
-		if out, ok := p.REP()(in); ok {
-			if res, ok := out.Result.Val.(List); ok && len(res) > 0 {
-				return out, true
-			}
+	return func(in Input) (*Output, error) {
+		if in == nil {
+			return nil, errors.New("end of input")
 		}
 
-		return Output{}, false
+		// REP never returns an error
+		out, _ := p.REP()(in)
+
+		// Ensure at least one repetition
+		res, ok := out.Result.Val.(List)
+		if !ok || len(res) == 0 {
+			curr, pos := in.Current()
+			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+		}
+
+		return out, nil
 	}
 }
 
@@ -471,13 +515,14 @@ func (p Parser) REP1() Parser {
 // Flatten composes a parser that applies parser p to the input and flattens all results into a single list.
 // This can be used for accessing the values of symbols in the right-side of a production rule more intuitively.
 func (p Parser) Flatten() Parser {
-	return func(in Input) (Output, bool) {
-		if out, ok := p(in); ok {
-			out.Result.Val = flatten(out.Result)
-			return out, true
+	return func(in Input) (*Output, error) {
+		out, err := p(in)
+		if err != nil {
+			return nil, err
 		}
 
-		return Output{}, false
+		out.Result.Val = flatten(out.Result)
+		return out, nil
 	}
 }
 
@@ -503,15 +548,15 @@ func flatten(r Result) List {
 // This will not have any effect if the result of parsing is not a list.
 // If indices are invalid, you will get the empty string ε.
 func (p Parser) Select(i ...int) Parser {
-	return func(in Input) (Output, bool) {
-		out, ok := p(in)
-		if !ok {
-			return Output{}, false
+	return func(in Input) (*Output, error) {
+		out, err := p(in)
+		if err != nil {
+			return nil, err
 		}
 
 		l, ok := out.Result.Val.(List)
 		if !ok {
-			return out, true
+			return out, nil
 		}
 
 		sub := make(List, 0, len(i))
@@ -530,10 +575,10 @@ func (p Parser) Select(i ...int) Parser {
 			}
 		}
 
-		return Output{
+		return &Output{
 			Result:    res,
 			Remaining: out.Remaining,
-		}, true
+		}, nil
 	}
 }
 
@@ -543,15 +588,15 @@ func (p Parser) Select(i ...int) Parser {
 // It will not have any effect if used after other operators and the result of parsing is not a list.
 // If index is invalid, you will get the empty string ε.
 func (p Parser) Get(i int) Parser {
-	return func(in Input) (Output, bool) {
-		out, ok := p(in)
-		if !ok {
-			return Output{}, false
+	return func(in Input) (*Output, error) {
+		out, err := p(in)
+		if err != nil {
+			return nil, err
 		}
 
 		l, ok := out.Result.Val.(List)
 		if !ok {
-			return out, true
+			return out, nil
 		}
 
 		var res Result
@@ -563,10 +608,10 @@ func (p Parser) Get(i int) Parser {
 			}
 		}
 
-		return Output{
+		return &Output{
 			Result:    res,
 			Remaining: out.Remaining,
-		}, ok
+		}, nil
 	}
 }
 
@@ -578,21 +623,24 @@ func (p Parser) Get(i int) Parser {
 //
 // The remaining input returned by p is preserved when the mapping succeeds.
 func (p Parser) Map(f MapFunc) Parser {
-	return func(in Input) (Output, bool) {
-		if out, ok := p(in); ok {
-			if res, ok := f(out.Result); ok {
-				out.Result = res
-				return out, true
-			}
+	return func(in Input) (*Output, error) {
+		out, err := p(in)
+		if err != nil {
+			return nil, err
 		}
 
-		return Output{}, false
+		res, err := f(out.Result)
+		if err != nil {
+			return nil, err
+		}
+
+		out.Result = res
+		return out, nil
 	}
 }
 
 // MapFunc is a function that receives a parsing result and returns a new result.
-// The second return value determines whether or not the mapping was successful.
-type MapFunc func(Result) (Result, bool)
+type MapFunc func(Result) (Result, error)
 
 // Bind composes a parser that uses parser p to parse the input and produces a new parser from the result.
 // It then applies the new parser to the remaining input from the first parser.
@@ -621,10 +669,10 @@ type MapFunc func(Result) (Result, bool)
 // Using Bind, you parse the number first, then return a parser that consumes exactly that many id occurrences.
 // This keeps the grammar mostly context-free while enforcing a small context-sensitive constraint using a Bind-produced parser.
 func (p Parser) Bind(f BindFunc) Parser {
-	return func(in Input) (Output, bool) {
-		out, ok := p(in)
-		if !ok {
-			return Output{}, false
+	return func(in Input) (*Output, error) {
+		out, err := p(in)
+		if err != nil {
+			return nil, err
 		}
 
 		return f(out.Result)(out.Remaining)
