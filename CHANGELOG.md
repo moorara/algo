@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.13.0](https://github.com/moorara/algo/tree/v0.13.0) (2025-11-08)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.12.5...v0.13.0)
+
+**Merged Changes:**
+
+  - Add error reporting to parser combinators [#348](https://github.com/moorara/algo/pull/348) ([moorara](https://github.com/moorara))
+  - Fix comments [#347](https://github.com/moorara/algo/pull/347) ([moorara](https://github.com/moorara))
+  - Misc refactoring [#346](https://github.com/moorara/algo/pull/346) ([moorara](https://github.com/moorara))
+
+
 ## [v0.12.5](https://github.com/moorara/algo/tree/v0.12.5) (2025-11-06)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.12.4...v0.12.5)
