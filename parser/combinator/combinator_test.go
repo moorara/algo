@@ -432,7 +432,7 @@ func TestExpectRuneInRange(t *testing.T) {
 	t.Run("Invalid_Range", func(t *testing.T) {
 		in := newStringInput("a")
 		assert.PanicsWithValue(t, "invalid range [z,a]", func() {
-			ExpectRuneInRange('z', 'a')(in)
+			_, _ = ExpectRuneInRange('z', 'a')(in)
 		})
 	})
 }
@@ -501,7 +501,7 @@ func TestNotExpectRuneInRange(t *testing.T) {
 	t.Run("Invalid_Range", func(t *testing.T) {
 		in := newStringInput("a")
 		assert.PanicsWithValue(t, "invalid range [Z,A]", func() {
-			NotExpectRuneInRange('Z', 'A')(in)
+			_, _ = NotExpectRuneInRange('Z', 'A')(in)
 		})
 	})
 }
