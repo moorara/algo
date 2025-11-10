@@ -1,6 +1,7 @@
 package combinator
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -44,7 +45,7 @@ func TestResult_Get(t *testing.T) {
 		expectedResult Result
 	}{
 		{
-			name: "Not_List",
+			name: "NotList",
 			r: Result{
 				Val: 'a',
 			},
@@ -144,16 +145,16 @@ func TestExpectRune(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			r:             'a',
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
+			name:          "InputNotMatching",
 			in:            newStringInput("a"),
 			r:             'b',
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name: "Successful_WithoutRemaining",
@@ -202,16 +203,16 @@ func TestNotExpectRune(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			r:             'a',
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
+			name:          "InputNotMatching",
 			in:            newStringInput("a"),
 			r:             'a',
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name: "Successful_WithoutRemaining",
@@ -260,16 +261,16 @@ func TestExpectRuneIn(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			runes:         []rune{'a', 'b'},
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
+			name:          "InputNotMatching",
 			in:            newStringInput("a"),
 			runes:         []rune{'0', '1'},
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name:  "Successful_WithoutRemaining",
@@ -318,16 +319,16 @@ func TestNotExpectRuneIn(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			runes:         []rune{'A', 'B'},
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
+			name:          "InputNotMatching",
 			in:            newStringInput("a"),
 			runes:         []rune{'a', 'b'},
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name:  "Successful_WithoutRemaining",
@@ -376,25 +377,18 @@ func TestExpectRuneInRange(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			lo:            'a',
 			hi:            'z',
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
+			name:          "InputNotMatching",
 			in:            newStringInput("a"),
 			lo:            '0',
 			hi:            '9',
-			expectedError: "unexpected rune 'a' at position 0",
-		},
-		{
-			name:          "Invalid_Range",
-			in:            newStringInput("a"),
-			lo:            'z',
-			hi:            'a',
-			expectedError: "invalid range [z,a]",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name: "Successful_WithoutRemaining",
@@ -434,6 +428,13 @@ func TestExpectRuneInRange(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("Invalid_Range", func(t *testing.T) {
+		in := newStringInput("a")
+		assert.PanicsWithValue(t, "invalid range [z,a]", func() {
+			ExpectRuneInRange('z', 'a')(in)
+		})
+	})
 }
 
 func TestNotExpectRuneInRange(t *testing.T) {
@@ -445,25 +446,18 @@ func TestNotExpectRuneInRange(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			lo:            'A',
 			hi:            'Z',
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
+			name:          "InputNotMatching",
 			in:            newStringInput("a"),
 			lo:            'a',
 			hi:            'z',
-			expectedError: "unexpected rune 'a' at position 0",
-		},
-		{
-			name:          "Invalid_Range",
-			in:            newStringInput("a"),
-			lo:            'Z',
-			hi:            'A',
-			expectedError: "invalid range [Z,A]",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name: "Successful_WithoutRemaining",
@@ -503,6 +497,13 @@ func TestNotExpectRuneInRange(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("Invalid_Range", func(t *testing.T) {
+		in := newStringInput("a")
+		assert.PanicsWithValue(t, "invalid range [Z,A]", func() {
+			NotExpectRuneInRange('Z', 'A')(in)
+		})
+	})
 }
 
 func TestExpectRunes(t *testing.T) {
@@ -514,22 +515,22 @@ func TestExpectRunes(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			runes:         []rune{'a', 'b'},
 			expectedError: "end of input",
 		},
 		{
-			name:          "Input_NotEnough",
+			name:          "InputNotEnough",
 			in:            newStringInput("a"),
 			runes:         []rune{'a', 'b'},
 			expectedError: "end of input",
 		},
 		{
-			name:          "Input_NotMatching",
+			name:          "InputNotMatching",
 			in:            newStringInput("ab"),
 			runes:         []rune{'b', 'a'},
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name:  "Successful_EmptyRunes",
@@ -587,22 +588,22 @@ func TestNotExpectRunes(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			runes:         []rune{'b', 'a'},
 			expectedError: "end of input",
 		},
 		{
-			name:          "Input_NotEnough",
+			name:          "InputNotEnough",
 			in:            newStringInput("a"),
 			runes:         []rune{'b', 'a'},
 			expectedError: "end of input",
 		},
 		{
-			name:          "Input_Matching",
+			name:          "InputNotMatching",
 			in:            newStringInput("ab"),
 			runes:         []rune{'a', 'b'},
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name:  "Successful_EmptyRunes",
@@ -660,22 +661,22 @@ func TestExpectString(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			s:             "ab",
 			expectedError: "end of input",
 		},
 		{
-			name:          "Input_NotEnough",
+			name:          "InputNotEnough",
 			in:            newStringInput("a"),
 			s:             "ab",
 			expectedError: "end of input",
 		},
 		{
-			name:          "Input_NotMatching",
+			name:          "InputNotMatching",
 			in:            newStringInput("ab"),
 			s:             "09",
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name: "Successful_EmptyString",
@@ -696,7 +697,7 @@ func TestExpectString(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful_With_Remaining",
+			name: "Successful_WithRemaining",
 			in:   newStringInput("abcd"),
 			s:    "ab",
 			expectedOut: &Output{
@@ -733,22 +734,22 @@ func TestNotExpectString(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			s:             "ba",
 			expectedError: "end of input",
 		},
 		{
-			name:          "Input_NotEnough",
+			name:          "InputNotEnough",
 			in:            newStringInput("a"),
 			s:             "ba",
 			expectedError: "end of input",
 		},
 		{
-			name:          "Input_Matching",
+			name:          "InputNotMatching",
 			in:            newStringInput("ab"),
 			s:             "ab",
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name: "Successful_EmptyString",
@@ -806,7 +807,7 @@ func TestALT(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "Parsers_Empty",
+			name: "NoParsers",
 			in:   newStringInput("ab"),
 			p:    []Parser{},
 			expectedOut: &Output{
@@ -818,7 +819,7 @@ func TestALT(t *testing.T) {
 			},
 		},
 		{
-			name: "Input_Empty",
+			name: "NoInput",
 			in:   nil,
 			p: []Parser{
 				ExpectString("ab"),
@@ -827,13 +828,35 @@ func TestALT(t *testing.T) {
 			expectedError: "end of input",
 		},
 		{
-			name: "Parser_Unsuccessful",
+			name: "InputNotMatching",
 			in:   newStringInput("ab"),
 			p: []Parser{
 				ExpectString("00"),
 				ExpectString("11"),
 			},
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
+		},
+		{
+			name: "SemanticError_FirstParser",
+			in:   newStringInput("ab"),
+			p: []Parser{
+				ExpectString("ab").Map(func(r Result) (Result, error) {
+					return Result{}, errors.New("invalid semantic")
+				}),
+				ExpectString("00"),
+			},
+			expectedError: "0: invalid semantic",
+		},
+		{
+			name: "SemanticError_SecondParser",
+			in:   newStringInput("ab"),
+			p: []Parser{
+				ExpectString("00"),
+				ExpectString("ab").Map(func(r Result) (Result, error) {
+					return Result{}, errors.New("invalid semantic")
+				}),
+			},
+			expectedError: "0: invalid semantic",
 		},
 		{
 			name: "Successful_FirstParser",
@@ -874,36 +897,6 @@ func TestALT(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "Unsuccessful_MultipleParsers",
-			in:   newStringInput("abcd"),
-			p: []Parser{
-				ExpectString("00"),
-				ExpectString("11"),
-				ExpectString("22"),
-				ExpectString("33"),
-				ExpectString("44"),
-			},
-			expectedError: "unexpected rune 'a' at position 0",
-		},
-		{
-			name: "Successful_MultipleParsers",
-			in:   newStringInput("abcd"),
-			p: []Parser{
-				ExpectString("00"),
-				ExpectString("11"),
-				ExpectString("22"),
-				ExpectString("33"),
-				ExpectString("ab"),
-			},
-			expectedOut: &Output{
-				Result: Result{"ab", 0, nil},
-				Remaining: &stringInput{
-					pos:   2,
-					runes: []rune("cd"),
-				},
-			},
-		},
 	}
 
 	for _, tc := range tests {
@@ -930,7 +923,7 @@ func TestCONCAT(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "Parsers_Empty",
+			name: "NoParsers",
 			in:   newStringInput("ab"),
 			p:    []Parser{},
 			expectedOut: &Output{
@@ -942,7 +935,7 @@ func TestCONCAT(t *testing.T) {
 			},
 		},
 		{
-			name: "Input_Empty",
+			name: "NoInput",
 			in:   nil,
 			p: []Parser{
 				ExpectString("b"),
@@ -951,31 +944,31 @@ func TestCONCAT(t *testing.T) {
 			expectedError: "end of input",
 		},
 		{
-			name: "Input_NotEnough",
+			name: "InputNotEnough",
 			in:   newStringInput("a"),
 			p: []Parser{
 				ExpectString("b"),
 				ExpectString("a"),
 			},
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name: "Unsuccessful_FirstParser",
 			in:   newStringInput("abcd"),
 			p: []Parser{
-				ExpectString("cd"),
 				ExpectString("00"),
+				ExpectString("cd"),
 			},
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name: "Unsuccessful_SecondParser",
 			in:   newStringInput("abcd"),
 			p: []Parser{
-				ExpectString("00"),
 				ExpectString("ab"),
+				ExpectString("00"),
 			},
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "2: unexpected rune 'c'",
 		},
 		{
 			name: "Successful_WithoutRemaining",
@@ -1016,44 +1009,6 @@ func TestCONCAT(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "Unsuccessful_MultipleParsers",
-			in:   newStringInput("abcdefghijklmn"),
-			p: []Parser{
-				ExpectString("cd"),
-				ExpectString("ef"),
-				ExpectString("ij"),
-				ExpectString("ab"),
-			},
-			expectedError: "unexpected rune 'a' at position 0",
-		},
-		{
-			name: "Successful_MultipleParsers",
-			in:   newStringInput("abcdefghijklmn"),
-			p: []Parser{
-				ExpectString("ab"),
-				ExpectString("cd"),
-				ExpectString("ef"),
-				ExpectString("gh"),
-				ExpectString("ij"),
-			},
-			expectedOut: &Output{
-				Result: Result{
-					Val: List{
-						Result{"ab", 0, nil},
-						Result{"cd", 2, nil},
-						Result{"ef", 4, nil},
-						Result{"gh", 6, nil},
-						Result{"ij", 8, nil},
-					},
-					Pos: 0,
-				},
-				Remaining: &stringInput{
-					pos:   10,
-					runes: []rune("klmn"),
-				},
-			},
-		},
 	}
 
 	for _, tc := range tests {
@@ -1080,7 +1035,7 @@ func TestOPT(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "Input_Empty",
+			name: "NoInput",
 			in:   nil,
 			p:    ExpectString("ab"),
 			expectedOut: &Output{
@@ -1089,7 +1044,15 @@ func TestOPT(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful_EmptyResult",
+			name: "SemanticError",
+			in:   newStringInput("ab"),
+			p: ExpectString("ab").Map(func(r Result) (Result, error) {
+				return Result{}, errors.New("invalid semantic")
+			}),
+			expectedError: "0: invalid semantic",
+		},
+		{
+			name: "Successful_NoMatch",
 			in:   newStringInput("ab"),
 			p:    ExpectString("00"),
 			expectedOut: &Output{
@@ -1144,7 +1107,7 @@ func TestREP(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "Input_Empty",
+			name: "NoInput",
 			in:   nil,
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1153,7 +1116,15 @@ func TestREP(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful_Zero",
+			name: "SemanticError",
+			in:   newStringInput("12ab"),
+			p: ExpectRuneInRange('0', '9').Map(func(r Result) (Result, error) {
+				return Result{}, errors.New("invalid semantic")
+			}),
+			expectedError: "0: invalid semantic",
+		},
+		{
+			name: "Successful_NoMatch",
 			in:   newStringInput("ab"),
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1162,7 +1133,7 @@ func TestREP(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful_One",
+			name: "Successful_OneMatch",
 			in:   newStringInput("1ab"),
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1179,7 +1150,7 @@ func TestREP(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful_Many",
+			name: "Successful_ManyMatches",
 			in:   newStringInput("1234ab"),
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1241,19 +1212,27 @@ func TestREP1(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			p:             ExpectRuneInRange('0', '9'),
 			expectedError: "end of input",
 		},
 		{
-			name:          "Unsuccessful_Zero",
-			in:            newStringInput("ab"),
-			p:             ExpectRuneInRange('0', '9'),
-			expectedError: "unexpected rune 'a' at position 0",
+			name: "SemanticError",
+			in:   newStringInput("12ab"),
+			p: ExpectRuneInRange('0', '9').Map(func(r Result) (Result, error) {
+				return Result{}, errors.New("invalid semantic")
+			}),
+			expectedError: "0: invalid semantic",
 		},
 		{
-			name: "Successful_One",
+			name:          "Unsuccessful_NoMatch",
+			in:            newStringInput("ab"),
+			p:             ExpectRuneInRange('0', '9'),
+			expectedError: "0: unexpected rune 'a'",
+		},
+		{
+			name: "Successful_OneMatch",
 			in:   newStringInput("1ab"),
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1270,7 +1249,7 @@ func TestREP1(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful_Many",
+			name: "Successful_ManyMatches",
 			in:   newStringInput("1234ab"),
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1333,24 +1312,52 @@ func TestParser_ALT(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
-			in:            nil,
-			p:             ExpectString("ab"),
-			q:             []Parser{ExpectString("00")},
+			name: "NoInput",
+			in:   nil,
+			p:    ExpectString("ab"),
+			q: []Parser{
+				ExpectString("00"),
+			},
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
-			in:            newStringInput("ab"),
-			p:             ExpectString("00"),
-			q:             []Parser{ExpectString("11")},
-			expectedError: "unexpected rune 'a' at position 0",
+			name: "InputNotMatching",
+			in:   newStringInput("ab"),
+			p:    ExpectString("00"),
+			q: []Parser{
+				ExpectString("11"),
+			},
+			expectedError: "0: unexpected rune 'a'",
+		},
+		{
+			name: "SemanticError_FirstParser",
+			in:   newStringInput("ab"),
+			p: ExpectString("ab").Map(func(r Result) (Result, error) {
+				return Result{}, errors.New("invalid semantic")
+			}),
+			q: []Parser{
+				ExpectString("00"),
+			},
+			expectedError: "0: invalid semantic",
+		},
+		{
+			name: "SemanticError_SecondParser",
+			in:   newStringInput("ab"),
+			p:    ExpectString("00"),
+			q: []Parser{
+				ExpectString("ab").Map(func(r Result) (Result, error) {
+					return Result{}, errors.New("invalid semantic")
+				}),
+			},
+			expectedError: "0: invalid semantic",
 		},
 		{
 			name: "Successful_FirstParser",
 			in:   newStringInput("ab"),
 			p:    ExpectString("ab"),
-			q:    []Parser{ExpectString("00")},
+			q: []Parser{
+				ExpectString("00"),
+			},
 			expectedOut: &Output{
 				Result:    Result{"ab", 0, nil},
 				Remaining: nil,
@@ -1360,7 +1367,9 @@ func TestParser_ALT(t *testing.T) {
 			name: "Successful_SecondParser",
 			in:   newStringInput("ab"),
 			p:    ExpectString("00"),
-			q:    []Parser{ExpectString("ab")},
+			q: []Parser{
+				ExpectString("ab"),
+			},
 			expectedOut: &Output{
 				Result:    Result{"ab", 0, nil},
 				Remaining: nil,
@@ -1370,27 +1379,9 @@ func TestParser_ALT(t *testing.T) {
 			name: "Successful_WithRemaining",
 			in:   newStringInput("abcd"),
 			p:    ExpectString("ab"),
-			q:    []Parser{ExpectString("cd")},
-			expectedOut: &Output{
-				Result: Result{"ab", 0, nil},
-				Remaining: &stringInput{
-					pos:   2,
-					runes: []rune("cd"),
-				},
+			q: []Parser{
+				ExpectString("cd"),
 			},
-		},
-		{
-			name:          "Unsuccessful_MultipleParsers",
-			in:            newStringInput("abcd"),
-			p:             ExpectString("00"),
-			q:             []Parser{ExpectString("11"), ExpectString("22"), ExpectString("33"), ExpectString("44")},
-			expectedError: "unexpected rune 'a' at position 0",
-		},
-		{
-			name: "Successful_MultipleParsers",
-			in:   newStringInput("abcd"),
-			p:    ExpectString("00"),
-			q:    []Parser{ExpectString("11"), ExpectString("22"), ExpectString("33"), ExpectString("ab")},
 			expectedOut: &Output{
 				Result: Result{"ab", 0, nil},
 				Remaining: &stringInput{
@@ -1426,38 +1417,48 @@ func TestParser_CONCAT(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
-			in:            nil,
-			p:             ExpectString("a"),
-			q:             []Parser{ExpectString("b")},
+			name: "NoInput",
+			in:   nil,
+			p:    ExpectString("a"),
+			q: []Parser{
+				ExpectString("b"),
+			},
 			expectedError: "end of input",
 		},
 		{
-			name:          "Input_NotEnough",
-			in:            newStringInput("a"),
-			p:             ExpectString("a"),
-			q:             []Parser{ExpectString("b")},
+			name: "InputNotEnough",
+			in:   newStringInput("a"),
+			p:    ExpectString("a"),
+			q: []Parser{
+				ExpectString("b"),
+			},
 			expectedError: "end of input",
 		},
 		{
-			name:          "Unsuccessful_FirstParser",
-			in:            newStringInput("abcd"),
-			p:             ExpectString("00"),
-			q:             []Parser{ExpectString("cd")},
-			expectedError: "unexpected rune 'a' at position 0",
+			name: "Unsuccessful_FirstParser",
+			in:   newStringInput("abcd"),
+			p:    ExpectString("00"),
+			q: []Parser{
+				ExpectString("cd"),
+			},
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
-			name:          "Unsuccessful_SecondParser",
-			in:            newStringInput("abcd"),
-			p:             ExpectString("ab"),
-			q:             []Parser{ExpectString("00")},
-			expectedError: "unexpected rune 'c' at position 0",
+			name: "Unsuccessful_SecondParser",
+			in:   newStringInput("abcd"),
+			p:    ExpectString("ab"),
+			q: []Parser{
+				ExpectString("00"),
+			},
+			expectedError: "2: unexpected rune 'c'",
 		},
 		{
 			name: "Successful_WithoutRemaining",
 			in:   newStringInput("abcd"),
 			p:    ExpectString("ab"),
-			q:    []Parser{ExpectString("cd")},
+			q: []Parser{
+				ExpectString("cd"),
+			},
 			expectedOut: &Output{
 				Result: Result{
 					Val: List{
@@ -1473,7 +1474,9 @@ func TestParser_CONCAT(t *testing.T) {
 			name: "Successful_WithRemaining",
 			in:   newStringInput("abcdef"),
 			p:    ExpectString("ab"),
-			q:    []Parser{ExpectString("cd")},
+			q: []Parser{
+				ExpectString("cd"),
+			},
 			expectedOut: &Output{
 				Result: Result{
 					Val: List{
@@ -1485,35 +1488,6 @@ func TestParser_CONCAT(t *testing.T) {
 				Remaining: &stringInput{
 					pos:   4,
 					runes: []rune("ef"),
-				},
-			},
-		},
-		{
-			name:          "Unsuccessful_MultipleParsers",
-			in:            newStringInput("abcdefghijklmn"),
-			p:             ExpectString("ab"),
-			q:             []Parser{ExpectString("cd"), ExpectString("ef"), ExpectString("ij")},
-			expectedError: "unexpected rune 'g' at position 0",
-		},
-		{
-			name: "Successful_MultipleParsers",
-			in:   newStringInput("abcdefghijklmn"),
-			p:    ExpectString("ab"),
-			q:    []Parser{ExpectString("cd"), ExpectString("ef"), ExpectString("gh"), ExpectString("ij")},
-			expectedOut: &Output{
-				Result: Result{
-					Val: List{
-						Result{"ab", 0, nil},
-						Result{"cd", 2, nil},
-						Result{"ef", 4, nil},
-						Result{"gh", 6, nil},
-						Result{"ij", 8, nil},
-					},
-					Pos: 0,
-				},
-				Remaining: &stringInput{
-					pos:   10,
-					runes: []rune("klmn"),
 				},
 			},
 		},
@@ -1543,7 +1517,7 @@ func TestParser_OPT(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "Input_Empty",
+			name: "NoInput",
 			in:   nil,
 			p:    ExpectString("ab"),
 			expectedOut: &Output{
@@ -1552,7 +1526,15 @@ func TestParser_OPT(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful_EmptyResult",
+			name: "SemanticError",
+			in:   newStringInput("ab"),
+			p: ExpectString("ab").Map(func(r Result) (Result, error) {
+				return Result{}, errors.New("invalid semantic")
+			}),
+			expectedError: "0: invalid semantic",
+		},
+		{
+			name: "Successful_NoMatch",
 			in:   newStringInput("ab"),
 			p:    ExpectString("00"),
 			expectedOut: &Output{
@@ -1607,7 +1589,7 @@ func TestParser_REP(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "Input_Empty",
+			name: "NoInput",
 			in:   nil,
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1616,7 +1598,15 @@ func TestParser_REP(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful_Zero",
+			name: "SemanticError",
+			in:   newStringInput("12ab"),
+			p: ExpectRuneInRange('0', '9').Map(func(r Result) (Result, error) {
+				return Result{}, errors.New("invalid semantic")
+			}),
+			expectedError: "0: invalid semantic",
+		},
+		{
+			name: "Successful_NoMatch",
 			in:   newStringInput("ab"),
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1625,7 +1615,7 @@ func TestParser_REP(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful_One",
+			name: "Successful_OneMatch",
 			in:   newStringInput("1ab"),
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1642,7 +1632,7 @@ func TestParser_REP(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful_Many",
+			name: "Successful_ManyMatches",
 			in:   newStringInput("1234ab"),
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1704,19 +1694,27 @@ func TestParser_REP1(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			p:             ExpectRuneInRange('0', '9'),
 			expectedError: "end of input",
 		},
 		{
-			name:          "Unsuccessful_Zero",
-			in:            newStringInput("ab"),
-			p:             ExpectRuneInRange('0', '9'),
-			expectedError: "unexpected rune 'a' at position 0",
+			name: "SemanticError",
+			in:   newStringInput("12ab"),
+			p: ExpectRuneInRange('0', '9').Map(func(r Result) (Result, error) {
+				return Result{}, errors.New("invalid semantic")
+			}),
+			expectedError: "0: invalid semantic",
 		},
 		{
-			name: "Successful_One",
+			name:          "Unsuccessful_NoMatch",
+			in:            newStringInput("ab"),
+			p:             ExpectRuneInRange('0', '9'),
+			expectedError: "0: unexpected rune 'a'",
+		},
+		{
+			name: "Successful_OneMatch",
 			in:   newStringInput("1ab"),
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1733,7 +1731,7 @@ func TestParser_REP1(t *testing.T) {
 			},
 		},
 		{
-			name: "Successful_Many",
+			name: "Successful_ManyMatches",
 			in:   newStringInput("1234ab"),
 			p:    ExpectRuneInRange('0', '9'),
 			expectedOut: &Output{
@@ -1803,16 +1801,16 @@ func TestParser_Flatten(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			p:             ExpectRune('!'),
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
+			name:          "InputNotMatching",
 			in:            newStringInput("{2,4}"),
 			p:             ExpectRune('!'),
-			expectedError: "unexpected rune '{' at position 0",
+			expectedError: "0: unexpected rune '{'",
 		},
 		{
 			name: "Successful_WithoutRemaining",
@@ -1887,19 +1885,19 @@ func TestParser_Select(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			p:             ExpectRune('!'),
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
+			name:          "InputNotMatching",
 			in:            newStringInput("{2,4}"),
 			p:             ExpectRune('!'),
-			expectedError: "unexpected rune '{' at position 0",
+			expectedError: "0: unexpected rune '{'",
 		},
 		{
-			name: "Result_NotList",
+			name: "ResultNotList",
 			in:   newStringInput("{2,4}"),
 			p:    ExpectString("{2,4}"),
 			expectedOut: &Output{
@@ -1908,7 +1906,7 @@ func TestParser_Select(t *testing.T) {
 			},
 		},
 		{
-			name: "Indices_Invalid",
+			name: "InvalidIndices",
 			in:   newStringInput("{2,4}"),
 			p:    rangeParser,
 			pos:  []int{-1, 5},
@@ -1979,21 +1977,21 @@ func TestParser_Get(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			p:             ExpectRune('!'),
 			i:             0,
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
+			name:          "InputNotMatching",
 			in:            newStringInput("ab"),
 			p:             ExpectRune('!'),
 			i:             0,
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
-			name: "Result_NotList",
+			name: "ResultNotList",
 			in:   newStringInput("abcd"),
 			p:    ExpectString("abcd"),
 			i:    -1,
@@ -2086,18 +2084,18 @@ func TestParser_Map(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			p:             ExpectRune('!'),
 			f:             toUpper,
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
+			name:          "InputNotMatching",
 			in:            newStringInput("ab"),
 			p:             ExpectRune('!'),
 			f:             toUpper,
-			expectedError: "unexpected rune 'a' at position 0",
+			expectedError: "0: unexpected rune 'a'",
 		},
 		{
 			name: "Successful_WithoutRemaining",
@@ -2160,18 +2158,18 @@ func TestParser_Bind(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Input_Empty",
+			name:          "NoInput",
 			in:            nil,
 			p:             ExpectRuneInRange('0', '9'),
 			f:             annotate,
 			expectedError: "end of input",
 		},
 		{
-			name:          "Parser_Unsuccessful",
+			name:          "InputNotMatching",
 			in:            newStringInput("4aaaa"),
 			p:             ExpectRuneInRange('a', 'f'),
 			f:             annotate,
-			expectedError: "unexpected rune '4' at position 0",
+			expectedError: "0: unexpected rune '4'",
 		},
 		{
 			name: "Successful_WithoutRemaining",
