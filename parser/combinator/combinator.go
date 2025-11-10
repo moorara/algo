@@ -22,7 +22,6 @@
 package combinator
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 )
@@ -111,12 +110,12 @@ var E Parser = func(in Input) (*Output, error) {
 func ExpectRune(r rune) Parser {
 	return func(in Input) (*Output, error) {
 		if in == nil {
-			return nil, errors.New("end of input")
+			return nil, errEOF
 		}
 
 		curr, pos := in.Current()
 		if curr != r {
-			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+			return nil, &syntaxError{pos, curr}
 		}
 
 		return &Output{
@@ -130,12 +129,12 @@ func ExpectRune(r rune) Parser {
 func NotExpectRune(r rune) Parser {
 	return func(in Input) (*Output, error) {
 		if in == nil {
-			return nil, errors.New("end of input")
+			return nil, errEOF
 		}
 
 		curr, pos := in.Current()
 		if curr == r {
-			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+			return nil, &syntaxError{pos, curr}
 		}
 
 		return &Output{
@@ -149,12 +148,12 @@ func NotExpectRune(r rune) Parser {
 func ExpectRuneIn(runes ...rune) Parser {
 	return func(in Input) (*Output, error) {
 		if in == nil {
-			return nil, errors.New("end of input")
+			return nil, errEOF
 		}
 
 		curr, pos := in.Current()
 		if !slices.Contains(runes, curr) {
-			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+			return nil, &syntaxError{pos, curr}
 		}
 
 		return &Output{
@@ -168,12 +167,12 @@ func ExpectRuneIn(runes ...rune) Parser {
 func NotExpectRuneIn(runes ...rune) Parser {
 	return func(in Input) (*Output, error) {
 		if in == nil {
-			return nil, errors.New("end of input")
+			return nil, errEOF
 		}
 
 		curr, pos := in.Current()
 		if slices.Contains(runes, curr) {
-			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+			return nil, &syntaxError{pos, curr}
 		}
 
 		return &Output{
@@ -185,18 +184,18 @@ func NotExpectRuneIn(runes ...rune) Parser {
 
 // ExpectRuneInRange creates a parser that returns a successful result only if the input starts with a rune in the given range.
 func ExpectRuneInRange(lo, hi rune) Parser {
+	if lo > hi {
+		panic(fmt.Sprintf("invalid range [%c,%c]", lo, hi))
+	}
+
 	return func(in Input) (*Output, error) {
 		if in == nil {
-			return nil, errors.New("end of input")
-		}
-
-		if lo > hi {
-			return nil, fmt.Errorf("invalid range [%c,%c]", lo, hi)
+			return nil, errEOF
 		}
 
 		curr, pos := in.Current()
 		if curr < lo || hi < curr {
-			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+			return nil, &syntaxError{pos, curr}
 		}
 
 		return &Output{
@@ -208,18 +207,18 @@ func ExpectRuneInRange(lo, hi rune) Parser {
 
 // NotExpectRuneInRange creates a parser that returns a successful result only if the input does not start with a rune in the given range.
 func NotExpectRuneInRange(lo, hi rune) Parser {
+	if lo > hi {
+		panic(fmt.Sprintf("invalid range [%c,%c]", lo, hi))
+	}
+
 	return func(in Input) (*Output, error) {
 		if in == nil {
-			return nil, errors.New("end of input")
-		}
-
-		if lo > hi {
-			return nil, fmt.Errorf("invalid range [%c,%c]", lo, hi)
+			return nil, errEOF
 		}
 
 		curr, pos := in.Current()
 		if lo <= curr && curr <= hi {
-			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+			return nil, &syntaxError{pos, curr}
 		}
 
 		return &Output{
@@ -232,28 +231,28 @@ func NotExpectRuneInRange(lo, hi rune) Parser {
 // ExpectRunes creates a parser that returns a successful result only if the input starts with the given runes in the given order.
 func ExpectRunes(runes ...rune) Parser {
 	return func(in Input) (*Output, error) {
-		var pos int
+		var firstPos int
 
 		for i, r := range runes {
 			if in == nil {
-				return nil, errors.New("end of input")
+				return nil, errEOF
 			}
 
-			curr, p := in.Current()
+			curr, pos := in.Current()
 			if curr != r {
-				return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+				return nil, &syntaxError{pos, curr}
 			}
 
 			// Save only the first position
 			if i == 0 {
-				pos = p
+				firstPos = pos
 			}
 
 			in = in.Remaining()
 		}
 
 		return &Output{
-			Result:    Result{runes, pos, nil},
+			Result:    Result{runes, firstPos, nil},
 			Remaining: in,
 		}, nil
 	}
@@ -262,17 +261,17 @@ func ExpectRunes(runes ...rune) Parser {
 // NotExpectRunes creates a parser that returns a successful result only if the input does not start with the given runes in the given order.
 func NotExpectRunes(runes ...rune) Parser {
 	return func(in Input) (*Output, error) {
-		var pos int
+		var firstPos int
 		val := make([]rune, len(runes))
 
 		for i, r := range runes {
 			if in == nil {
-				return nil, errors.New("end of input")
+				return nil, errEOF
 			}
 
-			curr, p := in.Current()
+			curr, pos := in.Current()
 			if curr == r {
-				return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+				return nil, &syntaxError{pos, curr}
 			}
 
 			// Accumulate the parsed runes
@@ -280,14 +279,14 @@ func NotExpectRunes(runes ...rune) Parser {
 
 			// Save only the first position
 			if i == 0 {
-				pos = p
+				firstPos = pos
 			}
 
 			in = in.Remaining()
 		}
 
 		return &Output{
-			Result:    Result{val, pos, nil},
+			Result:    Result{val, firstPos, nil},
 			Remaining: in,
 		}, nil
 	}
@@ -333,17 +332,24 @@ func ALT(p ...Parser) Parser {
 
 	return func(in Input) (*Output, error) {
 		if in == nil {
-			return nil, errors.New("end of input")
+			return nil, errEOF
 		}
 
 		for _, parse := range p {
-			if out, err := parse(in); err == nil {
+			out, err := parse(in)
+			if err == nil {
 				return out, nil
+			}
+
+			// A semantic error means parsing passed syntax but failed a semantic check.
+			// Stop here and propagate the error instead of treating it as an optional miss.
+			if _, ok := err.(*semanticError); ok {
+				return nil, err
 			}
 		}
 
 		curr, pos := in.Current()
-		return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+		return nil, &syntaxError{pos, curr}
 	}
 }
 
@@ -384,11 +390,18 @@ func CONCAT(p ...Parser) Parser {
 //   - EBNF Operator: Optional
 //   - EBNF Notation: [ p ] or p?
 //
-// OPT never returns an error.
+// OPT returns an error only if a SemanticError is encountered.
 func OPT(p Parser) Parser {
 	return func(in Input) (*Output, error) {
-		if out, err := p(in); err == nil {
+		out, err := p(in)
+		if err == nil {
 			return out, nil
+		}
+
+		// A semantic error means parsing passed syntax but failed a semantic check.
+		// Stop here and propagate the error instead of treating it as an optional miss.
+		if _, ok := err.(*semanticError); ok {
+			return nil, err
 		}
 
 		return &Output{
@@ -406,7 +419,7 @@ func OPT(p Parser) Parser {
 //   - EBNF Operator: Repetition (Kleene Star)
 //   - EBNF Notation: { p } or p*
 //
-// REP never returns an error.
+// REP returns an error only if a SemanticError is encountered.
 func REP(p Parser) Parser {
 	return func(in Input) (*Output, error) {
 		var l List
@@ -414,6 +427,12 @@ func REP(p Parser) Parser {
 		for i := 0; in != nil; i++ {
 			out, err := p(in)
 			if err != nil {
+				// A semantic error means parsing passed syntax but failed a semantic check.
+				// Stop here and propagate the error instead of treating it as an optional miss.
+				if _, ok := err.(*semanticError); ok {
+					return nil, err
+				}
+
 				break
 			}
 
@@ -445,17 +464,19 @@ func REP(p Parser) Parser {
 func REP1(p Parser) Parser {
 	return func(in Input) (*Output, error) {
 		if in == nil {
-			return nil, errors.New("end of input")
+			return nil, errEOF
 		}
 
-		// REP never returns an error
-		out, _ := p.REP()(in)
+		out, err := p.REP()(in)
+		if err != nil {
+			return nil, err
+		}
 
 		// Ensure at least one repetition
 		res, ok := out.Result.Val.(List)
 		if !ok || len(res) == 0 {
 			curr, pos := in.Current()
-			return nil, fmt.Errorf("unexpected rune %q at position %d", curr, pos)
+			return nil, &syntaxError{pos, curr}
 		}
 
 		return out, nil
@@ -622,6 +643,9 @@ func (p Parser) Get(i int) Parser {
 // (for example: convert a matched rune into an int, build AST nodes, attach metadata, etc.).
 //
 // The remaining input returned by p is preserved when the mapping succeeds.
+//
+// Any error returned by the map function is considerd a non-syntactic error,
+// causing combinators like ALT, OPT, REP, and REP1 to stop parsing and return the error immediately.
 func (p Parser) Map(f MapFunc) Parser {
 	return func(in Input) (*Output, error) {
 		out, err := p(in)
@@ -631,7 +655,7 @@ func (p Parser) Map(f MapFunc) Parser {
 
 		res, err := f(out.Result)
 		if err != nil {
-			return nil, err
+			return nil, &semanticError{out.Result.Pos, err}
 		}
 
 		out.Result = res
@@ -640,6 +664,9 @@ func (p Parser) Map(f MapFunc) Parser {
 }
 
 // MapFunc is a function that receives a parsing result and returns a new result.
+//
+// A mapping error is considerd a non-syntactic error,
+// causing combinators like ALT, OPT, REP, and REP1 to stop parsing and return the error immediately.
 type MapFunc func(Result) (Result, error)
 
 // Bind composes a parser that uses parser p to parse the input and produces a new parser from the result.
@@ -675,7 +702,12 @@ func (p Parser) Bind(f BindFunc) Parser {
 			return nil, err
 		}
 
-		return f(out.Result)(out.Remaining)
+		res, err := f(out.Result)(out.Remaining)
+		if err != nil {
+			return nil, err
+		}
+
+		return res, nil
 	}
 }
 
