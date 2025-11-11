@@ -211,7 +211,7 @@ func TestFuncs(t *testing.T) {
 				if tc.expectedUnion == nil {
 					assert.Nil(t, union)
 				} else {
-					assert.True(t, union.Equal(tc.expectedUnion), "expected: %s\ngot: %s\n", tc.expectedUnion, union)
+					assert.True(t, union.Equal(tc.expectedUnion), "Expected:\n%s\nGot:\n%s", tc.expectedUnion, union)
 				}
 			})
 		}
