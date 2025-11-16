@@ -4,7 +4,6 @@ package set
 
 import (
 	"fmt"
-	"iter"
 	"math/rand"
 	"time"
 
@@ -28,345 +27,50 @@ type Set[T any] interface {
 	Difference(...Set[T]) Set[T]
 }
 
-// set is an implementation of the Set interface.
-// It does not maintain any specific order for its members.
-type set[T any] struct {
-	members []T
-	equal   generic.EqualFunc[T]
-	format  FormatFunc[T]
-}
-
-// New creates a new set that does not maintain any specific order for its members.
-func New[T any](equal generic.EqualFunc[T], vals ...T) Set[T] {
-	s := &set[T]{
-		members: make([]T, 0),
-		equal:   equal,
-		format:  defaultFormat[T],
-	}
-
-	s.Add(vals...)
-
-	return s
-}
-
-// NewWithFormat creates a new set with a custom format for String method.
-func NewWithFormat[T any](equal generic.EqualFunc[T], format FormatFunc[T], vals ...T) Set[T] {
-	s := &set[T]{
-		members: make([]T, 0),
-		equal:   equal,
-		format:  format,
-	}
-
-	s.Add(vals...)
-
-	return s
-}
-
-func (s *set[T]) find(v T) int {
-	for i, m := range s.members {
-		if s.equal(m, v) {
-			return i
-		}
-	}
-
-	return -1
-}
-
-func (s *set[T]) String() string {
-	return s.format(s.members)
-}
-
-func (s *set[T]) Equal(rhs Set[T]) bool {
-	if s.Size() != rhs.Size() {
-		return false
-	}
-
-	for _, m := range s.members {
-		if !rhs.Contains(m) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (s *set[T]) Clone() Set[T] {
-	t := &set[T]{
-		members: make([]T, len(s.members)),
-		equal:   s.equal,
-		format:  s.format,
-	}
-
-	copy(t.members, s.members)
-
-	return t
-}
-
-func (s *set[T]) CloneEmpty() Set[T] {
-	return &set[T]{
-		members: make([]T, 0),
-		equal:   s.equal,
-		format:  s.format,
-	}
-}
-
-func (s *set[T]) Size() int {
-	return len(s.members)
-}
-
-func (s *set[T]) IsEmpty() bool {
-	return len(s.members) == 0
-}
-
-func (s *set[T]) Add(vals ...T) {
-	for _, v := range vals {
-		if !s.Contains(v) {
-			s.members = append(s.members, v)
-		}
-	}
-}
-
-func (s *set[T]) Remove(vals ...T) {
-	for _, v := range vals {
-		if i := s.find(v); i != -1 {
-			s.members = append(s.members[:i], s.members[i+1:]...)
-		}
-	}
-}
-
-func (s *set[T]) RemoveAll() {
-	s.members = make([]T, 0)
-}
-
-func (s *set[T]) Contains(vals ...T) bool {
-	for _, v := range vals {
-		if s.find(v) == -1 {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (s *set[T]) All() iter.Seq[T] {
-	// Create a list of indices representing the members.
-	indices := make([]int, len(s.members))
-	for i := range indices {
-		indices[i] = i
-	}
-
-	// Shuffle the indices list to randomize the order in which members are traversed.
-	// This ensures that the traversal order is non-deterministic, reflecting the unordered nature of set.
-	r.Shuffle(len(indices), func(i, j int) {
-		indices[i], indices[j] = indices[j], indices[i]
-	})
-
-	return func(yield func(T) bool) {
-		for _, i := range indices {
-			if !yield(s.members[i]) {
-				return
-			}
-		}
-	}
-}
-
-func (s *set[T]) AnyMatch(p generic.Predicate1[T]) bool {
-	for _, m := range s.members {
-		if p(m) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (s *set[T]) AllMatch(p generic.Predicate1[T]) bool {
-	for _, m := range s.members {
-		if !p(m) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (s *set[T]) FirstMatch(p generic.Predicate1[T]) (T, bool) {
-	for _, m := range s.members {
-		if p(m) {
-			return m, true
-		}
-	}
-
-	var zeroT T
-	return zeroT, false
-}
-
-func (s *set[T]) SelectMatch(p generic.Predicate1[T]) generic.Collection1[T] {
-	matched := s.CloneEmpty()
-
-	for _, m := range s.members {
-		if p(m) {
-			matched.Add(m)
-		}
-	}
-
-	return matched
-}
-
-func (s *set[T]) PartitionMatch(p generic.Predicate1[T]) (generic.Collection1[T], generic.Collection1[T]) {
-	matched := s.CloneEmpty()
-	unmatched := s.CloneEmpty()
-
-	for _, m := range s.members {
-		if p(m) {
-			matched.Add(m)
-		} else {
-			unmatched.Add(m)
-		}
-	}
-
-	return matched, unmatched
-}
-
-func (s *set[T]) IsSubset(superset Set[T]) bool {
-	for m := range s.All() {
-		if !superset.Contains(m) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (s *set[T]) IsSuperset(subset Set[T]) bool {
-	for m := range subset.All() {
-		if !s.Contains(m) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (s *set[T]) Union(sets ...Set[T]) Set[T] {
-	t := s.Clone()
-
-	for _, set := range sets {
-		for m := range set.All() {
-			t.Add(m)
-		}
-	}
-
-	return t
-}
-
-func (s *set[T]) Intersection(sets ...Set[T]) Set[T] {
-	t := s.CloneEmpty()
-
-	for _, m := range s.members {
-		isInAll := generic.AllMatch(sets, func(set Set[T]) bool {
-			return set.Contains(m)
-		})
-
-		if isInAll {
-			t.Add(m)
-		}
-	}
-
-	return t
-}
-
-func (s *set[T]) Difference(sets ...Set[T]) Set[T] {
-	t := s.Clone()
-
-	for _, set := range sets {
-		for m := range set.All() {
-			t.Remove(m)
-		}
-	}
-
-	return t
-}
-
 // Powerset creates and returns the power set of a given set.
 // The power set of a set is the set of all subsets, including the empty set and the set itself.
 //
-//	Set[T]      A set
-//	Set[Set[T]  The power set (the set of all subsets)
+//   - Set[T]:      A set
+//   - Set[Set[T]]: The power set (the set of all subsets)
+//
+// The power set implementation is chosen based on the concrete type of the input set.
+// For custom Set implementations, the basic set is used to construct the power set.
 func Powerset[T any](s Set[T]) Set[Set[T]] {
-	setEqFunc := func(a, b Set[T]) bool { return a.Equal(b) }
-
-	// The power set
-	PS := New[Set[T]](setEqFunc)
-
-	// Recurssion end condition
-	if s.Size() == 0 {
-		// Single empty set
-		es := s.CloneEmpty()
-		PS.Add(es)
-		return PS
+	switch s.(type) {
+	case *set[T]:
+		return powerset(s)
+	case *stableSet[T]:
+		return stablePowerset(s)
+	case *sortedSet[T]:
+		return sortedPowerset(s)
+	case *hashSet[T]:
+		return hashPowerset(s)
+	default:
+		return powerset(s)
 	}
-
-	members := generic.Collect1(s.All())
-	head, tail := s.CloneEmpty(), s.CloneEmpty()
-	head.Add(members[0])
-	tail.Add(members[1:]...)
-
-	// For every subset of s[1:]
-	for subset := range Powerset[T](tail).All() {
-		PS.Add(subset)             // Add every subset to the power set
-		PS.Add(head.Union(subset)) // Prepend s[0] to every subset and then add it to the power set
-	}
-
-	return PS
 }
 
 // Partitions creates and returns the set of all partitions for a given set.
 // A partition of a set is a grouping of its elements into non-empty subsets,
 // in such a way that every element is included in exactly one subset.
 //
-//	Set[T]            A set
-//	Set[Set[T]        A partition (a set of non-empty disjoint subsets with every element included)
-//	Set[Set[Set[T]]]  The set of all partitions
+//   - Set[T]:           A set
+//   - Set[Set[T]]:      A partition (a set of non-empty disjoint subsets with every element included)
+//   - Set[Set[Set[T]]]: The set of all partitions
+//
+// The partition implementation is chosen based on the concrete type of the input set.
+// For custom Set implementations, the basic set is used to construct partitions and the set of all partitions.
 func Partitions[T any](s Set[T]) Set[Set[Set[T]]] {
-	setEqFunc := func(a, b Set[T]) bool { return a.Equal(b) }
-	partEqFunc := func(a, b Set[Set[T]]) bool { return a.Equal(b) }
-
-	// The set of all partitions
-	Ps := New[Set[Set[T]]](partEqFunc)
-
-	// Recurssion end condition
-	if s.Size() == 0 {
-		// Single empty partition
-		P := New[Set[T]](setEqFunc)
-		Ps.Add(P)
-		return Ps
+	switch s.(type) {
+	case *set[T]:
+		return partitions(s)
+	case *stableSet[T]:
+		return stablePartitions(s)
+	case *sortedSet[T]:
+		return sortedPartitions(s)
+	case *hashSet[T]:
+		return hashPartitions(s)
+	default:
+		return partitions(s)
 	}
-
-	members := generic.Collect1(s.All())
-	head, tail := s.CloneEmpty(), s.CloneEmpty()
-	head.Add(members[0])
-	tail.Add(members[1:]...)
-
-	// For every partition of s[1:]
-	for P := range Partitions[T](tail).All() {
-		Pmembers := generic.Collect1(P.All())
-
-		// Prepend s[0] to the curret partition
-		Q := New[Set[T]](setEqFunc)
-		Q.Add(head.Clone())
-		Q.Add(Pmembers...)
-		Ps.Add(Q)
-
-		// Prepend s[0] to every subset in the curret partition
-		for i := range Pmembers {
-			Q := New[Set[T]](setEqFunc)
-			Q.Add(Pmembers[0:i]...)
-			Q.Add(head.Union(Pmembers[i]))
-			Q.Add(Pmembers[i+1:]...)
-			Ps.Add(Q)
-		}
-	}
-
-	return Ps
 }

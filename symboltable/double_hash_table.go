@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	dhMinM          = 31    // Minimum number of entries in the hash table (must be a prime number)
+	dhMinM          = 31    // Minimum capacity of the hash table (must be a prime number)
 	dhMinLoadFactor = 0.125 // Minimum load factor before resizing (shrinking)
 	dhMaxLoadFactor = 0.50  // Maximum load factor before resizing (expanding)
 )
@@ -19,7 +19,7 @@ const (
 // doubleHashTable is a hash table with double hashing for conflict resolution.
 type doubleHashTable[K, V any] struct {
 	entries []*hashTableEntry[K, V]
-	m       int     // Total number of entries in the hash table
+	m       int     // Capacity of the hash table
 	p       int     // Largest prime number less than m, used in secondary hashing
 	n       int     // Number of key-values stored in the hash table
 	minLF   float32 // Minimum load factor before resizing (shrinking) the hash table
@@ -185,7 +185,10 @@ func (t *doubleHashTable[K, V]) Put(key K, val V) {
 	for i = next(); t.entries[i] != nil; i = next() {
 		if t.eqKey(t.entries[i].key, key) {
 			t.entries[i].val = val
-			t.entries[i].deleted = false
+			if t.entries[i].deleted { // undelete
+				t.entries[i].deleted = false
+				t.n++
+			}
 			return
 		}
 	}

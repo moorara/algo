@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	scMinM          = 4    // Minimum number of buckets in the hash table (must be a power of 2 for efficient hashing)
+	scMinM          = 4    // Minimum capacity of buckets in the hash table (must be a power of 2 for efficient hashing)
 	scMinLoadFactor = 2.0  // Minimum load factor before resizing (shrinking)
 	scMaxLoadFactor = 10.0 // Maximum load factor before resizing (expanding)
 )
@@ -25,10 +25,10 @@ type chainNode[K, V any] struct {
 // chainHashTable is a hash table with separate chaining for conflict resolution.
 type chainHashTable[K, V any] struct {
 	buckets []*chainNode[K, V]
-	m       int     // The total number of buckets in the hash table
-	n       int     // The number of key-values stored in the hash table
-	minLF   float32 // The minimum load factor before resizing (shrinking) the hash table
-	maxLF   float32 // The maximum load factor before resizing (expanding) the hash table
+	m       int     // Capacity of buckets in the hash table
+	n       int     // Number of key-values stored in the hash table
+	minLF   float32 // Minimum load factor before resizing (shrinking) the hash table
+	maxLF   float32 // Maximum load factor before resizing (expanding) the hash table
 
 	hashKey hash.HashFunc[K]
 	eqKey   generic.EqualFunc[K]

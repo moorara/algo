@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	lpMinM          = 32    // Minimum number of entries in the hash table (must be a power of 2 for efficient hashing)
+	lpMinM          = 32    // Minimum capacity of the hash table (must be a power of 2 for efficient hashing)
 	lpMinLoadFactor = 0.125 // Minimum load factor before resizing (shrinking)
 	lpMaxLoadFactor = 0.50  // Maximum load factor before resizing (expanding)
 )
@@ -19,10 +19,10 @@ const (
 // linearHashTable is a hash table with linear probing for conflict resolution.
 type linearHashTable[K, V any] struct {
 	entries []*generic.KeyValue[K, V]
-	m       int     // The total number of entries in the hash table
-	n       int     // The number of key-values stored in the hash table
-	minLF   float32 // The minimum load factor before resizing (shrinking) the hash table
-	maxLF   float32 // The maximum load factor before resizing (expanding) the hash table
+	m       int     // Capacity of the hash table
+	n       int     // Number of key-values stored in the hash table
+	minLF   float32 // Minimum load factor before resizing (shrinking) the hash table
+	maxLF   float32 // Maximum load factor before resizing (expanding) the hash table
 
 	hashKey hash.HashFunc[K]
 	eqKey   generic.EqualFunc[K]

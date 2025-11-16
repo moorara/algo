@@ -61,7 +61,7 @@ type nfaBound struct {
 type nfaTransitionVector set.Set[nfaTransitionEnds]
 
 func newNFATransitionVector() nfaTransitionVector {
-	return set.NewSorted(cmpNFATransitionEnds)
+	return set.NewSortedSet(cmpNFATransitionEnds)
 }
 
 var cmpNFATransitionVector = func(lhs, rhs nfaTransitionVector) int {

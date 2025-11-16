@@ -1,1321 +1,615 @@
 package set
 
 import (
-	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/hash"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestNew(t *testing.T) {
-	tests := []struct {
-		name            string
-		equal           generic.EqualFunc[string]
-		vals            []string
-		expectedMembers []string
-	}{
-		{
-			name:            "OK",
-			equal:           generic.NewEqualFunc[string](),
-			vals:            []string{"a", "b", "c", "d"},
-			expectedMembers: []string{"a", "b", "c", "d"},
-		},
+type (
+	setTest[T any] struct {
+		name                string
+		addTests            [][]T
+		removeTests         [][]T
+		containTests        []containTest[T]
+		equalTests          []equalTest[T]
+		anyMatchTests       []anyMatchTest[T]
+		allMatchTests       []allMatchTest[T]
+		firstMatchTests     []firstMatchTest[T]
+		selectMatchTests    []selectMatchTest[T]
+		partitionMatchTests []partitionMatchTest[T]
+		isSubsetTests       []isSubsetTest[T]
+		isSupersetTests     []isSupersetTest[T]
+		unionTests          []unionTest[T]
+		intersectionTests   []intersectionTest[T]
+		differenceTests     []differenceTest[T]
+		expectedSize        int
+		expectedEmpty       bool
+		expectedSubstrings  []string
+		expectedAll         []T
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s := New(tc.equal, tc.vals...).(*set[string])
-
-			assert.NotNil(t, s)
-			assert.Equal(t, tc.expectedMembers, s.members)
-			assert.NotNil(t, s.equal)
-			assert.NotNil(t, s.format)
-		})
-	}
-}
-
-func TestNewWithFormat(t *testing.T) {
-	tests := []struct {
-		name            string
-		equal           generic.EqualFunc[string]
-		format          FormatFunc[string]
-		vals            []string
-		expectedMembers []string
-	}{
-		{
-			name:            "OK",
-			equal:           generic.NewEqualFunc[string](),
-			format:          defaultFormat[string],
-			vals:            []string{"a", "b", "c", "d"},
-			expectedMembers: []string{"a", "b", "c", "d"},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s := NewWithFormat(tc.equal, tc.format, tc.vals...).(*set[string])
-
-			assert.NotNil(t, s)
-			assert.Equal(t, tc.expectedMembers, s.members)
-			assert.NotNil(t, s.equal)
-			assert.NotNil(t, s.format)
-		})
-	}
-}
-
-func TestSet_String(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name           string
-		s              *set[string]
-		expectedString string
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-				format:  defaultFormat[string],
-			},
-			expectedString: "{}",
-		},
-		{
-			name: "NonEmpty",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-				format:  defaultFormat[string],
-			},
-			expectedString: "{a, b, c, d}",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedString, tc.s.String())
-		})
-	}
-}
-
-func TestSet_Equal(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name     string
-		s        *set[string]
-		rhs      Set[string]
+	containTest[T any] struct {
+		vals     []T
 		expected bool
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			rhs: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			expected: true,
-		},
-		{
-			name: "Equal",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			rhs: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			expected: true,
-		},
-		{
-			name: "NotEqual",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			rhs: &set[string]{
-				members: []string{"c", "d", "e", "f"},
-				equal:   eqFunc,
-			},
-			expected: false,
-		},
-		{
-			name: "NotEqual_Subset",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			rhs: &set[string]{
-				members: []string{"a", "b", "c", "d", "e", "f"},
-				equal:   eqFunc,
-			},
-			expected: false,
-		},
-		{
-			name: "NotEqual_Superset",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d", "e", "f"},
-				equal:   eqFunc,
-			},
-			rhs: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			expected: false,
-		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			b := tc.s.Equal(tc.rhs)
-			assert.Equal(t, tc.expected, b)
-		})
-	}
-}
-
-func TestSet_Clone(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name string
-		s    *set[string]
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-		},
-		{
-			name: "NonEmpty",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			set := tc.s.Clone()
-			assert.True(t, set.Equal(tc.s))
-		})
-	}
-}
-
-func TestSet_CloneEmpty(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name     string
-		s        *set[string]
-		expected Set[string]
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			expected: New[string](eqFunc),
-		},
-		{
-			name: "NonEmpty",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			expected: New[string](eqFunc),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			set := tc.s.CloneEmpty()
-			assert.True(t, set.Equal(tc.expected))
-		})
-	}
-}
-
-func TestSet_Size(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name     string
-		s        *set[string]
-		expected int
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			expected: 0,
-		},
-		{
-			name: "NonEmpty",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			expected: 4,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			size := tc.s.Size()
-			assert.Equal(t, tc.expected, size)
-		})
-	}
-}
-
-func TestSet_IsEmpty(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name     string
-		s        *set[string]
+	equalTest[T any] struct {
+		rhs      Set[T]
 		expected bool
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			expected: true,
-		},
-		{
-			name: "NonEmpty",
-			s: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-			expected: false,
-		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, tc.s.IsEmpty())
-		})
-	}
-}
-
-func TestSet_Add(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name            string
-		s               *set[string]
-		vals            []string
-		expectedMembers []string
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			vals:            []string{"a", "b", "c", "d"},
-			expectedMembers: []string{"a", "b", "c", "d"},
-		},
-		{
-			name: "NonEmpty",
-			s: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-			vals:            []string{"a", "c", "d"},
-			expectedMembers: []string{"a", "b", "c", "d"},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.s.Add(tc.vals...)
-			assert.Equal(t, tc.expectedMembers, tc.s.members)
-		})
-	}
-}
-
-func TestSet_Remove(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name            string
-		s               *set[string]
-		vals            []string
-		expectedMembers []string
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			vals:            []string{"a", "b"},
-			expectedMembers: []string{},
-		},
-		{
-			name: "NonEmpty",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			vals:            []string{"a", "c"},
-			expectedMembers: []string{"b", "d"},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.s.Remove(tc.vals...)
-			assert.Equal(t, tc.expectedMembers, tc.s.members)
-		})
-	}
-}
-
-func TestSet_RemoveAll(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name string
-		s    *set[string]
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-		},
-		{
-			name: "NonEmpty",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.s.RemoveAll()
-			assert.Zero(t, tc.s.Size())
-			assert.True(t, tc.s.IsEmpty())
-		})
-	}
-}
-
-func TestSet_Contains(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name     string
-		s        *set[string]
-		vals     []string
+	anyMatchTest[T any] struct {
+		p        generic.Predicate1[T]
 		expected bool
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			vals:     []string{"c"},
-			expected: false,
-		},
-		{
-			name: "NonEmpty_No",
-			s: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-			vals:     []string{"c"},
-			expected: false,
-		},
-		{
-			name: "NonEmpty_Yes",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			vals:     []string{"b", "c"},
-			expected: true,
-		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			b := tc.s.Contains(tc.vals...)
-			assert.Equal(t, tc.expected, b)
-		})
-	}
-}
-
-func TestSet_All(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name            string
-		s               *set[string]
-		expectedMembers []string
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			expectedMembers: nil,
-		},
-		{
-			name: "NonEmpty",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			expectedMembers: []string{"a", "b", "c", "d"},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			members := generic.Collect1(tc.s.All())
-
-			for _, expectedMember := range tc.expectedMembers {
-				assert.Contains(t, members, expectedMember)
-			}
-
-			for _, member := range members {
-				assert.Contains(t, tc.expectedMembers, member)
-			}
-		})
-	}
-}
-
-func TestSet_AnyMatch(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-	predicate := func(s string) bool {
-		return strings.ToUpper(s) == s
-	}
-
-	tests := []struct {
-		name     string
-		s        *set[string]
-		p        generic.Predicate1[string]
+	allMatchTest[T any] struct {
+		p        generic.Predicate1[T]
 		expected bool
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			p:        predicate,
-			expected: false,
-		},
-		{
-			name: "NonEmpty_No",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			p:        predicate,
-			expected: false,
-		},
-		{
-			name: "NonEmpty_Yes",
-			s: &set[string]{
-				members: []string{"a", "B", "c", "d"},
-				equal:   eqFunc,
-			},
-			p:        predicate,
-			expected: true,
-		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			b := tc.s.AnyMatch(tc.p)
-			assert.Equal(t, tc.expected, b)
-		})
-	}
-}
-
-func TestSet_AllMatch(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-	predicate := func(s string) bool {
-		return strings.ToUpper(s) == s
+	firstMatchTest[T any] struct {
+		p             generic.Predicate1[T]
+		expectedMatch T
+		expectedFound bool
 	}
 
-	tests := []struct {
-		name     string
-		s        *set[string]
-		p        generic.Predicate1[string]
+	selectMatchTest[T any] struct {
+		p               generic.Predicate1[T]
+		expectedMatched Set[T]
+	}
+
+	partitionMatchTest[T any] struct {
+		p                 generic.Predicate1[T]
+		expectedMatched   Set[T]
+		expectedUnmatched Set[T]
+	}
+
+	isSubsetTest[T any] struct {
+		superset Set[T]
 		expected bool
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			p:        predicate,
-			expected: true,
-		},
-		{
-			name: "NonEmpty_No",
-			s: &set[string]{
-				members: []string{"A", "B", "c", "D"},
-				equal:   eqFunc,
-			},
-			p:        predicate,
-			expected: false,
-		},
-		{
-			name: "NonEmpty_Yes",
-			s: &set[string]{
-				members: []string{"A", "B", "C", "D"},
-				equal:   eqFunc,
-			},
-			p:        predicate,
-			expected: true,
-		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			b := tc.s.AllMatch(tc.p)
-			assert.Equal(t, tc.expected, b)
-		})
-	}
-}
-
-func TestSet_FirstMatch(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-	predicate := func(s string) bool {
-		return strings.ToUpper(s) == s
+	isSupersetTest[T any] struct {
+		subset   Set[T]
+		expected bool
 	}
 
-	tests := []struct {
-		name          string
-		s             *set[string]
-		p             generic.Predicate1[string]
-		expectedValue string
-		expectedOK    bool
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			p:             predicate,
-			expectedValue: "",
-			expectedOK:    false,
-		},
-		{
-			name: "NoMatch",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			p:             predicate,
-			expectedValue: "",
-			expectedOK:    false,
-		},
+	unionTest[T any] struct {
+		sets     []Set[T]
+		expected Set[T]
+	}
+
+	intersectionTest[T any] struct {
+		sets     []Set[T]
+		expected Set[T]
+	}
+
+	differenceTest[T any] struct {
+		sets     []Set[T]
+		expected Set[T]
+	}
+)
+
+func getSetTests() []setTest[int] {
+	eqInt := generic.NewEqualFunc[int]()
+	cmpInt := generic.NewCompareFunc[int]()
+	hashInt := hash.HashFuncForInt[int](nil)
+
+	return []setTest[int]{
 		{
 			name: "OK",
-			s: &set[string]{
-				members: []string{"a", "b", "C", "d"},
-				equal:   eqFunc,
+			addTests: [][]int{
+				{1, 2, 4, 8, 16, 32, 64},
+				{1, 1, 2, 3, 5, 8, 13, 21, 34, 55},
+				{2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97},
 			},
-			p:             predicate,
-			expectedValue: "C",
-			expectedOK:    true,
+			removeTests: [][]int{
+				{16, 32, 64},
+				{13, 21, 34, 55},
+				{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97},
+				{101, 211, 307, 401, 503, 601, 701, 809, 907},
+			},
+			containTests: []containTest[int]{
+				{vals: []int{1, 2, 4, 8}, expected: true},
+				{vals: []int{3, 5, 7}, expected: true},
+				{vals: []int{16, 32, 64}, expected: false},
+				{vals: []int{13, 21, 34, 55}, expected: false},
+				{vals: []int{31, 37, 41, 43, 47, 53, 59, 61, 67}, expected: false},
+				{vals: []int{101, 211, 307, 401, 503, 601, 701}, expected: false},
+			},
+			equalTests: []equalTest[int]{
+				{rhs: New(eqInt), expected: false},
+				{rhs: New(eqInt, 2, 4, 8), expected: false},
+				{rhs: New(eqInt, 1, 2, 3, 4, 5, 6, 7), expected: false},
+				{rhs: New(eqInt, 1, 2, 3, 4, 5, 6, 7, 8), expected: false},
+				{rhs: New(eqInt, 1, 2, 3, 4, 5, 7, 8), expected: true},
+				{rhs: NewStableSet(eqInt, 1, 2, 3, 4, 5, 7, 8), expected: true},
+				{rhs: NewSortedSet(cmpInt, 1, 2, 3, 4, 5, 7, 8), expected: true},
+				{rhs: NewHashSet(hashInt, eqInt, HashSetOpts{}, 1, 2, 3, 4, 5, 7, 8), expected: true},
+			},
+			anyMatchTests: []anyMatchTest[int]{
+				{p: func(v int) bool { return v%2 == 0 }, expected: true},
+				{p: func(v int) bool { return v > 10 }, expected: false},
+			},
+			allMatchTests: []allMatchTest[int]{
+				{p: func(v int) bool { return v < 10 }, expected: true},
+				{p: func(v int) bool { return v%2 == 0 }, expected: false},
+			},
+			firstMatchTests: []firstMatchTest[int]{
+				{p: func(v int) bool { return v%3 == 0 }, expectedMatch: 3, expectedFound: true},
+				{p: func(v int) bool { return v > 10 }, expectedMatch: 0, expectedFound: false},
+			},
+			selectMatchTests: []selectMatchTest[int]{
+				{
+					p:               func(v int) bool { return v%2 == 0 },
+					expectedMatched: New(eqInt, 2, 4, 8),
+				},
+				{
+					p:               func(v int) bool { return v > 10 },
+					expectedMatched: New(eqInt),
+				},
+			},
+			partitionMatchTests: []partitionMatchTest[int]{
+				{
+					p:                 func(v int) bool { return v%2 == 0 },
+					expectedMatched:   New(eqInt, 2, 4, 8),
+					expectedUnmatched: New(eqInt, 1, 3, 5, 7),
+				},
+				{
+					p:                 func(v int) bool { return v > 10 },
+					expectedMatched:   New(eqInt),
+					expectedUnmatched: New(eqInt, 1, 2, 3, 4, 5, 7, 8),
+				},
+			},
+			isSubsetTests: []isSubsetTest[int]{
+				{superset: New(eqInt, 2, 3, 4, 5, 7, 8), expected: false},
+				{superset: New(eqInt, 1, 2, 3, 4, 5, 7, 8), expected: true},
+				{superset: New(eqInt, 1, 2, 3, 4, 5, 7, 8, 9), expected: true},
+			},
+			isSupersetTests: []isSupersetTest[int]{
+				{subset: New(eqInt, 2, 3, 4, 5, 7, 8), expected: true},
+				{subset: New(eqInt, 1, 2, 3, 4, 5, 7, 8), expected: true},
+				{subset: New(eqInt, 1, 2, 3, 4, 5, 7, 8, 9), expected: false},
+			},
+			unionTests: []unionTest[int]{
+				{
+					sets:     []Set[int]{},
+					expected: New(eqInt, 1, 2, 3, 4, 5, 7, 8),
+				},
+				{
+					sets: []Set[int]{
+						New(eqInt),
+					},
+					expected: New(eqInt, 1, 2, 3, 4, 5, 7, 8),
+				},
+				{
+					sets: []Set[int]{
+						New(eqInt, 16, 32, 64),
+						New(eqInt, 13, 21, 34, 55),
+					},
+					expected: New(eqInt, 1, 2, 3, 4, 5, 7, 8, 13, 16, 21, 32, 34, 55, 64),
+				},
+			},
+			intersectionTests: []intersectionTest[int]{
+				{
+					sets:     []Set[int]{},
+					expected: New(eqInt, 1, 2, 3, 4, 5, 7, 8),
+				},
+				{
+					sets: []Set[int]{
+						New(eqInt),
+					},
+					expected: New(eqInt),
+				},
+				{
+					sets: []Set[int]{
+						New(eqInt, 2, 4, 8),
+						New(eqInt, 2, 3, 5, 8),
+					},
+					expected: New(eqInt, 2, 8),
+				},
+			},
+			differenceTests: []differenceTest[int]{
+				{
+					sets:     []Set[int]{},
+					expected: New(eqInt, 1, 2, 3, 4, 5, 7, 8),
+				},
+				{
+					sets: []Set[int]{
+						New(eqInt),
+					},
+					expected: New(eqInt, 1, 2, 3, 4, 5, 7, 8),
+				},
+				{
+					sets: []Set[int]{
+						New(eqInt, 2, 4, 8),
+						New(eqInt, 2, 3, 5, 8),
+					},
+					expected: New(eqInt, 1, 7),
+				},
+			},
+			expectedSize:       7,
+			expectedEmpty:      false,
+			expectedSubstrings: []string{"1", "2", "3", "4", "5", "7", "8"},
+			expectedAll:        []int{1, 2, 3, 4, 5, 7, 8},
 		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			val, ok := tc.s.FirstMatch(tc.p)
-			assert.Equal(t, tc.expectedValue, val)
-			assert.Equal(t, tc.expectedOK, ok)
-		})
 	}
 }
 
-func TestSet_SelectMatch(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-	predicate := func(s string) bool {
-		return strings.ToUpper(s) == s
-	}
-
-	tests := []struct {
-		name             string
-		s                *set[string]
-		p                generic.Predicate1[string]
-		expectedSelected Set[string]
-	}{
-		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			p: predicate,
-			expectedSelected: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-		},
-		{
-			name: "SelectNone",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			p: predicate,
-			expectedSelected: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-		},
-		{
-			name: "SelectSome",
-			s: &set[string]{
-				members: []string{"A", "b", "C", "d"},
-				equal:   eqFunc,
-			},
-			p: predicate,
-			expectedSelected: &set[string]{
-				members: []string{"A", "C"},
-				equal:   eqFunc,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			selected := tc.s.SelectMatch(tc.p)
-
-			assert.True(t, selected.(*set[string]).Equal(tc.expectedSelected))
+func runSetTest(t *testing.T, set Set[int], test setTest[int]) {
+	t.Run(test.name, func(t *testing.T) {
+		t.Run("Before", func(t *testing.T) {
+			assert.Zero(t, set.Size())
+			assert.True(t, set.IsEmpty())
+			assert.False(t, set.Contains(-1))
+			assert.Equal(t, "{}", set.String())
 		})
-	}
-}
 
-func TestSet_PartitionMatch(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-	predicate := func(s string) bool {
-		return strings.ToUpper(s) == s
-	}
-
-	tests := []struct {
-		name              string
-		s                 *set[string]
-		p                 generic.Predicate1[string]
-		expectedMatched   Set[string]
-		expectedUnmatched Set[string]
-	}{
-		{
-			name: "OK",
-			s: &set[string]{
-				members: []string{"A", "b", "C", "d"},
-				equal:   eqFunc,
-			},
-			p: predicate,
-			expectedMatched: &set[string]{
-				members: []string{"A", "C"},
-				equal:   eqFunc,
-			},
-			expectedUnmatched: &set[string]{
-				members: []string{"b", "d"},
-				equal:   eqFunc,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			matched, unmatched := tc.s.PartitionMatch(tc.p)
-
-			assert.True(t, matched.(*set[string]).Equal(tc.expectedMatched))
-			assert.True(t, unmatched.(*set[string]).Equal(tc.expectedUnmatched))
+		t.Run("Add", func(t *testing.T) {
+			for _, vals := range test.addTests {
+				set.Add(vals...)
+			}
 		})
-	}
-}
 
-func TestSet_IsSubset(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name     string
-		s        *set[string]
-		superset Set[string]
-		expected bool
-	}{
-		{
-			name: "Subset",
-			s: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-			superset: &set[string]{
-				members: []string{"a", "b", "x", "y"},
-				equal:   eqFunc,
-			},
-			expected: true,
-		},
-		{
-			name: "NotSubset",
-			s: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-			superset: &set[string]{
-				members: []string{"x", "y"},
-				equal:   eqFunc,
-			},
-			expected: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			b := tc.s.IsSubset(tc.superset)
-			assert.Equal(t, tc.expected, b)
+		t.Run("Remove", func(t *testing.T) {
+			for _, vals := range test.removeTests {
+				set.Remove(vals...)
+			}
 		})
-	}
-}
 
-func TestSet_IsSuperset(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name     string
-		s        *set[string]
-		superset Set[string]
-		expected bool
-	}{
-		{
-			name: "Superset",
-			s: &set[string]{
-				members: []string{"a", "b", "x", "y"},
-				equal:   eqFunc,
-			},
-			superset: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-			expected: true,
-		},
-		{
-			name: "NotSuperset",
-			s: &set[string]{
-				members: []string{"a", "b", "x", "y"},
-				equal:   eqFunc,
-			},
-			superset: &set[string]{
-				members: []string{"x", "y", "z"},
-				equal:   eqFunc,
-			},
-			expected: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			b := tc.s.IsSuperset(tc.superset)
-			assert.Equal(t, tc.expected, b)
+		t.Run("Contains", func(t *testing.T) {
+			for _, test := range test.containTests {
+				b := set.Contains(test.vals...)
+				assert.Equal(t, test.expected, b)
+			}
 		})
-	}
-}
 
-func TestSet_Union(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name     string
-		s        *set[string]
-		sets     []Set[string]
-		expected Set[string]
-	}{
-		{
-			name: "Disjoint",
-			s: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-			sets: []Set[string]{
-				&set[string]{
-					members: []string{"c", "d"},
-					equal:   eqFunc,
-				},
-				&set[string]{
-					members: []string{"e", "f"},
-					equal:   eqFunc,
-				},
-			},
-			expected: &set[string]{
-				members: []string{"a", "b", "c", "d", "e", "f"},
-				equal:   eqFunc,
-			},
-		},
-		{
-			name: "NotDisjoint",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			sets: []Set[string]{
-				&set[string]{
-					members: []string{"c", "e"},
-					equal:   eqFunc,
-				},
-				&set[string]{
-					members: []string{"d", "f"},
-					equal:   eqFunc,
-				},
-			},
-			expected: &set[string]{
-				members: []string{"a", "b", "c", "d", "e", "f"},
-				equal:   eqFunc,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			set := tc.s.Union(tc.sets...)
-			assert.True(t, set.Equal(tc.expected))
+		t.Run("Equal", func(t *testing.T) {
+			for _, test := range test.equalTests {
+				b := set.Equal(test.rhs)
+				assert.Equal(t, test.expected, b)
+			}
 		})
-	}
-}
 
-func TestSet_Intersection(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name     string
-		s        *set[string]
-		sets     []Set[string]
-		expected Set[string]
-	}{
-		{
-			name: "Disjoint",
-			s: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-			sets: []Set[string]{
-				&set[string]{
-					members: []string{"c", "d"},
-					equal:   eqFunc,
-				},
-				&set[string]{
-					members: []string{"e", "f"},
-					equal:   eqFunc,
-				},
-			},
-			expected: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-		},
-		{
-			name: "NotDisjoint",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			sets: []Set[string]{
-				&set[string]{
-					members: []string{"b", "e"},
-					equal:   eqFunc,
-				},
-				&set[string]{
-					members: []string{"b", "f"},
-					equal:   eqFunc,
-				},
-			},
-			expected: &set[string]{
-				members: []string{"b"},
-				equal:   eqFunc,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			set := tc.s.Intersection(tc.sets...)
-			assert.True(t, set.Equal(tc.expected))
+		t.Run("AnyMatch", func(t *testing.T) {
+			for _, test := range test.anyMatchTests {
+				b := set.AnyMatch(test.p)
+				assert.Equal(t, test.expected, b)
+			}
 		})
-	}
-}
 
-func TestSet_Difference(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-
-	tests := []struct {
-		name     string
-		s        *set[string]
-		sets     []Set[string]
-		expected Set[string]
-	}{
-		{
-			name: "Disjoint",
-			s: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-			sets: []Set[string]{
-				&set[string]{
-					members: []string{"c", "d"},
-					equal:   eqFunc,
-				},
-				&set[string]{
-					members: []string{"e", "f"},
-					equal:   eqFunc,
-				},
-			},
-			expected: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-		},
-		{
-			name: "NotDisjoint",
-			s: &set[string]{
-				members: []string{"a", "b", "c", "d"},
-				equal:   eqFunc,
-			},
-			sets: []Set[string]{
-				&set[string]{
-					members: []string{"c", "e"},
-					equal:   eqFunc,
-				},
-				&set[string]{
-					members: []string{"d", "f"},
-					equal:   eqFunc,
-				},
-			},
-			expected: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			set := tc.s.Difference(tc.sets...)
-			assert.True(t, set.Equal(tc.expected))
+		t.Run("AllMatch", func(t *testing.T) {
+			for _, test := range test.allMatchTests {
+				b := set.AllMatch(test.p)
+				assert.Equal(t, test.expected, b)
+			}
 		})
-	}
+
+		t.Run("FirstMatch", func(t *testing.T) {
+			for _, test := range test.firstMatchTests {
+				match, found := set.FirstMatch(test.p)
+				assert.Equal(t, test.expectedMatch, match)
+				assert.Equal(t, test.expectedFound, found)
+			}
+		})
+
+		t.Run("SelectMatch", func(t *testing.T) {
+			for _, test := range test.selectMatchTests {
+				matched := set.SelectMatch(test.p)
+				assert.True(t, matched.(Set[int]).Equal(test.expectedMatched), "Expected:\n%s\nGot:\n%s", test.expectedMatched, matched)
+			}
+		})
+
+		t.Run("PartitionMatch", func(t *testing.T) {
+			for _, test := range test.partitionMatchTests {
+				matched, unmatched := set.PartitionMatch(test.p)
+				assert.True(t, matched.(Set[int]).Equal(test.expectedMatched), "Expected:\n%s\nGot:\n%s", test.expectedMatched, matched)
+				assert.True(t, unmatched.(Set[int]).Equal(test.expectedUnmatched), "Expected:\n%s\nGot:\n%s", test.expectedUnmatched, unmatched)
+			}
+		})
+
+		t.Run("IsSubset", func(t *testing.T) {
+			for _, test := range test.isSubsetTests {
+				b := set.IsSubset(test.superset)
+				assert.Equal(t, test.expected, b)
+			}
+		})
+
+		t.Run("IsSuperset", func(t *testing.T) {
+			for _, test := range test.isSupersetTests {
+				b := set.IsSuperset(test.subset)
+				assert.Equal(t, test.expected, b)
+			}
+		})
+
+		t.Run("Union", func(t *testing.T) {
+			for _, test := range test.unionTests {
+				union := set.Union(test.sets...)
+				assert.True(t, union.Equal(test.expected), "Expected:\n%s\nGot:\n%s", test.expected, union)
+			}
+		})
+
+		t.Run("Intersection", func(t *testing.T) {
+			for _, test := range test.intersectionTests {
+				intersection := set.Intersection(test.sets...)
+				assert.True(t, intersection.Equal(test.expected), "Expected:\n%s\nGot:\n%s", test.expected, intersection)
+			}
+		})
+
+		t.Run("Difference", func(t *testing.T) {
+			for _, test := range test.differenceTests {
+				difference := set.Difference(test.sets...)
+				assert.True(t, difference.Equal(test.expected), "Expected:\n%s\nGot:\n%s", test.expected, difference)
+			}
+		})
+
+		t.Run("Clone", func(t *testing.T) {
+			clone := set.Clone()
+			assert.True(t, clone.Equal(set))
+		})
+
+		t.Run("CloneEmpty", func(t *testing.T) {
+			clone := set.CloneEmpty()
+			assert.Zero(t, clone.Size())
+			assert.True(t, clone.IsEmpty())
+		})
+
+		t.Run("Size", func(t *testing.T) {
+			assert.Equal(t, test.expectedSize, set.Size())
+		})
+
+		t.Run("Empty", func(t *testing.T) {
+			assert.Equal(t, test.expectedEmpty, set.IsEmpty())
+		})
+
+		t.Run("String", func(t *testing.T) {
+			str := set.String()
+			for _, substr := range test.expectedSubstrings {
+				assert.Contains(t, str, substr)
+			}
+		})
+
+		t.Run("All", func(t *testing.T) {
+			all := generic.Collect1(set.All())
+
+			assert.Len(t, all, len(test.expectedAll))
+			for _, v := range test.expectedAll {
+				assert.Contains(t, all, v)
+			}
+		})
+
+		t.Run("RemoveAll", func(t *testing.T) {
+			set.RemoveAll()
+		})
+
+		t.Run("After", func(t *testing.T) {
+			assert.Zero(t, set.Size())
+			assert.True(t, set.IsEmpty())
+			assert.False(t, set.Contains(-1))
+			assert.Equal(t, "{}", set.String())
+		})
+	})
 }
 
 func TestPowerset(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-	setEqFunc := func(a, b Set[string]) bool { return a.Equal(b) }
+	opts := HashSetOpts{}
+	hashInt := hash.HashFuncForInt[int](nil)
+	eqInt := generic.NewEqualFunc[int]()
+	cmpInt := generic.NewCompareFunc[int]()
+	eqSet := func(a, b Set[int]) bool { return a.Equal(b) }
 
 	tests := []struct {
 		name     string
-		s        Set[string]
-		expected Set[Set[string]]
+		s        Set[int]
+		expected Set[Set[int]]
 	}{
 		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			expected: &set[Set[string]]{
-				members: []Set[string]{
-					&set[string]{
-						members: []string{},
-						equal:   eqFunc,
-					},
-				},
-				equal: setEqFunc,
-			},
+			name: "Empty_Set",
+			s:    New(eqInt),
+			expected: New(eqSet,
+				New(eqInt),
+			),
 		},
 		{
-			name: "OneElement",
-			s: &set[string]{
-				members: []string{"a"},
-				equal:   eqFunc,
-			},
-			expected: &set[Set[string]]{
-				members: []Set[string]{
-					&set[string]{
-						members: []string{},
-						equal:   eqFunc,
-					},
-					&set[string]{
-						members: []string{"a"},
-						equal:   eqFunc,
-					},
-				},
-				equal: setEqFunc,
-			},
+			name: "NonEmpty_Set",
+			s:    New(eqInt, 3, 5, 7),
+			expected: New(eqSet,
+				New(eqInt),
+				New(eqInt, 3),
+				New(eqInt, 5),
+				New(eqInt, 7),
+				New(eqInt, 3, 5),
+				New(eqInt, 3, 7),
+				New(eqInt, 5, 7),
+				New(eqInt, 3, 5, 7),
+			),
 		},
 		{
-			name: "TwoElements",
-			s: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-			expected: &set[Set[string]]{
-				members: []Set[string]{
-					&set[string]{
-						members: []string{},
-						equal:   eqFunc,
-					},
-					&set[string]{
-						members: []string{"a"},
-						equal:   eqFunc,
-					},
-					&set[string]{
-						members: []string{"b"},
-						equal:   eqFunc,
-					},
-					&set[string]{
-						members: []string{"a", "b"},
-						equal:   eqFunc,
-					},
-				},
-				equal: setEqFunc,
-			},
+			name: "NonEmpty_StableSet",
+			s:    NewStableSet(eqInt, 3, 5, 7),
+			expected: NewStableSet(eqSet,
+				NewStableSet(eqInt),
+				NewStableSet(eqInt, 3),
+				NewStableSet(eqInt, 5),
+				NewStableSet(eqInt, 7),
+				NewStableSet(eqInt, 3, 5),
+				NewStableSet(eqInt, 3, 7),
+				NewStableSet(eqInt, 5, 7),
+				NewStableSet(eqInt, 3, 5, 7),
+			),
 		},
 		{
-			name: "ThreeElements",
-			s: &set[string]{
-				members: []string{"a", "b", "c"},
-				equal:   eqFunc,
-			},
-			expected: &set[Set[string]]{
-				members: []Set[string]{
-					&set[string]{
-						members: []string{},
-						equal:   eqFunc,
-					},
-					&set[string]{
-						members: []string{"a"},
-						equal:   eqFunc,
-					},
-					&set[string]{
-						members: []string{"b"},
-						equal:   eqFunc,
-					},
-					&set[string]{
-						members: []string{"c"},
-						equal:   eqFunc,
-					},
-					&set[string]{
-						members: []string{"a", "b"},
-						equal:   eqFunc,
-					},
-					&set[string]{
-						members: []string{"a", "c"},
-						equal:   eqFunc,
-					},
-					&set[string]{
-						members: []string{"b", "c"},
-						equal:   eqFunc,
-					},
-					&set[string]{
-						members: []string{"a", "b", "c"},
-						equal:   eqFunc,
-					},
-				},
-				equal: setEqFunc,
-			},
+			name: "NonEmpty_SortedSet",
+			s:    NewSortedSet(cmpInt, 3, 5, 7),
+			expected: NewSortedSet(cmpSortedSet[int],
+				NewSortedSet(cmpInt),
+				NewSortedSet(cmpInt, 3),
+				NewSortedSet(cmpInt, 5),
+				NewSortedSet(cmpInt, 7),
+				NewSortedSet(cmpInt, 3, 5),
+				NewSortedSet(cmpInt, 3, 7),
+				NewSortedSet(cmpInt, 5, 7),
+				NewSortedSet(cmpInt, 3, 5, 7),
+			),
+		},
+		{
+			name: "NonEmpty_HashSet",
+			s:    NewHashSet(hashInt, eqInt, opts, 3, 5, 7),
+			expected: NewHashSet(hashHashSet[int], eqHashSet[int], opts,
+				NewHashSet(hashInt, eqInt, opts),
+				NewHashSet(hashInt, eqInt, opts, 3),
+				NewHashSet(hashInt, eqInt, opts, 5),
+				NewHashSet(hashInt, eqInt, opts, 7),
+				NewHashSet(hashInt, eqInt, opts, 3, 5),
+				NewHashSet(hashInt, eqInt, opts, 3, 7),
+				NewHashSet(hashInt, eqInt, opts, 5, 7),
+				NewHashSet(hashInt, eqInt, opts, 3, 5, 7),
+			),
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ps := Powerset[string](tc.s)
-			assert.True(t, ps.Equal(tc.expected))
+			powerset := Powerset(tc.s)
+			assert.True(t, powerset.Equal(tc.expected))
 		})
 	}
 }
 
 func TestPartitions(t *testing.T) {
-	eqFunc := generic.NewEqualFunc[string]()
-	setEqFunc := func(a, b Set[string]) bool { return a.Equal(b) }
-	partEqFunc := func(a, b Set[Set[string]]) bool { return a.Equal(b) }
+	opts := HashSetOpts{}
+	hashInt := hash.HashFuncForInt[int](nil)
+	eqInt := generic.NewEqualFunc[int]()
+	cmpInt := generic.NewCompareFunc[int]()
+	eqSet := func(a, b Set[int]) bool { return a.Equal(b) }
+	eqPartition := func(a, b Set[Set[int]]) bool { return a.Equal(b) }
 
 	tests := []struct {
 		name     string
-		s        Set[string]
-		expected Set[Set[Set[string]]]
+		s        Set[int]
+		expected Set[Set[Set[int]]]
 	}{
 		{
-			name: "Empty",
-			s: &set[string]{
-				members: []string{},
-				equal:   eqFunc,
-			},
-			expected: &set[Set[Set[string]]]{
-				members: []Set[Set[string]]{
-					&set[Set[string]]{ // 1st partition
-						members: []Set[string]{},
-						equal:   setEqFunc,
-					},
-				},
-				equal: partEqFunc,
-			},
+			name: "Empty_Set",
+			s:    New(eqInt),
+			expected: New(eqPartition,
+				New(eqSet),
+			),
 		},
 		{
-			name: "OneElement",
-			s: &set[string]{
-				members: []string{"a"},
-				equal:   eqFunc,
-			},
-			expected: &set[Set[Set[string]]]{
-				members: []Set[Set[string]]{
-					&set[Set[string]]{ // 1st partition
-						members: []Set[string]{
-							&set[string]{
-								members: []string{"a"},
-								equal:   eqFunc,
-							},
-						},
-						equal: setEqFunc,
-					},
-				},
-				equal: partEqFunc,
-			},
+			name: "NonEmpty_Set",
+			s:    New(eqInt, 3, 5, 7),
+			expected: New(eqPartition,
+				New(eqSet,
+					New(eqInt, 3),
+					New(eqInt, 5),
+					New(eqInt, 7),
+				),
+				New(eqSet,
+					New(eqInt, 7),
+					New(eqInt, 3, 5),
+				),
+				New(eqSet,
+					New(eqInt, 5),
+					New(eqInt, 3, 7),
+				),
+				New(eqSet,
+					New(eqInt, 3),
+					New(eqInt, 5, 7),
+				),
+				New(eqSet,
+					New(eqInt, 3, 5, 7),
+				),
+			),
 		},
 		{
-			name: "TwoElements",
-			s: &set[string]{
-				members: []string{"a", "b"},
-				equal:   eqFunc,
-			},
-			expected: &set[Set[Set[string]]]{
-				members: []Set[Set[string]]{
-					&set[Set[string]]{ // 1st partition
-						members: []Set[string]{
-							&set[string]{
-								members: []string{"a"},
-								equal:   eqFunc,
-							},
-							&set[string]{
-								members: []string{"b"},
-								equal:   eqFunc,
-							},
-						},
-						equal: setEqFunc,
-					},
-					&set[Set[string]]{ // 2nd partition
-						members: []Set[string]{
-							&set[string]{
-								members: []string{"a", "b"},
-								equal:   eqFunc,
-							},
-						},
-						equal: setEqFunc,
-					},
-				},
-				equal: partEqFunc,
-			},
+			name: "NonEmpty_StableSet",
+			s:    NewStableSet(eqInt, 3, 5, 7),
+			expected: NewStableSet(eqPartition,
+				NewStableSet(eqSet,
+					NewStableSet(eqInt, 3),
+					NewStableSet(eqInt, 5),
+					NewStableSet(eqInt, 7),
+				),
+				NewStableSet(eqSet,
+					NewStableSet(eqInt, 7),
+					NewStableSet(eqInt, 3, 5),
+				),
+				NewStableSet(eqSet,
+					NewStableSet(eqInt, 5),
+					NewStableSet(eqInt, 3, 7),
+				),
+				NewStableSet(eqSet,
+					NewStableSet(eqInt, 3),
+					NewStableSet(eqInt, 5, 7),
+				),
+				NewStableSet(eqSet,
+					NewStableSet(eqInt, 3, 5, 7),
+				),
+			),
 		},
 		{
-			name: "ThreeElements",
-			s: &set[string]{
-				members: []string{"a", "b", "c"},
-				equal:   eqFunc,
-			},
-			expected: &set[Set[Set[string]]]{
-				members: []Set[Set[string]]{
-					&set[Set[string]]{ // 1st partition
-						members: []Set[string]{
-							&set[string]{
-								members: []string{"a"},
-								equal:   eqFunc,
-							},
-							&set[string]{
-								members: []string{"b"},
-								equal:   eqFunc,
-							},
-							&set[string]{
-								members: []string{"c"},
-								equal:   eqFunc,
-							},
-						},
-						equal: setEqFunc,
-					},
-					&set[Set[string]]{ // 2nd partition
-						members: []Set[string]{
-							&set[string]{
-								members: []string{"a", "b"},
-								equal:   eqFunc,
-							},
-							&set[string]{
-								members: []string{"c"},
-								equal:   eqFunc,
-							},
-						},
-						equal: setEqFunc,
-					},
-					&set[Set[string]]{ // 3rd partition
-						members: []Set[string]{
-							&set[string]{
-								members: []string{"b"},
-								equal:   eqFunc,
-							},
-							&set[string]{
-								members: []string{"a", "c"},
-								equal:   eqFunc,
-							},
-						},
-						equal: setEqFunc,
-					},
-					&set[Set[string]]{ // 4th partition
-						members: []Set[string]{
-							&set[string]{
-								members: []string{"a"},
-								equal:   eqFunc,
-							},
-							&set[string]{
-								members: []string{"b", "c"},
-								equal:   eqFunc,
-							},
-						},
-						equal: setEqFunc,
-					},
-					&set[Set[string]]{ // 5th partition
-						members: []Set[string]{
-							&set[string]{
-								members: []string{"a", "b", "c"},
-								equal:   eqFunc,
-							},
-						},
-						equal: setEqFunc,
-					},
-				},
-				equal: partEqFunc,
-			},
+			name: "NonEmpty_SortedSet",
+			s:    NewSortedSet(cmpInt, 3, 5, 7),
+			expected: NewSortedSet(cmpSortedPartition[int],
+				NewSortedSet(cmpSortedSet[int],
+					NewSortedSet(cmpInt, 3),
+					NewSortedSet(cmpInt, 5),
+					NewSortedSet(cmpInt, 7),
+				),
+				NewSortedSet(cmpSortedSet[int],
+					NewSortedSet(cmpInt, 7),
+					NewSortedSet(cmpInt, 3, 5),
+				),
+				NewSortedSet(cmpSortedSet[int],
+					NewSortedSet(cmpInt, 5),
+					NewSortedSet(cmpInt, 3, 7),
+				),
+				NewSortedSet(cmpSortedSet[int],
+					NewSortedSet(cmpInt, 3),
+					NewSortedSet(cmpInt, 5, 7),
+				),
+				NewSortedSet(cmpSortedSet[int],
+					NewSortedSet(cmpInt, 3, 5, 7),
+				),
+			),
+		},
+		{
+			name: "NonEmpty_HashSet",
+			s:    NewHashSet(hashInt, eqInt, opts, 3, 5, 7),
+			expected: NewHashSet(hashHashPartition[int], eqHashPartition[int], opts,
+				NewHashSet(hashHashSet[int], eqHashSet[int], opts,
+					NewHashSet(hashInt, eqInt, opts, 3),
+					NewHashSet(hashInt, eqInt, opts, 5),
+					NewHashSet(hashInt, eqInt, opts, 7),
+				),
+				NewHashSet(hashHashSet[int], eqHashSet[int], opts,
+					NewHashSet(hashInt, eqInt, opts, 7),
+					NewHashSet(hashInt, eqInt, opts, 3, 5),
+				),
+				NewHashSet(hashHashSet[int], eqHashSet[int], opts,
+					NewHashSet(hashInt, eqInt, opts, 5),
+					NewHashSet(hashInt, eqInt, opts, 3, 7),
+				),
+				NewHashSet(hashHashSet[int], eqHashSet[int], opts,
+					NewHashSet(hashInt, eqInt, opts, 3),
+					NewHashSet(hashInt, eqInt, opts, 5, 7),
+				),
+				NewHashSet(hashHashSet[int], eqHashSet[int], opts,
+					NewHashSet(hashInt, eqInt, opts, 3, 5, 7),
+				),
+			),
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			parts := Partitions[string](tc.s)
-			assert.True(t, parts.Equal(tc.expected))
+			partitions := Partitions(tc.s)
+			assert.True(t, partitions.Equal(tc.expected))
 		})
 	}
 }
