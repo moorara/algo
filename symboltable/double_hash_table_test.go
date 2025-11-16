@@ -3,6 +3,8 @@ package symboltable
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/hash"
 )
@@ -94,4 +96,16 @@ func TestDoubleHashTable(t *testing.T) {
 		ht := NewDoubleHashTable(tc.hashKey, tc.eqKey, tc.eqVal, tc.opts)
 		runSymbolTableTest(t, ht, tc)
 	}
+}
+
+func TestNewDoubleHashTable_Panic(t *testing.T) {
+	hashString := hash.HashFuncForString[string](nil)
+	eqString := generic.NewEqualFunc[string]()
+	eqInt := generic.NewEqualFunc[int]()
+
+	assert.PanicsWithValue(t, "The hash table capacity must be a prime number", func() {
+		NewDoubleHashTable(hashString, eqString, eqInt, HashOpts{
+			InitialCap: 69,
+		})
+	})
 }

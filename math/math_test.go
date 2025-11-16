@@ -1,4 +1,4 @@
-package symboltable
+package math
 
 import (
 	"testing"
@@ -28,7 +28,32 @@ func TestGCD(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedGCD, gcd(tc.a, tc.b))
+			assert.Equal(t, tc.expectedGCD, GCD(tc.a, tc.b))
+		})
+	}
+}
+
+func TestPower2(t *testing.T) {
+	tests := []struct {
+		name           string
+		n              int
+		expectedResult int
+	}{
+		{
+			name:           "2⁶",
+			n:              6,
+			expectedResult: 64,
+		},
+		{
+			name:           "2¹⁰",
+			n:              10,
+			expectedResult: 1024,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedResult, Power2(tc.n))
 		})
 	}
 }
@@ -49,11 +74,16 @@ func TestIsPowerOf2(t *testing.T) {
 			n:          69,
 			expectedOK: false,
 		},
+		{
+			name:       "Negative",
+			n:          -16,
+			expectedOK: false,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedOK, isPowerOf2(tc.n))
+			assert.Equal(t, tc.expectedOK, IsPowerOf2(tc.n))
 		})
 	}
 }
@@ -113,7 +143,7 @@ func TestIsPrime(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedIsPrime, isPrime(tc.n))
+			assert.Equal(t, tc.expectedIsPrime, IsPrime(tc.n))
 		})
 	}
 }
@@ -153,7 +183,7 @@ func TestLargestPrimeSmallerThan(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedPrime, largestPrimeSmallerThan(tc.n))
+			assert.Equal(t, tc.expectedPrime, LargestPrimeSmallerThan(tc.n))
 		})
 	}
 }
@@ -193,7 +223,7 @@ func TestSmallestPrimeLargerThan(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedPrime, smallestPrimeLargerThan(tc.n))
+			assert.Equal(t, tc.expectedPrime, SmallestPrimeLargerThan(tc.n))
 		})
 	}
 }
