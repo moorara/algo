@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/set"
 )
 
 func TestString(t *testing.T) {
@@ -211,6 +212,35 @@ func TestWriteString(t *testing.T) {
 	}
 }
 
+func TestEqString(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs           String[Symbol]
+		rhs           String[Symbol]
+		expectedEqual bool
+	}{
+		{
+			name:          "NotEqual",
+			lhs:           String[Symbol]{NonTerminal("A")},
+			rhs:           String[Symbol]{NonTerminal("a"), NonTerminal("A")},
+			expectedEqual: false,
+		},
+		{
+			name:          "Equal",
+			lhs:           String[Symbol]{Terminal("a"), NonTerminal("A")},
+			rhs:           String[Symbol]{Terminal("a"), NonTerminal("A")},
+			expectedEqual: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			equal := EqString(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedEqual, equal)
+		})
+	}
+}
+
 func TestCmpString(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -264,13 +294,13 @@ func TestCmpString(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cmp := cmpString(tc.lhs, tc.rhs)
-			assert.Equal(t, tc.expectedCompare, cmp)
+			compare := CmpString(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedCompare, compare)
 		})
 	}
 }
 
-func TestHashFuncForString(t *testing.T) {
+func TestHashString(t *testing.T) {
 	tests := []struct {
 		s            String[Symbol]
 		expectedHash uint64
@@ -286,7 +316,47 @@ func TestHashFuncForString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		hash := hashFuncForString()(tc.s)
+		hash := HashString(tc.s)
 		assert.Equal(t, tc.expectedHash, hash)
+	}
+}
+
+func TestEqStringSet(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs           set.Set[String[Symbol]]
+		rhs           set.Set[String[Symbol]]
+		expectedEqual bool
+	}{
+		{
+			name: "NotEqual",
+			lhs: set.New(EqString,
+				String[Symbol]{Terminal("a"), NonTerminal("A")},
+			),
+			rhs: set.New(EqString,
+				String[Symbol]{Terminal("a"), NonTerminal("A")},
+				String[Symbol]{Terminal("b"), NonTerminal("B")},
+			),
+			expectedEqual: false,
+		},
+		{
+			name: "Equal",
+			lhs: set.New(EqString,
+				String[Symbol]{Terminal("a"), NonTerminal("A")},
+				String[Symbol]{Terminal("b"), NonTerminal("B")},
+			),
+			rhs: set.New(EqString,
+				String[Symbol]{Terminal("a"), NonTerminal("A")},
+				String[Symbol]{Terminal("b"), NonTerminal("B")},
+			),
+			expectedEqual: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			equal := eqStringSet(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedEqual, equal)
+		})
 	}
 }

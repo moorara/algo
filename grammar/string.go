@@ -1,30 +1,15 @@
 package grammar
 
 import (
-	"hash/fnv"
 	"io"
 	"strings"
 
 	"github.com/moorara/algo/generic"
-	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/set"
 )
 
 // E is the empty string ε.
 var E = String[Symbol]{}
-
-var (
-	CmpString  = cmpString
-	HashString = hashFuncForString()
-
-	EqString = func(lhs, rhs String[Symbol]) bool {
-		return lhs.Equal(rhs)
-	}
-
-	eqStringSet = func(lhs, rhs set.Set[String[Symbol]]) bool {
-		return lhs.Equal(rhs)
-	}
-)
 
 // String represent a string of grammar symbols.
 type String[T Symbol] []T
@@ -190,7 +175,12 @@ func WriteString(w io.Writer, s String[Symbol]) (n int, err error) {
 	return total, nil
 }
 
-// cmpString is a CompareFunc for String[Symbol] type.
+// EqString is an EqualFunc for String[Symbol] type.
+func EqString(lhs, rhs String[Symbol]) bool {
+	return lhs.Equal(rhs)
+}
+
+// CmpString is a CompareFunc for String[Symbol] type.
 //
 // The comparing criteria are as follows:
 //
@@ -202,7 +192,7 @@ func WriteString(w io.Writer, s String[Symbol]) (n int, err error) {
 //
 // This function can be used for sorting strings
 // to ensure a consistent and deterministic order for any given set of strings.
-func cmpString(lhs, rhs String[Symbol]) int {
+func CmpString(lhs, rhs String[Symbol]) int {
 	// First, compare based on the number of non-terminal symbols in the strings.
 	lhsNonTermLen, rhsNonTermLen := len(lhs.NonTerminals()), len(rhs.NonTerminals())
 	if lhsNonTermLen > rhsNonTermLen {
@@ -230,13 +220,14 @@ func cmpString(lhs, rhs String[Symbol]) int {
 	return 0
 }
 
-// hashFuncForString creates a HashFunc for hashing strings of symbols.
-func hashFuncForString() hash.HashFunc[String[Symbol]] {
-	h := fnv.New64()
+// HashString computes the hash value of a string of symbols.
+func HashString(s String[Symbol]) uint64 {
+	h.Reset()
+	_, _ = WriteString(h, s) // Hash.Write never returns an error
+	return h.Sum64()
+}
 
-	return func(s String[Symbol]) uint64 {
-		h.Reset()
-		_, _ = WriteString(h, s) // Hash.Write never returns an error
-		return h.Sum64()
-	}
+// eqStringSet is an EqualFunc for set.Set[String[Symbol]] type.
+func eqStringSet(lhs, rhs set.Set[String[Symbol]]) bool {
+	return lhs.Equal(rhs)
 }

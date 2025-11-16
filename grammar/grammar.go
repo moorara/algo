@@ -5,3 +5,10 @@
 // A formal grammar defines which strings in a formal language's alphabet are syntactically valid.
 // It specifies the structure of the strings but does not address their meaning or usage in a given context.
 package grammar
+
+import "hash/fnv"
+
+var (
+	// h is the hash function used for computing hash values.
+	h = fnv.New64()
+)

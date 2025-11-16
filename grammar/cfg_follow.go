@@ -36,7 +36,7 @@ type TerminalsAndEndmarker struct {
 // newTerminalsAndEndmarker creates a new TerminalsAndEndmarker instance with the given set of terminals.
 func newTerminalsAndEndmarker(terms ...Terminal) *TerminalsAndEndmarker {
 	return &TerminalsAndEndmarker{
-		Terminals:         set.New(EqTerminal, terms...),
+		Terminals:         set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, terms...),
 		IncludesEndmarker: false,
 	}
 }

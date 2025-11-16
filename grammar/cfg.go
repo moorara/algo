@@ -81,8 +81,8 @@ type CFG struct {
 // NewCFG creates a new context-free grammar.
 func NewCFG(terms []Terminal, nonTerms []NonTerminal, prods []*Production, start NonTerminal) *CFG {
 	g := &CFG{
-		Terminals:    set.New(EqTerminal),
-		NonTerminals: set.New(EqNonTerminal),
+		Terminals:    set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}),
+		NonTerminals: set.NewHashSet(HashNonTerminal, EqNonTerminal, set.HashSetOpts{}),
 		Productions:  NewProductions(),
 		Start:        start,
 	}
@@ -196,7 +196,7 @@ func (g *CFG) Equal(rhs *CFG) bool {
 
 // Symbols returns the set of all symbols in the grammar, including both terminal and non-terminal symbols.
 func (g *CFG) Symbols() set.Set[Symbol] {
-	symbols := set.New(EqSymbol)
+	symbols := set.NewHashSet(HashSymbol, EqSymbol, set.HashSetOpts{})
 
 	for t := range g.Terminals.All() {
 		symbols.Add(t)
@@ -343,7 +343,7 @@ func (g *CFG) IsLL1() error {
 // that can derive the empty string ε in one or more steps (A ⇒* ε for some non-terminal A).
 func (g *CFG) NullableNonTerminals() set.Set[NonTerminal] {
 	// Define a set for all non-terminals that can derive the empty string ε
-	nullable := set.New(EqNonTerminal)
+	nullable := set.NewHashSet(HashNonTerminal, EqNonTerminal, set.HashSetOpts{})
 
 	for updated := true; updated; {
 		updated = false
@@ -516,8 +516,8 @@ func (g *CFG) EliminateSingleProductions() *CFG {
 // The function also removes unreachable terminals,
 // which are terminals that do not appear in any reachable production.
 func (g *CFG) EliminateUnreachableProductions() *CFG {
-	reachableT := set.New(EqTerminal)
-	reachableN := set.New(EqNonTerminal, g.Start)
+	reachableT := set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{})
+	reachableN := set.NewHashSet(HashNonTerminal, EqNonTerminal, set.HashSetOpts{}, g.Start)
 	reachableP := NewProductions()
 
 	// Reppeat until no new non-terminal is added to reachable non-terminals:
@@ -783,7 +783,7 @@ func groupByCommonPrefix(prods set.Set[*Production]) symboltable.SymbolTable[Str
 				prefix, suffix = prod.Body[:1], prod.Body[1:]
 			}
 
-			suffixes := set.New(EqString, suffix)
+			suffixes := set.NewHashSet(HashString, EqString, set.HashSetOpts{}, suffix)
 			groups.Put(prefix, suffixes)
 		}
 	}

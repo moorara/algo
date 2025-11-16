@@ -38,7 +38,7 @@ func TestTerminalsAndEmpty(t *testing.T) {
 		{
 			name: "OK",
 			set: &TerminalsAndEmpty{
-				Terminals:     set.New(EqTerminal, "a", "b", "c", "d", "e", "f"),
+				Terminals:     set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a", "b", "c", "d", "e", "f"),
 				IncludesEmpty: true,
 			},
 			expectedString: `{"a", "b", "c", "d", "e", "f", ε}`,

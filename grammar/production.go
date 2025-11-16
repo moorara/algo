@@ -3,27 +3,12 @@ package grammar
 import (
 	"bytes"
 	"fmt"
-	"hash/fnv"
 	"iter"
 
 	"github.com/moorara/algo/generic"
-	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
-)
-
-var (
-	CmpProduction  = cmpProduction
-	HashProduction = hashFuncForProduction()
-
-	EqProduction = func(lhs, rhs *Production) bool {
-		return lhs.Equal(rhs)
-	}
-
-	EqProductionSet = func(lhs, rhs set.Set[*Production]) bool {
-		return lhs.Equal(rhs)
-	}
 )
 
 // Production represents a context-free production rule.
@@ -162,7 +147,10 @@ func (p *Productions) Size() int {
 func (p *Productions) Add(ps ...*Production) {
 	for _, q := range ps {
 		if _, ok := p.table.Get(q.Head); !ok {
-			p.table.Put(q.Head, set.New(EqProduction))
+			p.table.Put(
+				q.Head,
+				set.NewHashSet(HashProduction, EqProduction, set.HashSetOpts{}),
+			)
 		}
 
 		list, _ := p.table.Get(q.Head)
@@ -266,10 +254,15 @@ func OrderProductionSet(set set.Set[*Production]) []*Production {
 // orderProductionSlice orders a slice of production rules in a deterministic way.
 func orderProductionSlice(prods []*Production) {
 	// Sort the productions using a custom comparison function.
-	sort.Quick(prods, cmpProduction)
+	sort.Quick(prods, CmpProduction)
 }
 
-// cmpProduction is a CompareFunc for Production type.
+// EqProduction is an EqualFunc for Production type.
+func EqProduction(lhs, rhs *Production) bool {
+	return lhs.Equal(rhs)
+}
+
+// CmpProduction is a CompareFunc for Production type.
 //
 // The comparing criteria are as follows:
 //
@@ -278,7 +271,7 @@ func orderProductionSlice(prods []*Production) {
 //
 // This function can be used for sorting productions
 // to ensure a consistent and deterministic order for any given set of production rules.
-func cmpProduction(lhs, rhs *Production) int {
+func CmpProduction(lhs, rhs *Production) int {
 	// First, compare the heads of productions.
 	if cmp := CmpNonTerminal(lhs.Head, rhs.Head); cmp < 0 {
 		return -1
@@ -290,14 +283,15 @@ func cmpProduction(lhs, rhs *Production) int {
 	return CmpString(lhs.Body, rhs.Body)
 }
 
-// hashFuncForProduction creates a HashFunc for hashing productions.
-func hashFuncForProduction() hash.HashFunc[*Production] {
-	h := fnv.New64()
+// HashProduction is a HashFunc for Production type.
+func HashProduction(p *Production) uint64 {
+	h.Reset()
+	_, _ = WriteSymbol(h, p.Head) // Hash.Write never returns an error
+	_, _ = WriteString(h, p.Body) // Hash.Write never returns an error
+	return h.Sum64()
+}
 
-	return func(p *Production) uint64 {
-		h.Reset()
-		_, _ = WriteSymbol(h, p.Head) // Hash.Write never returns an error
-		_, _ = WriteString(h, p.Body) // Hash.Write never returns an error
-		return h.Sum64()
-	}
+// EqProductionSet is an EqualFunc for set.Set[*Production] type.
+func EqProductionSet(lhs, rhs set.Set[*Production]) bool {
+	return lhs.Equal(rhs)
 }

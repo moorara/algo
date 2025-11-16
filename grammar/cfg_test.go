@@ -613,7 +613,7 @@ func TestCFG_Symbols(t *testing.T) {
 		{
 			name: "1st",
 			g:    CFGrammars[0],
-			expectedSymbols: set.New[Symbol](EqSymbol,
+			expectedSymbols: set.NewHashSet[Symbol](HashSymbol, EqSymbol, set.HashSetOpts{},
 				Terminal("0"), Terminal("1"),
 				NonTerminal("S"), NonTerminal("X"), NonTerminal("Y"),
 			),
@@ -621,7 +621,7 @@ func TestCFG_Symbols(t *testing.T) {
 		{
 			name: "2nd",
 			g:    CFGrammars[1],
-			expectedSymbols: set.New[Symbol](EqSymbol,
+			expectedSymbols: set.NewHashSet[Symbol](HashSymbol, EqSymbol, set.HashSetOpts{},
 				Terminal("a"), Terminal("b"),
 				NonTerminal("S"),
 			),
@@ -629,7 +629,7 @@ func TestCFG_Symbols(t *testing.T) {
 		{
 			name: "3rd",
 			g:    CFGrammars[2],
-			expectedSymbols: set.New[Symbol](EqSymbol,
+			expectedSymbols: set.NewHashSet[Symbol](HashSymbol, EqSymbol, set.HashSetOpts{},
 				Terminal("a"), Terminal("b"),
 				NonTerminal("S"), NonTerminal("A"), NonTerminal("B"),
 			),
@@ -637,7 +637,7 @@ func TestCFG_Symbols(t *testing.T) {
 		{
 			name: "4th",
 			g:    CFGrammars[3],
-			expectedSymbols: set.New[Symbol](EqSymbol,
+			expectedSymbols: set.NewHashSet[Symbol](HashSymbol, EqSymbol, set.HashSetOpts{},
 				Terminal("b"), Terminal("c"), Terminal("d"), Terminal("s"),
 				NonTerminal("S"), NonTerminal("A"), NonTerminal("B"), NonTerminal("C"), NonTerminal("D"),
 			),
@@ -645,7 +645,7 @@ func TestCFG_Symbols(t *testing.T) {
 		{
 			name: "5th",
 			g:    CFGrammars[4],
-			expectedSymbols: set.New[Symbol](EqSymbol,
+			expectedSymbols: set.NewHashSet[Symbol](HashSymbol, EqSymbol, set.HashSetOpts{},
 				Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d"),
 				NonTerminal("S"), NonTerminal("A"), NonTerminal("B"), NonTerminal("C"), NonTerminal("D"),
 			),
@@ -653,7 +653,7 @@ func TestCFG_Symbols(t *testing.T) {
 		{
 			name: "6th",
 			g:    CFGrammars[5],
-			expectedSymbols: set.New[Symbol](EqSymbol,
+			expectedSymbols: set.NewHashSet[Symbol](HashSymbol, EqSymbol, set.HashSetOpts{},
 				Terminal("a"), Terminal("b"),
 				NonTerminal("S"), NonTerminal("A"), NonTerminal("A₁"), NonTerminal("B"), NonTerminal("B₁"),
 			),
@@ -661,7 +661,7 @@ func TestCFG_Symbols(t *testing.T) {
 		{
 			name: "7th",
 			g:    CFGrammars[6],
-			expectedSymbols: set.New[Symbol](EqSymbol,
+			expectedSymbols: set.NewHashSet[Symbol](HashSymbol, EqSymbol, set.HashSetOpts{},
 				Terminal("+"), Terminal("-"), Terminal("*"), Terminal("/"), Terminal("("), Terminal(")"), Terminal("id"),
 				NonTerminal("S"), NonTerminal("E"),
 			),
@@ -669,7 +669,7 @@ func TestCFG_Symbols(t *testing.T) {
 		{
 			name: "8th",
 			g:    CFGrammars[7],
-			expectedSymbols: set.New[Symbol](EqSymbol,
+			expectedSymbols: set.NewHashSet[Symbol](HashSymbol, EqSymbol, set.HashSetOpts{},
 				Terminal("+"), Terminal("-"), Terminal("*"), Terminal("/"), Terminal("("), Terminal(")"), Terminal("id"),
 				NonTerminal("S"), NonTerminal("E"), NonTerminal("T"), NonTerminal("F"),
 			),
@@ -677,7 +677,7 @@ func TestCFG_Symbols(t *testing.T) {
 		{
 			name: "9th",
 			g:    CFGrammars[8],
-			expectedSymbols: set.New[Symbol](EqSymbol,
+			expectedSymbols: set.NewHashSet[Symbol](HashSymbol, EqSymbol, set.HashSetOpts{},
 				Terminal("+"), Terminal("*"), Terminal("("), Terminal(")"), Terminal("id"),
 				NonTerminal("E"), NonTerminal("E′"), NonTerminal("T"), NonTerminal("T′"), NonTerminal("F"),
 			),
@@ -1880,7 +1880,7 @@ func TestGroupByCommonPrefix(t *testing.T) {
 	}{
 		{
 			name: "1st",
-			prods: set.New(EqProduction,
+			prods: set.NewHashSet(HashProduction, EqProduction, set.HashSetOpts{},
 				&Production{"A", String[Symbol]{Terminal("a")}},
 				&Production{"A", E},
 			),
@@ -1891,7 +1891,7 @@ func TestGroupByCommonPrefix(t *testing.T) {
 		},
 		{
 			name: "2nd",
-			prods: set.New(EqProduction,
+			prods: set.NewHashSet(HashProduction, EqProduction, set.HashSetOpts{},
 				&Production{"stmt", String[Symbol]{NonTerminal("expr")}},
 				&Production{"stmt", String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt")}},
 				&Production{"stmt", String[Symbol]{Terminal("if"), NonTerminal("expr"), Terminal("then"), NonTerminal("stmt"), Terminal("else"), NonTerminal("stmt")}},
@@ -1903,7 +1903,7 @@ func TestGroupByCommonPrefix(t *testing.T) {
 		},
 		{
 			name: "3rd",
-			prods: set.New(EqProduction,
+			prods: set.NewHashSet(HashProduction, EqProduction, set.HashSetOpts{},
 				&Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d"), NonTerminal("A"), NonTerminal("B")}},
 				&Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), Terminal("d"), NonTerminal("C"), NonTerminal("D")}},
 				&Production{"S", String[Symbol]{Terminal("a"), Terminal("b"), Terminal("c"), NonTerminal("E"), NonTerminal("F")}},
@@ -2254,18 +2254,18 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("Y"), NonTerminal("X"), NonTerminal("Y")}, // YXY
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(EqTerminal), IncludesEmpty: true},           // FIRST(ε)
-				{Terminals: set.New(EqTerminal, "0"), IncludesEmpty: false},     // FIRST(0)
-				{Terminals: set.New(EqTerminal, "1"), IncludesEmpty: false},     // FIRST(1)
-				{Terminals: set.New(EqTerminal, "0", "1"), IncludesEmpty: true}, // FIRST(S)
-				{Terminals: set.New(EqTerminal, "0"), IncludesEmpty: true},      // FIRST(X)
-				{Terminals: set.New(EqTerminal, "1"), IncludesEmpty: true},      // FIRST(Y)
-				{Terminals: set.New(EqTerminal, "0"), IncludesEmpty: false},     // FIRST(01)
-				{Terminals: set.New(EqTerminal, "1"), IncludesEmpty: false},     // FIRST(10)
-				{Terminals: set.New(EqTerminal, "0", "1"), IncludesEmpty: true}, // FIRST(XY)
-				{Terminals: set.New(EqTerminal, "1", "0"), IncludesEmpty: true}, // FIRST(YX)
-				{Terminals: set.New(EqTerminal, "0", "1"), IncludesEmpty: true}, // FIRST(XYX)
-				{Terminals: set.New(EqTerminal, "1", "0"), IncludesEmpty: true}, // FIRST(YXY)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEmpty: true},           // FIRST(ε)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "0"), IncludesEmpty: false},     // FIRST(0)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "1"), IncludesEmpty: false},     // FIRST(1)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "0", "1"), IncludesEmpty: true}, // FIRST(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "0"), IncludesEmpty: true},      // FIRST(X)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "1"), IncludesEmpty: true},      // FIRST(Y)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "0"), IncludesEmpty: false},     // FIRST(01)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "1"), IncludesEmpty: false},     // FIRST(10)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "0", "1"), IncludesEmpty: true}, // FIRST(XY)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "1", "0"), IncludesEmpty: true}, // FIRST(YX)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "0", "1"), IncludesEmpty: true}, // FIRST(XYX)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "1", "0"), IncludesEmpty: true}, // FIRST(YXY)
 			},
 		},
 		{
@@ -2282,14 +2282,14 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("S"), Terminal("b"), Terminal("a")}, // Sba
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(EqTerminal), IncludesEmpty: true},            // FIRST(ε)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false},      // FIRST(a)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false},      // FIRST(b)
-				{Terminals: set.New(EqTerminal, "a", "b"), IncludesEmpty: true},  // FIRST(S)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false},      // FIRST(ab)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false},      // FIRST(ba)
-				{Terminals: set.New(EqTerminal, "a", "b"), IncludesEmpty: false}, // FIRST(Sab)
-				{Terminals: set.New(EqTerminal, "b", "a"), IncludesEmpty: false}, // FIRST(Sba)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEmpty: true},            // FIRST(ε)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false},      // FIRST(a)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false},      // FIRST(b)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a", "b"), IncludesEmpty: true},  // FIRST(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false},      // FIRST(ab)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false},      // FIRST(ba)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a", "b"), IncludesEmpty: false}, // FIRST(Sab)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b", "a"), IncludesEmpty: false}, // FIRST(Sba)
 			},
 		},
 		{
@@ -2310,18 +2310,18 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("B"), NonTerminal("A"), NonTerminal("B")}, // BAB
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(EqTerminal), IncludesEmpty: true},            // FIRST(ε)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false},      // FIRST(a)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false},      // FIRST(b)
-				{Terminals: set.New(EqTerminal, "a", "b"), IncludesEmpty: false}, // FIRST(S)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(A)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(B)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false},      // FIRST(ab)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false},      // FIRST(ba)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(AB)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(BA)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(ABA)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: true},       // FIRST(BAB)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEmpty: true},            // FIRST(ε)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false},      // FIRST(a)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false},      // FIRST(b)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a", "b"), IncludesEmpty: false}, // FIRST(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: true},       // FIRST(A)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: true},       // FIRST(B)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false},      // FIRST(ab)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false},      // FIRST(ba)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: true},       // FIRST(AB)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: true},       // FIRST(BA)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: true},       // FIRST(ABA)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: true},       // FIRST(BAB)
 			},
 		},
 		{
@@ -2346,22 +2346,22 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("A"), NonTerminal("B"), NonTerminal("C"), NonTerminal("D")}, // ABCD
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(EqTerminal), IncludesEmpty: true},                 // FIRST(ε)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false},           // FIRST(b)
-				{Terminals: set.New(EqTerminal, "c"), IncludesEmpty: false},           // FIRST(c)
-				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false},           // FIRST(d)
-				{Terminals: set.New(EqTerminal, "s"), IncludesEmpty: false},           // FIRST(s)
-				{Terminals: set.New(EqTerminal, "b", "d", "s"), IncludesEmpty: false}, // FIRST(S)
-				{Terminals: set.New(EqTerminal, "d", "b"), IncludesEmpty: false},      // FIRST(A)
-				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(B)
-				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false},           // FIRST(C)
-				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false},           // FIRST(D)
-				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(AB)
-				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(BC)
-				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false},           // FIRST(CD)
-				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(ABC)
-				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(BCD)
-				{Terminals: set.New(EqTerminal, "b", "d"), IncludesEmpty: false},      // FIRST(ABCD)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEmpty: true},                 // FIRST(ε)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false},           // FIRST(b)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "c"), IncludesEmpty: false},           // FIRST(c)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "d"), IncludesEmpty: false},           // FIRST(d)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "s"), IncludesEmpty: false},           // FIRST(s)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b", "d", "s"), IncludesEmpty: false}, // FIRST(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "d", "b"), IncludesEmpty: false},      // FIRST(A)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b", "d"), IncludesEmpty: false},      // FIRST(B)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "d"), IncludesEmpty: false},           // FIRST(C)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "d"), IncludesEmpty: false},           // FIRST(D)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b", "d"), IncludesEmpty: false},      // FIRST(AB)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b", "d"), IncludesEmpty: false},      // FIRST(BC)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "d"), IncludesEmpty: false},           // FIRST(CD)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b", "d"), IncludesEmpty: false},      // FIRST(ABC)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b", "d"), IncludesEmpty: false},      // FIRST(BCD)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b", "d"), IncludesEmpty: false},      // FIRST(ABCD)
 			},
 		},
 		{
@@ -2386,22 +2386,22 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("A"), NonTerminal("B"), NonTerminal("C"), NonTerminal("D")}, // ABCD
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(EqTerminal), IncludesEmpty: true},       // FIRST(ε)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(a)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(b)
-				{Terminals: set.New(EqTerminal, "c"), IncludesEmpty: false}, // FIRST(c)
-				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false}, // FIRST(d)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(S)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(A)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(B)
-				{Terminals: set.New(EqTerminal, "c"), IncludesEmpty: false}, // FIRST(C)
-				{Terminals: set.New(EqTerminal, "d"), IncludesEmpty: false}, // FIRST(D)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(AB)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(BC)
-				{Terminals: set.New(EqTerminal, "c"), IncludesEmpty: false}, // FIRST(CD)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(ABC)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(BCD)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(ABCD)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEmpty: true},       // FIRST(ε)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(a)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false}, // FIRST(b)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "c"), IncludesEmpty: false}, // FIRST(c)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "d"), IncludesEmpty: false}, // FIRST(d)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(A)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false}, // FIRST(B)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "c"), IncludesEmpty: false}, // FIRST(C)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "d"), IncludesEmpty: false}, // FIRST(D)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(AB)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false}, // FIRST(BC)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "c"), IncludesEmpty: false}, // FIRST(CD)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(ABC)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false}, // FIRST(BCD)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(ABCD)
 			},
 		},
 		{
@@ -2426,22 +2426,22 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("B"), NonTerminal("B₁"), NonTerminal("A₁"), NonTerminal("A")}, // BB₁A₁A
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(EqTerminal), IncludesEmpty: true},       // FIRST(ε)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(a)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(b)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: true},  // FIRST(S)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(A)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(A₁)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(B)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(B₁)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(AA₁)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(BB₁)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(AB)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(A₁B₁)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(AA₁B₁)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(ABB₁)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEmpty: false}, // FIRST(AA₁BB₁)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEmpty: false}, // FIRST(BB₁A₁A)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEmpty: true},       // FIRST(ε)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(a)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false}, // FIRST(b)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: true},  // FIRST(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(A)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(A₁)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false}, // FIRST(B)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false}, // FIRST(B₁)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(AA₁)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false}, // FIRST(BB₁)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(AB)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(A₁B₁)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(AA₁B₁)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(ABB₁)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEmpty: false}, // FIRST(AA₁BB₁)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEmpty: false}, // FIRST(BB₁A₁A)
 			},
 		},
 		{
@@ -2462,18 +2462,18 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("E"), NonTerminal("E")}, // EE
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(EqTerminal), IncludesEmpty: true},                  // FIRST(ε)
-				{Terminals: set.New(EqTerminal, "+"), IncludesEmpty: false},            // FIRST(+)
-				{Terminals: set.New(EqTerminal, "-"), IncludesEmpty: false},            // FIRST(-)
-				{Terminals: set.New(EqTerminal, "*"), IncludesEmpty: false},            // FIRST(*)
-				{Terminals: set.New(EqTerminal, "/"), IncludesEmpty: false},            // FIRST(/)
-				{Terminals: set.New(EqTerminal, "("), IncludesEmpty: false},            // FIRST(()
-				{Terminals: set.New(EqTerminal, ")"), IncludesEmpty: false},            // FIRST())
-				{Terminals: set.New(EqTerminal, "id"), IncludesEmpty: false},           // FIRST(id)
-				{Terminals: set.New(EqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(S)
-				{Terminals: set.New(EqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(E)
-				{Terminals: set.New(EqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(SE)
-				{Terminals: set.New(EqTerminal, "-", "(", "id"), IncludesEmpty: false}, // FIRST(EE)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEmpty: true},                  // FIRST(ε)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "+"), IncludesEmpty: false},            // FIRST(+)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "-"), IncludesEmpty: false},            // FIRST(-)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "*"), IncludesEmpty: false},            // FIRST(*)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "/"), IncludesEmpty: false},            // FIRST(/)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "("), IncludesEmpty: false},            // FIRST(()
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, ")"), IncludesEmpty: false},            // FIRST())
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "id"), IncludesEmpty: false},           // FIRST(id)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "-", "(", "id"), IncludesEmpty: false}, // FIRST(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "-", "(", "id"), IncludesEmpty: false}, // FIRST(E)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "-", "(", "id"), IncludesEmpty: false}, // FIRST(SE)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "-", "(", "id"), IncludesEmpty: false}, // FIRST(EE)
 			},
 		},
 		{
@@ -2498,22 +2498,22 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("E"), NonTerminal("T"), NonTerminal("F")}, // ETF
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(EqTerminal), IncludesEmpty: true},             // FIRST(ε)
-				{Terminals: set.New(EqTerminal, "+"), IncludesEmpty: false},       // FIRST(+)
-				{Terminals: set.New(EqTerminal, "-"), IncludesEmpty: false},       // FIRST(-)
-				{Terminals: set.New(EqTerminal, "*"), IncludesEmpty: false},       // FIRST(*)
-				{Terminals: set.New(EqTerminal, "/"), IncludesEmpty: false},       // FIRST(/)
-				{Terminals: set.New(EqTerminal, "("), IncludesEmpty: false},       // FIRST(()
-				{Terminals: set.New(EqTerminal, ")"), IncludesEmpty: false},       // FIRST())
-				{Terminals: set.New(EqTerminal, "id"), IncludesEmpty: false},      // FIRST(id)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(S)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(E)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(T)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(F)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(ET)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(EF)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(TF)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(ETF)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEmpty: true},             // FIRST(ε)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "+"), IncludesEmpty: false},       // FIRST(+)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "-"), IncludesEmpty: false},       // FIRST(-)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "*"), IncludesEmpty: false},       // FIRST(*)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "/"), IncludesEmpty: false},       // FIRST(/)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "("), IncludesEmpty: false},       // FIRST(()
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, ")"), IncludesEmpty: false},       // FIRST())
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "id"), IncludesEmpty: false},      // FIRST(id)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(E)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(T)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(F)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(ET)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(EF)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(TF)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(ETF)
 			},
 		},
 		{
@@ -2538,22 +2538,22 @@ func TestCFG_ComputeFIRST(t *testing.T) {
 				{NonTerminal("E"), NonTerminal("E′"), NonTerminal("T"), NonTerminal("T′"), NonTerminal("F")}, // EE′TT′F
 			},
 			expectedFirsts: []TerminalsAndEmpty{
-				{Terminals: set.New(EqTerminal), IncludesEmpty: true},             // FIRST(ε)
-				{Terminals: set.New(EqTerminal, "+"), IncludesEmpty: false},       // FIRST(+)
-				{Terminals: set.New(EqTerminal, "*"), IncludesEmpty: false},       // FIRST(*)
-				{Terminals: set.New(EqTerminal, "("), IncludesEmpty: false},       // FIRST(()
-				{Terminals: set.New(EqTerminal, ")"), IncludesEmpty: false},       // FIRST())
-				{Terminals: set.New(EqTerminal, "id"), IncludesEmpty: false},      // FIRST(id)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(E)
-				{Terminals: set.New(EqTerminal, "+"), IncludesEmpty: true},        // FIRST(E′)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(T)
-				{Terminals: set.New(EqTerminal, "*"), IncludesEmpty: true},        // FIRST(T′)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(F)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(EE′)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(TT′)
-				{Terminals: set.New(EqTerminal, "*", "+"), IncludesEmpty: true},   // FIRST(E′T′)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(ETF)
-				{Terminals: set.New(EqTerminal, "(", "id"), IncludesEmpty: false}, // FIRST(EE′TT′F)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEmpty: true},             // FIRST(ε)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "+"), IncludesEmpty: false},       // FIRST(+)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "*"), IncludesEmpty: false},       // FIRST(*)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "("), IncludesEmpty: false},       // FIRST(()
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, ")"), IncludesEmpty: false},       // FIRST())
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "id"), IncludesEmpty: false},      // FIRST(id)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(E)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "+"), IncludesEmpty: true},        // FIRST(E′)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(T)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "*"), IncludesEmpty: true},        // FIRST(T′)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(F)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(EE′)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(TT′)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "*", "+"), IncludesEmpty: true},   // FIRST(E′T′)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(ETF)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "(", "id"), IncludesEmpty: false}, // FIRST(EE′TT′F)
 			},
 		},
 	}
@@ -2590,9 +2590,9 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("Y"), // Y
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},           // FOLLOW(S)
-				{Terminals: set.New(EqTerminal, "0", "1"), IncludesEndmarker: true}, // FOLLOW(X)
-				{Terminals: set.New(EqTerminal, "0"), IncludesEndmarker: true},      // FOLLOW(Y)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true},           // FOLLOW(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "0", "1"), IncludesEndmarker: true}, // FOLLOW(X)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "0"), IncludesEndmarker: true},      // FOLLOW(Y)
 			},
 		},
 		{
@@ -2602,7 +2602,7 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("S"), // S
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(EqTerminal, "a", "b"), IncludesEndmarker: true}, // FOLLOW(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a", "b"), IncludesEndmarker: true}, // FOLLOW(S)
 			},
 		},
 		{
@@ -2614,9 +2614,9 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("B"), // B
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},            // FOLLOW(S)
-				{Terminals: set.New(EqTerminal, "a", "b"), IncludesEndmarker: false}, // FOLLOW(A)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEndmarker: false},      // FOLLOW(B)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true},            // FOLLOW(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a", "b"), IncludesEndmarker: false}, // FOLLOW(A)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEndmarker: false},      // FOLLOW(B)
 			},
 		},
 		{
@@ -2630,11 +2630,11 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("D"), // D
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true}, // FOLLOW(S)
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true}, // FOLLOW(A)
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true}, // FOLLOW(B)
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true}, // FOLLOW(C)
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true}, // FOLLOW(D)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true}, // FOLLOW(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true}, // FOLLOW(A)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true}, // FOLLOW(B)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true}, // FOLLOW(C)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true}, // FOLLOW(D)
 			},
 		},
 		{
@@ -2648,11 +2648,11 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("D"), // D
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},       // FOLLOW(S)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEndmarker: false}, // FOLLOW(A)
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},       // FOLLOW(B)
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: false},      // FOLLOW(C)
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: false},      // FOLLOW(D)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true},       // FOLLOW(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEndmarker: false}, // FOLLOW(A)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true},       // FOLLOW(B)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: false},      // FOLLOW(C)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: false},      // FOLLOW(D)
 			},
 		},
 		{
@@ -2666,11 +2666,11 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("B₁"), // B₁
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},       // FOLLOW(S)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEndmarker: false}, // FOLLOW(A)
-				{Terminals: set.New(EqTerminal, "a"), IncludesEndmarker: false}, // FOLLOW(A₁)
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},       // FOLLOW(B)
-				{Terminals: set.New(EqTerminal, "b"), IncludesEndmarker: false}, // FOLLOW(B₁)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true},       // FOLLOW(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEndmarker: false}, // FOLLOW(A)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "a"), IncludesEndmarker: false}, // FOLLOW(A₁)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true},       // FOLLOW(B)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "b"), IncludesEndmarker: false}, // FOLLOW(B₁)
 			},
 		},
 		{
@@ -2681,8 +2681,8 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("E"), // E
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},                          // FOLLOW(S)
-				{Terminals: set.New(EqTerminal, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(E)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true},                          // FOLLOW(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(E)
 			},
 		},
 		{
@@ -2695,10 +2695,10 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("F"), // F
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(EqTerminal), IncludesEndmarker: true},                          // FOLLOW(S)
-				{Terminals: set.New(EqTerminal, "+", "-", ")"), IncludesEndmarker: true},           // FOLLOW(E)
-				{Terminals: set.New(EqTerminal, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(T)
-				{Terminals: set.New(EqTerminal, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(F)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}), IncludesEndmarker: true},                          // FOLLOW(S)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "+", "-", ")"), IncludesEndmarker: true},           // FOLLOW(E)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(T)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "+", "-", "*", "/", ")"), IncludesEndmarker: true}, // FOLLOW(F)
 			},
 		},
 		{
@@ -2712,11 +2712,11 @@ func TestCFG_ComputeFOLLOW(t *testing.T) {
 				NonTerminal("F"),  // F
 			},
 			expectedFollows: []TerminalsAndEndmarker{
-				{Terminals: set.New(EqTerminal, ")"), IncludesEndmarker: true},           // FOLLOW(E)
-				{Terminals: set.New(EqTerminal, ")"), IncludesEndmarker: true},           // FOLLOW(E′)
-				{Terminals: set.New(EqTerminal, ")", "+"), IncludesEndmarker: true},      // FOLLOW(T)
-				{Terminals: set.New(EqTerminal, ")", "+"), IncludesEndmarker: true},      // FOLLOW(T′)
-				{Terminals: set.New(EqTerminal, ")", "*", "+"), IncludesEndmarker: true}, // FOLLOW(F)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, ")"), IncludesEndmarker: true},           // FOLLOW(E)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, ")"), IncludesEndmarker: true},           // FOLLOW(E′)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, ")", "+"), IncludesEndmarker: true},      // FOLLOW(T)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, ")", "+"), IncludesEndmarker: true},      // FOLLOW(T′)
+				{Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, ")", "*", "+"), IncludesEndmarker: true}, // FOLLOW(F)
 			},
 		},
 	}

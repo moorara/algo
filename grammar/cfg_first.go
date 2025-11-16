@@ -35,7 +35,7 @@ type TerminalsAndEmpty struct {
 // newTerminalsAndEmpty creates a new TerminalsAndEmpty instance with the given set of terminals.
 func newTerminalsAndEmpty(terms ...Terminal) *TerminalsAndEmpty {
 	return &TerminalsAndEmpty{
-		Terminals:     set.New(EqTerminal, terms...),
+		Terminals:     set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, terms...),
 		IncludesEmpty: false,
 	}
 }

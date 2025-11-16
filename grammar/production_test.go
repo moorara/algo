@@ -469,19 +469,19 @@ func TestProductions_RemoveAll(t *testing.T) {
 func TestProductions_Get(t *testing.T) {
 	p := getTestProductions()
 
-	s1 := set.New(EqProduction,
+	s1 := set.NewHashSet(HashProduction, EqProduction, set.HashSetOpts{},
 		&Production{"S", String[Symbol]{Terminal("a"), NonTerminal("S"), Terminal("b"), NonTerminal("S")}}, // S → aSbS
 		&Production{"S", String[Symbol]{Terminal("b"), NonTerminal("S"), Terminal("a"), NonTerminal("S")}}, // S → bSaS
 		&Production{"S", E}, // S → ε
 	)
 
-	s2 := set.New(EqProduction,
+	s2 := set.NewHashSet(HashProduction, EqProduction, set.HashSetOpts{},
 		&Production{"T", String[Symbol]{NonTerminal("T"), Terminal("*"), NonTerminal("F")}}, // T → T * F
 		&Production{"T", String[Symbol]{NonTerminal("T"), Terminal("/"), NonTerminal("F")}}, // T → T / F
 		&Production{"T", String[Symbol]{NonTerminal("F")}},                                  // T → F
 	)
 
-	s3 := set.New(EqProduction,
+	s3 := set.NewHashSet(HashProduction, EqProduction, set.HashSetOpts{},
 		&Production{"E", String[Symbol]{NonTerminal("E"), Terminal("+"), NonTerminal("E")}}, // E → E + E
 		&Production{"E", String[Symbol]{NonTerminal("E"), Terminal("-"), NonTerminal("E")}}, // E → E - E
 		&Production{"E", String[Symbol]{NonTerminal("E"), Terminal("*"), NonTerminal("E")}}, // E → E * E
@@ -794,6 +794,35 @@ func TestOrderProductionSet(t *testing.T) {
 	}
 }
 
+func TestEqProduction(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs           *Production
+		rhs           *Production
+		expectedEqual bool
+	}{
+		{
+			name:          "NotEqual",
+			lhs:           &Production{"A", String[Symbol]{Terminal("a")}},
+			rhs:           &Production{"B", String[Symbol]{Terminal("b")}},
+			expectedEqual: false,
+		},
+		{
+			name:          "Equal",
+			lhs:           &Production{"A", String[Symbol]{Terminal("a")}},
+			rhs:           &Production{"A", String[Symbol]{Terminal("a")}},
+			expectedEqual: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			equal := EqProduction(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedEqual, equal)
+		})
+	}
+}
+
 func TestCmpProduction(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -823,13 +852,13 @@ func TestCmpProduction(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cmp := cmpProduction(tc.lhs, tc.rhs)
-			assert.Equal(t, tc.expectedCompare, cmp)
+			compare := CmpProduction(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedCompare, compare)
 		})
 	}
 }
 
-func TestHashFuncForProduction(t *testing.T) {
+func TestHashProduction(t *testing.T) {
 	tests := []struct {
 		p            *Production
 		expectedHash uint64
@@ -845,7 +874,48 @@ func TestHashFuncForProduction(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		hash := hashFuncForProduction()(tc.p)
+		hash := HashProduction(tc.p)
 		assert.Equal(t, tc.expectedHash, hash)
+	}
+}
+
+func TestEqProductionSet(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs           set.Set[*Production]
+		rhs           set.Set[*Production]
+		expectedEqual bool
+	}{
+		{
+			name: "NotEqual",
+			lhs: set.NewHashSet(HashProduction, EqProduction, set.HashSetOpts{},
+				&Production{"A", String[Symbol]{Terminal("a"), NonTerminal("A")}},
+				&Production{"A", String[Symbol]{Terminal("a")}},
+			),
+			rhs: set.NewHashSet(HashProduction, EqProduction, set.HashSetOpts{},
+				&Production{"B", String[Symbol]{Terminal("b"), NonTerminal("B")}},
+				&Production{"B", String[Symbol]{Terminal("b")}},
+			),
+			expectedEqual: false,
+		},
+		{
+			name: "Equal",
+			lhs: set.NewHashSet(HashProduction, EqProduction, set.HashSetOpts{},
+				&Production{"A", String[Symbol]{Terminal("a"), NonTerminal("A")}},
+				&Production{"A", String[Symbol]{Terminal("a")}},
+			),
+			rhs: set.NewHashSet(HashProduction, EqProduction, set.HashSetOpts{},
+				&Production{"A", String[Symbol]{Terminal("a"), NonTerminal("A")}},
+				&Production{"A", String[Symbol]{Terminal("a")}},
+			),
+			expectedEqual: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			equal := EqProductionSet(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedEqual, equal)
+		})
 	}
 }

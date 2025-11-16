@@ -42,14 +42,14 @@ func TestLL1Error(t *testing.T) {
 				Alpha:       String[Symbol]{NonTerminal("decls"), NonTerminal("decl")},
 				Beta:        E,
 				FOLLOWA: &TerminalsAndEndmarker{
-					Terminals:         set.New(EqTerminal, "IDENT", "TOKEN"),
+					Terminals:         set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "IDENT", "TOKEN"),
 					IncludesEndmarker: true,
 				},
 				FIRSTα: &TerminalsAndEmpty{
-					Terminals: set.New(EqTerminal, "IDENT", "TOKEN"),
+					Terminals: set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}, "IDENT", "TOKEN"),
 				},
 				FIRSTβ: &TerminalsAndEmpty{
-					Terminals:     set.New(EqTerminal),
+					Terminals:     set.NewHashSet(HashTerminal, EqTerminal, set.HashSetOpts{}),
 					IncludesEmpty: true,
 				},
 			},
