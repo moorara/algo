@@ -7,6 +7,7 @@ import (
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/hash"
+	"github.com/moorara/algo/math"
 )
 
 const (
@@ -34,7 +35,7 @@ type linearHashTable[K, V any] struct {
 // This hash table implements open addressing with linear probing, where collisions are resolved
 // by checking subsequent indices in a linear fashion (i+1, i+2, i+3, ...) until an empty slot is found.
 func NewLinearHashTable[K, V any](hashKey hash.HashFunc[K], eqKey generic.EqualFunc[K], eqVal generic.EqualFunc[V], opts HashOpts) SymbolTable[K, V] {
-	if opts.InitialCap == 0 {
+	if opts.InitialCap < lpMinM {
 		opts.InitialCap = lpMinM
 	}
 
@@ -46,8 +47,8 @@ func NewLinearHashTable[K, V any](hashKey hash.HashFunc[K], eqKey generic.EqualF
 		opts.MaxLoadFactor = lpMaxLoadFactor
 	}
 
-	if M := opts.InitialCap; M < lpMinM || !isPowerOf2(M) {
-		panic(fmt.Sprintf("The hash table capacity must be at least %d and a power of 2 for efficient hashing.", lpMinM))
+	if M := opts.InitialCap; !math.IsPowerOf2(M) {
+		panic("The hash table capacity must be a power of 2")
 	}
 
 	return &linearHashTable[K, V]{
@@ -63,15 +64,15 @@ func NewLinearHashTable[K, V any](hashKey hash.HashFunc[K], eqKey generic.EqualF
 }
 
 // nolint: unused
-func (ht *linearHashTable[K, V]) verify() bool {
-	if lf := ht.loadFactor(); lf > ht.maxLF {
+func (t *linearHashTable[K, V]) verify() bool {
+	if lf := t.loadFactor(); lf > t.maxLF {
 		return false
 	}
 
 	// Check that each key in table can be found by Get
-	for _, e := range ht.entries {
+	for _, e := range t.entries {
 		if e != nil {
-			if _, ok := ht.Get(e.Key); !ok {
+			if _, ok := t.Get(e.Key); !ok {
 				return false
 			}
 		}
@@ -82,18 +83,18 @@ func (ht *linearHashTable[K, V]) verify() bool {
 
 // loadFactor calculates the current load factor of the hash table.
 // In linear probing, the load factor ranges between 0 and 1.
-func (ht *linearHashTable[K, V]) loadFactor() float32 {
-	return float32(ht.n) / float32(ht.m)
+func (t *linearHashTable[K, V]) loadFactor() float32 {
+	return float32(t.n) / float32(t.m)
 }
 
 // probe returns a function that generates the next index in a linear probing sequence.
 // The sequence starts at h and increments linearly: h, h+1, h+2, h+3, ...
-func (ht *linearHashTable[K, V]) probe(key K) func() int {
-	h := ht.hashKey(key)
+func (t *linearHashTable[K, V]) probe(key K) func() int {
+	h := t.hashKey(key)
 	h ^= (h >> 20) ^ (h >> 12) ^ (h >> 7) ^ (h >> 4)
 
 	// M must be a power of 2
-	M := uint64(ht.m)
+	M := uint64(t.m)
 	h1 := h & (M - 1) // [0, M-1]
 
 	var i, next uint64
@@ -111,66 +112,73 @@ func (ht *linearHashTable[K, V]) probe(key K) func() int {
 }
 
 // resize adjusts the hash table to a new size and re-hashes all keys.
-func (ht *linearHashTable[K, V]) resize(m int) {
+func (t *linearHashTable[K, V]) resize(m int) {
 	// Ensure the minimum table size
 	if m < lpMinM {
 		return
 	}
 
-	newHT := NewLinearHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
-		InitialCap:    m,
-		MinLoadFactor: ht.minLF,
-		MaxLoadFactor: ht.maxLF,
-	}).(*linearHashTable[K, V])
-
-	for key, val := range ht.All() {
-		newHT.Put(key, val)
+	new := &linearHashTable[K, V]{
+		entries: make([]*generic.KeyValue[K, V], m),
+		m:       m,
+		n:       0,
+		minLF:   t.minLF,
+		maxLF:   t.maxLF,
+		hashKey: t.hashKey,
+		eqKey:   t.eqKey,
+		eqVal:   t.eqVal,
 	}
 
-	ht.entries = newHT.entries
-	ht.m = newHT.m
-	ht.n = newHT.n
+	for _, e := range t.entries {
+		if e != nil {
+			new.Put(e.Key, e.Val)
+		}
+	}
+
+	t.entries = new.entries
+	t.m = new.m
+	t.n = new.n
 }
 
 // Size returns the number of key-values in the hash table.
-func (ht *linearHashTable[K, V]) Size() int {
-	return ht.n
+func (t *linearHashTable[K, V]) Size() int {
+	return t.n
 }
 
 // IsEmpty returns true if the hash table is empty.
-func (ht *linearHashTable[K, V]) IsEmpty() bool {
-	return ht.n == 0
+func (t *linearHashTable[K, V]) IsEmpty() bool {
+	return t.n == 0
 }
 
 // Put adds a new key-value to the hash table.
-func (ht *linearHashTable[K, V]) Put(key K, val V) {
-	if ht.loadFactor() >= ht.maxLF {
-		ht.resize(2 * ht.m)
+func (t *linearHashTable[K, V]) Put(key K, val V) {
+	if t.loadFactor() >= t.maxLF {
+		t.resize(2 * t.m)
 	}
 
 	var i int
-	next := ht.probe(key)
-	for i = next(); ht.entries[i] != nil; i = next() {
-		if ht.eqKey(ht.entries[i].Key, key) {
-			ht.entries[i].Val = val
+	next := t.probe(key)
+	for i = next(); t.entries[i] != nil; i = next() {
+		if t.eqKey(t.entries[i].Key, key) {
+			t.entries[i].Val = val
 			return
 		}
 	}
 
-	ht.entries[i] = &generic.KeyValue[K, V]{
+	t.entries[i] = &generic.KeyValue[K, V]{
 		Key: key,
 		Val: val,
 	}
 
-	ht.n++
+	t.n++
 }
 
 // Get returns the value of a given key in the hash table.
-func (ht *linearHashTable[K, V]) Get(key K) (V, bool) {
-	next := ht.probe(key)
-	for i := next(); ht.entries[i] != nil; i = next() {
-		if ht.eqKey(ht.entries[i].Key, key) {
-			return ht.entries[i].Val, true
+func (t *linearHashTable[K, V]) Get(key K) (V, bool) {
+	next := t.probe(key)
+	for i := next(); t.entries[i] != nil; i = next() {
+		if t.eqKey(t.entries[i].Key, key) {
+			return t.entries[i].Val, true
 		}
 	}
 
@@ -179,51 +187,51 @@ func (ht *linearHashTable[K, V]) Get(key K) (V, bool) {
 }
 
 // Delete deletes a key-value from the hash table.
-func (ht *linearHashTable[K, V]) Delete(key K) (V, bool) {
-	next := ht.probe(key)
+func (t *linearHashTable[K, V]) Delete(key K) (V, bool) {
+	next := t.probe(key)
 	i := next()
-	for ht.entries[i] != nil && !ht.eqKey(ht.entries[i].Key, key) {
+	for t.entries[i] != nil && !t.eqKey(t.entries[i].Key, key) {
 		i = next()
 	}
 
 	// Key not found
-	if ht.entries[i] == nil {
+	if t.entries[i] == nil {
 		var zeroV V
 		return zeroV, false
 	}
 
 	// Remove the entry from the hash table
-	val := ht.entries[i].Val
-	ht.entries[i] = nil
-	ht.n--
+	val := t.entries[i].Val
+	t.entries[i] = nil
+	t.n--
 
 	// Re-hash all subsequent entries to maintain the probe sequence
-	for i = next(); ht.entries[i] != nil; i = next() {
-		key, val := ht.entries[i].Key, ht.entries[i].Val
-		ht.entries[i] = nil
-		ht.n--
-		ht.Put(key, val)
+	for i = next(); t.entries[i] != nil; i = next() {
+		key, val := t.entries[i].Key, t.entries[i].Val
+		t.entries[i] = nil
+		t.n--
+		t.Put(key, val)
 	}
 
-	if ht.loadFactor() <= ht.minLF {
-		ht.resize(ht.m / 2)
+	if t.loadFactor() <= t.minLF {
+		t.resize(t.m / 2)
 	}
 
 	return val, true
 }
 
 // DeleteAll deletes all key-values from the hash table, leaving it empty.
-func (ht *linearHashTable[K, V]) DeleteAll() {
-	ht.entries = make([]*generic.KeyValue[K, V], ht.m)
-	ht.n = 0
+func (t *linearHashTable[K, V]) DeleteAll() {
+	t.entries = make([]*generic.KeyValue[K, V], t.m)
+	t.n = 0
 }
 
 // String returns a string representation of the hash table.
-func (ht *linearHashTable[K, V]) String() string {
-	pairs := make([]string, ht.Size())
+func (t *linearHashTable[K, V]) String() string {
+	pairs := make([]string, t.Size())
 	i := 0
 
-	for key, val := range ht.All() {
+	for key, val := range t.All() {
 		pairs[i] = fmt.Sprintf("<%v:%v>", key, val)
 		i++
 	}
@@ -232,25 +240,25 @@ func (ht *linearHashTable[K, V]) String() string {
 }
 
 // Equal determines whether or not two hash tables have the same key-values.
-func (ht *linearHashTable[K, V]) Equal(rhs SymbolTable[K, V]) bool {
-	ht2, ok := rhs.(*linearHashTable[K, V])
+func (t *linearHashTable[K, V]) Equal(rhs SymbolTable[K, V]) bool {
+	tt, ok := rhs.(*linearHashTable[K, V])
 	if !ok {
 		return false
 	}
 
-	return ht.AllMatch(func(key K, val V) bool { // ht ⊂ ht2
-		v, ok := ht2.Get(key)
-		return ok && ht.eqVal(val, v)
-	}) && ht2.AllMatch(func(key K, val V) bool { // ht2 ⊂ ht
-		v, ok := ht.Get(key)
-		return ok && ht.eqVal(val, v)
+	return t.AllMatch(func(key K, val V) bool { // t ⊂ tt
+		v, ok := tt.Get(key)
+		return ok && t.eqVal(val, v)
+	}) && tt.AllMatch(func(key K, val V) bool { // tt ⊂ t
+		v, ok := t.Get(key)
+		return ok && t.eqVal(val, v)
 	})
 }
 
 // All returns an iterator sequence containing all the key-values in the hash table.
-func (ht *linearHashTable[K, V]) All() iter.Seq2[K, V] {
+func (t *linearHashTable[K, V]) All() iter.Seq2[K, V] {
 	// Create a list of indices representing the entries.
-	indices := make([]int, len(ht.entries))
+	indices := make([]int, len(t.entries))
 	for i := range indices {
 		indices[i] = i
 	}
@@ -263,7 +271,7 @@ func (ht *linearHashTable[K, V]) All() iter.Seq2[K, V] {
 
 	return func(yield func(K, V) bool) {
 		for _, i := range indices {
-			if e := ht.entries[i]; e != nil {
+			if e := t.entries[i]; e != nil {
 				if !yield(e.Key, e.Val) {
 					return
 				}
@@ -273,8 +281,8 @@ func (ht *linearHashTable[K, V]) All() iter.Seq2[K, V] {
 }
 
 // AnyMatch returns true if at least one key-value in the hash table satisfies the provided predicate.
-func (ht *linearHashTable[K, V]) AnyMatch(p generic.Predicate2[K, V]) bool {
-	for key, val := range ht.All() {
+func (t *linearHashTable[K, V]) AnyMatch(p generic.Predicate2[K, V]) bool {
+	for key, val := range t.All() {
 		if p(key, val) {
 			return true
 		}
@@ -284,8 +292,8 @@ func (ht *linearHashTable[K, V]) AnyMatch(p generic.Predicate2[K, V]) bool {
 
 // AllMatch returns true if all key-values in the hash table satisfy the provided predicate.
 // If the BST is empty, it returns true.
-func (ht *linearHashTable[K, V]) AllMatch(p generic.Predicate2[K, V]) bool {
-	for key, val := range ht.All() {
+func (t *linearHashTable[K, V]) AllMatch(p generic.Predicate2[K, V]) bool {
+	for key, val := range t.All() {
 		if !p(key, val) {
 			return false
 		}
@@ -295,8 +303,8 @@ func (ht *linearHashTable[K, V]) AllMatch(p generic.Predicate2[K, V]) bool {
 
 // FirstMatch returns the first key-value in the hash table that satisfies the given predicate.
 // If no match is found, it returns the zero values of K and V, along with false.
-func (ht *linearHashTable[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V, bool) {
-	for key, val := range ht.All() {
+func (t *linearHashTable[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V, bool) {
+	for key, val := range t.All() {
 		if p(key, val) {
 			return key, val, true
 		}
@@ -309,19 +317,19 @@ func (ht *linearHashTable[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V, b
 
 // SelectMatch selects a subset of key-values from the hash table that satisfy the given predicate.
 // It returns a new hash table containing the matching key-values, of the same type as the original hash table.
-func (ht *linearHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic.Collection2[K, V] {
-	newHT := NewLinearHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
-		MinLoadFactor: ht.minLF,
-		MaxLoadFactor: ht.maxLF,
+func (t *linearHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic.Collection2[K, V] {
+	new := NewLinearHashTable(t.hashKey, t.eqKey, t.eqVal, HashOpts{
+		MinLoadFactor: t.minLF,
+		MaxLoadFactor: t.maxLF,
 	})
 
-	for key, val := range ht.All() {
+	for key, val := range t.All() {
 		if p(key, val) {
-			newHT.Put(key, val)
+			new.Put(key, val)
 		}
 	}
 
-	return newHT
+	return new
 }
 
 // PartitionMatch partitions the key-values in the hash table
@@ -329,18 +337,18 @@ func (ht *linearHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic
 // The first hash table contains the key-values that satisfy the predicate (matched key-values),
 // while the second hash table contains those that do not satisfy the predicate (unmatched key-values).
 // Both hash tables are of the same type as the original hash table.
-func (ht *linearHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (generic.Collection2[K, V], generic.Collection2[K, V]) {
-	matched := NewLinearHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
-		MinLoadFactor: ht.minLF,
-		MaxLoadFactor: ht.maxLF,
+func (t *linearHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (generic.Collection2[K, V], generic.Collection2[K, V]) {
+	matched := NewLinearHashTable(t.hashKey, t.eqKey, t.eqVal, HashOpts{
+		MinLoadFactor: t.minLF,
+		MaxLoadFactor: t.maxLF,
 	})
 
-	unmatched := NewLinearHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
-		MinLoadFactor: ht.minLF,
-		MaxLoadFactor: ht.maxLF,
+	unmatched := NewLinearHashTable(t.hashKey, t.eqKey, t.eqVal, HashOpts{
+		MinLoadFactor: t.minLF,
+		MaxLoadFactor: t.maxLF,
 	})
 
-	for key, val := range ht.All() {
+	for key, val := range t.All() {
 		if p(key, val) {
 			matched.Put(key, val)
 		} else {
@@ -355,9 +363,9 @@ func (ht *linearHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (gen
 // including its parameters and a detailed table of indices, key-values, and hash function calculations.
 //
 // This method is intended for debugging and troubleshooting purposes.
-/* func (ht *linearHashTable[K, V]) print() {
+/* func (t *linearHashTable[K, V]) print() {
 	header := fmt.Sprintf("M: %d    N: %d    Min LF: %.2f    Max LF: %.2f    Load Factor: %.2f",
-		ht.m, ht.n, ht.minLF, ht.maxLF, ht.loadFactor())
+		t.m, t.n, t.minLF, t.maxLF, t.loadFactor())
 
 	fmt.Printf("┌─────────────────────────────────────────────────────────────────────────────────────────────┐\n")
 	fmt.Printf("│  %-89s  │\n", header)
@@ -365,17 +373,17 @@ func (ht *linearHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (gen
 	fmt.Printf("│Index│          Key-Value           │       hash(key)       │ h(key) │ h+1 │ h+2 │ h+3 │ h+4 │\n")
 	fmt.Printf("├─────┼──────────────────────────────┼───────────────────────┼────────┼─────┼─────┼─────┼─────┤\n")
 
-	for i, kv := range ht.entries {
+	for i, kv := range t.entries {
 		if kv == nil {
 			fmt.Printf("│ %-3d │                              │                       │        │     │     │     │     │\n", i)
 		} else {
 			pair := fmt.Sprintf("%v:%v", kv.Key, kv.Val)
 
-			h := ht.hashKey(kv.Key)
+			h := t.hashKey(kv.Key)
 			h ^= (h >> 20) ^ (h >> 12) ^ (h >> 7) ^ (h >> 4)
 			hash := fmt.Sprintf("%-20d", h)
 
-			next := ht.probe(kv.Key)
+			next := t.probe(kv.Key)
 
 			i0 := fmt.Sprintf("%-4d", next())
 			i1 := fmt.Sprintf("%-2d", next())
@@ -386,7 +394,7 @@ func (ht *linearHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (gen
 			fmt.Printf("│ %-3d │ %-28s │  %s │   %s │  %s │  %s │  %s │  %s │\n", i, pair, hash, i0, i1, i2, i3, i4)
 		}
 
-		if i < len(ht.entries)-1 {
+		if i < len(t.entries)-1 {
 			fmt.Println("├─────┼──────────────────────────────┼───────────────────────┼────────┼─────┼─────┼─────┼─────┤")
 		} else {
 			fmt.Println("└─────┴──────────────────────────────┴───────────────────────┴────────┴─────┴─────┴─────┴─────┘")

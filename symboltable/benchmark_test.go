@@ -3,8 +3,8 @@ package symboltable
 import (
 	"testing"
 
-	. "github.com/moorara/algo/generic"
-	. "github.com/moorara/algo/hash"
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/hash"
 )
 
 const (
@@ -85,9 +85,9 @@ func runDeleteBenchmark(b *testing.B, st SymbolTable[string, int]) {
 }
 
 func BenchmarkSymbolTable_Put(b *testing.B) {
-	hashKey := HashFuncForString[string](nil)
-	eqKey := NewEqualFunc[string]()
-	eqVal := NewEqualFunc[int]()
+	hashKey := hash.HashFuncForString[string](nil)
+	eqKey := generic.NewEqualFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 	opts := HashOpts{}
 
 	b.Run("ChainHashTable.Put", func(b *testing.B) {
@@ -112,115 +112,115 @@ func BenchmarkSymbolTable_Put(b *testing.B) {
 }
 
 func BenchmarkSymbolTable_Get(b *testing.B) {
-	hashKey := HashFuncForString[string](nil)
-	eqKey := NewEqualFunc[string]()
-	eqVal := NewEqualFunc[int]()
+	hashKey := hash.HashFuncForString[string](nil)
+	eqKey := generic.NewEqualFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 	opts := HashOpts{}
 
 	b.Run("ChainHashTable.Get", func(b *testing.B) {
-		ht := NewChainHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewChainHashTable(hashKey, eqKey, eqVal, opts)
 		runGetBenchmark(b, ht)
 	})
 
 	b.Run("LinearHashTable.Get", func(b *testing.B) {
-		ht := NewLinearHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewLinearHashTable(hashKey, eqKey, eqVal, opts)
 		runGetBenchmark(b, ht)
 	})
 
 	b.Run("QuadHashTable.Get", func(b *testing.B) {
-		ht := NewQuadraticHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewQuadraticHashTable(hashKey, eqKey, eqVal, opts)
 		runGetBenchmark(b, ht)
 	})
 
 	b.Run("DoubleHashTable.Get", func(b *testing.B) {
-		ht := NewDoubleHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewDoubleHashTable(hashKey, eqKey, eqVal, opts)
 		runGetBenchmark(b, ht)
 	})
 }
 
 func BenchmarkSymbolTable_Delete(b *testing.B) {
-	hashKey := HashFuncForString[string](nil)
-	eqKey := NewEqualFunc[string]()
-	eqVal := NewEqualFunc[int]()
+	hashKey := hash.HashFuncForString[string](nil)
+	eqKey := generic.NewEqualFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 	opts := HashOpts{}
 
 	b.Run("ChainHashTable.Delete", func(b *testing.B) {
-		ht := NewChainHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewChainHashTable(hashKey, eqKey, eqVal, opts)
 		runDeleteBenchmark(b, ht)
 	})
 
 	b.Run("LinearHashTable.Delete", func(b *testing.B) {
-		ht := NewLinearHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewLinearHashTable(hashKey, eqKey, eqVal, opts)
 		runDeleteBenchmark(b, ht)
 	})
 
 	b.Run("QuadHashTable.Delete", func(b *testing.B) {
-		ht := NewQuadraticHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewQuadraticHashTable(hashKey, eqKey, eqVal, opts)
 		runDeleteBenchmark(b, ht)
 	})
 
 	b.Run("DoubleHashTable.Delete", func(b *testing.B) {
-		ht := NewDoubleHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewDoubleHashTable(hashKey, eqKey, eqVal, opts)
 		runDeleteBenchmark(b, ht)
 	})
 }
 
 func BenchmarkOrderedSymbolTable_Put(b *testing.B) {
-	cmpKey := NewCompareFunc[string]()
-	eqVal := NewEqualFunc[int]()
+	cmpKey := generic.NewCompareFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 
 	b.Run("BST.Put", func(b *testing.B) {
-		bst := NewBST[string, int](cmpKey, eqVal)
+		bst := NewBST(cmpKey, eqVal)
 		runPutBenchmark(b, bst)
 	})
 
 	b.Run("AVL.Put", func(b *testing.B) {
-		avl := NewAVL[string, int](cmpKey, eqVal)
+		avl := NewAVL(cmpKey, eqVal)
 		runPutBenchmark(b, avl)
 	})
 
 	b.Run("RedBlack.Put", func(b *testing.B) {
-		rb := NewRedBlack[string, int](cmpKey, eqVal)
+		rb := NewRedBlack(cmpKey, eqVal)
 		runPutBenchmark(b, rb)
 	})
 }
 
 func BenchmarkOrderedSymbolTable_Get(b *testing.B) {
-	cmpKey := NewCompareFunc[string]()
-	eqVal := NewEqualFunc[int]()
+	cmpKey := generic.NewCompareFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 
 	b.Run("BST.Get", func(b *testing.B) {
-		bst := NewBST[string, int](cmpKey, eqVal)
+		bst := NewBST(cmpKey, eqVal)
 		runGetBenchmark(b, bst)
 	})
 
 	b.Run("AVL.Get", func(b *testing.B) {
-		avl := NewAVL[string, int](cmpKey, eqVal)
+		avl := NewAVL(cmpKey, eqVal)
 		runGetBenchmark(b, avl)
 	})
 
 	b.Run("RedBlack.Get", func(b *testing.B) {
-		rb := NewRedBlack[string, int](cmpKey, eqVal)
+		rb := NewRedBlack(cmpKey, eqVal)
 		runGetBenchmark(b, rb)
 	})
 }
 
 func BenchmarkOrderedSymbolTable_Delete(b *testing.B) {
-	cmpKey := NewCompareFunc[string]()
-	eqVal := NewEqualFunc[int]()
+	cmpKey := generic.NewCompareFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 
 	b.Run("BST.Delete", func(b *testing.B) {
-		bst := NewBST[string, int](cmpKey, eqVal)
+		bst := NewBST(cmpKey, eqVal)
 		runDeleteBenchmark(b, bst)
 	})
 
 	b.Run("AVL.Delete", func(b *testing.B) {
-		avl := NewAVL[string, int](cmpKey, eqVal)
+		avl := NewAVL(cmpKey, eqVal)
 		runDeleteBenchmark(b, avl)
 	})
 
 	b.Run("RedBlack.Delete", func(b *testing.B) {
-		rb := NewRedBlack[string, int](cmpKey, eqVal)
+		rb := NewRedBlack(cmpKey, eqVal)
 		runDeleteBenchmark(b, rb)
 	})
 }

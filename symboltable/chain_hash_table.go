@@ -7,6 +7,7 @@ import (
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/hash"
+	"github.com/moorara/algo/math"
 )
 
 const (
@@ -41,7 +42,7 @@ type chainHashTable[K, V any] struct {
 // by maintaining a linked list of all key-values that hash to the same bucket.
 // Each bucket contains a chain of elements.
 func NewChainHashTable[K, V any](hashKey hash.HashFunc[K], eqKey generic.EqualFunc[K], eqVal generic.EqualFunc[V], opts HashOpts) SymbolTable[K, V] {
-	if opts.InitialCap == 0 {
+	if opts.InitialCap < scMinM {
 		opts.InitialCap = scMinM
 	}
 
@@ -53,8 +54,8 @@ func NewChainHashTable[K, V any](hashKey hash.HashFunc[K], eqKey generic.EqualFu
 		opts.MaxLoadFactor = scMaxLoadFactor
 	}
 
-	if M := opts.InitialCap; M < scMinM || !isPowerOf2(M) {
-		panic(fmt.Sprintf("The hash table capacity must be at least %d and a power of 2 for efficient hashing.", scMinM))
+	if M := opts.InitialCap; !math.IsPowerOf2(M) {
+		panic("The hash table capacity must be a power of 2")
 	}
 
 	return &chainHashTable[K, V]{
@@ -70,15 +71,15 @@ func NewChainHashTable[K, V any](hashKey hash.HashFunc[K], eqKey generic.EqualFu
 }
 
 // nolint: unused
-func (ht *chainHashTable[K, V]) verify() bool {
-	if lf := ht.loadFactor(); lf > ht.maxLF {
+func (t *chainHashTable[K, V]) verify() bool {
+	if lf := t.loadFactor(); lf > t.maxLF {
 		return false
 	}
 
 	// Check that each key in table can be found by Get
-	for _, first := range ht.buckets {
+	for _, first := range t.buckets {
 		for x := first; x != nil; x = x.next {
-			if _, ok := ht.Get(x.key); !ok {
+			if _, ok := t.Get(x.key); !ok {
 				return false
 			}
 		}
@@ -89,83 +90,90 @@ func (ht *chainHashTable[K, V]) verify() bool {
 
 // loadFactor calculates the current load factor of the hash table.
 // In separate chaining, the load factor can exceed 1.
-func (ht *chainHashTable[K, V]) loadFactor() float32 {
-	return float32(ht.n) / float32(ht.m)
+func (t *chainHashTable[K, V]) loadFactor() float32 {
+	return float32(t.n) / float32(t.m)
 }
 
-// hash compute the hash for a key and returns an index in [0, M-1] range.
-func (ht *chainHashTable[K, V]) hash(key K) int {
-	h := ht.hashKey(key)
+// hash computes the hash for a key and returns an index in [0, M-1] range.
+func (t *chainHashTable[K, V]) hash(key K) int {
+	h := t.hashKey(key)
 	h ^= (h >> 20) ^ (h >> 12) ^ (h >> 7) ^ (h >> 4)
 
 	// M must be a power of 2
-	M := uint64(ht.m)
+	M := uint64(t.m)
 	h1 := h & (M - 1) // [0, M-1]
 
 	return int(h1)
 }
 
 // resize adjusts the hash table to a new size and re-hashes all keys.
-func (ht *chainHashTable[K, V]) resize(m int) {
+func (t *chainHashTable[K, V]) resize(m int) {
 	// Ensure the minimum table size
 	if m < scMinM {
 		return
 	}
 
-	newHT := NewChainHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
-		InitialCap:    m,
-		MinLoadFactor: ht.minLF,
-		MaxLoadFactor: ht.maxLF,
-	}).(*chainHashTable[K, V])
-
-	for key, val := range ht.All() {
-		newHT.Put(key, val)
+	new := &chainHashTable[K, V]{
+		buckets: make([]*chainNode[K, V], m),
+		m:       m,
+		n:       0,
+		minLF:   t.minLF,
+		maxLF:   t.maxLF,
+		hashKey: t.hashKey,
+		eqKey:   t.eqKey,
+		eqVal:   t.eqVal,
 	}
 
-	ht.buckets = newHT.buckets
-	ht.m = newHT.m
-	ht.n = newHT.n
+	for _, x := range t.buckets {
+		for ; x != nil; x = x.next {
+			new.Put(x.key, x.val)
+		}
+	}
+
+	t.buckets = new.buckets
+	t.m = new.m
+	t.n = new.n
 }
 
 // Size returns the number of key-values in the hash table.
-func (ht *chainHashTable[K, V]) Size() int {
-	return ht.n
+func (t *chainHashTable[K, V]) Size() int {
+	return t.n
 }
 
 // IsEmpty returns true if the hash table is empty.
-func (ht *chainHashTable[K, V]) IsEmpty() bool {
-	return ht.n == 0
+func (t *chainHashTable[K, V]) IsEmpty() bool {
+	return t.n == 0
 }
 
 // Put adds a new key-value to the hash table.
-func (ht *chainHashTable[K, V]) Put(key K, val V) {
-	if ht.loadFactor() >= ht.maxLF {
-		ht.resize(2 * ht.m)
+func (t *chainHashTable[K, V]) Put(key K, val V) {
+	if t.loadFactor() >= t.maxLF {
+		t.resize(2 * t.m)
 	}
 
-	i := ht.hash(key)
-	for x := ht.buckets[i]; x != nil; x = x.next {
-		if ht.eqKey(x.key, key) {
+	i := t.hash(key)
+	for x := t.buckets[i]; x != nil; x = x.next {
+		if t.eqKey(x.key, key) {
 			x.val = val
 			return
 		}
 	}
 
 	// Add a new node at the beginning of the chain
-	ht.buckets[i] = &chainNode[K, V]{
+	t.buckets[i] = &chainNode[K, V]{
 		key:  key,
 		val:  val,
-		next: ht.buckets[i],
+		next: t.buckets[i],
 	}
 
-	ht.n++
+	t.n++
 }
 
 // Get returns the value of a given key in the hash table.
-func (ht *chainHashTable[K, V]) Get(key K) (V, bool) {
-	i := ht.hash(key)
-	for x := ht.buckets[i]; x != nil; x = x.next {
-		if ht.eqKey(x.key, key) {
+func (t *chainHashTable[K, V]) Get(key K) (V, bool) {
+	i := t.hash(key)
+	for x := t.buckets[i]; x != nil; x = x.next {
+		if t.eqKey(x.key, key) {
 			return x.val, true
 		}
 	}
@@ -175,47 +183,47 @@ func (ht *chainHashTable[K, V]) Get(key K) (V, bool) {
 }
 
 // Delete deletes a key-value from the hash table.
-func (ht *chainHashTable[K, V]) Delete(key K) (val V, ok bool) {
-	i := ht.hash(key)
-	ht.buckets[i], val, ok = ht._delete(ht.buckets[i], key)
+func (t *chainHashTable[K, V]) Delete(key K) (val V, ok bool) {
+	i := t.hash(key)
+	t.buckets[i], val, ok = t._delete(t.buckets[i], key)
 
-	if ht.loadFactor() <= ht.minLF {
-		ht.resize(ht.m / 2)
+	if t.loadFactor() <= t.minLF {
+		t.resize(t.m / 2)
 	}
 
 	return val, ok
 }
 
-func (ht *chainHashTable[K, V]) _delete(n *chainNode[K, V], key K) (*chainNode[K, V], V, bool) {
+func (t *chainHashTable[K, V]) _delete(n *chainNode[K, V], key K) (*chainNode[K, V], V, bool) {
 	if n == nil {
 		var zeroV V
 		return nil, zeroV, false
 	}
 
-	if ht.eqKey(n.key, key) {
-		ht.n--
+	if t.eqKey(n.key, key) {
+		t.n--
 		return n.next, n.val, true
 	}
 
 	var val V
 	var ok bool
-	n.next, val, ok = ht._delete(n.next, key)
+	n.next, val, ok = t._delete(n.next, key)
 
 	return n, val, ok
 }
 
 // DeleteAll deletes all key-values from the hash table, leaving it empty.
-func (ht *chainHashTable[K, V]) DeleteAll() {
-	ht.buckets = make([]*chainNode[K, V], ht.m)
-	ht.n = 0
+func (t *chainHashTable[K, V]) DeleteAll() {
+	t.buckets = make([]*chainNode[K, V], t.m)
+	t.n = 0
 }
 
 // String returns a string representation of the hash table.
-func (ht *chainHashTable[K, V]) String() string {
-	pairs := make([]string, ht.Size())
+func (t *chainHashTable[K, V]) String() string {
+	pairs := make([]string, t.Size())
 	i := 0
 
-	for key, val := range ht.All() {
+	for key, val := range t.All() {
 		pairs[i] = fmt.Sprintf("<%v:%v>", key, val)
 		i++
 	}
@@ -224,25 +232,25 @@ func (ht *chainHashTable[K, V]) String() string {
 }
 
 // Equal determines whether or not two hash tables have the same key-values.
-func (ht *chainHashTable[K, V]) Equal(rhs SymbolTable[K, V]) bool {
-	ht2, ok := rhs.(*chainHashTable[K, V])
+func (t *chainHashTable[K, V]) Equal(rhs SymbolTable[K, V]) bool {
+	tt, ok := rhs.(*chainHashTable[K, V])
 	if !ok {
 		return false
 	}
 
-	return ht.AllMatch(func(key K, val V) bool { // ht ⊂ ht2
-		v, ok := ht2.Get(key)
-		return ok && ht.eqVal(val, v)
-	}) && ht2.AllMatch(func(key K, val V) bool { // ht2 ⊂ ht
-		v, ok := ht.Get(key)
-		return ok && ht.eqVal(val, v)
+	return t.AllMatch(func(key K, val V) bool { // t ⊂ tt
+		v, ok := tt.Get(key)
+		return ok && t.eqVal(val, v)
+	}) && tt.AllMatch(func(key K, val V) bool { // tt ⊂ t
+		v, ok := t.Get(key)
+		return ok && t.eqVal(val, v)
 	})
 }
 
 // All returns an iterator sequence containing all the key-values in the hash table.
-func (ht *chainHashTable[K, V]) All() iter.Seq2[K, V] {
+func (t *chainHashTable[K, V]) All() iter.Seq2[K, V] {
 	// Create a list of indices representing the buckets.
-	indices := make([]int, len(ht.buckets))
+	indices := make([]int, len(t.buckets))
 	for i := range indices {
 		indices[i] = i
 	}
@@ -255,7 +263,7 @@ func (ht *chainHashTable[K, V]) All() iter.Seq2[K, V] {
 
 	return func(yield func(K, V) bool) {
 		for _, i := range indices {
-			for x := ht.buckets[i]; x != nil; x = x.next {
+			for x := t.buckets[i]; x != nil; x = x.next {
 				if !yield(x.key, x.val) {
 					return
 				}
@@ -265,8 +273,8 @@ func (ht *chainHashTable[K, V]) All() iter.Seq2[K, V] {
 }
 
 // AnyMatch returns true if at least one key-value in the hash table satisfies the provided predicate.
-func (ht *chainHashTable[K, V]) AnyMatch(p generic.Predicate2[K, V]) bool {
-	for key, val := range ht.All() {
+func (t *chainHashTable[K, V]) AnyMatch(p generic.Predicate2[K, V]) bool {
+	for key, val := range t.All() {
 		if p(key, val) {
 			return true
 		}
@@ -276,8 +284,8 @@ func (ht *chainHashTable[K, V]) AnyMatch(p generic.Predicate2[K, V]) bool {
 
 // AllMatch returns true if all key-values in the hash table satisfy the provided predicate.
 // If the BST is empty, it returns true.
-func (ht *chainHashTable[K, V]) AllMatch(p generic.Predicate2[K, V]) bool {
-	for key, val := range ht.All() {
+func (t *chainHashTable[K, V]) AllMatch(p generic.Predicate2[K, V]) bool {
+	for key, val := range t.All() {
 		if !p(key, val) {
 			return false
 		}
@@ -287,8 +295,8 @@ func (ht *chainHashTable[K, V]) AllMatch(p generic.Predicate2[K, V]) bool {
 
 // FirstMatch returns the first key-value in the hash table that satisfies the given predicate.
 // If no match is found, it returns the zero values of K and V, along with false.
-func (ht *chainHashTable[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V, bool) {
-	for key, val := range ht.All() {
+func (t *chainHashTable[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V, bool) {
+	for key, val := range t.All() {
 		if p(key, val) {
 			return key, val, true
 		}
@@ -301,19 +309,19 @@ func (ht *chainHashTable[K, V]) FirstMatch(p generic.Predicate2[K, V]) (K, V, bo
 
 // SelectMatch selects a subset of key-values from the hash table that satisfy the given predicate.
 // It returns a new hash table containing the matching key-values, of the same type as the original hash table.
-func (ht *chainHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic.Collection2[K, V] {
-	newHT := NewChainHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
-		MinLoadFactor: ht.minLF,
-		MaxLoadFactor: ht.maxLF,
+func (t *chainHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic.Collection2[K, V] {
+	new := NewChainHashTable(t.hashKey, t.eqKey, t.eqVal, HashOpts{
+		MinLoadFactor: t.minLF,
+		MaxLoadFactor: t.maxLF,
 	})
 
-	for key, val := range ht.All() {
+	for key, val := range t.All() {
 		if p(key, val) {
-			newHT.Put(key, val)
+			new.Put(key, val)
 		}
 	}
 
-	return newHT
+	return new
 }
 
 // PartitionMatch partitions the key-values in the hash table
@@ -321,18 +329,18 @@ func (ht *chainHashTable[K, V]) SelectMatch(p generic.Predicate2[K, V]) generic.
 // The first hash table contains the key-values that satisfy the predicate (matched key-values),
 // while the second hash table contains those that do not satisfy the predicate (unmatched key-values).
 // Both hash tables are of the same type as the original hash table.
-func (ht *chainHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (generic.Collection2[K, V], generic.Collection2[K, V]) {
-	matched := NewChainHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
-		MinLoadFactor: ht.minLF,
-		MaxLoadFactor: ht.maxLF,
+func (t *chainHashTable[K, V]) PartitionMatch(p generic.Predicate2[K, V]) (generic.Collection2[K, V], generic.Collection2[K, V]) {
+	matched := NewChainHashTable(t.hashKey, t.eqKey, t.eqVal, HashOpts{
+		MinLoadFactor: t.minLF,
+		MaxLoadFactor: t.maxLF,
 	})
 
-	unmatched := NewChainHashTable(ht.hashKey, ht.eqKey, ht.eqVal, HashOpts{
-		MinLoadFactor: ht.minLF,
-		MaxLoadFactor: ht.maxLF,
+	unmatched := NewChainHashTable(t.hashKey, t.eqKey, t.eqVal, HashOpts{
+		MinLoadFactor: t.minLF,
+		MaxLoadFactor: t.maxLF,
 	})
 
-	for key, val := range ht.All() {
+	for key, val := range t.All() {
 		if p(key, val) {
 			matched.Put(key, val)
 		} else {

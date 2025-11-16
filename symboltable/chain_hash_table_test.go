@@ -3,6 +3,8 @@ package symboltable
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/hash"
 )
@@ -94,4 +96,16 @@ func TestChainHashTable(t *testing.T) {
 		ht := NewChainHashTable(tc.hashKey, tc.eqKey, tc.eqVal, tc.opts)
 		runSymbolTableTest(t, ht, tc)
 	}
+}
+
+func TestNewChainHashTable_Panic(t *testing.T) {
+	hashString := hash.HashFuncForString[string](nil)
+	eqString := generic.NewEqualFunc[string]()
+	eqInt := generic.NewEqualFunc[int]()
+
+	assert.PanicsWithValue(t, "The hash table capacity must be a power of 2", func() {
+		NewChainHashTable(hashString, eqString, eqInt, HashOpts{
+			InitialCap: 69,
+		})
+	})
 }

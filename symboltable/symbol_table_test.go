@@ -6,45 +6,45 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/moorara/algo/generic"
-	. "github.com/moorara/algo/hash"
+	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/hash"
 )
 
 type symbolTableTest[K, V any] struct {
 	name                       string
 	symbolTable                string
-	hashKey                    HashFunc[K]
-	eqKey                      EqualFunc[K]
-	eqVal                      EqualFunc[V]
+	hashKey                    hash.HashFunc[K]
+	eqKey                      generic.EqualFunc[K]
+	eqVal                      generic.EqualFunc[V]
 	opts                       HashOpts
-	keyVals                    []KeyValue[K, V]
+	keyVals                    []generic.KeyValue[K, V]
 	expectedSize               int
 	expectedIsEmpty            bool
 	expectedSubstrings         []string
 	equal                      SymbolTable[K, V]
 	expectedEqual              bool
-	expectedAll                []KeyValue[K, V]
-	anyMatchPredicate          Predicate2[K, V]
+	expectedAll                []generic.KeyValue[K, V]
+	anyMatchPredicate          generic.Predicate2[K, V]
 	expectedAnyMatch           bool
-	allMatchPredicate          Predicate2[K, V]
+	allMatchPredicate          generic.Predicate2[K, V]
 	expectedAllMatch           bool
-	firstMatchPredicate        Predicate2[K, V]
+	firstMatchPredicate        generic.Predicate2[K, V]
 	expectedFirstMatchKey      K
 	expectedFirstMatchVal      V
 	expectedFirstMatchOK       bool
-	selectMatchPredicate       Predicate2[K, V]
-	expectedSelectMatch        []KeyValue[K, V]
-	partitionMatchPredicate    Predicate2[K, V]
-	expectedPartitionMatched   []KeyValue[K, V]
-	expectedPartitionUnmatched []KeyValue[K, V]
+	selectMatchPredicate       generic.Predicate2[K, V]
+	expectedSelectMatch        []generic.KeyValue[K, V]
+	partitionMatchPredicate    generic.Predicate2[K, V]
+	expectedPartitionMatched   []generic.KeyValue[K, V]
+	expectedPartitionUnmatched []generic.KeyValue[K, V]
 }
 
 type orderedSymbolTableTest[K, V any] struct {
 	name                       string
 	symbolTable                string
-	cmpKey                     CompareFunc[K]
-	eqVal                      EqualFunc[V]
-	keyVals                    []KeyValue[K, V]
+	cmpKey                     generic.CompareFunc[K]
+	eqVal                      generic.EqualFunc[V]
+	keyVals                    []generic.KeyValue[K, V]
 	expectedSize               int
 	expectedHeight             int
 	expectedIsEmpty            bool
@@ -70,40 +70,40 @@ type orderedSymbolTableTest[K, V any] struct {
 	expectedRank               int
 	rangeKeyLo                 string
 	rangeKeyHi                 string
-	expectedRange              []KeyValue[K, V]
+	expectedRange              []generic.KeyValue[K, V]
 	expectedRangeSize          int
 	expectedString             string
 	equal                      SymbolTable[K, V]
 	expectedEqual              bool
-	expectedAll                []KeyValue[K, V]
-	anyMatchPredicate          Predicate2[K, V]
+	expectedAll                []generic.KeyValue[K, V]
+	anyMatchPredicate          generic.Predicate2[K, V]
 	expectedAnyMatch           bool
-	allMatchPredicate          Predicate2[K, V]
+	allMatchPredicate          generic.Predicate2[K, V]
 	expectedAllMatch           bool
-	firstMatchPredicate        Predicate2[K, V]
+	firstMatchPredicate        generic.Predicate2[K, V]
 	expectedFirstMatchKey      K
 	expectedFirstMatchVal      V
 	expectedFirstMatchOK       bool
-	selectMatchPredicate       Predicate2[K, V]
-	expectedSelectMatch        []KeyValue[K, V]
-	partitionMatchPredicate    Predicate2[K, V]
-	expectedPartitionMatched   []KeyValue[K, V]
-	expectedPartitionUnmatched []KeyValue[K, V]
-	expectedVLRTraverse        []KeyValue[K, V]
-	expectedVRLTraverse        []KeyValue[K, V]
-	expectedLVRTraverse        []KeyValue[K, V]
-	expectedRVLTraverse        []KeyValue[K, V]
-	expectedLRVTraverse        []KeyValue[K, V]
-	expectedRLVTraverse        []KeyValue[K, V]
-	expectedAscendingTraverse  []KeyValue[K, V]
-	expectedDescendingTraverse []KeyValue[K, V]
+	selectMatchPredicate       generic.Predicate2[K, V]
+	expectedSelectMatch        []generic.KeyValue[K, V]
+	partitionMatchPredicate    generic.Predicate2[K, V]
+	expectedPartitionMatched   []generic.KeyValue[K, V]
+	expectedPartitionUnmatched []generic.KeyValue[K, V]
+	expectedVLRTraverse        []generic.KeyValue[K, V]
+	expectedVRLTraverse        []generic.KeyValue[K, V]
+	expectedLVRTraverse        []generic.KeyValue[K, V]
+	expectedRVLTraverse        []generic.KeyValue[K, V]
+	expectedLRVTraverse        []generic.KeyValue[K, V]
+	expectedRLVTraverse        []generic.KeyValue[K, V]
+	expectedAscendingTraverse  []generic.KeyValue[K, V]
+	expectedDescendingTraverse []generic.KeyValue[K, V]
 	expectedDOT                string
 }
 
 func getSymbolTableTests() []symbolTableTest[string, int] {
-	hashKey := HashFuncForString[string](nil)
-	eqKey := NewEqualFunc[string]()
-	eqVal := NewEqualFunc[int]()
+	hashKey := hash.HashFuncForString[string](nil)
+	eqKey := generic.NewEqualFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 
 	return []symbolTableTest[string, int]{
 		{
@@ -112,7 +112,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			eqKey:   eqKey,
 			eqVal:   eqVal,
 			opts:    HashOpts{},
-			keyVals: []KeyValue[string, int]{
+			keyVals: []generic.KeyValue[string, int]{
 				{Key: "Apple", Val: 182},
 				{Key: "Banana", Val: 120},
 				{Key: "Mango", Val: 200},
@@ -148,7 +148,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				"<Pineapple:1200>",
 				"<Watermelon:9000>",
 			},
-			expectedAll: []KeyValue[string, int]{
+			expectedAll: []generic.KeyValue[string, int]{
 				{Key: "Apple", Val: 182},
 				{Key: "Avocado", Val: 200},
 				{Key: "Banana", Val: 120},
@@ -174,10 +174,10 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			expectedFirstMatchVal:    0,
 			expectedFirstMatchOK:     false,
 			selectMatchPredicate:     func(k string, v int) bool { return v < 20 },
-			expectedSelectMatch:      []KeyValue[string, int]{},
+			expectedSelectMatch:      []generic.KeyValue[string, int]{},
 			partitionMatchPredicate:  func(k string, v int) bool { return v < 20 },
-			expectedPartitionMatched: []KeyValue[string, int]{},
-			expectedPartitionUnmatched: []KeyValue[string, int]{
+			expectedPartitionMatched: []generic.KeyValue[string, int]{},
+			expectedPartitionUnmatched: []generic.KeyValue[string, int]{
 				{Key: "Apple", Val: 182},
 				{Key: "Avocado", Val: 200},
 				{Key: "Banana", Val: 120},
@@ -201,7 +201,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			eqKey:   eqKey,
 			eqVal:   eqVal,
 			opts:    HashOpts{},
-			keyVals: []KeyValue[string, int]{
+			keyVals: []generic.KeyValue[string, int]{
 				{Key: "Peacock", Val: 20},
 				{Key: "Scarlet Macaw", Val: 50},
 				{Key: "Golden Pheasant", Val: 15},
@@ -223,7 +223,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				"<Scarlet Macaw:50>",
 				"<Snowy Owl:10>",
 			},
-			expectedAll: []KeyValue[string, int]{
+			expectedAll: []generic.KeyValue[string, int]{
 				{Key: "Golden Pheasant", Val: 15},
 				{Key: "Harpy Eagle", Val: 35},
 				{Key: "Kingfisher", Val: 15},
@@ -242,18 +242,18 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			expectedFirstMatchVal: 20,
 			expectedFirstMatchOK:  true,
 			selectMatchPredicate:  func(k string, v int) bool { return v > 20 },
-			expectedSelectMatch: []KeyValue[string, int]{
+			expectedSelectMatch: []generic.KeyValue[string, int]{
 				{Key: "Harpy Eagle", Val: 35},
 				{Key: "Quetzal", Val: 25},
 				{Key: "Scarlet Macaw", Val: 50},
 			},
 			partitionMatchPredicate: func(k string, v int) bool { return v > 20 },
-			expectedPartitionMatched: []KeyValue[string, int]{
+			expectedPartitionMatched: []generic.KeyValue[string, int]{
 				{Key: "Harpy Eagle", Val: 35},
 				{Key: "Quetzal", Val: 25},
 				{Key: "Scarlet Macaw", Val: 50},
 			},
-			expectedPartitionUnmatched: []KeyValue[string, int]{
+			expectedPartitionUnmatched: []generic.KeyValue[string, int]{
 				{Key: "Golden Pheasant", Val: 15},
 				{Key: "Kingfisher", Val: 15},
 				{Key: "Mandarin Duck", Val: 10},
@@ -267,7 +267,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			eqKey:   eqKey,
 			eqVal:   eqVal,
 			opts:    HashOpts{},
-			keyVals: []KeyValue[string, int]{
+			keyVals: []generic.KeyValue[string, int]{
 				{Key: "Violin", Val: 60},
 				{Key: "Guitar", Val: 100},
 				{Key: "Piano", Val: 150},
@@ -303,7 +303,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				"<Ukulele:60>",
 				"<Violin:60>",
 			},
-			expectedAll: []KeyValue[string, int]{
+			expectedAll: []generic.KeyValue[string, int]{
 				{Key: "Accordion", Val: 50},
 				{Key: "Bassoon", Val: 140},
 				{Key: "Cello", Val: 120},
@@ -329,7 +329,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			expectedFirstMatchVal: 80,
 			expectedFirstMatchOK:  true,
 			selectMatchPredicate:  func(k string, v int) bool { return v < 100 },
-			expectedSelectMatch: []KeyValue[string, int]{
+			expectedSelectMatch: []generic.KeyValue[string, int]{
 				{Key: "Accordion", Val: 50},
 				{Key: "Clarinet", Val: 66},
 				{Key: "Flute", Val: 67},
@@ -339,7 +339,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Violin", Val: 60},
 			},
 			partitionMatchPredicate: func(k string, v int) bool { return v < 100 },
-			expectedPartitionMatched: []KeyValue[string, int]{
+			expectedPartitionMatched: []generic.KeyValue[string, int]{
 				{Key: "Accordion", Val: 50},
 				{Key: "Clarinet", Val: 66},
 				{Key: "Flute", Val: 67},
@@ -348,7 +348,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Ukulele", Val: 60},
 				{Key: "Violin", Val: 60},
 			},
-			expectedPartitionUnmatched: []KeyValue[string, int]{
+			expectedPartitionUnmatched: []generic.KeyValue[string, int]{
 				{Key: "Bassoon", Val: 140},
 				{Key: "Cello", Val: 120},
 				{Key: "Double Bass", Val: 180},
@@ -365,7 +365,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			eqKey:   eqKey,
 			eqVal:   eqVal,
 			opts:    HashOpts{},
-			keyVals: []KeyValue[string, int]{
+			keyVals: []generic.KeyValue[string, int]{
 				{Key: "Toronto", Val: 8},
 				{Key: "Montreal", Val: 6},
 				{Key: "Vancouver", Val: 10},
@@ -391,7 +391,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				"<Toronto:8>",
 				"<Vancouver:10>",
 			},
-			expectedAll: []KeyValue[string, int]{
+			expectedAll: []generic.KeyValue[string, int]{
 				{Key: "Berlin", Val: 10},
 				{Key: "London", Val: 11},
 				{Key: "Montreal", Val: 6},
@@ -412,18 +412,18 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			expectedFirstMatchVal: 17,
 			expectedFirstMatchOK:  true,
 			selectMatchPredicate:  func(k string, v int) bool { return v > 15 },
-			expectedSelectMatch: []KeyValue[string, int]{
+			expectedSelectMatch: []generic.KeyValue[string, int]{
 				{Key: "Rome", Val: 16},
 				{Key: "Tehran", Val: 17},
 				{Key: "Tokyo", Val: 16},
 			},
 			partitionMatchPredicate: func(k string, v int) bool { return v > 15 },
-			expectedPartitionMatched: []KeyValue[string, int]{
+			expectedPartitionMatched: []generic.KeyValue[string, int]{
 				{Key: "Rome", Val: 16},
 				{Key: "Tehran", Val: 17},
 				{Key: "Tokyo", Val: 16},
 			},
-			expectedPartitionUnmatched: []KeyValue[string, int]{
+			expectedPartitionUnmatched: []generic.KeyValue[string, int]{
 				{Key: "Berlin", Val: 10},
 				{Key: "London", Val: 11},
 				{Key: "Montreal", Val: 6},
@@ -439,7 +439,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			eqKey:   eqKey,
 			eqVal:   eqVal,
 			opts:    HashOpts{},
-			keyVals: []KeyValue[string, int]{
+			keyVals: []generic.KeyValue[string, int]{
 				{Key: "Elephant", Val: 70},
 				{Key: "Blue Whale", Val: 80},
 				{Key: "Galapagos Tortoise", Val: 100},
@@ -545,7 +545,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				"<Wolf:14>",
 				"<Zebra:25>",
 			},
-			expectedAll: []KeyValue[string, int]{
+			expectedAll: []generic.KeyValue[string, int]{
 				{Key: "Ant", Val: 1},
 				{Key: "Bald Eagle", Val: 20},
 				{Key: "Bat", Val: 30},
@@ -606,7 +606,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 			expectedFirstMatchVal: 17,
 			expectedFirstMatchOK:  true,
 			selectMatchPredicate:  func(k string, v int) bool { return v < 20 },
-			expectedSelectMatch: []KeyValue[string, int]{
+			expectedSelectMatch: []generic.KeyValue[string, int]{
 				{Key: "Dog", Val: 13},
 				{Key: "Cat", Val: 15},
 				{Key: "Rabbit", Val: 9},
@@ -631,7 +631,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Butterfly", Val: 1},
 			},
 			partitionMatchPredicate: func(k string, v int) bool { return v < 20 },
-			expectedPartitionMatched: []KeyValue[string, int]{
+			expectedPartitionMatched: []generic.KeyValue[string, int]{
 				{Key: "Dog", Val: 13},
 				{Key: "Cat", Val: 15},
 				{Key: "Rabbit", Val: 9},
@@ -655,7 +655,7 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 				{Key: "Bee", Val: 5},
 				{Key: "Butterfly", Val: 1},
 			},
-			expectedPartitionUnmatched: []KeyValue[string, int]{
+			expectedPartitionUnmatched: []generic.KeyValue[string, int]{
 				{Key: "Bald Eagle", Val: 20},
 				{Key: "Bat", Val: 30},
 				{Key: "Blue Whale", Val: 80},
@@ -690,15 +690,15 @@ func getSymbolTableTests() []symbolTableTest[string, int] {
 }
 
 func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
-	cmpKey := NewCompareFunc[string]()
-	eqVal := NewEqualFunc[int]()
+	cmpKey := generic.NewCompareFunc[string]()
+	eqVal := generic.NewEqualFunc[int]()
 
 	return []orderedSymbolTableTest[string, int]{
 		{
 			name:   "ABC",
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
-			keyVals: []KeyValue[string, int]{
+			keyVals: []generic.KeyValue[string, int]{
 				{Key: "B", Val: 2},
 				{Key: "A", Val: 1},
 				{Key: "C", Val: 3},
@@ -727,14 +727,14 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedRank:       2,
 			rangeKeyLo:         "A",
 			rangeKeyHi:         "C",
-			expectedRange: []KeyValue[string, int]{
+			expectedRange: []generic.KeyValue[string, int]{
 				{Key: "A", Val: 1},
 				{Key: "B", Val: 2},
 				{Key: "C", Val: 3},
 			},
 			expectedRangeSize: 3,
 			expectedString:    "{<A:1> <B:2> <C:3>}",
-			expectedAll: []KeyValue[string, int]{
+			expectedAll: []generic.KeyValue[string, int]{
 				{Key: "A", Val: 1},
 				{Key: "B", Val: 2},
 				{Key: "C", Val: 3},
@@ -748,10 +748,10 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedFirstMatchVal:    0,
 			expectedFirstMatchOK:     false,
 			selectMatchPredicate:     func(k string, v int) bool { return v%10 == 0 },
-			expectedSelectMatch:      []KeyValue[string, int]{},
+			expectedSelectMatch:      []generic.KeyValue[string, int]{},
 			partitionMatchPredicate:  func(k string, v int) bool { return v%10 == 0 },
-			expectedPartitionMatched: []KeyValue[string, int]{},
-			expectedPartitionUnmatched: []KeyValue[string, int]{
+			expectedPartitionMatched: []generic.KeyValue[string, int]{},
+			expectedPartitionUnmatched: []generic.KeyValue[string, int]{
 				{Key: "A", Val: 1},
 				{Key: "B", Val: 2},
 				{Key: "C", Val: 3},
@@ -761,7 +761,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			name:   "ABCDE",
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
-			keyVals: []KeyValue[string, int]{
+			keyVals: []generic.KeyValue[string, int]{
 				{Key: "B", Val: 2},
 				{Key: "A", Val: 1},
 				{Key: "C", Val: 3},
@@ -792,14 +792,14 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedRank:       4,
 			rangeKeyLo:         "B",
 			rangeKeyHi:         "D",
-			expectedRange: []KeyValue[string, int]{
+			expectedRange: []generic.KeyValue[string, int]{
 				{Key: "B", Val: 2},
 				{Key: "C", Val: 3},
 				{Key: "D", Val: 4},
 			},
 			expectedRangeSize: 3,
 			expectedString:    "{<A:1> <B:2> <C:3> <D:4> <E:5>}",
-			expectedAll: []KeyValue[string, int]{
+			expectedAll: []generic.KeyValue[string, int]{
 				{Key: "A", Val: 1},
 				{Key: "B", Val: 2},
 				{Key: "C", Val: 3},
@@ -815,16 +815,16 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedFirstMatchVal: 5,
 			expectedFirstMatchOK:  true,
 			selectMatchPredicate:  func(k string, v int) bool { return v%2 == 0 },
-			expectedSelectMatch: []KeyValue[string, int]{
+			expectedSelectMatch: []generic.KeyValue[string, int]{
 				{Key: "B", Val: 2},
 				{Key: "D", Val: 4},
 			},
 			partitionMatchPredicate: func(k string, v int) bool { return v%2 == 0 },
-			expectedPartitionMatched: []KeyValue[string, int]{
+			expectedPartitionMatched: []generic.KeyValue[string, int]{
 				{Key: "B", Val: 2},
 				{Key: "D", Val: 4},
 			},
-			expectedPartitionUnmatched: []KeyValue[string, int]{
+			expectedPartitionUnmatched: []generic.KeyValue[string, int]{
 				{Key: "A", Val: 1},
 				{Key: "C", Val: 3},
 				{Key: "E", Val: 5},
@@ -834,7 +834,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			name:   "ADGJMPS",
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
-			keyVals: []KeyValue[string, int]{
+			keyVals: []generic.KeyValue[string, int]{
 				{Key: "J", Val: 10},
 				{Key: "A", Val: 1},
 				{Key: "D", Val: 4},
@@ -867,7 +867,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedRank:       6,
 			rangeKeyLo:         "B",
 			rangeKeyHi:         "R",
-			expectedRange: []KeyValue[string, int]{
+			expectedRange: []generic.KeyValue[string, int]{
 				{Key: "D", Val: 4},
 				{Key: "G", Val: 7},
 				{Key: "J", Val: 10},
@@ -876,7 +876,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			},
 			expectedRangeSize: 5,
 			expectedString:    "{<A:1> <D:4> <G:7> <J:10> <M:13> <P:16> <S:19>}",
-			expectedAll: []KeyValue[string, int]{
+			expectedAll: []generic.KeyValue[string, int]{
 				{Key: "A", Val: 1},
 				{Key: "D", Val: 4},
 				{Key: "G", Val: 7},
@@ -894,18 +894,18 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedFirstMatchVal: 13,
 			expectedFirstMatchOK:  true,
 			selectMatchPredicate:  func(k string, v int) bool { return v > 10 },
-			expectedSelectMatch: []KeyValue[string, int]{
+			expectedSelectMatch: []generic.KeyValue[string, int]{
 				{Key: "M", Val: 13},
 				{Key: "P", Val: 16},
 				{Key: "S", Val: 19},
 			},
 			partitionMatchPredicate: func(k string, v int) bool { return v > 10 },
-			expectedPartitionMatched: []KeyValue[string, int]{
+			expectedPartitionMatched: []generic.KeyValue[string, int]{
 				{Key: "M", Val: 13},
 				{Key: "P", Val: 16},
 				{Key: "S", Val: 19},
 			},
-			expectedPartitionUnmatched: []KeyValue[string, int]{
+			expectedPartitionUnmatched: []generic.KeyValue[string, int]{
 				{Key: "A", Val: 1},
 				{Key: "D", Val: 4},
 				{Key: "G", Val: 7},
@@ -916,7 +916,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			name:   "Words",
 			cmpKey: cmpKey,
 			eqVal:  eqVal,
-			keyVals: []KeyValue[string, int]{
+			keyVals: []generic.KeyValue[string, int]{
 				{Key: "box", Val: 2},
 				{Key: "dad", Val: 3},
 				{Key: "baby", Val: 5},
@@ -949,7 +949,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedRank:       5,
 			rangeKeyLo:         "a",
 			rangeKeyHi:         "c",
-			expectedRange: []KeyValue[string, int]{
+			expectedRange: []generic.KeyValue[string, int]{
 				{Key: "baby", Val: 5},
 				{Key: "balloon", Val: 17},
 				{Key: "band", Val: 11},
@@ -957,7 +957,7 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			},
 			expectedRangeSize: 4,
 			expectedString:    "{<baby:5> <balloon:17> <band:11> <box:2> <dad:3> <dance:13> <dome:7>}",
-			expectedAll: []KeyValue[string, int]{
+			expectedAll: []generic.KeyValue[string, int]{
 				{Key: "baby", Val: 5},
 				{Key: "balloon", Val: 17},
 				{Key: "band", Val: 11},
@@ -975,18 +975,18 @@ func getOrderedSymbolTableTests() []orderedSymbolTableTest[string, int] {
 			expectedFirstMatchVal: 17,
 			expectedFirstMatchOK:  true,
 			selectMatchPredicate:  func(k string, v int) bool { return strings.HasPrefix(k, "ba") },
-			expectedSelectMatch: []KeyValue[string, int]{
+			expectedSelectMatch: []generic.KeyValue[string, int]{
 				{Key: "baby", Val: 5},
 				{Key: "balloon", Val: 17},
 				{Key: "band", Val: 11},
 			},
 			partitionMatchPredicate: func(k string, v int) bool { return strings.HasPrefix(k, "ba") },
-			expectedPartitionMatched: []KeyValue[string, int]{
+			expectedPartitionMatched: []generic.KeyValue[string, int]{
 				{Key: "baby", Val: 5},
 				{Key: "balloon", Val: 17},
 				{Key: "band", Val: 11},
 			},
-			expectedPartitionUnmatched: []KeyValue[string, int]{
+			expectedPartitionUnmatched: []generic.KeyValue[string, int]{
 				{Key: "box", Val: 2},
 				{Key: "dad", Val: 3},
 				{Key: "dance", Val: 13},
@@ -1049,7 +1049,7 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 
 		t.Run("All", func(t *testing.T) {
 			// The key-values are unordered, so we need to compare the lists pair-wise.
-			all := Collect2(st.All())
+			all := generic.Collect2(st.All())
 
 			for _, kv := range test.expectedAll {
 				assert.Contains(t, all, kv)
@@ -1080,7 +1080,7 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 		t.Run("SelectMatch", func(t *testing.T) {
 			selected := st.SelectMatch(test.selectMatchPredicate)
 
-			selectedAll := Collect2(selected.All())
+			selectedAll := generic.Collect2(selected.All())
 			for _, kv := range test.expectedSelectMatch {
 				assert.Contains(t, selectedAll, kv)
 			}
@@ -1092,7 +1092,7 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 		t.Run("PartitionMatch", func(t *testing.T) {
 			matched, unmatched := st.PartitionMatch(test.partitionMatchPredicate)
 
-			matchedAll := Collect2(matched.All())
+			matchedAll := generic.Collect2(matched.All())
 			for _, kv := range test.expectedPartitionMatched {
 				assert.Contains(t, matchedAll, kv)
 			}
@@ -1100,7 +1100,7 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 				assert.Contains(t, test.expectedPartitionMatched, kv)
 			}
 
-			unmatchedAll := Collect2(unmatched.All())
+			unmatchedAll := generic.Collect2(unmatched.All())
 			for _, kv := range test.expectedPartitionUnmatched {
 				assert.Contains(t, unmatchedAll, kv)
 			}
@@ -1142,7 +1142,7 @@ func runSymbolTableTest(t *testing.T, st SymbolTable[string, int], test symbolTa
 
 func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int], test orderedSymbolTableTest[string, int]) {
 	t.Run(test.name, func(t *testing.T) {
-		var kvs []KeyValue[string, int]
+		var kvs []generic.KeyValue[string, int]
 		var minKey, maxKey, floorKey, ceilingKey, selectKey string
 		var minVal, maxVal, floorVal, ceilingVal, selectVal int
 		var minOK, maxOK, floorOK, ceilingOK, selectOK bool
@@ -1296,7 +1296,7 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 
 		t.Run("All", func(t *testing.T) {
 			// The key-values are ordered, so we can directly compare the lists.
-			all := Collect2(ost.All())
+			all := generic.Collect2(ost.All())
 			assert.Equal(t, test.expectedAll, all)
 		})
 
@@ -1319,76 +1319,76 @@ func runOrderedSymbolTableTest(t *testing.T, ost OrderedSymbolTable[string, int]
 
 		t.Run("SelectMatch", func(t *testing.T) {
 			selected := ost.SelectMatch(test.selectMatchPredicate)
-			assert.Equal(t, test.expectedSelectMatch, Collect2(selected.All()))
+			assert.Equal(t, test.expectedSelectMatch, generic.Collect2(selected.All()))
 		})
 
 		t.Run("PartitionMatch", func(t *testing.T) {
 			matched, unmatched := ost.PartitionMatch(test.partitionMatchPredicate)
-			assert.Equal(t, test.expectedPartitionMatched, Collect2(matched.All()))
-			assert.Equal(t, test.expectedPartitionUnmatched, Collect2(unmatched.All()))
+			assert.Equal(t, test.expectedPartitionMatched, generic.Collect2(matched.All()))
+			assert.Equal(t, test.expectedPartitionUnmatched, generic.Collect2(unmatched.All()))
 		})
 
 		t.Run("Traverse", func(t *testing.T) {
 			// VLR Traversal
-			kvs = []KeyValue[string, int]{}
-			ost.Traverse(VLR, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
+			kvs = []generic.KeyValue[string, int]{}
+			ost.Traverse(generic.VLR, func(key string, val int) bool {
+				kvs = append(kvs, generic.KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedVLRTraverse, kvs)
 
 			// VRL Traversal
-			kvs = []KeyValue[string, int]{}
-			ost.Traverse(VRL, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
+			kvs = []generic.KeyValue[string, int]{}
+			ost.Traverse(generic.VRL, func(key string, val int) bool {
+				kvs = append(kvs, generic.KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedVRLTraverse, kvs)
 
 			// LVR Traversal
-			kvs = []KeyValue[string, int]{}
-			ost.Traverse(LVR, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
+			kvs = []generic.KeyValue[string, int]{}
+			ost.Traverse(generic.LVR, func(key string, val int) bool {
+				kvs = append(kvs, generic.KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedLVRTraverse, kvs)
 
 			// RVL Traversal
-			kvs = []KeyValue[string, int]{}
-			ost.Traverse(RVL, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
+			kvs = []generic.KeyValue[string, int]{}
+			ost.Traverse(generic.RVL, func(key string, val int) bool {
+				kvs = append(kvs, generic.KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedRVLTraverse, kvs)
 
 			// LRV Traversal
-			kvs = []KeyValue[string, int]{}
-			ost.Traverse(LRV, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
+			kvs = []generic.KeyValue[string, int]{}
+			ost.Traverse(generic.LRV, func(key string, val int) bool {
+				kvs = append(kvs, generic.KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedLRVTraverse, kvs)
 
 			// RLV Traversal
-			kvs = []KeyValue[string, int]{}
-			ost.Traverse(RLV, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
+			kvs = []generic.KeyValue[string, int]{}
+			ost.Traverse(generic.RLV, func(key string, val int) bool {
+				kvs = append(kvs, generic.KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedRLVTraverse, kvs)
 
 			// Ascending Traversal
-			kvs = []KeyValue[string, int]{}
-			ost.Traverse(Ascending, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
+			kvs = []generic.KeyValue[string, int]{}
+			ost.Traverse(generic.Ascending, func(key string, val int) bool {
+				kvs = append(kvs, generic.KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedAscendingTraverse, kvs)
 
 			// Descending Traversal
-			kvs = []KeyValue[string, int]{}
-			ost.Traverse(Descending, func(key string, val int) bool {
-				kvs = append(kvs, KeyValue[string, int]{Key: key, Val: val})
+			kvs = []generic.KeyValue[string, int]{}
+			ost.Traverse(generic.Descending, func(key string, val int) bool {
+				kvs = append(kvs, generic.KeyValue[string, int]{Key: key, Val: val})
 				return true
 			})
 			assert.Equal(t, test.expectedDescendingTraverse, kvs)
