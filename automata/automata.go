@@ -57,6 +57,16 @@ var (
 		return len(lhs) - len(rhs)
 	}
 
+	HashStates = func(ss States) uint64 {
+		// Use XOR which is commutative and associative, so insertion order does not matter.
+		var h uint64
+		for s := range ss.All() {
+			h ^= HashState(s)
+		}
+
+		return h
+	}
+
 	EqSymbols = func(a, b Symbols) bool {
 		if a == nil && b == nil {
 			return true
@@ -67,6 +77,38 @@ var (
 		}
 
 		return a.Equal(b)
+	}
+
+	CmpSymbols = func(a, b Symbols) int {
+		if a == nil && b == nil {
+			return 0
+		} else if a == nil {
+			return -1
+		} else if b == nil {
+			return 1
+		}
+
+		// Assume a and b are sorted.
+		lhs := generic.Collect1(a.All())
+		rhs := generic.Collect1(b.All())
+
+		for i := 0; i < len(lhs) && i < len(rhs); i++ {
+			if c := CmpSymbol(lhs[i], rhs[i]); c != 0 {
+				return c
+			}
+		}
+
+		return len(lhs) - len(rhs)
+	}
+
+	HashSymbols = func(ss Symbols) uint64 {
+		// Use XOR which is commutative and associative, so insertion order does not matter.
+		var h uint64
+		for s := range ss.All() {
+			h ^= HashSymbol(s)
+		}
+
+		return h
 	}
 
 	unionStates = func(a, b States) States {

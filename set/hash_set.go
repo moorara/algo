@@ -530,7 +530,7 @@ func hashPartitions[T any](s Set[T]) Set[Set[Set[T]]] {
 func hashHashSet[T any](s Set[T]) uint64 {
 	ss := s.(*hashSet[T])
 
-	// use XOR which is commutative and associative, so insertion order does not matter.
+	// Use XOR which is commutative and associative, so insertion order does not matter.
 	var h uint64
 	for _, m := range ss.members {
 		if m != nil && !m.deleted {
@@ -548,7 +548,7 @@ func eqHashSet[T any](a, b Set[T]) bool {
 func hashHashPartition[T any](P Set[Set[T]]) uint64 {
 	PP := P.(*hashSet[Set[T]])
 
-	// use XOR which is commutative and associative, so insertion order does not matter.
+	// Use XOR which is commutative and associative, so insertion order does not matter.
 	var h uint64
 	for _, m := range PP.members {
 		if m != nil && !m.deleted {
