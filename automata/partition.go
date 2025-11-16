@@ -1,8 +1,6 @@
 package automata
 
-import (
-	"github.com/moorara/algo/set"
-)
+import "github.com/moorara/algo/set"
 
 // group represents a subset of states within a partition.
 // Each group is uniquely identified by a representative state.
@@ -19,7 +17,7 @@ var eqGroup = func(a, b group) bool {
 type groups set.Set[group]
 
 func newGroups(gs ...group) groups {
-	return set.NewStable(eqGroup, gs...)
+	return set.NewStableSet(eqGroup, gs...)
 }
 
 // partition groups DFA states into disjoint sets, each tracked by a representative state.

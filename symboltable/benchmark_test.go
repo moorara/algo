@@ -91,22 +91,22 @@ func BenchmarkSymbolTable_Put(b *testing.B) {
 	opts := HashOpts{}
 
 	b.Run("ChainHashTable.Put", func(b *testing.B) {
-		ht := NewChainHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewChainHashTable(hashKey, eqKey, eqVal, opts)
 		runPutBenchmark(b, ht)
 	})
 
 	b.Run("LinearHashTable.Put", func(b *testing.B) {
-		ht := NewLinearHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewLinearHashTable(hashKey, eqKey, eqVal, opts)
 		runPutBenchmark(b, ht)
 	})
 
 	b.Run("QuadHashTable.Put", func(b *testing.B) {
-		ht := NewQuadraticHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewQuadraticHashTable(hashKey, eqKey, eqVal, opts)
 		runPutBenchmark(b, ht)
 	})
 
 	b.Run("DoubleHashTable.Put", func(b *testing.B) {
-		ht := NewDoubleHashTable[string, int](hashKey, eqKey, eqVal, opts)
+		ht := NewDoubleHashTable(hashKey, eqKey, eqVal, opts)
 		runPutBenchmark(b, ht)
 	})
 }

@@ -90,7 +90,7 @@ type States set.Set[State]
 
 // NewStates creates a new set of states, initialized with the given states.
 func NewStates(s ...State) States {
-	return set.NewSorted(CmpState, s...)
+	return set.NewSortedSet(CmpState, s...)
 }
 
 // Symbol represents an input symbol in an automaton, identified by a rune.
@@ -105,7 +105,7 @@ type Symbols set.Set[Symbol]
 
 // NewSymbols creates a new set of symbols, initialized with the given symbols.
 func NewSymbols(a ...Symbol) set.Set[Symbol] {
-	return set.NewSorted(CmpSymbol, a...)
+	return set.NewSortedSet(CmpSymbol, a...)
 }
 
 // String represents a sequence of symbols in an automaton.

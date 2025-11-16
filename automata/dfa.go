@@ -48,7 +48,7 @@ type dfaBound struct {
 type dfaTransitionVector set.Set[dfaTransitionEnds]
 
 func newDFATransitionVector() dfaTransitionVector {
-	return set.NewSorted(cmpDFATransitionEnds)
+	return set.NewSortedSet(cmpDFATransitionEnds)
 }
 
 var cmpDFATransitionVector = func(lhs, rhs dfaTransitionVector) int {

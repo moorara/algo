@@ -22,7 +22,7 @@ import (
  */
 
 const (
-	qpMinM          = 31    // Minimum number of entries in the hash table (must be a prime number)
+	qpMinM          = 31    // Minimum capacity of the hash table (must be a prime number)
 	qpMinLoadFactor = 0.125 // Minimum load factor before resizing (shrinking)
 	qpMaxLoadFactor = 0.50  // Maximum load factor before resizing (expanding)
 )
@@ -30,10 +30,10 @@ const (
 // quadraticHashTable is a hash table with quadratic probing for conflict resolution.
 type quadraticHashTable[K, V any] struct {
 	entries []*hashTableEntry[K, V]
-	m       int     // The total number of entries in the hash table
-	n       int     // The number of key-values stored in the hash table
-	minLF   float32 // The minimum load factor before resizing (shrinking) the hash table
-	maxLF   float32 // The maximum load factor before resizing (expanding) the hash table
+	m       int     // Capacity of the hash table
+	n       int     // Number of key-values stored in the hash table
+	minLF   float32 // Minimum load factor before resizing (shrinking) the hash table
+	maxLF   float32 // Maximum load factor before resizing (expanding) the hash table
 
 	hashKey hash.HashFunc[K]
 	eqKey   generic.EqualFunc[K]
@@ -174,7 +174,10 @@ func (t *quadraticHashTable[K, V]) Put(key K, val V) {
 	for i = next(); t.entries[i] != nil; i = next() {
 		if t.eqKey(t.entries[i].key, key) {
 			t.entries[i].val = val
-			t.entries[i].deleted = false
+			if t.entries[i].deleted { // undelete
+				t.entries[i].deleted = false
+				t.n++
+			}
 			return
 		}
 	}

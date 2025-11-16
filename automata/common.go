@@ -58,7 +58,7 @@ type rangeSet set.Set[disc.Range[Symbol]]
 
 // newRangeSet creates a new set of symbol ranges.
 func newRangeSet(rs ...disc.Range[Symbol]) rangeSet {
-	return set.NewStableWithFormat(
+	return set.NewStableSetWithFormat(
 		func(a, b disc.Range[Symbol]) bool {
 			return a.Lo == b.Lo && a.Hi == b.Hi
 		},
