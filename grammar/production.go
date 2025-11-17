@@ -14,16 +14,11 @@ import (
 )
 
 var (
+	EqProduction   = eqProduction
 	CmpProduction  = cmpProduction
 	HashProduction = hashFuncForProduction()
 
-	EqProduction = func(lhs, rhs *Production) bool {
-		return lhs.Equal(rhs)
-	}
-
-	EqProductionSet = func(lhs, rhs set.Set[*Production]) bool {
-		return lhs.Equal(rhs)
-	}
+	EqProductionSet = eqProductionSet
 )
 
 // Production represents a context-free production rule.
@@ -263,10 +258,17 @@ func OrderProductionSet(set set.Set[*Production]) []*Production {
 	return prods
 }
 
-// orderProductionSlice orders a slice of production rules in a deterministic way.
 func orderProductionSlice(prods []*Production) {
 	// Sort the productions using a custom comparison function.
 	sort.Quick(prods, cmpProduction)
+}
+
+func eqProduction(lhs, rhs *Production) bool {
+	return lhs.Equal(rhs)
+}
+
+func eqProductionSet(lhs, rhs set.Set[*Production]) bool {
+	return lhs.Equal(rhs)
 }
 
 // cmpProduction is a CompareFunc for Production type.
@@ -290,7 +292,6 @@ func cmpProduction(lhs, rhs *Production) int {
 	return CmpString(lhs.Body, rhs.Body)
 }
 
-// hashFuncForProduction creates a HashFunc for hashing productions.
 func hashFuncForProduction() hash.HashFunc[*Production] {
 	h := fnv.New64()
 

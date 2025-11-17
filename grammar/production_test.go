@@ -794,6 +794,77 @@ func TestOrderProductionSet(t *testing.T) {
 	}
 }
 
+func TestEqProduction(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs           *Production
+		rhs           *Production
+		expectedEqual bool
+	}{
+		{
+			name:          "NotEqual",
+			lhs:           &Production{"A", String[Symbol]{Terminal("a")}},
+			rhs:           &Production{"A", E},
+			expectedEqual: false,
+		},
+		{
+			name:          "Equal",
+			lhs:           &Production{"A", String[Symbol]{Terminal("a")}},
+			rhs:           &Production{"A", String[Symbol]{Terminal("a")}},
+			expectedEqual: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			eq := eqProduction(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedEqual, eq)
+		})
+	}
+}
+
+func TestEqProductionSet(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs           set.Set[*Production]
+		rhs           set.Set[*Production]
+		expectedEqual bool
+	}{
+		{
+			name: "NotEqual",
+			lhs: set.New(eqProduction,
+				&Production{"A", String[Symbol]{Terminal("a")}},
+				&Production{"B", String[Symbol]{Terminal("b")}},
+			),
+			rhs: set.New(eqProduction,
+				&Production{"A", String[Symbol]{Terminal("a")}},
+				&Production{"B", String[Symbol]{Terminal("b")}},
+				&Production{"B", E},
+			),
+			expectedEqual: false,
+		},
+		{
+			name: "Equal",
+			lhs: set.New(eqProduction,
+				&Production{"A", String[Symbol]{Terminal("a")}},
+				&Production{"B", String[Symbol]{Terminal("b")}},
+			),
+			rhs: set.New(eqProduction,
+				&Production{"A", String[Symbol]{Terminal("a")}},
+				&Production{"B", String[Symbol]{Terminal("b")}},
+			),
+			expectedEqual: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			eq := eqProductionSet(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedEqual, eq)
+		})
+	}
+}
+
 func TestCmpProduction(t *testing.T) {
 	tests := []struct {
 		name            string

@@ -21,11 +21,8 @@ import (
 const Endmarker = Terminal("\uEEEE")
 
 var (
-	EqSymbol = func(lhs, rhs Symbol) bool {
-		return lhs.Equal(rhs)
-	}
-
-	CmpSymbol  = compareFuncForSymbol()
+	EqSymbol   = eqSymbol
+	CmpSymbol  = cmpSymbol
 	HashSymbol = hashFuncForSymbol()
 
 	EqTerminal   = generic.NewEqualFunc[Terminal]()
@@ -52,28 +49,33 @@ func WriteSymbol(w io.Writer, s Symbol) (n int, err error) {
 	return w.Write([]byte(s.String()))
 }
 
-// compareFuncForSymbol creates a CompareFunc for comparing symbols.
-func compareFuncForSymbol() generic.CompareFunc[Symbol] {
-	cmpString := generic.NewCompareFunc[string]()
-
-	return func(lhs, rhs Symbol) int {
-		if lhs.IsTerminal() && !rhs.IsTerminal() {
-			return -1
-		} else if !lhs.IsTerminal() && rhs.IsTerminal() {
-			return 1
-		}
-
-		return cmpString(lhs.String(), rhs.String())
-	}
+func eqSymbol(lhs, rhs Symbol) bool {
+	return lhs.Equal(rhs)
 }
 
-// hashFuncForSymbol creates a HashFunc for hashing symbols.
+func cmpSymbol(lhs, rhs Symbol) int {
+	if lhs.IsTerminal() && !rhs.IsTerminal() {
+		return -1
+	} else if !lhs.IsTerminal() && rhs.IsTerminal() {
+		return 1
+	}
+
+	ls, rs := lhs.String(), rhs.String()
+	if ls < rs {
+		return -1
+	} else if ls > rs {
+		return 1
+	}
+
+	return 0
+}
+
 func hashFuncForSymbol() hash.HashFunc[Symbol] {
 	h := fnv.New64()
 
 	return func(s Symbol) uint64 {
 		h.Reset()
-		_, _ = WriteSymbol(h, s) // Hash.Write never returns an error
+		_, _ = h.Write([]byte(s.String())) // Hash.Write never returns an error
 		return h.Sum64()
 	}
 }

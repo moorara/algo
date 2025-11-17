@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moorara/algo/generic"
+	"github.com/moorara/algo/set"
 )
 
 func TestString(t *testing.T) {
@@ -208,6 +209,76 @@ func TestWriteString(t *testing.T) {
 		n, err := WriteString(tc.w, tc.s)
 		assert.Equal(t, tc.expectedN, n)
 		assert.Equal(t, tc.expectedError, err)
+	}
+}
+
+func TestEqString(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs           String[Symbol]
+		rhs           String[Symbol]
+		expectedEqual bool
+	}{
+		{
+			name:          "NotEqual",
+			lhs:           String[Symbol]{Terminal("a"), NonTerminal("A")},
+			rhs:           String[Symbol]{Terminal("a"), NonTerminal("B")},
+			expectedEqual: false,
+		},
+		{
+			name:          "Equal",
+			lhs:           String[Symbol]{Terminal("a"), NonTerminal("A")},
+			rhs:           String[Symbol]{Terminal("a"), NonTerminal("A")},
+			expectedEqual: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			eq := eqString(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedEqual, eq)
+		})
+	}
+}
+
+func TestEqStringSet(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs           set.Set[String[Symbol]]
+		rhs           set.Set[String[Symbol]]
+		expectedEqual bool
+	}{
+		{
+			name: "NotEqual",
+			lhs: set.New(eqString,
+				String[Symbol]{Terminal("a"), NonTerminal("A")},
+				String[Symbol]{Terminal("b"), NonTerminal("B")},
+			),
+			rhs: set.New(eqString,
+				String[Symbol]{Terminal("b"), NonTerminal("A")},
+				String[Symbol]{Terminal("a"), NonTerminal("B")},
+			),
+			expectedEqual: false,
+		},
+		{
+			name: "Equal",
+			lhs: set.New(eqString,
+				String[Symbol]{Terminal("a"), NonTerminal("A")},
+				String[Symbol]{Terminal("b"), NonTerminal("B")},
+			),
+			rhs: set.New(eqString,
+				String[Symbol]{Terminal("a"), NonTerminal("A")},
+				String[Symbol]{Terminal("b"), NonTerminal("B")},
+			),
+			expectedEqual: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			eq := eqStringSet(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedEqual, eq)
+		})
 	}
 }
 

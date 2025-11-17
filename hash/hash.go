@@ -24,6 +24,7 @@ func ensureHasher(h hash.Hash64) hash.Hash64 {
 	if h == nil {
 		h = fnv.New64()
 	}
+
 	return h
 }
 

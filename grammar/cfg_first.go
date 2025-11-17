@@ -10,10 +10,6 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
-var EqTerminalsAndEmpty = func(lhs, rhs *TerminalsAndEmpty) bool {
-	return lhs.Terminals.Equal(rhs.Terminals) && lhs.IncludesEmpty == rhs.IncludesEmpty
-}
-
 // FIRST is the FIRST function associated with a context-free grammar.
 //
 // FIRST(α), where α is any string of grammar symbols (terminals and non-terminals),
@@ -57,6 +53,10 @@ func (s *TerminalsAndEmpty) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(members, ", "))
 }
 
+func eqTerminalsAndEmpty(lhs, rhs *TerminalsAndEmpty) bool {
+	return lhs.Terminals.Equal(rhs.Terminals) && lhs.IncludesEmpty == rhs.IncludesEmpty
+}
+
 // firstBySymbolTable is the type for a table that stores the FIRST set for each grammar symbol.
 type firstBySymbolTable symboltable.SymbolTable[Symbol, *TerminalsAndEmpty]
 
@@ -64,7 +64,7 @@ func newFirstBySymbolTable() firstBySymbolTable {
 	return symboltable.NewQuadraticHashTable(
 		HashSymbol,
 		EqSymbol,
-		EqTerminalsAndEmpty,
+		eqTerminalsAndEmpty,
 		symboltable.HashOpts{},
 	)
 }
@@ -76,7 +76,7 @@ func newFirstByStringTable() firstByStringTable {
 	return symboltable.NewQuadraticHashTable(
 		HashString,
 		EqString,
-		EqTerminalsAndEmpty,
+		eqTerminalsAndEmpty,
 		symboltable.HashOpts{},
 	)
 }
