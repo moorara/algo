@@ -110,5 +110,11 @@ func EqRange[T Discrete](lhs, rhs Range[T]) bool {
 
 // CmpRange compares two discrete ranges by their low bounds.
 func CmpRange[T Discrete](lhs, rhs Range[T]) int {
-	return int(lhs.Lo) - int(rhs.Lo)
+	if lhs.Lo < rhs.Lo {
+		return -1
+	} else if lhs.Lo > rhs.Lo {
+		return 1
+	} else {
+		return 0
+	}
 }
