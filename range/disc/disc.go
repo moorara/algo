@@ -107,3 +107,14 @@ type RangeOrEmpty[T Discrete] struct {
 func EqRange[T Discrete](lhs, rhs Range[T]) bool {
 	return lhs.Equal(rhs)
 }
+
+// CmpRange compares two discrete ranges by their low bounds.
+func CmpRange[T Discrete](lhs, rhs Range[T]) int {
+	if lhs.Lo < rhs.Lo {
+		return -1
+	} else if lhs.Lo > rhs.Lo {
+		return 1
+	} else {
+		return 0
+	}
+}

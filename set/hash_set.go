@@ -175,6 +175,21 @@ func (s *hashSet[T]) Equal(rhs Set[T]) bool {
 	return true
 }
 
+func (s *hashSet[T]) Hash() uint64 {
+	var h uint64
+
+	// Combine member hashes with XOR to keep the result order-independent (XOR is commutative and associative).
+	// This is fast and works well for true sets (no duplicates).
+	// If duplicates can appear, XOR may cancel equal hashes and increase collisions.
+	for _, m := range s.members {
+		if m != nil && !m.deleted {
+			h ^= s.hash(m.val)
+		}
+	}
+
+	return h
+}
+
 func (s *hashSet[T]) Clone() Set[T] {
 	ss := &hashSet[T]{
 		members: make([]*hashSetMember[T], s.m),
@@ -527,38 +542,20 @@ func hashPartitions[T any](s Set[T]) Set[Set[Set[T]]] {
 	return Ps
 }
 
-func hashHashSet[T any](s Set[T]) uint64 {
-	ss := s.(*hashSet[T])
-
-	// use XOR which is commutative and associative, so insertion order does not matter.
-	var h uint64
-	for _, m := range ss.members {
-		if m != nil && !m.deleted {
-			h ^= ss.hash(m.val)
-		}
-	}
-
-	return h
-}
-
 func eqHashSet[T any](a, b Set[T]) bool {
 	return a.Equal(b)
 }
 
-func hashHashPartition[T any](P Set[Set[T]]) uint64 {
-	PP := P.(*hashSet[Set[T]])
-
-	// use XOR which is commutative and associative, so insertion order does not matter.
-	var h uint64
-	for _, m := range PP.members {
-		if m != nil && !m.deleted {
-			h ^= PP.hash(m.val)
-		}
-	}
-
-	return h
-}
-
 func eqHashPartition[T any](a, b Set[Set[T]]) bool {
 	return a.Equal(b)
+}
+
+func hashHashSet[T any](s Set[T]) uint64 {
+	ss := s.(*hashSet[T])
+	return ss.Hash()
+}
+
+func hashHashPartition[T any](P Set[Set[T]]) uint64 {
+	PP := P.(*hashSet[Set[T]])
+	return PP.Hash()
 }

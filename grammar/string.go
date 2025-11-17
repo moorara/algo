@@ -14,16 +14,9 @@ import (
 var E = String[Symbol]{}
 
 var (
+	EqString   = eqString
 	CmpString  = cmpString
 	HashString = hashFuncForString()
-
-	EqString = func(lhs, rhs String[Symbol]) bool {
-		return lhs.Equal(rhs)
-	}
-
-	eqStringSet = func(lhs, rhs set.Set[String[Symbol]]) bool {
-		return lhs.Equal(rhs)
-	}
 )
 
 // String represent a string of grammar symbols.
@@ -190,6 +183,14 @@ func WriteString(w io.Writer, s String[Symbol]) (n int, err error) {
 	return total, nil
 }
 
+func eqString(lhs, rhs String[Symbol]) bool {
+	return lhs.Equal(rhs)
+}
+
+func eqStringSet(lhs, rhs set.Set[String[Symbol]]) bool {
+	return lhs.Equal(rhs)
+}
+
 // cmpString is a CompareFunc for String[Symbol] type.
 //
 // The comparing criteria are as follows:
@@ -230,7 +231,6 @@ func cmpString(lhs, rhs String[Symbol]) int {
 	return 0
 }
 
-// hashFuncForString creates a HashFunc for hashing strings of symbols.
 func hashFuncForString() hash.HashFunc[String[Symbol]] {
 	h := fnv.New64()
 
