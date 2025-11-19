@@ -1,9 +1,16 @@
-// Package hash provides hash functions for standard Go types.
-// It leverages the built-in "hash" package, with FNV-1 (Fowler–Noll–Vo) as the default hashing algorithm.
+// Package hash provides fast, predictable hash functions for Go's built-in types.
+// It uses the standard hash.Hash64 interface and defaults to FNV-1 (Fowler–Noll–Vo) via hash/fnv.New64.
 //
-// The functions in this package are designed for high performance,
-// following a similar approach to the built-in "encoding/binary" package,
-// but avoiding type assertions or reflection to minimize overhead.
+// The helpers are designed for performance: values are encoded explicitly in
+// little-endian form, and reflection or type assertions are avoided to minimize overhead.
+//
+// This package intentionally does not provide generic hashing for structs or other composite types,
+// nor does it attempt to combine multiple fields.
+// The right approach depends on the use case and acceptable collision profile,
+// so callers should implement hashing for their own composite types.
+//
+// For example, XOR is very fast and order-insensitive, suitable for true sets,
+// but it performs poorly with duplicates and can lead to high collision rates.
 package hash
 
 import (
