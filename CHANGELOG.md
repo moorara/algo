@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.14.0](https://github.com/moorara/algo/tree/v0.14.0) (2025-11-19)
+
+[Compare Changes](https://github.com/moorara/algo/compare/v0.13.1...v0.14.0)
+
+**Merged Changes:**
+
+  - Refactoring [#356](https://github.com/moorara/algo/pull/356) ([moorara](https://github.com/moorara))
+  - Refactor utility functions across packages [#355](https://github.com/moorara/algo/pull/355) ([moorara](https://github.com/moorara))
+  - [Breaking] New Set API &#43; Hash Set implementation [#353](https://github.com/moorara/algo/pull/353) ([moorara](https://github.com/moorara))
+  - Add math package and refactor symboltable package [#352](https://github.com/moorara/algo/pull/352) ([moorara](https://github.com/moorara))
+  - fix(deps): update golang.org/x/exp digest to e25ba8c [#351](https://github.com/moorara/algo/pull/351) ([renovate[bot]](https://github.com/apps/renovate), [moorara](https://github.com/moorara))
+  - Small refactoring [#350](https://github.com/moorara/algo/pull/350) ([moorara](https://github.com/moorara))
+
+
 ## [v0.13.1](https://github.com/moorara/algo/tree/v0.13.1) (2025-11-09)
 
 [Compare Changes](https://github.com/moorara/algo/compare/v0.13.0...v0.13.1)
