@@ -55,6 +55,50 @@ func TestItem0_String(t *testing.T) {
 	}
 }
 
+func TestItem0_Hash(t *testing.T) {
+	tests := []struct {
+		name         string
+		i            *Item0
+		expectedHash uint64
+	}{
+		{
+			name: "EmptyProduction",
+			i: &Item0{
+				Production: &grammar.Production{Head: "E", Body: grammar.E},
+				Start:      "E′",
+				Dot:        0,
+			},
+			expectedHash: 0x53601cabdae2cd11,
+		},
+		{
+			name:         "Initial",
+			i:            &Item0{Production: parsertest.Prods[3][0], Start: "E′", Dot: 0},
+			expectedHash: 0x1220d07375b21726,
+		},
+		{
+			name:         "DotAtLeft",
+			i:            &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 0},
+			expectedHash: 0xdf028a641306cfaf,
+		},
+		{
+			name:         "DotInMiddle",
+			i:            &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 2},
+			expectedHash: 0x545d934f6f5f29f9,
+		},
+		{
+			name:         "DotAtRight",
+			i:            &Item0{Production: parsertest.Prods[3][1], Start: "E′", Dot: 3},
+			expectedHash: 0x8f0b17c51d8b571e,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedHash, tc.i.Hash())
+		})
+	}
+}
+
 func TestItem0_Equal(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -391,6 +435,51 @@ func TestItem1_String(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedString, tc.i.String())
+		})
+	}
+}
+
+func TestItem1_Hash(t *testing.T) {
+	tests := []struct {
+		name         string
+		i            *Item1
+		expectedHash uint64
+	}{
+		{
+			name: "EmptyProduction",
+			i: &Item1{
+				Production: &grammar.Production{Head: "S", Body: grammar.E},
+				Start:      "S′",
+				Dot:        0,
+				Lookahead:  grammar.Endmarker,
+			},
+			expectedHash: 0xe8dbda3d0a9c1cc1,
+		},
+		{
+			name:         "Initial",
+			i:            &Item1{Production: parsertest.Prods[1][0], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker},
+			expectedHash: 0xa3e7c4c7838e3ef6,
+		},
+		{
+			name:         "DotAtLeft",
+			i:            &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 0, Lookahead: grammar.Endmarker},
+			expectedHash: 0x35c3ab3505bcedb7,
+		},
+		{
+			name:         "DotInMiddle",
+			i:            &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 1, Lookahead: grammar.Endmarker},
+			expectedHash: 0xa421ea49649eee3a,
+		},
+		{
+			name:         "DotAtRight",
+			i:            &Item1{Production: parsertest.Prods[1][1], Start: "S′", Dot: 2, Lookahead: grammar.Endmarker},
+			expectedHash: 0x1280295dc380eebd,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedHash, tc.i.Hash())
 		})
 	}
 }

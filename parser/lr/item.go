@@ -8,24 +8,21 @@ import (
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
 )
 
 var (
-	EqItem = func(lhs, rhs Item) bool {
-		return lhs.Equal(rhs)
-	}
+	EqItem   = eqItem
+	CmpItem  = cmpItem
+	HashItem = hashItem
 
-	CmpItem = func(lhs, rhs Item) int {
-		return lhs.Compare(rhs)
-	}
+	EqItemSet   = eqItemSet
+	CmpItemSet  = cmpItemSet
+	HashItemSet = hashItemSet
 
-	EqItemSet = func(lhs, rhs ItemSet) bool {
-		return lhs.Equal(rhs)
-	}
-
-	CmpItemSet = cmpItemSet
+	hashInt = hash.HashFuncForInt[int](nil)
 )
 
 // Item represents an LR item for a context-free grammar.
@@ -33,6 +30,7 @@ var (
 // This interface defines the methods required by an LR parser.
 type Item interface {
 	fmt.Stringer
+	hash.Hasher
 	generic.Equaler[Item]
 	generic.Comparer[Item]
 
@@ -66,6 +64,18 @@ type Item interface {
 	// NextItem generates a new item by advancing the dot one position forward in the item's body.
 	// If the dot is at the end of the body, it returns an empty item and false.
 	Next() (Item, bool)
+}
+
+func eqItem(lhs, rhs Item) bool {
+	return lhs.Equal(rhs)
+}
+
+func cmpItem(lhs, rhs Item) int {
+	return lhs.Compare(rhs)
+}
+
+func hashItem(i Item) uint64 {
+	return i.Hash()
 }
 
 // Item0 represents an LR(0) item for a context-free grammar.
@@ -107,6 +117,23 @@ func (i *Item0) String() string {
 	}
 
 	return b.String()
+}
+
+// Hash computes a hash value for an LR(0) item.
+func (i *Item0) Hash() uint64 {
+	var hash uint64
+
+	// Use a polynomial rolling hash to combine the individual hashes.
+	const B = 0x9E3779B185EBCA87
+
+	if i.Production != nil {
+		hash = hash*B + grammar.HashProduction(i.Production)
+	}
+
+	hash = hash*B + grammar.HashNonTerminal(i.Start)
+	hash = hash*B + hashInt(i.Dot)
+
+	return hash
 }
 
 // Equal determines whether or not two LR(0) items are the same.
@@ -265,6 +292,24 @@ func (i *Item1) String() string {
 	return b.String()
 }
 
+// Hash computes a hash value for an LR(1) item.
+func (i *Item1) Hash() uint64 {
+	var hash uint64
+
+	// Use a polynomial rolling hash to combine the individual hashes.
+	const B = 0x9E3779B185EBCA87
+
+	if i.Production != nil {
+		hash = hash*B + grammar.HashProduction(i.Production)
+	}
+
+	hash = hash*B + grammar.HashNonTerminal(i.Start)
+	hash = hash*B + hashInt(i.Dot)
+	hash = hash*B + grammar.HashTerminal(i.Lookahead)
+
+	return hash
+}
+
 // Equal determines whether or not two LR(1) items are the same.
 func (i *Item1) Equal(rhs Item) bool {
 	ii, ok := rhs.(*Item1)
@@ -421,6 +466,10 @@ func NewItemSet(items ...Item) ItemSet {
 	)
 }
 
+func eqItemSet(lhs, rhs ItemSet) bool {
+	return lhs.Equal(rhs)
+}
+
 // cmpItemSet compares two collections of item sets to establish a consistent and deterministic order.
 // The comparison process is as follows:
 //
@@ -445,6 +494,19 @@ func cmpItemSet(lhs, rhs ItemSet) int {
 
 	//  If all compared items are equal, the longer list comes first.
 	return len(rs) - len(ls)
+}
+
+func hashItemSet(s ItemSet) uint64 {
+	var hash uint64
+
+	// Combine member hashes with XOR to keep the result order-independent (XOR is commutative and associative).
+	// This is fast and works well for true sets (no duplicates).
+	// If duplicates can appear, XOR may cancel equal hashes and increase collisions.
+	for i := range s.All() {
+		hash ^= i.Hash()
+	}
+
+	return hash
 }
 
 // itemSetStringer builds a string representation of an item set.

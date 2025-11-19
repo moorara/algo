@@ -74,6 +74,7 @@ func TestScopedItem(t *testing.T) {
 		rhs             *scopedItem
 		expectedEqual   bool
 		expectedCompare int
+		expectedHash    uint64
 	}{
 		{
 			name:            "Equal",
@@ -81,6 +82,7 @@ func TestScopedItem(t *testing.T) {
 			rhs:             &scopedItem{ItemSet: 2, Item: 4},
 			expectedEqual:   true,
 			expectedCompare: 0,
+			expectedHash:    0x3f297c94d6cfd842,
 		},
 		{
 			name:            "FirstStateSmaller",
@@ -88,6 +90,7 @@ func TestScopedItem(t *testing.T) {
 			rhs:             &scopedItem{ItemSet: 2, Item: 4},
 			expectedEqual:   false,
 			expectedCompare: -1,
+			expectedHash:    0xd0cb3d8077edd7bf,
 		},
 		{
 			name:            "FirstStateLarger",
@@ -95,6 +98,7 @@ func TestScopedItem(t *testing.T) {
 			rhs:             &scopedItem{ItemSet: 2, Item: 4},
 			expectedEqual:   false,
 			expectedCompare: 1,
+			expectedHash:    0xad87bba935b1d8c5,
 		},
 	}
 
@@ -102,6 +106,7 @@ func TestScopedItem(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedEqual, eqScopedItem(tc.lhs, tc.rhs))
 			assert.Equal(t, tc.expectedCompare, cmpScopedItem(tc.lhs, tc.rhs))
+			assert.Equal(t, tc.expectedHash, hashScopedItem(tc.lhs))
 		})
 	}
 }

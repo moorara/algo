@@ -139,7 +139,7 @@ func (t *ParsingTable) AddACTION(s State, a grammar.Terminal, action *Action) bo
 
 	row, _ := t.actions.Get(s)
 	if _, ok := row.Get(a); !ok {
-		row.Put(a, set.New[*Action](eqAction))
+		row.Put(a, set.New(eqAction))
 	}
 
 	actions, _ := row.Get(a)

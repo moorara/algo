@@ -245,3 +245,20 @@ func cmpPrecedenceHandleGroup(lhs, rhs *precedenceHandleGroup) int {
 
 	return cmpPrecedenceHandles(lhs.shifts, rhs.shifts)
 }
+
+func hashPrecedenceHandleGroup(g *precedenceHandleGroup) uint64 {
+	var hash uint64
+
+	// Use a polynomial rolling hash to combine the individual hashes.
+	const B = 0x9E3779B185EBCA87
+
+	if g.reduces != nil {
+		hash = hash*B + hashPrecedenceHandles(g.reduces)
+	}
+
+	if g.shifts != nil {
+		hash = hash*B + hashPrecedenceHandles(g.shifts)
+	}
+
+	return hash
+}

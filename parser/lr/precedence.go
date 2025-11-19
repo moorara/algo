@@ -247,7 +247,10 @@ func NewPrecedenceHandles(handles ...*PrecedenceHandle) PrecedenceHandles {
 	)
 }
 
-// cmpPrecedenceHandles compares two sets of handles and establishes an order between them.
+func eqPrecedenceHandles(lhs, rhs PrecedenceHandles) bool {
+	return lhs.Equal(rhs)
+}
+
 func cmpPrecedenceHandles(lhs, rhs PrecedenceHandles) int {
 	if lhs.Size() < rhs.Size() {
 		return -1
@@ -268,6 +271,17 @@ func cmpPrecedenceHandles(lhs, rhs PrecedenceHandles) int {
 	}
 
 	return 0
+}
+
+func hashPrecedenceHandles(h PrecedenceHandles) uint64 {
+	var hash uint64
+
+	// Combine member hashes with Sum to keep the result order-independent.
+	for h := range h.All() {
+		hash += hashPrecedenceHandle(h)
+	}
+
+	return hash
 }
 
 // PrecedenceHandle represents either a terminal symbol or a production rule
@@ -339,13 +353,10 @@ func (h *PrecedenceHandle) Equal(rhs *PrecedenceHandle) bool {
 	return false
 }
 
-// eqPrecedenceHandle determines whether or not two handles are the same.
 func eqPrecedenceHandle(lhs, rhs *PrecedenceHandle) bool {
 	return lhs.Equal(rhs)
 }
 
-// cmpPrecedenceHandle compares two handles and establishes an order between them.
-// Terminal handles come before Production handles.
 func cmpPrecedenceHandle(lhs, rhs *PrecedenceHandle) int {
 	switch {
 	case lhs.IsTerminal() && rhs.IsProduction():
@@ -359,4 +370,21 @@ func cmpPrecedenceHandle(lhs, rhs *PrecedenceHandle) int {
 	}
 
 	panic("cmpPrecedenceHandle: invalid configuration")
+}
+
+func hashPrecedenceHandle(h *PrecedenceHandle) uint64 {
+	var hash uint64
+
+	// Use a polynomial rolling hash to combine the individual hashes.
+	const B = 0x9E3779B185EBCA87
+
+	if h.Terminal != nil {
+		hash = hash*B + grammar.HashTerminal(*h.Terminal)
+	}
+
+	if h.Production != nil {
+		hash = hash*B + grammar.HashProduction(h.Production)
+	}
+
+	return hash
 }
