@@ -4,17 +4,16 @@ import (
 	"fmt"
 
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/set"
 )
 
 var (
-	eqAction = func(lhs, rhs *Action) bool {
-		return lhs.Equal(rhs)
-	}
+	EqAction   = eqAction
+	CmpAction  = cmpAction
+	HashAction = hashAction
 
-	eqActionSet = func(lhs, rhs set.Set[*Action]) bool {
-		return lhs.Equal(rhs)
-	}
+	hashActionType = hash.HashFuncForInt[ActionType](nil)
 )
 
 // ActionType enumerates the possible types of actions in an LR parser.
@@ -64,6 +63,14 @@ func equalProductions(lhs, rhs *grammar.Production) bool {
 	return lhs.Equal(rhs)
 }
 
+func eqAction(lhs, rhs *Action) bool {
+	return lhs.Equal(rhs)
+}
+
+func eqActionSet(lhs, rhs set.Set[*Action]) bool {
+	return lhs.Equal(rhs)
+}
+
 func cmpAction(lhs, rhs *Action) int {
 	if lhs.Type == SHIFT && rhs.Type == SHIFT {
 		return int(lhs.State) - int(rhs.State)
@@ -72,4 +79,20 @@ func cmpAction(lhs, rhs *Action) int {
 	}
 
 	return int(lhs.Type) - int(rhs.Type)
+}
+
+func hashAction(a *Action) uint64 {
+	var hash uint64
+
+	// Use a polynomial rolling hash to combine the individual hashes.
+	const B = 0x9E3779B185EBCA87
+
+	hash = hash*B + hashActionType(a.Type)
+	hash = hash*B + HashState(a.State)
+
+	if a.Production != nil {
+		hash = hash*B + grammar.HashProduction(a.Production)
+	}
+
+	return hash
 }

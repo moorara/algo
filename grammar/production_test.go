@@ -832,11 +832,11 @@ func TestEqProductionSet(t *testing.T) {
 	}{
 		{
 			name: "NotEqual",
-			lhs: set.New(eqProduction,
+			lhs: set.New(EqProduction,
 				&Production{"A", String[Symbol]{Terminal("a")}},
 				&Production{"B", String[Symbol]{Terminal("b")}},
 			),
-			rhs: set.New(eqProduction,
+			rhs: set.New(EqProduction,
 				&Production{"A", String[Symbol]{Terminal("a")}},
 				&Production{"B", String[Symbol]{Terminal("b")}},
 				&Production{"B", E},
@@ -845,11 +845,11 @@ func TestEqProductionSet(t *testing.T) {
 		},
 		{
 			name: "Equal",
-			lhs: set.New(eqProduction,
+			lhs: set.New(EqProduction,
 				&Production{"A", String[Symbol]{Terminal("a")}},
 				&Production{"B", String[Symbol]{Terminal("b")}},
 			),
-			rhs: set.New(eqProduction,
+			rhs: set.New(EqProduction,
 				&Production{"A", String[Symbol]{Terminal("a")}},
 				&Production{"B", String[Symbol]{Terminal("b")}},
 			),

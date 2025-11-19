@@ -514,6 +514,46 @@ func TestNewPrecedenceHandles(t *testing.T) {
 	}
 }
 
+func TestEqPrecedenceHandles(t *testing.T) {
+	tests := []struct {
+		name          string
+		lhs           PrecedenceHandles
+		rhs           PrecedenceHandles
+		expectedEqual bool
+	}{
+		{
+			name: "NotEqual",
+			lhs: NewPrecedenceHandles(
+				handles[0][0],
+			),
+			rhs: NewPrecedenceHandles(
+				handles[0][0],
+				handles[0][1],
+			),
+			expectedEqual: false,
+		},
+		{
+			name: "Equal",
+			lhs: NewPrecedenceHandles(
+				handles[0][0],
+				handles[0][1],
+			),
+			rhs: NewPrecedenceHandles(
+				handles[0][0],
+				handles[0][1],
+			),
+			expectedEqual: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			eq := eqPrecedenceHandles(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedEqual, eq)
+		})
+	}
+}
+
 func TestCmpPrecedenceHandles(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -571,7 +611,34 @@ func TestCmpPrecedenceHandles(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedCompare, cmpPrecedenceHandles(tc.lhs, tc.rhs))
+			cmp := cmpPrecedenceHandles(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedCompare, cmp)
+		})
+	}
+}
+
+func TestHashPrecedenceHandles(t *testing.T) {
+	tests := []struct {
+		name         string
+		h            PrecedenceHandles
+		expectedHash uint64
+	}{
+		{
+			name: "OK",
+			h: NewPrecedenceHandles(
+				handles[0][0],
+				handles[0][1],
+				handles[0][2],
+				handles[0][3],
+			),
+			expectedHash: 0xbd8ef5321806dfcb,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			hash := hashPrecedenceHandles(tc.h)
+			assert.Equal(t, tc.expectedHash, hash)
 		})
 	}
 }
@@ -717,7 +784,8 @@ func TestEqPrecedenceHandle(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedEqual, eqPrecedenceHandle(tc.lhs, tc.rhs))
+			eq := eqPrecedenceHandle(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedEqual, eq)
 		})
 	}
 }
@@ -751,7 +819,34 @@ func TestCmpPrecedenceHandle(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedCompare, cmpPrecedenceHandle(tc.lhs, tc.rhs))
+			cmp := cmpPrecedenceHandle(tc.lhs, tc.rhs)
+			assert.Equal(t, tc.expectedCompare, cmp)
+		})
+	}
+}
+
+func TestHashPrecedenceHandle(t *testing.T) {
+	tests := []struct {
+		name         string
+		h            *PrecedenceHandle
+		expectedHash uint64
+	}{
+		{
+			name:         "Terminal",
+			h:            handles[0][0],
+			expectedHash: 0xaf63bd4c8601b7f4,
+		},
+		{
+			name:         "Production",
+			h:            handles[0][4],
+			expectedHash: 0xb17a6a839462b089,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			hash := hashPrecedenceHandle(tc.h)
+			assert.Equal(t, tc.expectedHash, hash)
 		})
 	}
 }

@@ -446,3 +446,34 @@ func TestCmpPrecedenceHandleGroup(t *testing.T) {
 		})
 	}
 }
+
+func TestHashPrecedenceHandleGroup(t *testing.T) {
+	tests := []struct {
+		name         string
+		g            *precedenceHandleGroup
+		expectedHash uint64
+	}{
+		{
+			name: "Accept",
+			g: &precedenceHandleGroup{
+				reduces: NewPrecedenceHandles(
+					handles[1][1],
+				),
+				shifts: NewPrecedenceHandles(
+					handles[1][2],
+					handles[1][3],
+					handles[1][4],
+					handles[1][5],
+				),
+			},
+			expectedHash: 0x5333a4b38e5fa7eb,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			hash := hashPrecedenceHandleGroup(tc.g)
+			assert.Equal(t, tc.expectedHash, hash)
+		})
+	}
+}

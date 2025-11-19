@@ -3,8 +3,9 @@ package lr
 import (
 	"testing"
 
-	"github.com/moorara/algo/internal/parsertest"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moorara/algo/internal/parsertest"
 )
 
 func TestBuildStateMap(t *testing.T) {

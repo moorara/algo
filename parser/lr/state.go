@@ -12,11 +12,8 @@ const ErrState = State(-1)
 
 var (
 	EqState   = generic.NewEqualFunc[State]()
+	CmpState  = generic.NewCompareFunc[State]()
 	HashState = hash.HashFuncForInt[State](nil)
-
-	CmpState = func(lhs, rhs State) int {
-		return int(lhs) - int(rhs)
-	}
 )
 
 // State represents a state in the LR parsing table or automaton.

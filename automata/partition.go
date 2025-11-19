@@ -9,15 +9,23 @@ type group struct {
 	Rep State
 }
 
-var eqGroup = func(a, b group) bool {
+func eqGroup(a, b group) bool {
 	return a.States.Equal(b.States)
+}
+
+func cmpGroup(a, b group) int {
+	return CmpStates(a.States, b.States)
+}
+
+func hashGroup(g group) uint64 {
+	return HashStates(g.States)
 }
 
 // groups represents a set of groups.
 type groups set.Set[group]
 
 func newGroups(gs ...group) groups {
-	return set.NewStableSet(eqGroup, gs...)
+	return set.NewSortedSet(cmpGroup, gs...)
 }
 
 // partition groups DFA states into disjoint sets, each tracked by a representative state.

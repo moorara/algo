@@ -25,23 +25,12 @@ type nfaTransitionEnds struct {
 	Next  States
 }
 
-var cmpNFATransitionEnds = func(lhs, rhs nfaTransitionEnds) int {
+func cmpNFATransitionEnds(lhs, rhs nfaTransitionEnds) int {
 	if c := CmpState(lhs.State, rhs.State); c != 0 {
 		return c
 	}
 
-	// Next States are sorted set and can be compared element-wise.
-
-	s1 := generic.Collect1(lhs.Next.All())
-	s2 := generic.Collect1(rhs.Next.All())
-
-	for i := 0; i < len(s1) && i < len(s2); i++ {
-		if c := CmpState(s1[i], s2[i]); c != 0 {
-			return c
-		}
-	}
-
-	return len(s1) - len(s2)
+	return CmpStates(lhs.Next, rhs.Next)
 }
 
 // nfaTransition  represents a transition from one state to a set of states on a range of input symbols.
@@ -64,7 +53,7 @@ func newNFATransitionVector() nfaTransitionVector {
 	return set.NewSortedSet(cmpNFATransitionEnds)
 }
 
-var cmpNFATransitionVector = func(lhs, rhs nfaTransitionVector) int {
+func cmpNFATransitionVector(lhs, rhs nfaTransitionVector) int {
 	v1 := generic.Collect1(lhs.All())
 	v2 := generic.Collect1(rhs.All())
 
@@ -79,7 +68,7 @@ var cmpNFATransitionVector = func(lhs, rhs nfaTransitionVector) int {
 
 /* ------------------------------------------------------------------------------------------------------------------------ */
 
-var eqClassIDStatesTable = func(a, b symboltable.SymbolTable[classID, States]) bool {
+func eqClassIDStatesTable(a, b symboltable.SymbolTable[classID, States]) bool {
 	if a == nil && b == nil {
 		return true
 	}
@@ -263,8 +252,8 @@ func (b *NFABuilder) Build() *NFA {
 		ranges.Add(sub.Key, cid)
 
 		// Build class-based transitions for the current range and its transitions.
-		for ends := range sub.Val.All() {
-			transitions.Add(ends.State, cid, ends.Next)
+		for e := range sub.Val.All() {
+			transitions.Add(e.State, cid, e.Next)
 		}
 	}
 
@@ -297,6 +286,7 @@ type NFA struct {
 	trans  *nfaTransitionTable
 
 	// Derived values (computed lazily)
+	_final   []State
 	_states  []State
 	_symbols []disc.Range[Symbol]
 	_classes classMapping
@@ -365,7 +355,7 @@ func (n *NFA) String() string {
 	fmt.Fprintf(&b, "Start state: %d\n", n.start)
 	fmt.Fprintf(&b, "Final states: ")
 
-	for s := range n.final.All() {
+	for _, s := range n.Final() {
 		fmt.Fprintf(&b, "%d, ", s)
 	}
 
@@ -516,7 +506,7 @@ func (n *NFA) getSortedDegreeSequence() []int {
 		sortedDegrees[i] = degree
 	}
 
-	sort.Quick3Way[int](sortedDegrees, generic.NewCompareFunc[int]())
+	sort.Quick3Way(sortedDegrees, generic.NewCompareFunc[int]())
 
 	return sortedDegrees
 }
@@ -528,7 +518,12 @@ func (n *NFA) Start() State {
 
 // Final returns the final (accepting) states of the NFA.
 func (n *NFA) Final() []State {
-	return generic.Collect1(n.final.All())
+	if n._final == nil {
+		n._final = generic.Collect1(n.final.All())
+		// sort.Quick(n._final, CmpState)
+	}
+
+	return n._final
 }
 
 // States returns all states in the NFA.
@@ -544,6 +539,7 @@ func (n *NFA) States() []State {
 		}
 
 		n._states = generic.Collect1(states.All())
+		// sort.Quick(n._states, CmpState)
 	}
 
 	return n._states
@@ -622,8 +618,9 @@ func (n *NFA) TransitionsFrom(s State) iter.Seq2[[]disc.Range[Symbol], []State] 
 	//  Yield all aggregated ranges and their corresponding set of next states.
 	return func(yield func([]disc.Range[Symbol], []State) bool) {
 		for next, list := range agg.All() {
-			states := generic.Collect1(next.All())
 			ranges := generic.Collect1(list.All())
+			states := generic.Collect1(next.All())
+			// sort.Quick(states, CmpState)
 
 			if !yield(ranges, states) {
 				return

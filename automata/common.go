@@ -12,18 +12,16 @@ import (
 	"github.com/moorara/algo/symboltable"
 )
 
-func formatRangeSlice(rs []disc.Range[Symbol]) string {
-	var b bytes.Buffer
+func hashRange(r disc.Range[Symbol]) uint64 {
+	var hash uint64
 
-	for _, r := range rs {
-		fmt.Fprintf(&b, "%s, ", formatRange(r))
-	}
+	// Use a polynomial rolling hash to combine the individual hashes.
+	const B = 0x9E3779B185EBCA87
 
-	if b.Len() >= 2 {
-		b.Truncate(b.Len() - 2)
-	}
+	hash = hash*B + HashSymbol(r.Lo)
+	hash = hash*B + HashSymbol(r.Hi)
 
-	return b.String()
+	return hash
 }
 
 func formatRange(r disc.Range[Symbol]) string {
@@ -53,18 +51,26 @@ func formatRangeBound(a Symbol) string {
 	}
 }
 
+func formatRangeSlice(rs []disc.Range[Symbol]) string {
+	var b bytes.Buffer
+
+	for _, r := range rs {
+		fmt.Fprintf(&b, "%s, ", formatRange(r))
+	}
+
+	if b.Len() >= 2 {
+		b.Truncate(b.Len() - 2)
+	}
+
+	return b.String()
+}
+
 // rangeSet represents a set of symbol ranges.
 type rangeSet set.Set[disc.Range[Symbol]]
 
 // newRangeSet creates a new set of symbol ranges.
 func newRangeSet(rs ...disc.Range[Symbol]) rangeSet {
-	return set.NewStableSetWithFormat(
-		func(a, b disc.Range[Symbol]) bool {
-			return a.Lo == b.Lo && a.Hi == b.Hi
-		},
-		formatRangeSlice,
-		rs...,
-	)
+	return set.NewSortedSetWithFormat(disc.CmpRange[Symbol], formatRangeSlice, rs...)
 }
 
 // rangeList represents a list of symbol ranges.

@@ -9,10 +9,15 @@ import (
 
 	"github.com/moorara/algo/generic"
 	"github.com/moorara/algo/grammar"
+	"github.com/moorara/algo/hash"
 	"github.com/moorara/algo/parser/lr"
 	"github.com/moorara/algo/set"
 	"github.com/moorara/algo/sort"
 	"github.com/moorara/algo/symboltable"
+)
+
+var (
+	hashInt = hash.HashFuncForInt[int](nil)
 )
 
 // BuildParsingTable constructs a parsing table for an LALR parser.
@@ -287,6 +292,18 @@ func cmpScopedItem(lhs, rhs *scopedItem) int {
 	}
 
 	return lhs.Item - rhs.Item
+}
+
+func hashScopedItem(i *scopedItem) uint64 {
+	var hash uint64
+
+	// Use a polynomial rolling hash to combine the individual hashes.
+	const B = 0x9E3779B185EBCA87
+
+	hash = hash*B + lr.HashState(i.ItemSet)
+	hash = hash*B + hashInt(i.Item)
+
+	return hash
 }
 
 // propagationTable keeps track of which scoped items propagate their lookaheads to which other scoped items.

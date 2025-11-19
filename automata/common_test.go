@@ -9,26 +9,37 @@ import (
 	"github.com/moorara/algo/range/disc"
 )
 
-func TestFormatRangeSlice(t *testing.T) {
+func TestHashRange(t *testing.T) {
 	tests := []struct {
-		name           string
-		rs             []disc.Range[Symbol]
-		expectedString string
+		name         string
+		r            disc.Range[Symbol]
+		expectedHash uint64
 	}{
 		{
-			name: "OK",
-			rs: []disc.Range[Symbol]{
-				{Lo: '0', Hi: '9'},
-				{Lo: 'A', Hi: 'F'},
-				{Lo: 'a', Hi: 'f'},
-			},
-			expectedString: "[0..9], [A..F], [a..f]",
+			name:         "Empty",
+			r:            disc.Range[Symbol]{Lo: E, Hi: E},
+			expectedHash: 0x51174ad049a677c8,
+		},
+		{
+			name:         "Zero",
+			r:            disc.Range[Symbol]{Lo: 0, Hi: 0},
+			expectedHash: 0xa2172c400c20ec28,
+		},
+		{
+			name:         "Digit",
+			r:            disc.Range[Symbol]{Lo: '0', Hi: '9'},
+			expectedHash: 0x26d68f6462ac85a5,
+		},
+		{
+			name:         "Letter",
+			r:            disc.Range[Symbol]{Lo: 'A', Hi: 'Z'},
+			expectedHash: 0xf18c054b3e7f9e9d,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedString, formatRangeSlice(tc.rs))
+			assert.Equal(t, tc.expectedHash, hashRange(tc.r))
 		})
 	}
 }
@@ -120,6 +131,30 @@ func TestNewRangeSet(t *testing.T) {
 
 			assert.NotNil(t, rs)
 			assert.Equal(t, tc.expectedString, rs.String())
+		})
+	}
+}
+
+func TestFormatRangeSlice(t *testing.T) {
+	tests := []struct {
+		name           string
+		rs             []disc.Range[Symbol]
+		expectedString string
+	}{
+		{
+			name: "OK",
+			rs: []disc.Range[Symbol]{
+				{Lo: '0', Hi: '9'},
+				{Lo: 'A', Hi: 'F'},
+				{Lo: 'a', Hi: 'f'},
+			},
+			expectedString: "[0..9], [A..F], [a..f]",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedString, formatRangeSlice(tc.rs))
 		})
 	}
 }

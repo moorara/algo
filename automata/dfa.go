@@ -23,7 +23,7 @@ type dfaTransitionEnds struct {
 	Next  State
 }
 
-var cmpDFATransitionEnds = func(lhs, rhs dfaTransitionEnds) int {
+func cmpDFATransitionEnds(lhs, rhs dfaTransitionEnds) int {
 	if c := CmpState(lhs.State, rhs.State); c != 0 {
 		return c
 	}
@@ -51,7 +51,7 @@ func newDFATransitionVector() dfaTransitionVector {
 	return set.NewSortedSet(cmpDFATransitionEnds)
 }
 
-var cmpDFATransitionVector = func(lhs, rhs dfaTransitionVector) int {
+func cmpDFATransitionVector(lhs, rhs dfaTransitionVector) int {
 	v1 := generic.Collect1(lhs.All())
 	v2 := generic.Collect1(rhs.All())
 
@@ -66,7 +66,7 @@ var cmpDFATransitionVector = func(lhs, rhs dfaTransitionVector) int {
 
 /* ------------------------------------------------------------------------------------------------------------------------ */
 
-var eqClassIDStateTable = func(a, b symboltable.SymbolTable[classID, State]) bool {
+func eqClassIDStateTable(a, b symboltable.SymbolTable[classID, State]) bool {
 	if a == nil && b == nil {
 		return true
 	}
@@ -250,8 +250,8 @@ func (b *DFABuilder) Build() *DFA {
 		ranges.Add(sub.Key, cid)
 
 		// Build class-based transitions for the current range and its transitions.
-		for ends := range sub.Val.All() {
-			transitions.Add(ends.State, cid, ends.Next)
+		for e := range sub.Val.All() {
+			transitions.Add(e.State, cid, e.Next)
 		}
 	}
 
@@ -284,6 +284,7 @@ type DFA struct {
 	trans  *dfaTransitionTable
 
 	// Derived values (computed lazily)
+	_final   []State
 	_states  []State
 	_symbols []disc.Range[Symbol]
 	_classes classMapping
@@ -296,7 +297,7 @@ func (d *DFA) String() string {
 	fmt.Fprintf(&b, "Start state: %d\n", d.start)
 	fmt.Fprintf(&b, "Final states: ")
 
-	for s := range d.final.All() {
+	for _, s := range d.Final() {
 		fmt.Fprintf(&b, "%d, ", s)
 	}
 
@@ -439,7 +440,7 @@ func (d *DFA) getSortedDegreeSequence() []int {
 		sortedDegrees[i] = degree
 	}
 
-	sort.Quick3Way[int](sortedDegrees, generic.NewCompareFunc[int]())
+	sort.Quick3Way(sortedDegrees, generic.NewCompareFunc[int]())
 
 	return sortedDegrees
 }
@@ -451,7 +452,12 @@ func (d *DFA) Start() State {
 
 // Final returns the final (accepting) states of the DFA.
 func (d *DFA) Final() []State {
-	return generic.Collect1(d.final.All())
+	if d._final == nil {
+		d._final = generic.Collect1(d.final.All())
+		// sort.Quick(d._final, CmpState)
+	}
+
+	return d._final
 }
 
 // States returns all states in the DFA.
@@ -467,6 +473,7 @@ func (d *DFA) States() []State {
 		}
 
 		d._states = generic.Collect1(states.All())
+		// sort.Quick(d._states, CmpState)
 	}
 
 	return d._states
@@ -595,8 +602,11 @@ func (d *DFA) Minimize() *DFA {
 	for {
 		Πnew := newPartition()
 
+		groups := generic.Collect1(Π.groups.All())
+		sort.Quick(groups, cmpGroup)
+
 		// For every group in the current partition
-		for G := range Π.groups.All() {
+		for _, G := range groups {
 			Gtrans := buildGroupTransitions(d, Π, G)
 			partitionGroup(Πnew, Gtrans)
 		}
@@ -623,7 +633,7 @@ func (d *DFA) Minimize() *DFA {
 	start := Π.FindRep(d.start)
 
 	final := NewStates()
-	for f := range d.final.All() {
+	for _, f := range d.Final() {
 		g := Π.FindRep(f)
 		final.Add(g)
 	}
@@ -631,7 +641,10 @@ func (d *DFA) Minimize() *DFA {
 	b := NewDFABuilder().SetStart(start)
 	b.final = final
 
-	for G := range Π.groups.All() {
+	groups := generic.Collect1(Π.groups.All())
+	sort.Quick(groups, cmpGroup)
+
+	for _, G := range groups {
 		// Get any state in the group
 		s, _ := G.States.FirstMatch(func(State) bool {
 			return true
@@ -981,7 +994,9 @@ func UnionDFA(ds ...*DFA) (*DFA, [][]State) {
 					}
 				}
 			}
+
 			finalMap[id] = generic.Collect1(mapped.All())
+			sort.Quick(finalMap[id], CmpState)
 		}
 	}
 
@@ -1046,7 +1061,9 @@ func UnionDFA(ds ...*DFA) (*DFA, [][]State) {
 				ff := sm.GetOrCreateState(0, f)
 				mapped.Add(ff)
 			}
+
 			finalMap[id] = generic.Collect1(mapped.All())
+			sort.Quick(finalMap[id], CmpState)
 		}
 	}
 
