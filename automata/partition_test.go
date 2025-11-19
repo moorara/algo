@@ -8,33 +8,92 @@ import (
 
 func TestEqGroup(t *testing.T) {
 	tests := []struct {
-		name     string
-		a, b     group
-		expected bool
+		name          string
+		a, b          group
+		expectedEqual bool
 	}{
 		{
-			name:     "NotEqual",
-			a:        group{States: NewStates(2, 4, 8), Rep: 2},
-			b:        group{States: NewStates(3, 5, 7), Rep: 3},
-			expected: false,
+			name:          "NotEqual",
+			a:             group{States: NewStates(2, 4, 8), Rep: 2},
+			b:             group{States: NewStates(3, 5, 7), Rep: 3},
+			expectedEqual: false,
 		},
 		{
-			name:     "Equal_SameRepresentative",
-			a:        group{States: NewStates(2, 4, 8), Rep: 2},
-			b:        group{States: NewStates(2, 4, 8), Rep: 2},
-			expected: true,
+			name:          "Equal_SameRepresentative",
+			a:             group{States: NewStates(2, 4, 8), Rep: 2},
+			b:             group{States: NewStates(2, 4, 8), Rep: 2},
+			expectedEqual: true,
 		},
 		{
-			name:     "Equal_DiffRepresentative",
-			a:        group{States: NewStates(2, 4, 8), Rep: 2},
-			b:        group{States: NewStates(2, 4, 8), Rep: 4},
-			expected: true,
+			name:          "Equal_DiffRepresentative",
+			a:             group{States: NewStates(2, 4, 8), Rep: 2},
+			b:             group{States: NewStates(2, 4, 8), Rep: 4},
+			expectedEqual: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, eqGroup(tc.a, tc.b))
+			assert.Equal(t, tc.expectedEqual, eqGroup(tc.a, tc.b))
+		})
+	}
+}
+
+func TestCmpGroup(t *testing.T) {
+	tests := []struct {
+		name            string
+		a, b            group
+		expectedCompare int
+	}{
+		{
+			name:            "LessThan",
+			a:               group{States: NewStates(2, 4, 8), Rep: 2},
+			b:               group{States: NewStates(3, 5, 7), Rep: 3},
+			expectedCompare: -1,
+		},
+		{
+			name:            "GreaterThan",
+			a:               group{States: NewStates(3, 5, 7), Rep: 3},
+			b:               group{States: NewStates(2, 4, 8), Rep: 2},
+			expectedCompare: 1,
+		},
+		{
+			name:            "Equal_SameRepresentative",
+			a:               group{States: NewStates(2, 4, 8), Rep: 2},
+			b:               group{States: NewStates(2, 4, 8), Rep: 2},
+			expectedCompare: 0,
+		},
+		{
+			name:            "Equal_DiffRepresentative",
+			a:               group{States: NewStates(2, 4, 8), Rep: 2},
+			b:               group{States: NewStates(2, 4, 8), Rep: 4},
+			expectedCompare: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedCompare, cmpGroup(tc.a, tc.b))
+		})
+	}
+}
+
+func TestHashGroup(t *testing.T) {
+	tests := []struct {
+		name         string
+		g            group
+		expectedHash uint64
+	}{
+		{
+			name:         "OK",
+			g:            group{States: NewStates(2, 4, 8), Rep: 2},
+			expectedHash: 0xf36910cafdc3d8bb,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedHash, hashGroup(tc.g))
 		})
 	}
 }

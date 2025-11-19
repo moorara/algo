@@ -64,9 +64,13 @@ func cmpStates(a, b States) int {
 		return 1
 	}
 
-	// Assume a and b are sorted.
 	lhs := generic.Collect1(a.All())
 	rhs := generic.Collect1(b.All())
+
+	// Sorting is not needed since the sets are sorted.
+	// Uncomment if you switch to unsorted sets.
+	// sort.Quick(lhs, CmpState)
+	// sort.Quick(rhs, CmpState)
 
 	for i := 0; i < len(lhs) && i < len(rhs); i++ {
 		if c := CmpState(lhs[i], rhs[i]); c != 0 {
@@ -126,9 +130,13 @@ func cmpSymbols(a, b Symbols) int {
 		return 1
 	}
 
-	// Assume a and b are sorted.
 	lhs := generic.Collect1(a.All())
 	rhs := generic.Collect1(b.All())
+
+	// Sorting is not needed since the sets are sorted.
+	// Uncomment if you switch to unsorted sets.
+	// sort.Quick(lhs, CmpSymbol)
+	// sort.Quick(rhs, CmpSymbol)
 
 	for i := 0; i < len(lhs) && i < len(rhs); i++ {
 		if c := CmpSymbol(lhs[i], rhs[i]); c != 0 {

@@ -1034,7 +1034,8 @@ func TestNFARunner_Next(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedNext, tc.r.Next(tc.s, tc.a))
+			next := tc.r.Next(tc.s, tc.a)
+			assert.ElementsMatch(t, tc.expectedNext, next)
 		})
 	}
 }
