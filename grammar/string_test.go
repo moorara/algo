@@ -250,11 +250,11 @@ func TestEqStringSet(t *testing.T) {
 	}{
 		{
 			name: "NotEqual",
-			lhs: set.New(eqString,
+			lhs: set.New(EqString,
 				String[Symbol]{Terminal("a"), NonTerminal("A")},
 				String[Symbol]{Terminal("b"), NonTerminal("B")},
 			),
-			rhs: set.New(eqString,
+			rhs: set.New(EqString,
 				String[Symbol]{Terminal("b"), NonTerminal("A")},
 				String[Symbol]{Terminal("a"), NonTerminal("B")},
 			),
@@ -262,11 +262,11 @@ func TestEqStringSet(t *testing.T) {
 		},
 		{
 			name: "Equal",
-			lhs: set.New(eqString,
+			lhs: set.New(EqString,
 				String[Symbol]{Terminal("a"), NonTerminal("A")},
 				String[Symbol]{Terminal("b"), NonTerminal("B")},
 			),
-			rhs: set.New(eqString,
+			rhs: set.New(EqString,
 				String[Symbol]{Terminal("a"), NonTerminal("A")},
 				String[Symbol]{Terminal("b"), NonTerminal("B")},
 			),
