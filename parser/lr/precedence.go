@@ -277,8 +277,8 @@ func hashPrecedenceHandles(h PrecedenceHandles) uint64 {
 	var hash uint64
 
 	// Combine member hashes with Sum to keep the result order-independent.
-	for h := range h.All() {
-		hash += hashPrecedenceHandle(h)
+	for handle := range h.All() {
+		hash += hashPrecedenceHandle(handle)
 	}
 
 	return hash

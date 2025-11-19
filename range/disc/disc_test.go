@@ -221,7 +221,6 @@ func TestEqRange(t *testing.T) {
 
 func TestCmpRange(t *testing.T) {
 	tests := []struct {
-		name            string
 		lhs, rhs        Range[int]
 		expectedCompare int
 	}{
@@ -231,8 +230,6 @@ func TestCmpRange(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedCompare, CmpRange(tc.lhs, tc.rhs))
-		})
+		assert.Equal(t, tc.expectedCompare, CmpRange(tc.lhs, tc.rhs))
 	}
 }

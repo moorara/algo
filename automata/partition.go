@@ -14,7 +14,7 @@ func eqGroup(a, b group) bool {
 }
 
 func cmpGroup(a, b group) int {
-	return CmpStates(a, b)
+	return CmpStates(a.States, b.States)
 }
 
 func hashGroup(g group) uint64 {
