@@ -1,10 +1,10 @@
 module github.com/moorara/algo
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6
+	golang.org/x/exp v0.0.0-20260824195058-e88cd73687aa
 )
 
 require (
